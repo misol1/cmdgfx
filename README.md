@@ -27,7 +27,9 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transform]
-3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
+3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
+         face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect 
+         fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
 insert   file
 
 Fgcol and bgcol can be specified either as decimal or hex.
@@ -37,7 +39,8 @@ For both char and fgcol+bgcol, specify ? to use existing.
 Bitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.
 
 Image: 256 color pcx file (first 16 colors used), or gxy file, or text file.
-If a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!
+If a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp
+to -1 if transparency is not needed!
 
 Gpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).
 Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move
@@ -45,11 +48,13 @@ Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move
 String for text op has all _ replaced with ' '. Supports a subset of gxy codes.
 
 Objectfile should point to either a plg, ply or obj file.
-Drawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.
-Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 2: put bitop in high byte.
+Drawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat.
+Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop.
+            Mode 1/2: 0=static col, 1=even col. Mode 2: put bitop in high byte.
 
 [flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
-         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples).
+         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit
+         pattern(see mouse examples).
 ```
 
 cmdgfx_gdi.exe
@@ -74,7 +79,9 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transform]
-3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
+3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
+         face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect
+         fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
 insert   file
 
 Fgcol and bgcol can be specified either as decimal or hex.
@@ -84,7 +91,8 @@ For both char and fgcol+bgcol, specify ? to use existing.
 Bitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.
 
 Image: 256 color pcx file (first 16 colors used), or gxy file, or text file.
-If a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!
+If a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp
+to -1 if transparency is not needed!
 
 Gpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).
 Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move
@@ -92,14 +100,15 @@ Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move
 String for text op has all _ replaced with ' '. Supports a subset of gxy codes.
 
 Objectfile should point to either a plg, ply or obj file.
-Drawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.
-Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 2: put bitop in high byte.
+Drawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat.
+Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop.
+            Mode 1/2: 0=static col, 1=even col. Mode 2: put bitop in high byte.
 
 Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (all hex)
 
-[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wai and return key,
-         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples),
-         'fn[:x,y,w,h]' use font n(0-9, default 6).
+[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
+         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit
+         pattern(see mouse examples), 'fn[:x,y,w,h]' use font n(0-9, default 6).
 ```
 
 cmdwiz.exe
