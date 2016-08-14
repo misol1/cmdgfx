@@ -27,7 +27,7 @@
 
 // For 3d:
 // *1. Add a real zbuffer
-// *2. Add second rotation (+second(actually, third) move?) after the move? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
+// *2. Add second rotation (+second(actually, third) move?) after the rotation? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
 // 3. If texture set and face-vertices=1, draw texture as image?
 // 4. Add perspective-correct texture mapping / directional light / phong shading / bump mapping / reflection mapping / primitive shadows
 // 5: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
@@ -1271,10 +1271,10 @@ int main(int argc, char *argv[]) {
 	 }
 	 else if (strstr(pch,"text ") == pch) {
 		Bitmap b_cols, b_chars;
-		char tstring[4096];
+		char tstring[12096];
 		int x1,y1,w1,h1,xb,xdb,res;
 		pch = pch + 5;
-		nof = sscanf(pch, "%2s %2s %2s %4090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
+		nof = sscanf(pch, "%2s %2s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
 
 		if (nof == 6) {
 			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
