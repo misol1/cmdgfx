@@ -5,7 +5,7 @@ bg font 2 & mode %W%,75
 cmdwiz setbuffersize %WW% 130
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
-::cmdwiz setcursorpos 0 79
+cmdwiz setcursorpos 0 76
 
 cmdgfx "fbox f 0 30 0,0,%WW%,130 & fbox f 0 20 0,0,%WW%,120 & fbox e 0 20 %W%,0,%W%,95"
 set OUT=""&(for /L %%a in (1,1,75) do set /a "X=!RANDOM! %% %W%+%W%,FG=!RANDOM! %% 6+10" & set OUT="!OUT:~1,-1! & pixel !FG! 0 30 !X!,126")&cmdgfx !OUT! p
@@ -27,6 +27,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	cmdgfx "!OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 !STREAM:~1,-1! & block 0 %W%,0,%W%,130 0,0 !TRANSF%%c:~1,-1!" pk
 	set KEY=!errorlevel!
 	
+	if !KEY! == 102 cmdgfx "image img\fire.txt f 0 0 20 87,79 & image img\fire.txt f 0 0 20 89,79 & image img\fire.txt f 0 0 20 88,78 & image img\fire.txt f 0 0 20 88,80 & image img\fire.txt f 0 0 20 88,79" p
 	if !KEY! == 32 set /A COL+=1&if !COL! gtr 1 set COL=0
 	if !KEY! == 333 set /A PW+=1&if !PW! gtr 5 set PW=5
 	if !KEY! == 331 set /A PW-=1&if !PW! lss 1 set PW=1

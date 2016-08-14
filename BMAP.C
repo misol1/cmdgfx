@@ -38,6 +38,7 @@ int PCXload (Bitmap *bild,char filename[]) {
 	 
     bild->xSize=PCXh.Xmax+1;
     bild->ySize=PCXh.Ymax+1;
+	 bild->transpVal = -1;
 
     while (j<(PCXh.Xmax+1)*(PCXh.Ymax+1)) {
       c=filedata[k++];
