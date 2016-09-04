@@ -1,13 +1,19 @@
 :: 3dworld with textures and moving "enemy" : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set W=180&set H=80
 mode con lines=%H% cols=%W%
 mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 
 set W=720&set H=500
+
+cmdwiz getdisplaydim w&set SW=!errorlevel!
+cmdwiz getdisplaydim h&set SH=!errorlevel!
+set /a SW=%SW%/2,SH=%SH%/2
+set /a WPX=%SW%-%W%/2,WPY=%SH%-%H%/2-20
+cmdwiz setwindowpos %WPX% %WPY%
 
 cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
 
@@ -105,6 +111,10 @@ set /A "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 copy /Y %FN% %FN3%>nul
 
+cmdwiz setwindowpos %WPX% %WPY%
+set /a MPY=%SH%-%H%/3
+cmdwiz setmousecursorpos %SW% %MPY%
+
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not defined STOP (
 	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel c 0 db !XP!,!ZP!
@@ -128,8 +138,6 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 	
 	cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,800,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,400,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%
 	
-	if not "!HELP!"=="" cmdgfx "!HELP!"
-
 	set RET=!errorlevel!
    if not !RET! == -1 (
 		set /a "ME=!RET! & 1,ML=(!RET!&2)>>1, MR=(!RET!&4)>>2, MWD=MT=(!RET!&8)>>3, MWU=(!RET!&16)>>4, MX=(!RET!>>5)&511, MY=(!RET!>>14)&127"
@@ -183,7 +191,7 @@ endlocal
 mode con cols=80 lines=50
 mode con rate=31 delay=0
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 :MOVE <direction> <div>

@@ -1,7 +1,7 @@
 :: Colorwrite test : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 6 & cls
+cmdwiz setfont 6 & cls
 set W=80&set H=54
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="

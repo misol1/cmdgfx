@@ -1,7 +1,7 @@
 :: 3dworld with textures and moving "enemy" : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set W=180&set H=110
 mode con lines=%H% cols=%W%
 mode con rate=0 delay=10000
@@ -187,7 +187,7 @@ endlocal
 mode con cols=80 lines=50
 mode con rate=31 delay=0
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 :MOVE <direction> <div>

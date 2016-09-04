@@ -1,7 +1,7 @@
 :: BlockOut : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls&bg font 0
+cls&cmdwiz setfont 0
 set /a W=220,H=110
 mode %W%,%H% & cls
 cmdwiz showcursor 0
@@ -199,7 +199,7 @@ del /Q bgbl-r.gxy>nul 2>nul
 del /Q lay?.obj>nul 2>nul
 endlocal
 cmdwiz showcursor 1
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls
 goto :eof
 

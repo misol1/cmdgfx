@@ -18,7 +18,7 @@ for /L %%i in (1,1,10) do set "spaces=!spaces!!spaces!"
 
 cd /D "%~DP0"
 
-bg font 0&cls
+cmdwiz setfont 0&cls
 set W=180&set H=110
 mode con lines=%H% cols=%W%
 mode con rate=31 delay=0
@@ -120,7 +120,7 @@ mode con cols=80 lines=50
 cmdwiz showcursor 1
 del /Q key>nul
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 

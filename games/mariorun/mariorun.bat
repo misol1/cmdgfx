@@ -1,7 +1,7 @@
 :: Parallax scrolling jumping game : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set W=240&set H=110
 mode con lines=%H% cols=%W%
 mode con rate=31 delay=0
@@ -79,7 +79,7 @@ goto SHOWLOOP
 echo %HISCORE% >hiscore.dat
 endlocal
 mode con cols=80 lines=50
-cls & bg font 6
+cls & cmdwiz setfont 6
 goto :eof
 
 :GAMEOVER

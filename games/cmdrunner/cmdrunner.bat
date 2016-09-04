@@ -1,7 +1,7 @@
 :: CmdRunner : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0&cls
+cmdwiz setfont 0&cls
 set W=180&set H=110
 mode con lines=%H% cols=%W%
 mode con rate=31 delay=0
@@ -84,4 +84,4 @@ endlocal
 mode con cols=80 lines=50
 cmdwiz showcursor 1
 cls
-bg font 6
+cmdwiz setfont 6

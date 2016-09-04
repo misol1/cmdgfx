@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1&cls
+cmdwiz setfont 1&cls
 set W=160&set H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
@@ -47,6 +47,6 @@ if !KEY! == 27 set STOP=1
 if not defined STOP goto LOOP
 
 endlocal
-bg font 6
+cmdwiz setfont 6
 mode 80,50
 del /Q pixels.ply

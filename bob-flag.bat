@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 1
+cls & cmdwiz setfont 1
 set W=160&set H=83
 if "%~1" == "2" set W=158&set H=76
 mode %W%,%H% & cmdwiz showcursor 0
@@ -54,5 +54,5 @@ if not defined STOP goto LOOP
 
 endlocal
 rd /Q /S dots
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls & cmdwiz showcursor 1

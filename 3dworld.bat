@@ -1,7 +1,7 @@
 :: 3dworld : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0
+cmdwiz setfont 0 & cls
 set W=180&set H=110
 mode con lines=%H% cols=%W%
 mode con rate=31 delay=0
@@ -100,7 +100,7 @@ del /Q %WNAME%
 endlocal
 mode con cols=80 lines=50
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 :STRLEN <result> <string>

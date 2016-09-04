@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 6 & cls
+cmdwiz setfont 6 & cls
 set /a W=80, H=50
 mode con lines=%H% cols=%W%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
