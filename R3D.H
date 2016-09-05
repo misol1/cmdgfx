@@ -9,10 +9,10 @@
 #include "bmap.h"
 
 typedef struct point3d {
-  int x,y,z;
-  int vx,vy,vz;
-  float u,v;
-  float ox,oy,oz;
+	int x,y,z;
+	int vx,vy,vz;
+	float u,v;
+	float ox,oy,oz;
 } point3d;
 
 extern int XRES, YRES;
@@ -25,16 +25,16 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 #define R3D_MAX_V_PER_FACE 28
 
 typedef struct obj3d {
-  int nofPoints;
-  int nofFaces;
-  point3d *objData;
-  int *faceData;
+	int nofPoints;
+	int nofFaces;
+	point3d *objData;
+	int *faceData;
 
-  float *texCoords;
-  int *texData;
-  int *faceBitmapIndex;
-  Bitmap **bmaps;
-  int nofBmaps;
+	float *texCoords;
+	int *texData;
+	int *faceBitmapIndex;
+	Bitmap **bmaps;
+	int nofBmaps;
 } obj3d;
 
 typedef int (*readTexture)(Bitmap *bmap, char *fname);
@@ -43,5 +43,5 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 obj3d *readPly(char *fname, float scale, float modx, float mody, float modz);
 obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz);
 void freeObj3d(obj3d *obj);
-	
+
 #endif

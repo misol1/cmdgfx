@@ -1,6 +1,6 @@
 // Cmd font 0 
-int cmd_font0_w=4; 
-int cmd_font0_h=6; 
+int cmd_font0_w=4;
+int cmd_font0_h=6;
 int cmd_font0_data[256][6] = {
 { 0, 0, 0, 0, 0, 0 },
 { 4, 10, 14, 10, 4, 0 },

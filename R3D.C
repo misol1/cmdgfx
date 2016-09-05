@@ -4,72 +4,72 @@
 
 // Note: Does NOT properly parse e.g. -3.399e-15, IFF e is larger than 9 (sets result to 0 in that case)
 float naiveToF(const char *p) {
-	 static float pow10[10] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
-	 
-    float r = 0.0;
-    int neg = 0;
-    if (*p == '-') {
-        neg = 1;
-        ++p;
-    }
-    while (*p >= '0' && *p <= '9') {
-        r = (r*10.0) + (*p - '0');
-        ++p;
-    }
-    if (*p == '.') {
-        float f = 0.0;
-        int n = 0;
-        ++p;
-        while (*p >= '0' && *p <= '9') {
-            f = (f*10.0) + (*p - '0');
-            ++p;
-            ++n;
-        }
-        r += f / pow10[n];
-    }
-	 
-	 if(*p == 'e' && *(p+1) == '-') {
-			int n = 0;
-		   p = p + 2;
-			while (*p >= '0' && *p <= '9') {
-				n = (n*10.0) + (*p - '0');
-				++p;
-			}
-			if (n > 9) r = 0; else r /= pow10[n];
-	 }
-	 
-    if (neg) {
-        r = -r;
-    }
-    return r;
+	static float pow10[10] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
+	
+	float r = 0.0;
+	int neg = 0;
+	if (*p == '-') {
+		neg = 1;
+		++p;
+	}
+	while (*p >= '0' && *p <= '9') {
+		r = (r*10.0) + (*p - '0');
+		++p;
+	}
+	if (*p == '.') {
+		float f = 0.0;
+		int n = 0;
+		++p;
+		while (*p >= '0' && *p <= '9') {
+			f = (f*10.0) + (*p - '0');
+			++p;
+			++n;
+		}
+		r += f / pow10[n];
+	}
+	
+	if(*p == 'e' && *(p+1) == '-') {
+		int n = 0;
+		p = p + 2;
+		while (*p >= '0' && *p <= '9') {
+			n = (n*10.0) + (*p - '0');
+			++p;
+		}
+		if (n > 9) r = 0; else r /= pow10[n];
+	}
+	
+	if (neg) {
+		r = -r;
+	}
+	return r;
 }
 
 int naiveAtoi(const char *p) {
 	int n = 0;
-   int neg = 0;
-   if (*p == '-') {
-       neg = 1;
-       ++p;
-   }
+	int neg = 0;
+	if (*p == '-') {
+		neg = 1;
+		++p;
+	}
 
 	while (*p >= '0' && *p <= '9') {
 		n = (n*10.0) + (*p - '0');
 		++p;
 	}
 	
-   if (neg) n = -n;	 
-   return n;
+	if (neg) n = -n;	 
+	return n;
 }
 
 char *strgets(char *in, char *ut, int max) {
-   int nof;
-   char *ch;
+	int nof;
+	char *ch;
 	
 	if (*in == 0) return NULL;
 
 	ch = strchr(in, '\n');
 	if (ch == NULL) 
-		nof = strlen(in);
+	nof = strlen(in);
 	else {
 		nof = ch - in;
 	}
@@ -87,18 +87,18 @@ char *strgets(char *in, char *ut, int max) {
 int readIntSequence(char *fr, int *out, char *delims, int maxRead) {
 	int read = 0;
 	int n = 0, ok;
-   int neg;
-//	int delen = strlen(delims);
+	int neg;
+	//	int delen = strlen(delims);
 
 	do {
 		while (*fr == delims[0] || *fr == delims[1]) fr++;
 
 		neg = 0;
 		if (*fr == '-') {
-			 neg = 1;
-			 ++fr;
+			neg = 1;
+			++fr;
 		}
-	   n = 0; ok = 0;
+		n = 0; ok = 0;
 		while (*fr >= '0' && *fr <= '9') {
 			n = (n*10.0) + (*fr - '0');
 			++fr;
@@ -115,178 +115,178 @@ int readIntSequence(char *fr, int *out, char *delims, int maxRead) {
 }
 
 void Make_torus_object(point3d obj[],float shaper) {
-  float c,d,e,f,g;
-  int i,j;
+	float c,d,e,f,g;
+	int i,j;
 
-  d=0;
-  for (i=0; i<60; i++) {
-    c=0; d+=(2*PI)/60;
-    e=250; f=e; g=f/(10*shaper);
-    for (j=0; j<60; j++) {
-      obj[i*60+j].x=sin(d)*e;
-      obj[i*60+j].y=cos(d)*e;
-      obj[i*60+j].z=sin(c)*f;
-      c+=(2*PI)/60;
-      e+=sin(c)*g;
-    }
-  }
+	d=0;
+	for (i=0; i<60; i++) {
+		c=0; d+=(2*PI)/60;
+		e=250; f=e; g=f/(10*shaper);
+		for (j=0; j<60; j++) {
+			obj[i*60+j].x=sin(d)*e;
+			obj[i*60+j].y=cos(d)*e;
+			obj[i*60+j].z=sin(c)*f;
+			c+=(2*PI)/60;
+			e+=sin(c)*g;
+		}
+	}
 }
 
 void Make_ball_object(point3d obj[], float shaper) {
-  float c,d,e;
-  int i,j;
+	float c,d,e;
+	int i,j;
 
-  d=0;
-  for (i=0; i<60; i++) {
-    c=0; d+=(2*PI)/120;
-    e=sin(d*shaper)*625; 
+	d=0;
+	for (i=0; i<60; i++) {
+		c=0; d+=(2*PI)/120;
+		e=sin(d*shaper)*625; 
 
-    for (j=0; j<60; j++) {
-      obj[i*60+j].x=sin(c)*e;
-      obj[i*60+j].y=cos(c)*e;
-      obj[i*60+j].z=cos(d)*625;
-      c+=(2*PI)/60;
-    }
-  }
+		for (j=0; j<60; j++) {
+			obj[i*60+j].x=sin(c)*e;
+			obj[i*60+j].y=cos(c)*e;
+			obj[i*60+j].z=cos(d)*625;
+			c+=(2*PI)/60;
+		}
+	}
 }
 
 void Make_cube_object(point3d obj[]) {
-  int i,j,k, i2,j2,k2;
-  i2=-500; j2=-500; k2=-500;
+	int i,j,k, i2,j2,k2;
+	i2=-500; j2=-500; k2=-500;
 
-  for (i=0; i<15; i++) {
-    j2=-500;
-    for (j=0; j<15; j++) {
-      k2=-500;
-      for (k=0; k<15; k++) {
-        obj[k+j*15+i*15*15].x=k2;
-        obj[k+j*15+i*15*15].y=j2;
-        obj[k+j*15+i*15*15].z=i2;
-        k2+=70;
-      }
-      j2+=70;
-    }
-    i2+=70;
-  }
+	for (i=0; i<15; i++) {
+		j2=-500;
+		for (j=0; j<15; j++) {
+			k2=-500;
+			for (k=0; k<15; k++) {
+				obj[k+j*15+i*15*15].x=k2;
+				obj[k+j*15+i*15*15].y=j2;
+				obj[k+j*15+i*15*15].z=i2;
+				k2+=70;
+			}
+			j2+=70;
+		}
+		i2+=70;
+	}
 }
 
 void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez) {
-  static int H=4096*500;
-  float srx, crx, sry, cry, srz ,crz;
-  int i, pe, ped, xpp, ypp, zpp, xpp2;
-  float asp;
-  
-  asp = (aspect/((float)XRES/(float)YRES));
+	static int H=4096*500;
+	float srx, crx, sry, cry, srz ,crz;
+	int i, pe, ped, xpp, ypp, zpp, xpp2;
+	float asp;
 
-  srx=sin(rx); crx=cos(rx); sry=sin(ry);
-  cry=cos(ry); srz=sin(rz); crz=cos(rz);
+	asp = (aspect/((float)XRES/(float)YRES));
 
-  for (i=0; i<points; i++) {
+	srx=sin(rx); crx=cos(rx); sry=sin(ry);
+	cry=cos(ry); srz=sin(rz); crz=cos(rz);
 
-    ypp=obj[i].y*crx + obj[i].z*srx;
-    zpp=obj[i].z*crx - obj[i].y*srx;
+	for (i=0; i<points; i++) {
 
-	 // for two axis only, rename xpp to xpp2 in row below, and comment out last two calcs. Makes no difference except no z rot obviously
-    xpp=obj[i].x*cry + zpp*sry;
-    obj[i].vz=zpp*cry - obj[i].x*sry;
+		ypp=obj[i].y*crx + obj[i].z*srx;
+		zpp=obj[i].z*crx - obj[i].y*srx;
 
-    xpp2=xpp*crz + ypp*srz;
-    ypp=ypp*crz - xpp*srz;
+		// for two axis only, rename xpp to xpp2 in row below, and comment out last two calcs. Makes no difference except no z rot obviously
+		xpp=obj[i].x*cry + zpp*sry;
+		obj[i].vz=zpp*cry - obj[i].x*sry;
 
-	 xpp2 += movex;
-	 ypp -= movey;
-	 obj[i].vz += movez;
-	 
-    ped = distance+obj[i].vz; if (!ped) ped = 1;
-    pe=H/ped;
-    obj[i].vx=((xpp2*pe)>>12)+xg;
-    obj[i].vy=((ypp*pe)>>12)*asp+yg;
-  }
+		xpp2=xpp*crz + ypp*srz;
+		ypp=ypp*crz - xpp*srz;
+
+		xpp2 += movex;
+		ypp -= movey;
+		obj[i].vz += movez;
+		
+		ped = distance+obj[i].vz; if (!ped) ped = 1;
+		pe=H/ped;
+		obj[i].vx=((xpp2*pe)>>12)+xg;
+		obj[i].vy=((ypp*pe)>>12)*asp+yg;
+	}
 }
 
 void freeObj3d(obj3d *obj) {
-  int i;
-  if (!obj) return;
-  if (obj->objData) free(obj->objData);
-  if (obj->faceData) free(obj->faceData);
-  if (obj->texCoords) free(obj->texCoords);
-  if (obj->texData) free(obj->texData);
-  if (obj->bmaps) {
-	  for (i = 0; i < obj->nofBmaps; i++)
-		  if (obj->bmaps[i]) free(obj->bmaps[i]);
-	  free(obj->bmaps);
-  }
-  if (obj->faceBitmapIndex) free(obj->faceBitmapIndex);
-  free(obj);
+	int i;
+	if (!obj) return;
+	if (obj->objData) free(obj->objData);
+	if (obj->faceData) free(obj->faceData);
+	if (obj->texCoords) free(obj->texCoords);
+	if (obj->texData) free(obj->texData);
+	if (obj->bmaps) {
+		for (i = 0; i < obj->nofBmaps; i++)
+		if (obj->bmaps[i]) free(obj->bmaps[i]);
+		free(obj->bmaps);
+	}
+	if (obj->faceBitmapIndex) free(obj->faceBitmapIndex);
+	free(obj);
 }
 
 obj3d *readPly(char *fname, float scale, float modx, float mody, float modz) {
-  char keywords[8][64] = { "ply", "element face ", "element vertex ", "end_header" };
-  char data[256], *fr, *fpos;
-  obj3d *obj;
-  float x,y,z;
-//  float x2,y2,z2;
-  FILE *fp;
-  int i,j,k, nofread;
-  char * pch, *filedata;
-  
-  fp = fopen(fname, "r");
-  if (!fp)
-	  return NULL;
+	char keywords[8][64] = { "ply", "element face ", "element vertex ", "end_header" };
+	char data[256], *fr, *fpos;
+	obj3d *obj;
+	float x,y,z;
+	//  float x2,y2,z2;
+	FILE *fp;
+	int i,j,k, nofread;
+	char * pch, *filedata;
 
-  obj = (obj3d *) calloc(sizeof(obj3d), 1);
-  if (!obj) {
-     fclose(fp);
-	  return NULL;
-  }
-  obj->nofFaces = obj->nofPoints = 0;
+	fp = fopen(fname, "r");
+	if (!fp)
+	return NULL;
 
-  
-  filedata = (char *)malloc(3000000 * sizeof(char));
-  if (!filedata) {
-	  fclose(fp);
-	  free(obj);
-	  return NULL;
-  }
-  
-  nofread = fread(filedata, 1, 3000000, fp);
-  filedata[nofread] = 0;
-  fr = filedata;
-  fclose(fp);
-  
-  do {
-	  fr = strgets(fr, data, 255);
-	  if (fr) {
-		  fpos = strstr(data, keywords[1]);
-		  if (fpos)
-			  obj->nofFaces = atoi((char *)fpos + strlen(keywords[1]));
-		  fpos = strstr(data, keywords[2]);
-		  if (fpos)
-			  obj->nofPoints = atoi((char *)fpos + strlen(keywords[2]));
-	  }
-  } while(fr && strstr(data, keywords[3]) == NULL);
-  
-  if (!fr || obj->nofFaces < 1 || obj->nofPoints < 1) {
-     fclose(fp);
-	  free(obj);
-	  free(filedata);
-	  return NULL;
-  }	  
+	obj = (obj3d *) calloc(sizeof(obj3d), 1);
+	if (!obj) {
+		fclose(fp);
+		return NULL;
+	}
+	obj->nofFaces = obj->nofPoints = 0;
+
+
+	filedata = (char *)malloc(3000000 * sizeof(char));
+	if (!filedata) {
+		fclose(fp);
+		free(obj);
+		return NULL;
+	}
+
+	nofread = fread(filedata, 1, 3000000, fp);
+	filedata[nofread] = 0;
+	fr = filedata;
+	fclose(fp);
+
+	do {
+		fr = strgets(fr, data, 255);
+		if (fr) {
+			fpos = strstr(data, keywords[1]);
+			if (fpos)
+			obj->nofFaces = atoi((char *)fpos + strlen(keywords[1]));
+			fpos = strstr(data, keywords[2]);
+			if (fpos)
+			obj->nofPoints = atoi((char *)fpos + strlen(keywords[2]));
+		}
+	} while(fr && strstr(data, keywords[3]) == NULL);
+
+	if (!fr || obj->nofFaces < 1 || obj->nofPoints < 1) {
+		fclose(fp);
+		free(obj);
+		free(filedata);
+		return NULL;
+	}	  
 
 	obj->objData = (point3d *) malloc(sizeof(point3d) * obj->nofPoints); if (!obj->objData) { fclose(fp); freeObj3d(obj); return NULL; }
 	obj->faceData = (int *) malloc(sizeof(int) * R3D_MAX_V_PER_FACE * obj->nofFaces); if (!obj->faceData) { fclose(fp); freeObj3d(obj); return NULL; }
 	
-  for (i = 0, j = 0; i < obj->nofPoints; i++) {
-	  fr = strgets(fr, data, 255);
-	  if (!fr) {
-		 fclose(fp);
-		 freeObj3d(obj);
-	    return NULL;
-	  }
+	for (i = 0, j = 0; i < obj->nofPoints; i++) {
+		fr = strgets(fr, data, 255);
+		if (!fr) {
+			fclose(fp);
+			freeObj3d(obj);
+			return NULL;
+		}
 
-//   nofread = sscanf(fr, "%f %f %f", &x2, &y2, &z2);
+		//   nofread = sscanf(fr, "%f %f %f", &x2, &y2, &z2);
 
-	  pch = strtok (data," \t");
+		pch = strtok (data," \t");
 		nofread = x=y=z=0;
 		while (pch != NULL && nofread < 3) {
 			if (nofread == 0) x = naiveToF(pch);
@@ -296,36 +296,36 @@ obj3d *readPly(char *fname, float scale, float modx, float mody, float modz) {
 			pch = strtok (NULL, " \t");
 		}
 
-/*	  if (x2!=x || y2!=y || z2!=z) {
-		  printf("%d:  %f %f   %f %f   %f %f!\n",i,x,x2,y,y2,z,z2);
-		  getch();
-	  } */
+		/*	  if (x2!=x || y2!=y || z2!=z) {
+		printf("%d:  %f %f   %f %f   %f %f!\n",i,x,x2,y,y2,z,z2);
+		getch();
+	} */
 		
-	  if (nofread == 3) {
-		  obj->objData[j].x = (x+modx) * scale;
-		  obj->objData[j].y = (y+mody) * scale;
-		  obj->objData[j].z = (z+modz) * scale;
-		  obj->objData[j].ox = x;
-		  obj->objData[j].oy = y;
-		  obj->objData[j].oz = z;
+		if (nofread == 3) {
+			obj->objData[j].x = (x+modx) * scale;
+			obj->objData[j].y = (y+mody) * scale;
+			obj->objData[j].z = (z+modz) * scale;
+			obj->objData[j].ox = x;
+			obj->objData[j].oy = y;
+			obj->objData[j].oz = z;
 
-	//	  obj->objData[j].x = (x*scale) +modx;
-	//	  obj->objData[j].y = (y*scale) +mody;
-	//	  obj->objData[j].z = (z*scale) +modz;
-		  j++;
-	  } else i--;
-  }
+			//	  obj->objData[j].x = (x*scale) +modx;
+			//	  obj->objData[j].y = (y*scale) +mody;
+			//	  obj->objData[j].z = (z*scale) +modz;
+			j++;
+		} else i--;
+	}
 	
-  for (i = 0, j = 0; i < obj->nofFaces; i++) {
-	  fr = strgets(fr,data, 255);
-	  if (!fr) {
-		 freeObj3d(obj);
-       fclose(fp);
-	    return NULL;
-	  }
-	  k = j*R3D_MAX_V_PER_FACE;
-	  nofread = readIntSequence(data, &obj->faceData[k], " \t", 28);
-/*	  nofread = sscanf(fr, "%d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d",   &obj->faceData[k], 
+	for (i = 0, j = 0; i < obj->nofFaces; i++) {
+		fr = strgets(fr,data, 255);
+		if (!fr) {
+			freeObj3d(obj);
+			fclose(fp);
+			return NULL;
+		}
+		k = j*R3D_MAX_V_PER_FACE;
+		nofread = readIntSequence(data, &obj->faceData[k], " \t", 28);
+		/*	  nofread = sscanf(fr, "%d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d %d %d %d  %d %d",   &obj->faceData[k], 
 													&obj->faceData[k+1], &obj->faceData[k+2], &obj->faceData[k+3], &obj->faceData[k+4], &obj->faceData[k+5],
 													&obj->faceData[k+6], &obj->faceData[k+7], &obj->faceData[k+8], &obj->faceData[k+9], &obj->faceData[k+10],
 													&obj->faceData[k+11], &obj->faceData[k+12], &obj->faceData[k+13], &obj->faceData[k+14], &obj->faceData[k+15],
@@ -333,83 +333,83 @@ obj3d *readPly(char *fname, float scale, float modx, float mody, float modz) {
 													&obj->faceData[k+21], &obj->faceData[k+22], &obj->faceData[k+23], &obj->faceData[k+24], &obj->faceData[k+25],
 													&obj->faceData[k+26], &obj->faceData[k+27]
 													); */
-	 if (nofread >= 2)
+		if (nofread >= 2)
 		j++;
-	 else
-	   i--;
-  }
+		else
+		i--;
+	}
 
-/*
-  for (j = 0; j < obj->nofPoints; j++) {
-	  printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
-  }
-  printf("\n");
-  for (j = 0; j < obj->nofFaces; j++) {
-	  printf("%d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE]+5);
-  }
-	  
-   printf("%d %d\n", obj->nofFaces, obj->nofPoints);
+	/*
+for (j = 0; j < obj->nofPoints; j++) {
+	printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
+}
+printf("\n");
+for (j = 0; j < obj->nofFaces; j++) {
+	printf("%d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE]+5);
+}
+	
+	printf("%d %d\n", obj->nofFaces, obj->nofPoints);
 	getch();	*/
 	
-//  fclose(fp);
-  free(filedata);
-  return obj;
+	//  fclose(fp);
+	free(filedata);
+	return obj;
 }
 
 
 obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture) {
-  char keywords[8][64] = { "v ", "vn ", "vt ", "f ", "usemtl " };
-  char data[256], *fr, *fpos;
-  obj3d *obj;
-  float x,y,z;
-  int j, bmapIndex = 0, nofread;
-  int nofV = 0, nofN = 0, nofT = 0, nofF = 0, nofB = 0;
-  char *lfpos, *filedata;
-  FILE *fp;
-  
-  fp = fopen(fname, "r");
-  if (!fp)
-	  return NULL;
+	char keywords[8][64] = { "v ", "vn ", "vt ", "f ", "usemtl " };
+	char data[256], *fr, *fpos;
+	obj3d *obj;
+	float x,y,z;
+	int j, bmapIndex = 0, nofread;
+	int nofV = 0, nofN = 0, nofT = 0, nofF = 0, nofB = 0;
+	char *lfpos, *filedata;
+	FILE *fp;
 
-  filedata = (char *)malloc(3000000 * sizeof(char));
-  if (!filedata) {
-	  fclose(fp);
-	  return NULL;
-  }
-  
-  nofread = fread(filedata, 1, 3000000, fp);
-  filedata[nofread] = 0;
-  fr = filedata;
-  fclose(fp);
-  
-  do {
-	  fr = strgets(fr, data, 255);
-	  if (fr) {
-		  fpos = strstr(data, keywords[0]);
-		  if (fpos == data) nofV++;
-		  fpos = strstr(data, keywords[1]);
-		  if (fpos == data) nofN++;
-		  fpos = strstr(data, keywords[2]);
-		  if (fpos == data) nofT++;
-		  fpos = strstr(data, keywords[3]);
-		  if (fpos == data) nofF++;
-		  fpos = strstr(data, keywords[4]);
-		  if (fpos == data) nofB++;
-	  }
-  } while(fr);
+	fp = fopen(fname, "r");
+	if (!fp)
+	return NULL;
 
-//  printf("%d %d %d %d\n", nofV, nofF, nofN, nofT);
-  if (nofV < 1 || nofF < 1) {
-	  free(filedata);
-	  return NULL;
-  }
-  
-  obj = (obj3d *) calloc(sizeof(obj3d), 1);
-  if (!obj) {
-	  free(filedata);
-	  return NULL;
-  }
-    
+	filedata = (char *)malloc(3000000 * sizeof(char));
+	if (!filedata) {
+		fclose(fp);
+		return NULL;
+	}
+
+	nofread = fread(filedata, 1, 3000000, fp);
+	filedata[nofread] = 0;
+	fr = filedata;
+	fclose(fp);
+
+	do {
+		fr = strgets(fr, data, 255);
+		if (fr) {
+			fpos = strstr(data, keywords[0]);
+			if (fpos == data) nofV++;
+			fpos = strstr(data, keywords[1]);
+			if (fpos == data) nofN++;
+			fpos = strstr(data, keywords[2]);
+			if (fpos == data) nofT++;
+			fpos = strstr(data, keywords[3]);
+			if (fpos == data) nofF++;
+			fpos = strstr(data, keywords[4]);
+			if (fpos == data) nofB++;
+		}
+	} while(fr);
+
+	//  printf("%d %d %d %d\n", nofV, nofF, nofN, nofT);
+	if (nofV < 1 || nofF < 1) {
+		free(filedata);
+		return NULL;
+	}
+
+	obj = (obj3d *) calloc(sizeof(obj3d), 1);
+	if (!obj) {
+		free(filedata);
+		return NULL;
+	}
+	
 	obj->nofPoints = nofV;
 	obj->nofFaces = nofF;
 	obj->nofBmaps = nofB;
@@ -425,16 +425,16 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 		obj->faceBitmapIndex = (int *) calloc(sizeof(int) * obj->nofFaces, 1);
 		if (!obj->bmaps || !obj->faceBitmapIndex) { freeObj3d(obj); free(filedata); return NULL; }
 	}
-   nofF = nofV = nofT = nofN = 0;	
+	nofF = nofV = nofT = nofN = 0;	
 
-  fr = filedata;	
+	fr = filedata;	
 	
-   do {
-	  fr = strgets(fr, data, 255);
-	  if (fr) {
-		  fpos = strstr(data, keywords[0]);
-		  if (fpos == data) {
-			   char * pch;
+	do {
+		fr = strgets(fr, data, 255);
+		if (fr) {
+			fpos = strstr(data, keywords[0]);
+			if (fpos == data) {
+				char * pch;
 				pch = strtok (data," \t");
 				pch = strtok (NULL, " \t");
 				nofread = x=y=z=0;
@@ -446,24 +446,24 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 					pch = strtok (NULL, " \t");
 				}
 
-			  if (nofread == 3) {
-				  obj->objData[nofV].x = (x+modx) * scale;
-				  obj->objData[nofV].y = (y+mody) * scale;
-				  obj->objData[nofV].z = (z+modz) * scale;
-				  
-				  obj->objData[nofV].ox = x;
-				  obj->objData[nofV].oy = y;
-				  obj->objData[nofV].oz = z;
-				  nofV++;
-			  }
-		  }
-		  
-//		  fpos = strstr(data, keywords[1]);
-//		  if (fpos == data) nofN++;
+				if (nofread == 3) {
+					obj->objData[nofV].x = (x+modx) * scale;
+					obj->objData[nofV].y = (y+mody) * scale;
+					obj->objData[nofV].z = (z+modz) * scale;
+					
+					obj->objData[nofV].ox = x;
+					obj->objData[nofV].oy = y;
+					obj->objData[nofV].oz = z;
+					nofV++;
+				}
+			}
+			
+			//		  fpos = strstr(data, keywords[1]);
+			//		  if (fpos == data) nofN++;
 
-		  fpos = strstr(data, keywords[2]);
-		  if (fpos == data) {
-			   char * pch;
+			fpos = strstr(data, keywords[2]);
+			if (fpos == data) {
+				char * pch;
 				pch = strtok (data," \t");
 				pch = strtok (NULL, " \t");
 				nofread = x=y=0;
@@ -473,51 +473,51 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 					nofread++;
 					pch = strtok (NULL, " \t");
 				}
-			  
-			  if (nofread == 2) {
-				  if (x<0) x=-x;
-				  if (x>1) x=1;
-				  if (y<0) y=-y;
-				  if (y>1) y=1;
-				  obj->texCoords[nofT*2] = x;
-				  obj->texCoords[nofT*2+1] = y;
-				  nofT++;
-			  }
-		  }
+				
+				if (nofread == 2) {
+					if (x<0) x=-x;
+					if (x>1) x=1;
+					if (y<0) y=-y;
+					if (y>1) y=1;
+					obj->texCoords[nofT*2] = x;
+					obj->texCoords[nofT*2+1] = y;
+					nofT++;
+				}
+			}
 
-		  fpos = strstr(data, keywords[4]);
-		  if (fpos == data) {
-			  if ((lfpos=strchr(data, '\n')) != NULL)
-			    *lfpos = '\0';
+			fpos = strstr(data, keywords[4]);
+			if (fpos == data) {
+				if ((lfpos=strchr(data, '\n')) != NULL)
+				*lfpos = '\0';
 
-			  if (obj->bmaps[bmapIndex]) {
-				  freeBitmap(obj->bmaps[bmapIndex]);
-			  }
-			 
-			  obj->bmaps[bmapIndex] = (Bitmap *) malloc(sizeof(Bitmap));
-			  if (obj->bmaps[bmapIndex]) {
-				 if (fpReadTexture)
-				   j = fpReadTexture(obj->bmaps[bmapIndex], (char *)&data[strlen(keywords[4])] );
-				 else
-				   j = PCXload(obj->bmaps[bmapIndex], (char *)&data[strlen(keywords[4])] );
-				 if (j) {
-			      bmapIndex++;
-				 } else {
-					obj->bmaps[bmapIndex] = NULL;
-				 }
-			  }
-			  //printf("%d %s\n", j, (char *)&data[strlen(keywords[4])]); getch();
-			  //printf("%d\n", bmapIndex); getch();
-		  }
-		  
-		  fpos = strstr(data, keywords[3]);
-		  if (fpos == data) {
+				if (obj->bmaps[bmapIndex]) {
+					freeBitmap(obj->bmaps[bmapIndex]);
+				}
+				
+				obj->bmaps[bmapIndex] = (Bitmap *) malloc(sizeof(Bitmap));
+				if (obj->bmaps[bmapIndex]) {
+					if (fpReadTexture)
+					j = fpReadTexture(obj->bmaps[bmapIndex], (char *)&data[strlen(keywords[4])] );
+					else
+					j = PCXload(obj->bmaps[bmapIndex], (char *)&data[strlen(keywords[4])] );
+					if (j) {
+						bmapIndex++;
+					} else {
+						obj->bmaps[bmapIndex] = NULL;
+					}
+				}
+				//printf("%d %s\n", j, (char *)&data[strlen(keywords[4])]); getch();
+				//printf("%d\n", bmapIndex); getch();
+			}
+			
+			fpos = strstr(data, keywords[3]);
+			if (fpos == data) {
 				char * pch;
 				pch = strtok (data," \t");
 				pch = strtok (NULL, " \t");
 				j = 0;
 				while (pch != NULL) {
-//					nofread = sscanf(pch, "%d/%d/%d ", &obj->faceData[nofF*R3D_MAX_V_PER_FACE + j + 1] ,&dumv1, &dumv2);
+					//					nofread = sscanf(pch, "%d/%d/%d ", &obj->faceData[nofF*R3D_MAX_V_PER_FACE + j + 1] ,&dumv1, &dumv2);
 					nofread = readIntSequence(pch, &obj->faceData[nofF*R3D_MAX_V_PER_FACE + j + 1], "/", 3);
 					if (nofread > 0) {
 						if (obj->texData && nofread > 1) { obj->texData[nofF*R3D_MAX_V_PER_FACE + j + 1] = obj->faceData[nofF*R3D_MAX_V_PER_FACE + j + 2] - 1; }
@@ -526,135 +526,135 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 					}
 					pch = strtok (NULL, " \t");
 				}
-			  obj->faceData[nofF*R3D_MAX_V_PER_FACE] = j;
-			  if (dec1) obj->faceData[nofF*R3D_MAX_V_PER_FACE]--;
-			  if (obj->faceBitmapIndex) obj->faceBitmapIndex[nofF] = (bmapIndex > 0)? bmapIndex - 1 : 0;
-			  nofF++;
-		  }
-	  }
-  } while(fr);
+				obj->faceData[nofF*R3D_MAX_V_PER_FACE] = j;
+				if (dec1) obj->faceData[nofF*R3D_MAX_V_PER_FACE]--;
+				if (obj->faceBitmapIndex) obj->faceBitmapIndex[nofF] = (bmapIndex > 0)? bmapIndex - 1 : 0;
+				nofF++;
+			}
+		}
+	} while(fr);
 
-/*
-  for (j = 0; j < obj->nofPoints; j++) {
-	  printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
-  }
-  printf("\n");
-  for (j = 0; j < obj->nofFaces; j++) {
-	  printf("%d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE]+5);
-  }
-	  
-  printf("\n");
-  for (j = 0; j < obj->nofFaces; j++) {
-	  printf("%d %d %d %d %d %d\n", obj->texData[j*R3D_MAX_V_PER_FACE], obj->texData[j*R3D_MAX_V_PER_FACE+1], obj->texData[j*R3D_MAX_V_PER_FACE+2], obj->texData[j*R3D_MAX_V_PER_FACE+3], obj->texData[j*R3D_MAX_V_PER_FACE+4], obj->texData[j*R3D_MAX_V_PER_FACE]+5);
-  }
-  printf("\n");
-  for (j = 0; j < nofT; j++) {
-	  printf("%f %f\n", obj->texCoords[j*2], obj->texCoords[j*2+1]);
-  }
-   printf("%d %d\n", obj->nofFaces, obj->nofPoints);
+	/*
+for (j = 0; j < obj->nofPoints; j++) {
+	printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
+}
+printf("\n");
+for (j = 0; j < obj->nofFaces; j++) {
+	printf("%d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE]+5);
+}
+	
+printf("\n");
+for (j = 0; j < obj->nofFaces; j++) {
+	printf("%d %d %d %d %d %d\n", obj->texData[j*R3D_MAX_V_PER_FACE], obj->texData[j*R3D_MAX_V_PER_FACE+1], obj->texData[j*R3D_MAX_V_PER_FACE+2], obj->texData[j*R3D_MAX_V_PER_FACE+3], obj->texData[j*R3D_MAX_V_PER_FACE+4], obj->texData[j*R3D_MAX_V_PER_FACE]+5);
+}
+printf("\n");
+for (j = 0; j < nofT; j++) {
+	printf("%f %f\n", obj->texCoords[j*2], obj->texCoords[j*2+1]);
+}
+	printf("%d %d\n", obj->nofFaces, obj->nofPoints);
 	getch();	
 */
 
-  obj->nofBmaps = bmapIndex;
+	obj->nofBmaps = bmapIndex;
 
-  free(filedata);
-  return obj;
+	free(filedata);
+	return obj;
 }
 
 
 /* Räknar ut normaler för samtliga vertex i ett objekt */
 /*
 void insertnormal(Object *o) {
-  int i, j;
-  Triangle *tri;
-  Vector t[3], n, *v;
+int i, j;
+Triangle *tri;
+Vector t[3], n, *v;
 
-  tri = o->triangles;
-  for (i = 0; i < o->nt; i++) {
-    for (j = 0; j < 3; j++) {
-      memcpy(&(t[j]), &(o->vertices[tri->vertex[j]].world), sizeof(Vector));
-    }
+tri = o->triangles;
+for (i = 0; i < o->nt; i++) {
+	for (j = 0; j < 3; j++) {
+		memcpy(&(t[j]), &(o->vertices[tri->vertex[j]].world), sizeof(Vector));
+	}
 
-    n = Normal(t);
-    for (j = 0; j < 3; j++) {
-      v = &(o->vertices[tri->vertex[j]].normal);
-      *v = Add(*v, n);
-    }
-    tri++;
-  }
+	n = Normal(t);
+	for (j = 0; j < 3; j++) {
+		v = &(o->vertices[tri->vertex[j]].normal);
+		*v = Add(*v, n);
+	}
+	tri++;
+}
 
-  for (i = 0; i < o->nv; i++) {
-    v = &(o->vertices[i].normal);
-    *v = ScalarVecDiv(Length(*v), *v);
-  }
+for (i = 0; i < o->nv; i++) {
+	v = &(o->vertices[i].normal);
+	*v = ScalarVecDiv(Length(*v), *v);
+}
 }
 */
-	
+
 /* Läser en rad från en PLG-fil */
 char *PLG_getline(char *s, int n, FILE *fp) {
-  char buf[4096];
-  int i, j;
+	char buf[4096];
+	int i, j;
 
-  for (;;) {
-    if (!fgets(buf, sizeof buf, fp))
-	    return 0;
+	for (;;) {
+		if (!fgets(buf, sizeof buf, fp))
+		return 0;
 		/* kill trailing CR */
 		buf[strlen(buf)-1] = 0;
 		/* eat leading white space */
 		for (i = 0; isspace(buf[i]); i++)
-	    ;
+		;
 		/* buf[i] is now 1st non-white character */
 		/* copy remaining characters, up to NULL or # into s */
 		for (j = 0; j < n && buf[i+j] != 0 && buf[i+j] != '#'; j++)
-	    s[j] = buf[i+j];
+		s[j] = buf[i+j];
 		s[j] = 0;
 		/* make sure we really got something */
 		if (strlen(s))		
-	    return s;
-  }
+		return s;
+	}
 }
 
 obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz) {
-  char buf[4096], *bufp;
-  char name[128];
-  char texname[128];
-  int i, polys, nv;
-  FILE *fp;
-  obj3d *obj = NULL;
-  float x,y,z;
-  int nofread;
-  char * pch;
-	  
+	char buf[4096], *bufp;
+	char name[128];
+	char texname[128];
+	int i, polys, nv;
+	FILE *fp;
+	obj3d *obj = NULL;
+	float x,y,z;
+	int nofread;
+	char * pch;
+	
 	fp = fopen(fname, "r");
-  if (!fp) {
-	  return NULL;
-  }
-  if ((bufp = PLG_getline(buf, sizeof(buf), fp)) != NULL) {
-    strcpy(texname, "");
-    nofread = sscanf(bufp, "%s %d %d %s", name, &nv, &polys, texname);
-	 if (nofread < 3 || nv < 1 || polys < 1)
-		 return NULL;
-	 
-     obj = (obj3d *) calloc(sizeof(obj3d), 1);
-     if (!obj) {
-	    return NULL;
-     }
-    
-	  obj->nofPoints = nv;
-	  obj->nofFaces = polys;
-	  obj->objData = (point3d *) malloc(sizeof(point3d) * obj->nofPoints); if (!obj->objData) { fclose(fp); freeObj3d(obj); return NULL; }
-	  obj->faceData = (int *) malloc(sizeof(int) * R3D_MAX_V_PER_FACE * obj->nofFaces); if (!obj->faceData) { fclose(fp); freeObj3d(obj); return NULL; }
+	if (!fp) {
+		return NULL;
+	}
+	if ((bufp = PLG_getline(buf, sizeof(buf), fp)) != NULL) {
+		strcpy(texname, "");
+		nofread = sscanf(bufp, "%s %d %d %s", name, &nv, &polys, texname);
+		if (nofread < 3 || nv < 1 || polys < 1)
+		return NULL;
+		
+		obj = (obj3d *) calloc(sizeof(obj3d), 1);
+		if (!obj) {
+			return NULL;
+		}
+		
+		obj->nofPoints = nv;
+		obj->nofFaces = polys;
+		obj->objData = (point3d *) malloc(sizeof(point3d) * obj->nofPoints); if (!obj->objData) { fclose(fp); freeObj3d(obj); return NULL; }
+		obj->faceData = (int *) malloc(sizeof(int) * R3D_MAX_V_PER_FACE * obj->nofFaces); if (!obj->faceData) { fclose(fp); freeObj3d(obj); return NULL; }
 
-	  /* read vertices */
+		/* read vertices */
 		for (i = 0; i < nv; i++) {
-		  if (!(bufp = PLG_getline(buf, sizeof buf, fp))) {
-	        //fprintf(stderr, "PLG file %s truncated?\n", fname);
-			  freeObj3d(obj);
-			  fclose(fp);
-			  return NULL;
+			if (!(bufp = PLG_getline(buf, sizeof buf, fp))) {
+				//fprintf(stderr, "PLG file %s truncated?\n", fname);
+				freeObj3d(obj);
+				fclose(fp);
+				return NULL;
 			}
 			
-//      	nofread = sscanf(bufp, "%f %f %f", &x, &y, &z);
+			//      	nofread = sscanf(bufp, "%f %f %f", &x, &y, &z);
 			pch = strtok (bufp," \t");
 			nofread = x=y=z=0;
 			while (pch != NULL && nofread < 3) {
@@ -664,7 +664,7 @@ obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz) {
 				nofread++;
 				pch = strtok (NULL, " \t");
 			}
-				
+			
 			if (nofread == 3) {
 				obj->objData[i].x = (x+modx) * scale;
 				obj->objData[i].y = (y+mody) * scale;
@@ -678,39 +678,39 @@ obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz) {
 
 		/* read (convex, hopefully) polygons */
 		for (i = 0; i < polys; i++) {
-		  int j, n;
-		  char *token;
-		  if (!(bufp = PLG_getline(buf, sizeof buf, fp))) {
-		    //fprintf(stderr, "PLG file %s truncated?\n", fname);
-			  freeObj3d(obj);
-			  fclose(fp);
-			  return NULL;
-		  }
-		  token = strtok(bufp, " "); //sscanf(token, "%x", &color);
-		  token = strtok(0, " ");    n = naiveAtoi(token);
-		  obj->faceData[i*R3D_MAX_V_PER_FACE] = n;
+			int j, n;
+			char *token;
+			if (!(bufp = PLG_getline(buf, sizeof buf, fp))) {
+				//fprintf(stderr, "PLG file %s truncated?\n", fname);
+				freeObj3d(obj);
+				fclose(fp);
+				return NULL;
+			}
+			token = strtok(bufp, " "); //sscanf(token, "%x", &color);
+			token = strtok(0, " ");    n = naiveAtoi(token);
+			obj->faceData[i*R3D_MAX_V_PER_FACE] = n;
 
-		  for (j = 0; j < n; j++) {
-		    token = strtok(0, " ");
-			 obj->faceData[i*R3D_MAX_V_PER_FACE+j+1] = naiveAtoi(token);
-		  }
+			for (j = 0; j < n; j++) {
+				token = strtok(0, " ");
+				obj->faceData[i*R3D_MAX_V_PER_FACE+j+1] = naiveAtoi(token);
+			}
 		}
-// 	  insertnormal(op);	
+		// 	  insertnormal(op);	
 
-/*
-  for (int j = 0; j < obj->nofPoints; j++) {
-	  printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
-  }
-  printf("\n");
-  for (int j = 0; j < obj->nofFaces; j++) {
-	  printf("%d %d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE+5], obj->faceData[j*R3D_MAX_V_PER_FACE+6]);
-  }
- 
-   printf("%d %d\n", obj->nofFaces, obj->nofPoints);
+		/*
+for (int j = 0; j < obj->nofPoints; j++) {
+	printf("%d %d %d\n", obj->objData[j].x, obj->objData[j].y, obj->objData[j].z);
+}
+printf("\n");
+for (int j = 0; j < obj->nofFaces; j++) {
+	printf("%d %d %d %d %d %d %d\n", obj->faceData[j*R3D_MAX_V_PER_FACE], obj->faceData[j*R3D_MAX_V_PER_FACE+1], obj->faceData[j*R3D_MAX_V_PER_FACE+2], obj->faceData[j*R3D_MAX_V_PER_FACE+3], obj->faceData[j*R3D_MAX_V_PER_FACE+4], obj->faceData[j*R3D_MAX_V_PER_FACE+5], obj->faceData[j*R3D_MAX_V_PER_FACE+6]);
+}
+
+	printf("%d %d\n", obj->nofFaces, obj->nofPoints);
 	getch();	
 */
-  }
-  
-  fclose(fp);
-  return obj;
+	}
+
+	fclose(fp);
+	return obj;
 }

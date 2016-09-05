@@ -29,7 +29,7 @@ CHAR_INFO * readScreenBlock() {
 	ReadConsoleOutput(GetStdHandle(STD_OUTPUT_HANDLE), str, a, b, &r);
 	return str;
 }
-	
+
 void clrScr(int color, int scale, int SCR_XRES, int SCR_YRES) {
 	CHAR_INFO *str;
 	COORD a, b;
@@ -39,7 +39,7 @@ void clrScr(int color, int scale, int SCR_XRES, int SCR_YRES) {
 
 	a.X = SCR_XRES/scale;
 	a.Y = SCR_YRES/scale;
-		
+	
 	hCurrHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	str = (CHAR_INFO *) malloc (sizeof(CHAR_INFO) * (a.X * a.Y));
 	if (!str) return;
@@ -143,9 +143,9 @@ int saveScreenBlock(char *filename, int x, int y, int w, int h, int bEncode, int
 			}
 
 			if (oldAttrib == str[i + j*w].Attributes)
-				sprintf(output, "%s%s", output, charS);
+			sprintf(output, "%s%s", output, charS);
 			else
-				sprintf(output, "%s%s%s", output, GetAttribs(str[i + j*w].Attributes, attribS, transpChar, transpBg, transpFg), charS);
+			sprintf(output, "%s%s%s", output, GetAttribs(str[i + j*w].Attributes, attribS, transpChar, transpBg, transpFg), charS);
 			oldAttrib = str[i + j*w].Attributes;
 		}
 		fprintf(ofp, "%s\\n", output);
@@ -167,7 +167,7 @@ void convertToText(int mode, int scale, int palette[], int startx, int starty, C
 	SMALL_RECT r;
 	int scaleplus = 1;
 	HANDLE hCurrHandle;
-   char map[4][8] = { { 32, 0xb0, 0xb1, 0xb2, 0xdb }, { 32, '.', ':', 'k', '#' }, { 32, '.', ':', 'k', '#' }};
+	char map[4][8] = { { 32, 0xb0, 0xb1, 0xb2, 0xdb }, { 32, '.', ':', 'k', '#' }, { 32, '.', ':', 'k', '#' }};
 	char map2vary[16] = "##M7W8%KXZQAE3BQ";
 	int i, j, m;
 
@@ -175,7 +175,7 @@ void convertToText(int mode, int scale, int palette[], int startx, int starty, C
 	
 	a.X = XRES/scale;
 	a.Y = YRES/scale;
-		
+	
 	hCurrHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	str = (CHAR_INFO *) calloc (sizeof(CHAR_INFO) * (a.X * a.Y), 1);
 	if (!str) return;
@@ -199,16 +199,16 @@ void convertToText(int mode, int scale, int palette[], int startx, int starty, C
 			if (palette[col] == -1) {
 				str[m].Char.AsciiChar = map[mapIndex][2];
 				if (k > 2)
-					str[m].Attributes = palette[col-1] | (palette[col+1] << 4);
+				str[m].Attributes = palette[col-1] | (palette[col+1] << 4);
 				else
-					str[m].Attributes = palette[col-1];
+				str[m].Attributes = palette[col-1];
 			}
 			if (old && k == 0) {
 				str[m].Char.AsciiChar = old[m].Char.AsciiChar;
 				str[m].Attributes = old[m].Attributes;
 			}
 			if (old && mode && (col > 9 || mode == 1))
-				str[m].Char.AsciiChar = old[m].Char.AsciiChar;
+			str[m].Char.AsciiChar = old[m].Char.AsciiChar;
 		}
 	}
 
@@ -225,13 +225,13 @@ void convertToText(int mode, int scale, int palette[], int startx, int starty, C
 void setDefaultTextPalette(int palette []) {
 	int i;
 	for (i = 0; i < 255; i++)
-		palette[i] = i % 16;
+	palette[i] = i % 16;
 }
 
 void setTextPalette(int palette[], int index, int cols[], int nof) {
 	int i, j = 0;
 	for (i = index; i < index + nof; i++)
-		palette[i] = cols[j++];
+	palette[i] = cols[j++];
 }
 
 int getConsoleDim(int bH) {

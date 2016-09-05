@@ -9,33 +9,33 @@
 #define until(a) while(!(a)) 
 
 typedef struct Vector {
-  float x, y, z;
+	float x, y, z;
 } Vector;
 
 typedef struct intVector {
-  int x, y;
-  float z;
-  Vector tex_coord;
+	int x, y;
+	float z;
+	Vector tex_coord;
 } intVector;
 
 extern int XRES, YRES;
 extern int FRAMESIZE;
 extern unsigned char *video;
 
-#define GORAUD_TYPE_STATIC   0
-#define GORAUD_TYPE_Z        1
+#define GORAUD_TYPE_STATIC	0
+#define GORAUD_TYPE_Z		1
 
-#define BIT_OP_NORMAL   0
-#define BIT_OP_OR  		1
-#define BIT_OP_AND  		2
-#define BIT_OP_XOR  		3
-#define BIT_OP_ADD  		4
-#define BIT_OP_SUB  		5
-#define BIT_OP_SUB_ME  	6
-#define BIT_NORMAL_IPOLY  	7
-#define BIT_OP_ADD_REAL 	8
-#define BIT_OP_SUB_REAL 	9
-#define BIT_OP_SUB_ME_REAL 10
+#define BIT_OP_NORMAL		0
+#define BIT_OP_OR				1
+#define BIT_OP_AND			2
+#define BIT_OP_XOR			3
+#define BIT_OP_ADD			4
+#define BIT_OP_SUB			5
+#define BIT_OP_SUB_ME		6
+#define BIT_NORMAL_IPOLY	7
+#define BIT_OP_ADD_REAL		8
+#define BIT_OP_SUB_REAL		9
+#define BIT_OP_SUB_ME_REAL	10
 
 int scan3(intVector vv[], int clipedges[], uchar col);
 int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ);

@@ -7,12 +7,12 @@
 #include <string.h>
 
 typedef struct RGBcol {
-  unsigned char R, G, B;
+	unsigned char R, G, B;
 } RGBcol;
 
 typedef struct RGBcol_float {
-  float fR,fG,fB;
-  float dR,dG,dB;
+	float fR,fG,fB;
+	float dR,dG,dB;
 } RGBcol_float;
 
 // Palette
