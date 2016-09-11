@@ -16,7 +16,7 @@ set OW=32
 set /A CNT=720 / %OW%
 set /A CNTV=%CNT%+1
 set WNAME=circle.ply
-cmdwiz printf "ply\nformat ascii 1.0\nelement vertex %CNTV%\nelement face 1\nend_header\n">%WNAME%
+cmdwiz print "ply\nformat ascii 1.0\nelement vertex %CNTV%\nelement face 1\nend_header\n">%WNAME%
 
 set /A MUL=150
 for /L %%a in (0,%OW%,720) do set /A COS=%%a+180&for %%b in (!COS!) do set /a "XPOS=(!S%%a!*%MUL%>>14)" & set /A "YPOS=(!S%%b!*%MUL%>>14)" & echo !XPOS! !YPOS! 0 >>%WNAME%
