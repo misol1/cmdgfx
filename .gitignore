@@ -30,3 +30,9 @@
 # Debug files
 *.dSYM/
 
+hiscore.dat
+export
+dev
+distrib.bat
+altmakeall.bat
+cpmake.bat
