@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=115
+set /a W=155
 set /a WW=!W!*2
 cmdwiz setfont 5
 set /a WT=%W%-1 & mode !WT!,55
@@ -16,7 +16,7 @@ set CNT=0&for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set HX!CNT!=%%a&set /a
 )
 for /l %%i in (1,1,60) do set linetemp="!line%%i!"&set linetemp=!linetemp:^"='!&set "line%%i=!linetemp:~1,-1!"
 
-set SPACES=                                                                                                                                            
+set SPACES=                                                                                                                                                                              
 for /L %%a in (1,1,60) do (
   cmdwiz stringlen "!line%%a!" & set /a FILL = %W% - !errorlevel!
   if !FILL! gtr 0 for %%b in (!FILL!) do cmdwiz print "!N!!L!!line%%a!!SPACES:~0,%%b!">>matrix-src-copy.bat
