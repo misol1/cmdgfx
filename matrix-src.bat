@@ -5,13 +5,13 @@ set /a WW=!W!*2
 cmdwiz setfont 5
 set /a WT=%W%-1 & mode !WT!,55
 cmdwiz setbuffersize %WW% 160
-cmdwiz showcursor 0
-cls
+cmdwiz showcursor 0 & cls
 
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
 set CNT=0&for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set HX!CNT!=%%a&set /a CNT+=1
+set IMG=matrix-src.bat&if not "%~1" == "" set IMG=%1
 
-< matrix-src.bat (
+< %IMG% (
   for /l %%i in (1,1,60) do set /p line%%i=
 )
 for /l %%i in (1,1,60) do set linetemp="!line%%i!"&set linetemp=!linetemp:^"='!&set "line%%i=!linetemp:~1,-1!"
