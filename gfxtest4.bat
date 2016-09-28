@@ -25,7 +25,7 @@ set HELPMSG=text 3 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d
 set MSG=%HELPMSG%
 
 set OBJINDEX=13
-set NOFOBJECTS=18
+set NOFOBJECTS=20
 call :SETOBJECT
 set RENDERER=&set REND=1
 
@@ -80,3 +80,4 @@ if %OBJINDEX% == 15 set FNAME=springy1.plg& set MOD=-0.23,-0.23,-0.23, 0,0,0 0
 if %OBJINDEX% == 16 set FNAME=chopper.plg& set MOD=-0.3,-0.3,-0.3, 0,-800,-800 1
 if %OBJINDEX% == 17 set FNAME=humanoid_quad.obj& set MOD=40,40,40, -1.25,0,-8.7 1
 if %OBJINDEX% == 18 set FNAME=fracttree.ply& set MOD=100,100,100, 0,0,0 1
+if %OBJINDEX% == 19 set FNAME=al.obj& set MOD=150,150,150, 0,0,0 0

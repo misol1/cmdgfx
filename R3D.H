@@ -20,7 +20,7 @@ extern int XRES, YRES;
 void Make_torus_object(point3d obj[], float shaper);
 void Make_ball_object(point3d obj[], float shaper);
 void Make_cube_object(point3d obj[]);
-void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez);
+void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth);
 
 #define R3D_MAX_V_PER_FACE 28
 
@@ -30,6 +30,8 @@ typedef struct obj3d {
 	point3d *objData;
 	int *faceData;
 
+	int nofNormals;
+	int nofTexturePoints;
 	float *texCoords;
 	int *texData;
 	int *faceBitmapIndex;

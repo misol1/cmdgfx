@@ -26,7 +26,7 @@ fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transform]
+block    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform]
 3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
          face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect 
          fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]

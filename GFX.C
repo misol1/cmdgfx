@@ -197,9 +197,9 @@ if (clipedges!=NULL) { // Om clipedges innehåller klipprektangel, så klipp!
 
 	if (goraudType == GORAUD_TYPE_Z) {
 		for (i=0; i<3; i++) {
-			I[i] = cp[i].z/divZ+plusZ+8; // 6, divZ=100
+			I[i] = cp[i].z/divZ+plusZ+8;
 			if (I[i] < 8) I[i]=8;
-			if (I[i] > maxZ+8) I[i]=maxZ+8; // maxZ+8=19
+			if (I[i] > maxZ+8) I[i]=maxZ+8;
 		}
 		//	  I[2]++; // weird
 	}
@@ -240,25 +240,25 @@ if (clipedges!=NULL) { // Om clipedges innehåller klipprektangel, så klipp!
 	lut2/=(cp[MAXy].y-cp[MINy].y+1);
 	x1=x2=(cp[MINy].x)<<16;
 
-	shadla_diff=(I[MIDy]-I[MINy])/(float)(cp[MIDy].y-cp[MINy].y+1); 
-	shadra_diff=(I[MAXy]-I[MINy])/(float)(cp[MAXy].y-cp[MINy].y+1);
+	shadla_diff=(I[MIDy]-I[MINy]+0.01)/(float)(cp[MIDy].y-cp[MINy].y+1); // 0.01 to avoid rounding/edge bug
+	shadra_diff=(I[MAXy]-I[MINy]+0.01)/(float)(cp[MAXy].y-cp[MINy].y+1);
 	shadl_diff=shadr_diff=I[MINy];
 
 	vid=video+ysweep*XRES;
 	yEND=cp[MAXy].y;
-	if(yEND>YRES-1) yEND=YRES; //-1;
+	if(yEND>YRES-1) yEND=YRES;
 
 	while(ysweep<yEND) {  // Svep från Ymin till Ymax
 
 		x1+=lut1; x2+=lut2;  // Lutning adderas till x-position.
 		shadr_diff+=shadra_diff; shadl_diff+=shadla_diff;
 
-		if (ysweep==cp[MIDy].y) { // Skärning ("triangel 2" börjar h„r)
+		if (ysweep==cp[MIDy].y) { // Skärning ("triangel 2" börjar här)
 			lut1=(cp[MAXy].x-cp[MIDy].x)<<16;  // Ny lutning.
 			lut1/=(cp[MAXy].y-cp[MIDy].y+1);
 			x1=(cp[MIDy].x)<<16;
 			x1+=lut1;
-			shadla_diff=(I[MAXy]-I[MIDy])/(float)(cp[MAXy].y-cp[MIDy].y+1);
+			shadla_diff=(I[MAXy]-I[MIDy]+0.01)/(float)(cp[MAXy].y-cp[MIDy].y+1);
 			shadl_diff=I[MIDy];
 			shadl_diff+=shadla_diff;
 		}
@@ -294,21 +294,6 @@ if (clipedges!=NULL) { // Om clipedges innehåller klipprektangel, så klipp!
 			vid[i]=diff_sx + plusVal;
 			diff_sx+=diff_sxa;  // Interpolera diffuse
 		}
-		/*
-	asm ("gloop: "
-			"movl  %%esi,%%eax\n\t"
-			"shrl  $16,%%eax\n\t"
-			"movb  %%al, (%%ebx)\n\t"
-			"incl  %%ebx\n\t"
-			"addl  %%edi,%%esi\n\t"
-			"decw  %%cx\n\t"
-			"jnz  gloop"
-			:
-			: "b" (vid+xx1), "c" (xx2-xx1+1), "S" ((int)(diff_sx*65536)), "D" ((int)(diff_sxa*65536))
-			: "%eax"
-	);
-*/
-
 skip:
 		ysweep++;
 		vid+=XRES;
@@ -528,7 +513,10 @@ struct pline {
 Hjälpfunktion som används av systemfunktionen qsort i den generella
 polygonritaren. 
 */
-int compar(int *x, int *y) {
+int compar(const void *vx, const void *vy) {
+	int *x = (int *)vx;
+	int *y = (int *)vy;
+	
 	if (*x<*y) return -1;
 	return (*x>*y);
 }
@@ -579,12 +567,12 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 
 	ysweep=linje[0].Yactive;
 	for (i=0; i<points; i++)
-	if(linje[i].Yactive<ysweep)
-	ysweep=linje[i].Yactive;
+		if(linje[i].Yactive<ysweep)
+			ysweep=linje[i].Yactive;
 	MAXy=linje[0].Yinactive;
 	for (i=0; i<points; i++)
-	if(linje[i].Yinactive>MAXy)
-	MAXy=linje[i].Yinactive;
+		if(linje[i].Yinactive>MAXy)
+			MAXy=linje[i].Yinactive;
 
 	vid=video+ysweep*XRES;
 	if(MAXy>YRES) MAXy=YRES;
@@ -606,10 +594,10 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 		for(i=0; i<j; i+=2) { // Rita pixlar mellan sorterade xpositioner.
 			x1=xes[i]; x2=xes[i+1];
 			if(x2>=XRES) {
-				if(x1>=XRES) goto dont; else x2=XRES-1;
+				if(x1>=XRES) continue; else x2=XRES-1;
 			}
 			if(x1<0) {
-				if(x2<=0) goto dont; else x1=0;
+				if(x2<=0) continue; else x1=0;
 			}
 
 			switch(bitOp) {
@@ -815,14 +803,14 @@ void vecpolinit(vec_interpolate *vp, Vector v1, Vector v2, double div_val, int l
 
 void vecpol_addydelt(vec_interpolate *vp, int left) {
 	if (left) {
-		vp->xy_l+=vp->x_ay_l; //if (vp->xy_l > 93) vp->xy_l = 0;
-		vp->yy_l+=vp->y_ay_l; //if (vp->yy_l > 93) vp->yy_l = 0;
-		vp->zy_l+=vp->z_ay_l; //if (vp->zy_l > 93) vp->zy_l = 0;
+		vp->xy_l+=vp->x_ay_l;
+		vp->yy_l+=vp->y_ay_l;
+		vp->zy_l+=vp->z_ay_l;
 	}
 	else {
-		vp->xy_r+=vp->x_ay_r; //if (vp->xy_r > 93) vp->xy_r = 0;
-		vp->yy_r+=vp->y_ay_r; //if (vp->yy_r > 93) vp->yy_r = 0;
-		vp->zy_r+=vp->z_ay_r; //if (vp->zy_r > 93) vp->zy_r = 0;
+		vp->xy_r+=vp->x_ay_r;
+		vp->yy_r+=vp->y_ay_r;
+		vp->zy_r+=vp->z_ay_r;
 	}
 }
 
@@ -854,10 +842,6 @@ void vecpol_addxdelt(vec_interpolate *vp) {
 	vp->ip_pos.y+=vp->y_ax;
 	vp->ip_pos.z+=vp->z_ax;
 }
-
-int ax,ay;
-int uf, vf;
-int ui, vi;
 
 int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal) {
 	register int I;
@@ -971,60 +955,10 @@ if (clipedges!=NULL) { // Om clipedges innehåller klipprektangel, så klipp!
 			vpp=tex_ip.ip_pos.y>>16;// /tex_ip.ip_pos.z;
 			if (upp >= texw) upp = upp % texw;
 			if (vpp >= texh) vpp = vpp % texh;
-			//      I=tex.data[(vpp<<9)+upp];
 			I=tex->data[(vpp*texw)+upp];
 			vid[i]=I + plusVal;
 			vecpol_addxdelt(&tex_ip);
 		}
-
-		/*
-	ui=tex_ip.x_ax>>16;
-	vi=tex_ip.y_ax>>16;
-	uf=tex_ip.x_ax;
-	vf=tex_ip.y_ax;
-
-	asm ("pushl %%ebp\n\t"
-			"movw  %%di,%%bp\n\t"
-			"shrl  $16,%%edi\n\t"
-			"loop: "
-			"movb  (%%edx,%%ecx),%%al\n\t"
-			"movb  %%al, (%%ebx)\n\t"
-			"incl  %%ebx\n\t"
-			"addw  uf,%%di\n\t"
-			"adcb  ui,%%cl\n\t"
-			"addw  vf,%%si\n\t"
-			"adcb  vi,%%ch\n\t"
-			"decw  %%bp\n\t"
-			"jnz  loop\n\t"
-			"popl %%ebp"
-			:
-			: "b" (vid+xx1), "D" (xx2-xx1 + (tex_ip.ip_pos.y<<16)), "d" (tex.data), "c" ((tex_ip.ip_pos.x>>16)+((tex_ip.ip_pos.y>>16)<<8)) , "S" (tex_ip.ip_pos.x)
-	);
-*/
-		/*
-	ax=tex_ip.x_ax; ay=tex_ip.y_ax;
-
-	asm ("pushl %%ebp\n\t"
-			"movl  %%di,%%bp\n\t"
-			"loop: "
-			"movl  %%esi,%%eax\n\t"
-			"movl  %%ecx,%%edi\n\t"
-			"shrl  $16,%%eax\n\t"
-			"shrl  $16,%%edi\n\t"
-			"shll  $8,%%edi\n\t"
-			"addw  %%ax,%%di\n\t"
-			"movb  (%%edx,%%edi),%%al\n\t"
-			"movb  %%al, (%%ebx)\n\t"
-			"incl  %%ebx\n\t"
-			"addl  ay,%%ecx\n\t"
-			"addl  ax,%%esi\n\t"
-			"decw  %%bp\n\t"
-			"jnz  loop\n\t"
-			"popl %%ebp"
-			:
-			: "b" (vid+xx1), "D" (xx2-xx1), "d" (tex.data), "S" (tex_ip.ip_pos.x), "c" (tex_ip.ip_pos.y)
-	);
-*/
 ut:
 		ysweep++;
 		vid+=XRES;

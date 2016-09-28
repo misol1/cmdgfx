@@ -57,4 +57,5 @@ void hline(int x1, int x2, int y, uchar col);
 int line_clip(int *x1, int *y1, int *x2, int *y2);
 void setpixel(int x, int y, unsigned char col);
 
+
 #endif

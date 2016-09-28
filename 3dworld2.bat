@@ -105,7 +105,7 @@ cmdwiz gettime&set ORGT=!errorlevel!
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not defined STOP (
 	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+146, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
 
-	cmdgfx!RENDERER! "%BKSTR:~1,-1% & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,800,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% %GROUNDCOLS% & 3d %FN% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,800,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" kf0
+	cmdgfx!RENDERER! "%BKSTR:~1,-1% & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% %GROUNDCOLS% & 3d %FN% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" kf0
 	set KEY=!ERRORLEVEL!
 
 	if !KEY! == 331 set /A RY+=8&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)

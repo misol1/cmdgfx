@@ -19,32 +19,28 @@
 // Possible To-Do's:
 // 1. Add forcecol for image operation (and tpoly? and 3d if textures?)
 // 2. Support v/V for gxy files/string
-// 3. Outlined poly (need new line routine)
-// 4. Transparency for block operation
-// 5. Code optimization: Re-use images used several times, same way as for objects
-// 6. Code optimization: Optimize texture transparency for tpoly/3d (currently fills/copies whole buffer for every polygon )
-// 7. Code fix: Goraud shade rounding/edge bug
-// 8. Code fix: ipoly when coords outside of screen sometimes causes holes in polygon (e.g. when zooming in glenz.bat)
+// 3. Outlined poly (need new line routine + how specify color/char of line?)
+// 4. Code optimization: Re-use images used several times, same way as for objects
+// 5. Code optimization: Optimize texture transparency for tpoly/3d (currently fills/copies whole buffer for every polygon!)
 
 // For 3d:
-// *1. Add a real zbuffer
-// *2. Add second rotation (+second(actually, third) move?) after the rotation? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
+// 1. Add a real zbuffer
+// 2. Add second rotation (+third move?) after first rotation+second move? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
 // 3. If texture set and face-vertices=1, draw texture as image?
-// 4. Add perspective-correct texture mapping / directional light / phong shading / bump mapping / reflection mapping / primitive shadows
+// 4. Add perspective-correct texture mapping
 // 5: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
 // 6. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
-// *7. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
-// *8. Code fix: Figure out/fix why polys get messed up when too close in 3d? (e.g. 3dworld.bat without z_near_culling) Calculation fail or poly draw fail, or both?
-// 9. Code fix: Fix crashes, especially for faulty 3d files
+// 7. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
 
 // Unlikely/discarded:
 // 1. 3d: Flag to run operations given n times. Useful to gain speed for complex 3d objects (but where to *start* for e.g. rx,ry,rz?)
 // 2. 3d: Make it possible to use any drawing op for the processed 3d coordinates from "3d", ignoring the faces?
-// 3. Speedup image operations by using a "compiled"/binary format of gxy, saving only char+cols in non-readable format (then make gotoxy accept this format too?)
-// 4. Some kind of "anti-aliasing" (by supersampling?)
-// 5. Pcx, make colors 16-255 be combinations of colors, using the b1 (b0,b2?) character(s). E.g. 17 would be color 0(bg)+color 1(fg), color 35 is color 1(bg)+color 3(fg) etc
-// 6. Gdi: Able to specify external font file? (preferably binary)
-// 7. Bit ops for other drawing than ipoly
+// 3. 3d: Add directional light / phong shading / bump mapping / reflection mapping / primitive shadows
+// 4. Speedup image operations by using a "compiled"/binary format of gxy, saving only char+cols in non-readable format (then make gotoxy accept this format too?)
+// 5. Some kind of "anti-aliasing" (by supersampling?)
+// 6. Pcx, make colors 16-255 be combinations of colors, using the b1 (b0,b2?) character(s). E.g. 17 would be color 0(bg)+color 1(fg), color 35 is color 1(bg)+color 3(fg) etc
+// 7. Gdi: Able to specify external font file? (preferably binary)
+// 8. Bit ops for other drawing than ipoly
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -683,7 +679,7 @@ void reportArgError(ErrorHandler *errHandler, OperationType opType, int index) {
 }
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar) {
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar) {
 	uchar *blockCol, *blockChar;
 	int i=0,j,k,k2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0;
@@ -770,7 +766,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			k = i*w; k2=ny*XRES+i*XRES+nx;
 			if (ny+i >= 0 && ny+i < YRES) {
 				for (j = 0; j < w; j++) {
-					if (nx+j >= 0 && nx+j < XRES) {
+					if (nx+j >= 0 && nx+j < XRES && blockChar[k+j] != transpchar) {
 						videoCol[k2+j] = blockCol[k+j];
 						videoChar[k2+j] = blockChar[k+j];
 					}
@@ -795,14 +791,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 								break;
 							}
 						}
-						
-						videoCol[k2+j] = (outBg << 4) | outFg;
-						videoChar[k2+j] = outChar;
+
+						if (inChar != transpchar) {
+							videoCol[k2+j] = (outBg << 4) | outFg;
+							videoChar[k2+j] = outChar;
+						}
 					}
 				}
 			}
 		}
-	
 	}
 
 	free(blockCol); free(blockChar);
@@ -817,31 +814,24 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 
 int main(int argc, char *argv[]) {
 	uchar *videoCol, *videoChar, *videoTransp, *videoTranspChar;
-	int txres, tyres, nof;
+	int txres, tyres, nof, opCount = 0, fgcol, bgcol, dchar, transpval;
 	intVector vv[64];
-	char * pch;
-	int fgcol, bgcol, dchar, transpval;
 	CHAR_INFO *old = NULL;
 	char s_fgcol[4], s_bgcol[4], s_dchar[4], s_transpval[4], fname[128];
 	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1;
 	Bitmap b_pcx;
 	intVector v[64];
-	int i, j, k;
-	float us[4] = {0, 1, 1, 0};
-	float vs[4] = {0, 0, 1, 1};
-	float *averageZ;
-	float lowZ, highZ, addZ, currZ;
-	int opCount = 0;
+	float us[4] = {0, 1, 1, 0}, vs[4] = {0, 0, 1, 1};
+	float *averageZ, lowZ, highZ, addZ, currZ;
 	unsigned char *argv1;
 	obj3d *objs[MAX_OBJECTS_IN_MEM];
 	char *objNames[MAX_OBJECTS_IN_MEM];
 	int objCnt = 0;
-	char *insertedArgs = NULL;
-	uchar *cp;
+	char *pch, *insertedArgs = NULL;
 	ErrorHandler errH;
 	int bSuppressErrors = 0, bWaitAfterErrors = 0;
 	int bWait = 0, waitTime = 0;
-	int bWriteChars, bWriteCols;
+	int bWriteChars, bWriteCols, projectionDepth = 500;
 #ifdef GDI_OUTPUT
 	int fontIndex = 6;
 	uchar fgPalette[16][3] = { {0,0,0}, {128,0,0}, {0,128,0}, {128,128,0}, {0,0,128}, {128,0,128}, {0,128,128}, {192,192,192}, {128,128,128}, {255,0,0}, {0,255,0}, {255,255,0}, {0,0,255}, {255,0,255}, {0,255,255}, {255,255,255} };
@@ -852,6 +842,8 @@ int main(int argc, char *argv[]) {
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 #endif
+	int i, j, k;
+	uchar *cp;
 	unsigned int startT = GetTickCount();
 
 	cp = hexLookup; k = 0;
@@ -904,7 +896,7 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nDrawing operations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transform]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nDrawing operations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
 		return 0;
 	}
 
@@ -964,6 +956,14 @@ int main(int argc, char *argv[]) {
 				break;
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
+				case 'Z': {
+					char pDepth[64];
+					j = 0; i++;
+					while (argv[2][i] >= '0' && argv[2][i] <= '9') pDepth[j++] = argv[2][i++];
+					i--; pDepth[j] = 0;
+					if (j) projectionDepth = atoi(pDepth);
+					break;
+				}
 				case 'M': {
 					char wTime[64];
 					bMouse = 1; j = 0; i++;
@@ -1389,13 +1389,16 @@ int main(int argc, char *argv[]) {
 		char transf[2510], mode[8];
 
 		pch = pch + 6;
-		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2500s", mode, &x1, &y1, &w, &h, &nx, &ny, transf);
-
+		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %2500s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, transf);
+		
+		transpval = -1;
 		if (nof >= 7) {
 			if (nof > 7)
-				transformBlock(mode, x1, y1, w, h, nx, ny, transf, XRES, YRES, videoCol, videoChar);
+				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+			if (nof > 8)
+				transformBlock(mode, x1, y1, w, h, nx, ny, transf, XRES, YRES, videoCol, videoChar, transpval);
 			else
-				transformBlock(mode, x1, y1, w, h, nx, ny, NULL, XRES, YRES, videoCol, videoChar);
+				transformBlock(mode, x1, y1, w, h, nx, ny, NULL, XRES, YRES, videoCol, videoChar, transpval);
 		} else
 			reportArgError(&errH, OP_BLOCK, opCount);
 	 }
@@ -1480,7 +1483,7 @@ int main(int argc, char *argv[]) {
 				rry = (float)(ry/4) * 3.14159265359 / 180.0;
 				rrz = (float)(rz/4) * 3.14159265359 / 180.0;
 
-				 rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz);
+				 rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
 				 
 				 lowZ = 99999999; highZ = -99999999;
 				 for(j=0; j<obj3->nofFaces; j++) {
@@ -1549,10 +1552,11 @@ int main(int argc, char *argv[]) {
 							}
 						}
 
-						 if (averageZ[j] != 99999999 && averageZ[j] >= currZ && averageZ[j] <= currZ + addZ) {
+						if (averageZ[j] != 99999999 && averageZ[j] >= currZ && averageZ[j] <= currZ + addZ) {
 							for(i=0; i<obj3->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
 								v[i].x=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vx; v[i].y=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vy;
-								v[i].z=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz; 
+								v[i].z=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz;
+								
 								if (obj3->texCoords) {
 									v[i].tex_coord.x=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2];
 									v[i].tex_coord.y=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2+1];

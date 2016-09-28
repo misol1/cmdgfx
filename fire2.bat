@@ -24,7 +24,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	set /A "nf=20-!PW!*5,PWP=(!PW!+1)*2"&for /L %%a in (0,1,!nf!) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set /a "J2=!J!+!RANDOM! %% !PWP!-!PW!,X2=!X!+!RANDOM! %% !PWP!-!PW!"&set OUT="!OUT:~1,-1!line e 0 50 !X!,!J!,!X2!,!J2!&"
 	set /A "nf=55-!PW!*10,PWP=(!PW!+1)*2"&for /L %%a in (0,1,!nf!) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set /a "J2=!J!+!RANDOM! %% !PWP!-!PW!,X2=!X!+!RANDOM! %% !PWP!-!PW!"&set OUT="!OUT:~1,-1!line e 0 60 !X!,!J!,!X2!,!J2!&"
 
-	cmdgfx "!OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 !STREAM:~1,-1! & block 0 %W%,0,%W%,130 0,0 !TRANSF%%c:~1,-1!" pk
+	cmdgfx "!OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 -1 !STREAM:~1,-1! & block 0 %W%,0,%W%,130 0,0 -1 !TRANSF%%c:~1,-1!" pk
 	set KEY=!errorlevel!
 	
 	if !KEY! == 102 cmdgfx "image img\fire.txt f 0 0 20 87,79 & image img\fire.txt f 0 0 20 89,79 & image img\fire.txt f 0 0 20 88,78 & image img\fire.txt f 0 0 20 88,80 & image img\fire.txt f 0 0 20 88,79" p

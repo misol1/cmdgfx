@@ -29,7 +29,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	if !MODE!==1 set /A "nf=75-!PW!*10,PWP=(!PW!+1)*2"&for /L %%a in (0,1,!nf!) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set /a "J2=!J!+!RANDOM! %% !PWP!-!PW!,X2=!X!+!RANDOM! %% !PWP!-!PW!"&set OUT="!OUT:~1,-1!line e 0 50 !X!,!J!,!X2!,!J2!&"
    if !MODE!==2 for /L %%a in (0,1,%W%) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set OUT="!OUT:~1,-1!fellipse c 0 50 !X!,!J!,!PW!,!PH!&"
 
-	cmdgfx "!OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 %STREAM:~1,-1% & block 0 %W%,0,%W%,75 0,0 !TRANSF%%c:~1,-1!" pk
+	cmdgfx "!OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 -1 %STREAM:~1,-1% & block 0 %W%,0,%W%,75 0,0 -1 !TRANSF%%c:~1,-1!" pk
 	set KEY=!errorlevel!
 	
 	if !KEY! == 32 set /A COL+=1&if !COL! gtr 3 set COL=0

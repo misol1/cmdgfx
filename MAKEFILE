@@ -11,7 +11,8 @@ OBJECTSLIBGDI = gfx.o r3d.o bmap.o cmdgfx_gdi.o
 TARGETLIBGDI  = cmdgfx_gdi.exe
 #CC      = cl
 #CC      = C:\Dos\tcc\tcc32\tcc.exe
-CC      = gcc -O2 -Wall
+#CC      = gcc -O2 -Wall
+CC      = gcc -O2
 CCFLAG  =
 
 testlib.exe : $(OBJECTS)

@@ -94,7 +94,7 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 set BKSTR="fbox 0 1 20 0,0,%W%,120 & fbox 9 1 b1 0,120,%W%,250 & fbox 9 1 b1 0,105,%W%,10 & fbox 9 1 b1 0,90,%W%,5 & fbox 9 1 b1 0,75,%W%,2 & fbox 9 1 b1 0,60,%W%,1    & fbox 0 0 20 0,343,%W%,5 & fbox 0 2 20 0,344,%W%,320"
 
 set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 680,5
+set MAPTXT=image 3dworld2.dat e 0 0 - 1220,15
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
@@ -107,7 +107,7 @@ copy /Y %FN% %FN3%>nul
 
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+1220, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	if !ENEMY! == 1 (
 		copy /Y %FN% %FN3%>nul
@@ -126,7 +126,7 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>%FN3%
 	)
 	
-	cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,800,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,400,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%
+	cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%Z800
 	
 	set RET=!errorlevel!
    if not !RET! == -1 (

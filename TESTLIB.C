@@ -376,7 +376,7 @@ return 1;
 		rx+=rxa; ry+=rya; rz+=rza;
 
 		if (show == 1) {
-			rot3dPoints(triangle, 24, xg, yg, dist, rx, ry, rz, aspect, 0,0,0);
+			rot3dPoints(triangle, 24, xg, yg, dist, rx, ry, rz, aspect, 0,0,0, 0,0);
 			for(j=0; j<6; j++) {
 				for(i=0; i<4; i++) {
 					v[i].x=triangle[i+j*4].vx; v[i].y=triangle[i+j*4].vy;
@@ -406,7 +406,7 @@ return 1;
 		}
 
 		if (show == 2 && depthSort) {
-			rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rx, ry, rz, aspect, 0,0,0);
+			rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rx, ry, rz, aspect, 0,0,0, 0,0);
 			
 			lowZ = 99999999; highZ = -99999999;
 			for(j=0; j<obj3->nofFaces; j++) {
@@ -466,7 +466,7 @@ return 1;
 
 		
 		if (show == 2 && !depthSort) {
-			rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rx, ry, rz, aspect, 0,0,0);
+			rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rx, ry, rz, aspect, 0,0,0, 0,0);
 			for(j=0; j<obj3->nofFaces; j++) {
 				for(i=0; i<obj3->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
 					v[i].x=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vx; v[i].y=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vy;

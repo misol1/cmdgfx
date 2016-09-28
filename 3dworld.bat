@@ -72,7 +72,7 @@ set BKSTR="fbox 0 1 b1 0,0,%W%,30 & fbox 0 1 20 0,30,%W%,10 & fbox 9 1 b1 0,40,%
 set STOP=
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP (
-cmdgfx "%BKSTR:~1,-1% & 3d 3dworld.ply %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,800,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS!" k
+cmdgfx "%BKSTR:~1,-1% & 3d 3dworld.ply %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,0,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS!" k
 set KEY=!ERRORLEVEL!
 
 if !KEY! == 331 set /A RY+=6&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
