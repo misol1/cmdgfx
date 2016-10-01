@@ -534,6 +534,7 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 
 	for (j = 0; j < obj->nofFaces; j++) {
 		for (i = 0; i < obj->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
+		  if (obj->faceData[j*R3D_MAX_V_PER_FACE + i] < 0) obj->faceData[j*R3D_MAX_V_PER_FACE + i] = obj->nofPoints + 1 + obj->faceData[j*R3D_MAX_V_PER_FACE + i];
 		  if (obj->faceData[j*R3D_MAX_V_PER_FACE + i] >= obj->nofPoints || obj->faceData[j*R3D_MAX_V_PER_FACE + i] < 0)  { freeObj3d(obj); free(filedata); return NULL; }
 		}
 	}
