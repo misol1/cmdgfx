@@ -75,8 +75,9 @@ if %OBJINDEX% == 10 set FNAME=teapot.ply& set MOD=160,160,160, 0,-0.3,-0.8 0
 if %OBJINDEX% == 11 set FNAME=trashcan.ply& set MOD=11,11,11, 0,0,0 0
 if %OBJINDEX% == 12 set FNAME=urn2.ply& set MOD=300,300,300, 0,0,0 1
 if %OBJINDEX% == 13 set FNAME=torus.plg& set MOD=-1.3,-1.3,-1.3, 0,0,0 0
-::if %OBJINDEX% == 13 set FNAME=spaceship2.obj& set MOD=2.5,2.5,2.5, 0,0,0 1
-::if %OBJINDEX% == 13 set FNAME=ufo.obj& set MOD=0.015,0.015,0.015, 0,0,0 0
+::if %OBJINDEX% == 13 set FNAME=..\dev\objs\mountains.obj& set MOD=4,4,4, 0,0,0 0
+::if %OBJINDEX% == 13 set FNAME=..\dev\objs\spaceship2.obj& set MOD=2.5,2.5,2.5, 0,0,0 1
+::if %OBJINDEX% == 13 set FNAME=..\dev\objs\ufo.obj& set MOD=0.015,0.015,0.015, 0,0,0 0
 if %OBJINDEX% == 14 set FNAME=sphere.plg& set MOD=-1.8,-1.8,-1.8, 0,0,0 0
 if %OBJINDEX% == 15 set FNAME=springy1.plg& set MOD=-0.23,-0.23,-0.23, 0,0,0 0
 if %OBJINDEX% == 16 set FNAME=chopper.plg& set MOD=-0.3,-0.3,-0.3, 0,-800,-800 1

@@ -56,6 +56,22 @@ void vline(int x, int y1, int y2, uchar col);
 void hline(int x1, int x2, int y, uchar col); 
 int line_clip(int *x1, int *y1, int *x2, int *y2);
 void setpixel(int x, int y, unsigned char col);
+void bezier(long n, int *xPoints, int *yPoints, uchar col);
 
+/*
+typedef struct
+{
+	float x1, y1, z1;
+	float x2, y2, z2;
+	float x3, y3, z3;
+	float u1, v1;
+	float u2, v2;
+	float u3, v3;
+	unsigned char *texture;
+} TPolytri;
+
+void drawtpolyperspdivsubtri(TPolytri *poly);
+void drawtpolyperspsubtri(TPolytri *poly);
+*/
 
 #endif

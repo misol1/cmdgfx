@@ -1,6 +1,7 @@
 // gfx.c
 
 #include "gfxlib.h"
+#include <math.h>
 
 void setpixel(int x, int y, unsigned char col) {
 
@@ -22,6 +23,57 @@ int scanConvex(intVector vv[], int points, int clipedges[], uchar col) {
 	return (ok > 0);
 }
 
+/*
+int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal) {
+	intVector v[3];
+	register int i,j;
+	int ok = 0;
+	TPolytri poly;
+
+	if (points<3) return 0;
+
+	memcpy(v,vv,sizeof(intVector));
+	v[0].tex_coord.x *= (float)bild->xSize - 1;
+	v[0].tex_coord.y *= (float)bild->ySize - 1;
+	v[0].tex_coord.z = 1;
+	for (i=1; i<points-1; i++) {
+		memcpy(&(v[1]),&(vv[i]),sizeof(intVector)<<1);
+		for (j=1; j<3; j++) {
+			v[j].tex_coord.x *= (float)bild->xSize - 1;
+			v[j].tex_coord.y *= (float)bild->ySize - 1;
+			v[j].tex_coord.z = 1;
+		}
+
+		ok += scan3_tmap(v, clipedges, bild,plusVal);
+
+		poly.texture = bild->data;
+		poly.x1=v[0].x;
+		poly.y1=v[0].y;
+		poly.z1=(v[0].z;
+		poly.x2=v[1].x;
+		poly.y2=v[1].y;
+		poly.z2=(v[1].z;
+		poly.x3=v[2].x;
+		poly.y3=v[2].y;
+		poly.z3=(v[2].z;
+
+		poly.u1=v[0].tex_coord.x;
+		poly.v1=v[0].tex_coord.y;
+		poly.u2=v[1].tex_coord.x;
+		poly.v2=v[1].tex_coord.y;
+		poly.u3=v[2].tex_coord.x;
+		poly.v3=v[2].tex_coord.y;
+		
+//		drawtpolyperspdivsubtri(&poly);
+		drawtpolyperspsubtri(&poly);
+		
+	}
+	
+	return (ok > 0);
+}
+*/
+
+
 int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal) {
 	intVector v[3];
 	register int i,j;
@@ -40,7 +92,7 @@ int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, i
 			v[j].tex_coord.y *= (float)bild->ySize - 1;
 			v[j].tex_coord.z = 1;
 		}
-		
+
 		ok += scan3_tmap(v, clipedges, bild,plusVal);
 	}
 	return (ok > 0);
@@ -690,8 +742,8 @@ void line(int x1, int y1, int x2, int y2, uchar col, int clip) {
 	int error, temp; 
 
 	if (clip)
-	if (!line_clip(&x1, &y1, &x2, &y2))
-	return;
+		if (!line_clip(&x1, &y1, &x2, &y2))
+			return;
 
 	// by making sure y1 is greater than y2 we eliminate different line
 	// possibilites. So, if this condition is false, we just switch our 
@@ -713,9 +765,9 @@ void line(int x1, int y1, int x2, int y2, uchar col, int clip) {
 	} 
 
 	if(delta_x > delta_y)
-	major_axis = 0;      // our main axis is the x
+		major_axis = 0;      // our main axis is the x
 	else
-	major_axis = 1;      // our main axis in the y
+		major_axis = 1;      // our main axis in the y
 
 	vid=video+y1*XRES;
 
@@ -994,3 +1046,666 @@ void hline(int x1, int x2, int y, uchar col) {
 
 	memset(video+y*XRES+x1, col, x2-x1+1);
 }
+
+
+/*
+	General Bezier curve
+	Number of control points is n+1
+	0 <= mu < 1    IMPORTANT, the last point is not computed
+*/
+void curvePoint_N(long n, long *px, long *py, double mu, int *xPoints, int *yPoints) {
+	long   k, kn, nn, nkn;
+	double blend, muk, munk;
+	double bx = 0.0, by = 0.0;
+
+	muk = 1;
+	munk = pow(1-mu, (double)n);
+
+	for (k=0; k <= n; k++) {
+		nn = n;
+		kn = k;
+		nkn = n - k;
+		blend = muk * munk;
+		muk *= mu;
+		munk /= (1-mu);
+		while (nn >= 1) {
+			blend *= nn;
+			nn--;
+			if (kn > 1) {
+				blend /= (double)kn;
+				kn--;
+			}
+			if (nkn > 1) {
+				blend /= (double)nkn;
+				nkn--;
+			}
+		}
+		bx += (double)xPoints[k] * blend;
+		by += (double)yPoints[k] * blend;
+	}
+
+	*px = (long)bx;
+	*py = (long)by;
+}
+
+
+void bezier(long n, int *xPoints, int *yPoints, uchar col) {
+	double mu = 0, mua;
+	long i, gran = 20;
+	long x,y;
+	long oldx = xPoints[0], oldy = yPoints[0];
+	double ddSx=0, ddSy=0;
+	
+	i = (n-3)*5;
+	if (i > 0) gran += i;
+	
+	mua = 1.0 / (double) gran;
+	
+	for (i = 0; i < gran+1; i++)
+	{
+		curvePoint_N(n,&x,&y,mu,xPoints,yPoints);
+		line(oldx, oldy, x, y, col, 1);
+		oldx = x; oldy = y;
+		
+		mu = mu + mua;
+	}
+}
+
+
+/*
+// Texturemapper with perspective correction at every Nth pixel (scanline
+//	subdivision), subpixels and subtexels, uses floats all the way through
+//	except for when drawing each N-pixel span
+
+static float dizdx, duizdx, dvizdx, dizdy, duizdy, dvizdy;
+static float dizdxn, duizdxn, dvizdxn;
+static float xa, xb, iza, uiza, viza;
+static float dxdya, dxdyb, dizdya, duizdya, dvizdya;
+static char *texture;
+
+// Subdivision span-size
+
+#define SUBDIVSHIFT	4
+#define SUBDIVSIZE	(1 << SUBDIVSHIFT)
+
+static void drawtpolyperspdivsubtriseg(int y1, int y2);
+
+void drawtpolyperspdivsubtri(TPolytri *poly)
+{
+	float x1, y1, x2, y2, x3, y3;
+	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
+	float dxdy1, dxdy2, dxdy3;
+	float tempf;
+	float denom;
+	float dy;
+	int y1i, y2i, y3i;
+	int side;
+
+	// Shift XY coordinate system (+0.5, +0.5) to match the subpixeling
+	//  technique
+
+	x1 = poly->x1 + 0.5;
+	y1 = poly->y1 + 0.5;
+	x2 = poly->x2 + 0.5;
+	y2 = poly->y2 + 0.5;
+	x3 = poly->x3 + 0.5;
+	y3 = poly->y3 + 0.5;
+
+	// Calculate alternative 1/Z, U/Z and V/Z values which will be
+	//  interpolated
+
+	iz1 = 1 / poly->z1;
+	iz2 = 1 / poly->z2;
+	iz3 = 1 / poly->z3;
+	uiz1 = poly->u1 * iz1;
+	viz1 = poly->v1 * iz1;
+	uiz2 = poly->u2 * iz2;
+	viz2 = poly->v2 * iz2;
+	uiz3 = poly->u3 * iz3;
+	viz3 = poly->v3 * iz3;
+
+	texture = poly->texture;
+
+	// Sort the vertices in increasing Y order
+
+#define swapfloat(x, y) tempf = x; x = y; y = tempf;
+	if (y1 > y2)
+	{
+		swapfloat(x1, x2);
+		swapfloat(y1, y2);
+		swapfloat(iz1, iz2);
+		swapfloat(uiz1, uiz2);
+		swapfloat(viz1, viz2);
+	}
+	if (y1 > y3)
+	{
+		swapfloat(x1, x3);
+		swapfloat(y1, y3);
+		swapfloat(iz1, iz3);
+		swapfloat(uiz1, uiz3);
+		swapfloat(viz1, viz3);
+	}
+	if (y2 > y3)
+	{
+		swapfloat(x2, x3);
+		swapfloat(y2, y3);
+		swapfloat(iz2, iz3);
+		swapfloat(uiz2, uiz3);
+		swapfloat(viz2, viz3);
+	}
+#undef swapfloat
+
+	y1i = y1;
+	y2i = y2;
+	y3i = y3;
+
+	// Skip poly if it's too thin to cover any pixels at all
+
+	if ((y1i == y2i && y1i == y3i)
+	    || ((int) x1 == (int) x2 && (int) x1 == (int) x3))
+		return;
+
+	// Calculate horizontal and vertical increments for UV axes (these
+	//  calcs are certainly not optimal, although they're stable
+	//  (handles any dy being 0)
+
+	denom = ((x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1));
+
+	if (!denom)		// Skip poly if it's an infinitely thin line
+		return;	
+
+	denom = 1 / denom;	// Reciprocal for speeding up
+	dizdx = ((iz3 - iz1) * (y2 - y1) - (iz2 - iz1) * (y3 - y1)) * denom;
+	duizdx = ((uiz3 - uiz1) * (y2 - y1) - (uiz2 - uiz1) * (y3 - y1)) * denom;
+	dvizdx = ((viz3 - viz1) * (y2 - y1) - (viz2 - viz1) * (y3 - y1)) * denom;
+	dizdy = ((iz2 - iz1) * (x3 - x1) - (iz3 - iz1) * (x2 - x1)) * denom;
+	duizdy = ((uiz2 - uiz1) * (x3 - x1) - (uiz3 - uiz1) * (x2 - x1)) * denom;
+	dvizdy = ((viz2 - viz1) * (x3 - x1) - (viz3 - viz1) * (x2 - x1)) * denom;
+
+	// Horizontal increases for 1/Z, U/Z and V/Z which step one full span
+	//  ahead
+
+	dizdxn = dizdx * SUBDIVSIZE;
+	duizdxn = duizdx * SUBDIVSIZE;
+	dvizdxn = dvizdx * SUBDIVSIZE;
+
+	// Calculate X-slopes along the edges
+
+	if (y2 > y1)
+		dxdy1 = (x2 - x1) / (y2 - y1);
+	if (y3 > y1)
+		dxdy2 = (x3 - x1) / (y3 - y1);
+	if (y3 > y2)
+		dxdy3 = (x3 - x2) / (y3 - y2);
+
+	// Determine which side of the poly the longer edge is on
+
+	side = dxdy2 > dxdy1;
+
+	if (y1 == y2)
+		side = x1 > x2;
+	if (y2 == y3)
+		side = x3 > x2;
+
+	if (!side)	// Longer edge is on the left side
+	{
+		// Calculate slopes along left edge
+
+		dxdya = dxdy2;
+		dizdya = dxdy2 * dizdx + dizdy;
+		duizdya = dxdy2 * duizdx + duizdy;
+		dvizdya = dxdy2 * dvizdx + dvizdy;
+
+		// Perform subpixel pre-stepping along left edge
+
+		dy = 1 - (y1 - y1i);
+		xa = x1 + dy * dxdya;
+		iza = iz1 + dy * dizdya;
+		uiza = uiz1 + dy * duizdya;
+		viza = viz1 + dy * dvizdya;
+
+		if (y1i < y2i)	// Draw upper segment if possibly visible
+		{
+			// Set right edge X-slope and perform subpixel pre-
+			//  stepping
+
+			xb = x1 + dy * dxdy1;
+			dxdyb = dxdy1;
+
+			drawtpolyperspdivsubtriseg(y1i, y2i);
+		}
+		if (y2i < y3i)	// Draw lower segment if possibly visible
+		{
+			// Set right edge X-slope and perform subpixel pre-
+			//  stepping
+
+			xb = x2 + (1 - (y2 - y2i)) * dxdy3;
+			dxdyb = dxdy3;
+
+			drawtpolyperspdivsubtriseg(y2i, y3i);
+		}
+	}
+	else	// Longer edge is on the right side
+	{
+		// Set right edge X-slope and perform subpixel pre-stepping
+
+		dxdyb = dxdy2;
+		dy = 1 - (y1 - y1i);
+		xb = x1 + dy * dxdyb;
+
+		if (y1i < y2i)	// Draw upper segment if possibly visible
+		{
+			// Set slopes along left edge and perform subpixel
+			//  pre-stepping
+
+			dxdya = dxdy1;
+			dizdya = dxdy1 * dizdx + dizdy;
+			duizdya = dxdy1 * duizdx + duizdy;
+			dvizdya = dxdy1 * dvizdx + dvizdy;
+			xa = x1 + dy * dxdya;
+			iza = iz1 + dy * dizdya;
+			uiza = uiz1 + dy * duizdya;
+			viza = viz1 + dy * dvizdya;
+
+			drawtpolyperspdivsubtriseg(y1i, y2i);
+		}
+		if (y2i < y3i)	// Draw lower segment if possibly visible
+		{
+			// Set slopes along left edge and perform subpixel
+			//  pre-stepping
+
+			dxdya = dxdy3;
+			dizdya = dxdy3 * dizdx + dizdy;
+			duizdya = dxdy3 * duizdx + duizdy;
+			dvizdya = dxdy3 * dvizdx + dvizdy;
+			dy = 1 - (y2 - y2i);
+			xa = x2 + dy * dxdya;
+			iza = iz2 + dy * dizdya;
+			uiza = uiz2 + dy * duizdya;
+			viza = viz2 + dy * dvizdya;
+
+			drawtpolyperspdivsubtriseg(y2i, y3i);
+		}
+	}
+}
+
+static void drawtpolyperspdivsubtriseg(int y1, int y2)
+{
+	unsigned char *scr;
+	int x1, x2;
+	int x, xcount;
+	float z, dx;
+	float iz, uiz, viz;
+	int u1, v1, u2, v2, u, v, du, dv;
+
+	while (y1 < y2)		// Loop through all lines in segment
+	{
+		x1 = xa;
+		x2 = xb;
+
+		// Perform subtexel pre-stepping on 1/Z, U/Z and V/Z
+
+		dx = 1 - (xa - x1);
+		iz = iza + dx * dizdx;
+		uiz = uiza + dx * duizdx;
+		viz = viza + dx * dvizdx;
+
+		scr = &video[y1 * XRES + x1];
+
+		// Calculate UV for the first pixel
+
+		z = 65536 / iz;
+		u2 = uiz * z;
+		v2 = viz * z;
+
+		// Length of line segment
+
+		xcount = x2 - x1;
+
+		while (xcount >= SUBDIVSIZE)	// Draw all full-length
+		{				//  spans
+			// Step 1/Z, U/Z and V/Z to the next span
+
+			iz += dizdxn;
+			uiz += duizdxn;
+			viz += dvizdxn;
+
+			u1 = u2;
+			v1 = v2;
+
+			// Calculate UV at the beginning of next span
+
+			z = 65536 / iz;
+			u2 = uiz * z;
+			v2 = viz * z;
+
+			u = u1;
+			v = v1;
+
+			// Calculate linear UV slope over span
+
+			du = (u2 - u1) >> SUBDIVSHIFT;
+			dv = (v2 - v1) >> SUBDIVSHIFT;
+
+			x = SUBDIVSIZE;
+			while (x--)	// Draw span
+			{
+				// Copy pixel from texture to screen
+
+				*(scr++) = texture[((((int) v) & 0xff0000) >> 8) + ((((int) u) & 0xff0000) >> 16)];
+
+				// Step horizontally along UV axes
+
+				u += du;
+				v += dv;
+			}
+
+			xcount -= SUBDIVSIZE;	// One span less
+		}
+
+		if (xcount)	// Draw last, non-full-length span
+		{
+			// Step 1/Z, U/Z and V/Z to end of span
+
+			iz += dizdx * xcount;
+			uiz += duizdx * xcount;
+			viz += dvizdx * xcount;
+
+			u1 = u2;
+			v1 = v2;
+
+			// Calculate UV at end of span
+
+			z = 65536 / iz;
+			u2 = uiz * z;
+			v2 = viz * z;
+
+			u = u1;
+			v = v1;
+
+
+			// Calculate linear UV slope over span
+
+			du = (u2 - u1) / xcount;
+			dv = (v2 - v1) / xcount;
+
+			while (xcount--)	// Draw span
+			{
+				// Copy pixel from texture to screen
+
+				*(scr++) = texture[((((int) v) & 0xff0000) >> 8) + ((((int) u) & 0xff0000) >> 16)];
+
+				// Step horizontally along UV axes
+
+				u += du;
+				v += dv;
+			}
+		}
+
+		// Step vertically along both edges
+
+		xa += dxdya;
+		xb += dxdyb;
+		iza += dizdya;
+		uiza += duizdya;
+		viza += dvizdya;
+
+		y1++;
+	}
+}
+
+
+// Texturemapper with full perspective correction, subpixels and subtexels,
+//	uses floats all the way through
+
+static float dizdx, duizdx, dvizdx, dizdy, duizdy, dvizdy;
+static float xa, xb, iza, uiza, viza;
+static float dxdya, dxdyb, dizdya, duizdya, dvizdya;
+static char *texture;
+
+static void drawtpolyperspsubtriseg(int y1, int y2);
+
+void drawtpolyperspsubtri(TPolytri *poly)
+{
+	float x1, y1, x2, y2, x3, y3;
+	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
+	float dxdy1, dxdy2, dxdy3;
+	float tempf;
+	float denom;
+	float dy;
+	int y1i, y2i, y3i;
+	int side;
+
+	// Shift XY coordinate system (+0.5, +0.5) to match the subpixeling
+	//  technique
+
+	x1 = poly->x1 + 0.5;
+	y1 = poly->y1 + 0.5;
+	x2 = poly->x2 + 0.5;
+	y2 = poly->y2 + 0.5;
+	x3 = poly->x3 + 0.5;
+	y3 = poly->y3 + 0.5;
+
+	// Calculate alternative 1/Z, U/Z and V/Z values which will be
+	//  interpolated
+
+	iz1 = 1 / poly->z1;
+	iz2 = 1 / poly->z2;
+	iz3 = 1 / poly->z3;
+	uiz1 = poly->u1 * iz1;
+	viz1 = poly->v1 * iz1;
+	uiz2 = poly->u2 * iz2;
+	viz2 = poly->v2 * iz2;
+	uiz3 = poly->u3 * iz3;
+	viz3 = poly->v3 * iz3;
+
+	texture = poly->texture;
+
+	// Sort the vertices in ascending Y order
+
+#define swapfloat(x, y) tempf = x; x = y; y = tempf;
+	if (y1 > y2)
+	{
+		swapfloat(x1, x2);
+		swapfloat(y1, y2);
+		swapfloat(iz1, iz2);
+		swapfloat(uiz1, uiz2);
+		swapfloat(viz1, viz2);
+	}
+	if (y1 > y3)
+	{
+		swapfloat(x1, x3);
+		swapfloat(y1, y3);
+		swapfloat(iz1, iz3);
+		swapfloat(uiz1, uiz3);
+		swapfloat(viz1, viz3);
+	}
+	if (y2 > y3)
+	{
+		swapfloat(x2, x3);
+		swapfloat(y2, y3);
+		swapfloat(iz2, iz3);
+		swapfloat(uiz2, uiz3);
+		swapfloat(viz2, viz3);
+	}
+#undef swapfloat
+
+	y1i = y1;
+	y2i = y2;
+	y3i = y3;
+
+	// Skip poly if it's too thin to cover any pixels at all
+
+	if ((y1i == y2i && y1i == y3i)
+	    || ((int) x1 == (int) x2 && (int) x1 == (int) x3))
+		return;
+
+	// Calculate horizontal and vertical increments for UV axes (these
+	//  calcs are certainly not optimal, although they're stable
+	//  (handles any dy being 0)
+
+	denom = ((x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1));
+
+	if (!denom)		// Skip poly if it's an infinitely thin line
+		return;	
+
+	denom = 1 / denom;	// Reciprocal for speeding up
+	dizdx = ((iz3 - iz1) * (y2 - y1) - (iz2 - iz1) * (y3 - y1)) * denom;
+	duizdx = ((uiz3 - uiz1) * (y2 - y1) - (uiz2 - uiz1) * (y3 - y1)) * denom;
+	dvizdx = ((viz3 - viz1) * (y2 - y1) - (viz2 - viz1) * (y3 - y1)) * denom;
+	dizdy = ((iz2 - iz1) * (x3 - x1) - (iz3 - iz1) * (x2 - x1)) * denom;
+	duizdy = ((uiz2 - uiz1) * (x3 - x1) - (uiz3 - uiz1) * (x2 - x1)) * denom;
+	dvizdy = ((viz2 - viz1) * (x3 - x1) - (viz3 - viz1) * (x2 - x1)) * denom;
+
+	// Calculate X-slopes along the edges
+
+	if (y2 > y1)
+		dxdy1 = (x2 - x1) / (y2 - y1);
+	if (y3 > y1)
+		dxdy2 = (x3 - x1) / (y3 - y1);
+	if (y3 > y2)
+		dxdy3 = (x3 - x2) / (y3 - y2);
+
+	// Determine which side of the poly the longer edge is on
+
+	side = dxdy2 > dxdy1;
+
+	if (y1 == y2)
+		side = x1 > x2;
+	if (y2 == y3)
+		side = x3 > x2;
+
+	if (!side)	// Longer edge is on the left side
+	{
+		// Calculate slopes along left edge
+
+		dxdya = dxdy2;
+		dizdya = dxdy2 * dizdx + dizdy;
+		duizdya = dxdy2 * duizdx + duizdy;
+		dvizdya = dxdy2 * dvizdx + dvizdy;
+
+		// Perform subpixel pre-stepping along left edge
+
+		dy = 1 - (y1 - y1i);
+		xa = x1 + dy * dxdya;
+		iza = iz1 + dy * dizdya;
+		uiza = uiz1 + dy * duizdya;
+		viza = viz1 + dy * dvizdya;
+
+		if (y1i < y2i)	// Draw upper segment if possibly visible
+		{
+			// Set right edge X-slope and perform subpixel pre-
+			//  stepping
+
+			xb = x1 + dy * dxdy1;
+			dxdyb = dxdy1;
+
+			drawtpolyperspsubtriseg(y1i, y2i);
+		}
+		if (y2i < y3i)	// Draw lower segment if possibly visible
+		{
+			// Set right edge X-slope and perform subpixel pre-
+			//  stepping
+
+			xb = x2 + (1 - (y2 - y2i)) * dxdy3;
+			dxdyb = dxdy3;
+
+			drawtpolyperspsubtriseg(y2i, y3i);
+		}
+	}
+	else	// Longer edge is on the right side
+	{
+		// Set right edge X-slope and perform subpixel pre-stepping
+
+		dxdyb = dxdy2;
+		dy = 1 - (y1 - y1i);
+		xb = x1 + dy * dxdyb;
+
+		if (y1i < y2i)	// Draw upper segment if possibly visible
+		{
+			// Set slopes along left edge and perform subpixel
+			//  pre-stepping
+
+			dxdya = dxdy1;
+			dizdya = dxdy1 * dizdx + dizdy;
+			duizdya = dxdy1 * duizdx + duizdy;
+			dvizdya = dxdy1 * dvizdx + dvizdy;
+			xa = x1 + dy * dxdya;
+			iza = iz1 + dy * dizdya;
+			uiza = uiz1 + dy * duizdya;
+			viza = viz1 + dy * dvizdya;
+
+			drawtpolyperspsubtriseg(y1i, y2i);
+		}
+		if (y2i < y3i)	// Draw lower segment if possibly visible
+		{
+			// Set slopes along left edge and perform subpixel
+			//  pre-stepping
+
+			dxdya = dxdy3;
+			dizdya = dxdy3 * dizdx + dizdy;
+			duizdya = dxdy3 * duizdx + duizdy;
+			dvizdya = dxdy3 * dvizdx + dvizdy;
+			dy = 1 - (y2 - y2i);
+			xa = x2 + dy * dxdya;
+			iza = iz2 + dy * dizdya;
+			uiza = uiz2 + dy * duizdya;
+			viza = viz2 + dy * dvizdya;
+
+			drawtpolyperspsubtriseg(y2i, y3i);
+		}
+	}
+}
+
+static void drawtpolyperspsubtriseg(int y1, int y2)
+{
+	unsigned char *scr;
+	int x1, x2;
+	float z, u, v, dx;
+	float iz, uiz, viz;
+
+	while (y1 < y2)		// Loop through all lines in the segment
+	{
+		x1 = xa;
+		x2 = xb;
+
+		// Perform subtexel pre-stepping on 1/Z, U/Z and V/Z
+
+		dx = 1 - (xa - x1);
+		iz = iza + dx * dizdx;
+		uiz = uiza + dx * duizdx;
+		viz = viza + dx * dvizdx;
+
+		scr = &video[y1 * XRES + x1];
+
+		while (x1++ < x2)	// Draw horizontal line
+		{
+			// Calculate U and V from 1/Z, U/Z and V/Z
+
+			z = 1 / iz;
+			u = uiz * z;
+			v = viz * z;
+
+			// Copy pixel from texture to screen
+
+			*(scr++) = texture[((((int) v) & 0xff) << 8) + (((int) u) & 0xff)];
+
+			// Step 1/Z, U/Z and V/Z horizontally
+
+			iz += dizdx;
+			uiz += duizdx;
+			viz += dvizdx;
+		}
+
+		// Step along both edges
+
+		xa += dxdya;
+		xb += dxdyb;
+		iza += dizdya;
+		uiza += duizdya;
+		viza += dvizdya;
+
+		y1++;
+	}
+}
+*/

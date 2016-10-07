@@ -207,6 +207,7 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 				ped = MAGIC_TOO_CLOSE_NUMBER;
 		}
 		pe=H/ped;
+
 		obj[i].vx=((xpp2*pe)>>12)+xg;
 		obj[i].vy=((ypp*pe)>>12)*asp+yg;
 	}

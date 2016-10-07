@@ -11,6 +11,7 @@
 #include <conio.h>
 #include <windows.h>
 #include "gfxlib.h"
+#include "tinyexpr.h"
 
 #ifdef GDI_OUTPUT
 #include "cmdfonts.h"
@@ -20,17 +21,19 @@
 // 1. Add forcecol for image operation (and tpoly? and 3d if textures?)
 // 2. Support v/V for gxy files/string
 // 3. Outlined poly (need new line routine + how specify color/char of line?)
-// 4. Code optimization: Re-use images used several times, same way as for objects
-// 5. Code optimization: Optimize texture transparency for tpoly/3d (currently fills/copies whole buffer for every polygon!)
+// 4. Scaling for image and/or block
+// 5. Code optimization: Re-use images used several times, same way as for objects
+// 6. Code optimization: Optimize texture transparency for tpoly/3d (currently fills/copies whole buffer for every polygon!)
 
 // For 3d:
 // 1. Add a real zbuffer
 // 2. Add second rotation (+third move?) after first rotation+second move? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
 // 3. If texture set and face-vertices=1, draw texture as image?
 // 4. Add perspective-correct texture mapping
-// 5: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
-// 6. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
-// 7. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
+// 5. Use part of current buffer as texture map (create texture map object in callback, nonstandard .obj extension)
+// 6: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
+// 7. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
+// 8. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
 
 // Unlikely/discarded:
 // 1. 3d: Flag to run operations given n times. Useful to gain speed for complex 3d objects (but where to *start* for e.g. rx,ry,rz?)
@@ -46,7 +49,7 @@ int XRES, YRES, FRAMESIZE;
 uchar *video;
 
 #define MAX_ERRS 64
-typedef enum {ERR_NOF_ARGS, ERR_IMAGE_LOAD, ERR_OBJECT_LOAD, ERR_PARSE, ERR_MEMORY, ERR_OPTYPE } ErrorType;
+typedef enum {ERR_NOF_ARGS, ERR_IMAGE_LOAD, ERR_OBJECT_LOAD, ERR_PARSE, ERR_MEMORY, ERR_OPTYPE, ERR_EXPRESSION } ErrorType;
 typedef enum {OP_POLY=0, OP_IPOLY=1, OP_GPOLY=2, OP_TPOLY=3, OP_IMAGE=4, OP_BOX=5, OP_FBOX=6, OP_LINE=7, OP_PIXEL=8, OP_CIRCLE=9, OP_FCIRCLE=10, OP_ELLIPSE=11, OP_FELLIPSE=12, OP_TEXT=13, OP_3D=14, OP_BLOCK=15, OP_INSERT=16, OP_UNKNOWN=17 } OperationType;
 typedef struct {
 	ErrorType errType[MAX_ERRS];
@@ -248,6 +251,10 @@ void parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bg
 }
 
 
+ErrorHandler *g_errH;
+int g_opCount;
+void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras);
+
 int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 	int res = 0;
 	if (!bmap || !fname) return res;
@@ -259,6 +266,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		nofargs = sscanf(fname, "%250s %2s", inpname, transp);
 		if (nofargs > 1) parseInput(transp, transp, transp, &transpVal, &dum1, &dum2, NULL, NULL);
 		res = PCXload(bmap, inpname);
+
 		bmap->transpVal = transpVal;
 	} else if (strstr(fname, "cmdpalette ")) {
 		char s_fgcols[34][64], s_bgcols[34][4], s_dchars[34][4];
@@ -318,6 +326,8 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1);
 		bmap->transpVal = transpVal;
 	}
+	
+	if (!res) reportFileError(g_errH, OP_3D, ERR_IMAGE_LOAD, g_opCount, fname);
 	return res;
 }
 
@@ -647,6 +657,7 @@ void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 			case ERR_PARSE: sprintf(tstring, "#ERR %d: (op %d) '%s' failed to parse/process '%s'", i+1, errH->index[i]+1, opNames[errH->opType[i]], errH->extras[i]); break;
 			case ERR_MEMORY: sprintf(tstring, "#ERR %d: (op %d) '%s' memory allocation error", i+1, errH->index[i]+1, opNames[errH->opType[i]]); break;
 			case ERR_OPTYPE: sprintf(tstring, "#ERR %d: (op %d) '%s' unknown operation", i+1, errH->index[i]+1, errH->extras[i]); break;
+			case ERR_EXPRESSION: sprintf(tstring, "#ERR %d: (op %d) '%s' parse error in %s", i+1, errH->index[i]+1, opNames[errH->opType[i]], errH->extras[i]); break;
 			default: sprintf(tstring, "#ERR %d: (op %d) '%s' unknown error", i+1, errH->index[i]+1, opNames[errH->opType[i]]);
 		}
 		displayMessage(tstring, 0, y, 0xa, 0x2, videoCol, videoChar);
@@ -678,15 +689,95 @@ void reportArgError(ErrorHandler *errHandler, OperationType opType, int index) {
 	reportError(errHandler, opType, ERR_NOF_ARGS, index, NULL);
 }
 
+double my_random(void) {
+	static int setSeed = 1;
+	if (setSeed) { setSeed = 0; srand(GetTickCount()); }
+	return  (double)(rand() % 65536) / 65535.0;
+}
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar) {
+double my_eq(double n, double comp) {
+	return (double)(n == comp);
+}
+
+double my_neq(double n, double comp) {
+	return (double)(n != comp);
+}
+
+double my_gtr(double n, double comp) {
+	return (double)(n > comp);
+}
+
+double my_lss(double n, double comp) {
+	return (double)(n < comp);
+}
+
+static uchar *activeChars;
+static uchar *activeCols;
+static int sw, sh;
+static double store[5];
+
+double my_char(double x, double y) {
+	if (x < 0 || y < 0 || x >= sw || y >= sh)
+		return 0;
+	return activeChars[(int)y * sw + (int)x];
+}
+
+double my_col(double x, double y) {
+	if (x < 0 || y < 0 || x >= sw || y >= sh)
+		return 0;
+	return activeCols[(int)y * sw + (int)x];
+}
+
+double my_fgcol(double x, double y) {
+	if (x < 0 || y < 0 || x >= sw || y >= sh)
+		return 0;
+	return (activeCols[(int)y * sw + (int)x]) & 0xff;
+}
+
+double my_bgcol(double x, double y) {
+	if (x < 0 || y < 0 || x >= sw || y >= sh)
+		return 0;
+	return (activeCols[(int)y * sw + (int)x]) >> 4;
+}
+
+double my_store(double val, double index) {
+	int i = (int)index;
+	if (i < 0 || i > 4)
+		return 0;
+	store[i] = val;
+	return 0;
+}
+
+double my_or(double v1, double v2) {
+	return ((int)v1) | ((int)v2);
+}
+double my_and(double v1, double v2) {
+	return ((int)v1) & ((int)v2);
+}
+double my_xor(double v1, double v2) {
+	return ((int)v1) ^ ((int)v2);
+}
+double my_neg(double v1) {
+	return ~((int)v1);
+}
+double my_shl(double v1, double v2) {
+	return ((int)v1) << ((int)v2);
+}
+double my_shr(double v1, double v2) {
+	return ((int)v1) >> ((int)v2);
+}
+
+
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar) {
 	uchar *blockCol, *blockChar;
-	int i=0,j,k,k2, mode = 0, moveChar = 32, nofT = 0, n;
+	int i,j,k,k2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0;
 	int inFg, inBg, inChar;
 	int outFg, outBg, outChar;
 	int *m_inFg = NULL, *m_inBg = NULL, *m_inChar = NULL;
 	int *m_outFg = NULL, *m_outBg = NULL, *m_outChar = NULL;
+
+	for (i=0; i < 5; i++) store[i] = 0;
 	
 	if (s_mode) {
 		if (s_mode[i]=='1') {
@@ -703,8 +794,9 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		}
 	}
 		
-	w+=1; h+=1;
-	
+//	w+=1; h+=1; // why was this here? Can't remember...
+	sw = w, sh = h;
+		
 	if (x >= XRES || nx >= XRES) return 0;
 	if (x+w < 0 || nx+w < 0) return 0;
 	if (y >= YRES || ny >= YRES) return 0;
@@ -720,7 +812,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	blockChar = (uchar *)malloc(w*h*sizeof(uchar));
 	if (!blockCol || !blockChar) { if (blockCol) free(blockCol); if (blockChar) free(blockChar); return 0; }
 
-	if (transf) {
+	if (strlen(transf) >= 9) {
 		nofT = (strlen(transf)+1)/10;
 		if (nofT > 0) {
 			m_inFg = (int *)malloc(nofT*sizeof(int));
@@ -759,6 +851,108 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		fbox(x, y, w-1, h-1, (moveBg << 4) | moveFg);
 		video = videoChar;
 		fbox(x, y, w-1, h-1, moveChar);
+	}
+
+	if (strlen(colorExpr) > 1) {
+		int err, r;
+		double ex, ey;
+		uchar *blockCol2, *blockChar2;
+	 
+		activeChars = blockChar;
+		activeCols = blockCol;
+			
+		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"random", my_random, TE_FUNCTION0}
+		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
+		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
+		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
+		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
+		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}
+		};
+		te_expr *n = te_compile(colorExpr, vars, 23, &err);
+
+		if (n) {
+			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
+			blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
+			activeChars = blockChar2;
+			activeCols = blockCol2;
+
+			if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); return 0; }
+			memcpy(blockCol2, blockCol, w*h*sizeof(uchar));
+			memcpy(blockChar2, blockChar, w*h*sizeof(uchar));
+			
+			for (i = 0; i < h; i++) {
+				k = i*w;
+				for (j = 0; j < w; j++) {
+					ex = j; ey = i;
+					r = (int) te_eval(n);
+					// printf("Result:\n\t%f\n", r);
+					blockCol[k+j] = r;
+				}
+			}
+			te_free(n);
+			free(blockChar2); free(blockCol2);
+		} else {
+			char errS[64];
+			sprintf(errS, "colorExpr near character %d", err);
+			reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+		}
+	}
+
+	if (strlen(xExpr) > 1 && strlen(yExpr) > 1) {
+		int err, errX, nx, ny;
+		double ex, ey;
+		uchar *blockCol2, *blockChar2;
+		
+		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"random", my_random, TE_FUNCTION0}
+		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
+		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
+		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
+		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
+		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}
+		};
+		te_expr *n, *n2;
+		n = te_compile(xExpr, vars, 23, &err); errX = err;
+		n2 = te_compile(yExpr, vars, 23, &err);
+		
+		if (n && n2) {
+			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
+			blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
+			activeChars = blockChar2;
+			activeCols = blockCol2;
+
+			if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); te_free(n2); return 0; }
+			memcpy(blockCol2, blockCol, w*h*sizeof(uchar));
+			memcpy(blockChar2, blockChar, w*h*sizeof(uchar));
+
+			for (i = 0; i < h; i++) {
+				k = i*w;
+				for (j = 0; j < w; j++) {
+					ex = j; ey = i;
+					nx = (int) te_eval(n);
+					ny = (int) te_eval(n2);
+					// printf("Result:\n\t%f\n", r);
+//					if (nx >= 0 && nx < w && ny >=0 && ny < h && blockChar2[k+j] != 0) {
+					if (nx >= 0 && nx < w && ny >=0 && ny < h) {
+						blockCol[ny*w+nx] = blockCol2[k+j];
+						blockChar[ny*w+nx] = blockChar2[k+j];
+					}
+				}
+			}
+		} else {
+			char errS[64];
+			if (!n) {
+				sprintf(errS, "xExpr near character %d", errX);
+				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+			}
+			if (!n2) {
+				sprintf(errS, "yExpr near character %d", err);
+				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+			}
+		}
+
+		if (n) te_free(n);
+		if (n2) te_free(n2);
+		free(blockChar2); free(blockCol2);
 	}
 	
 	if (nofT < 1) {
@@ -896,7 +1090,7 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nDrawing operations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nDrawing operations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform] [colExpr] [xEx yEx]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
 		return 0;
 	}
 
@@ -1244,9 +1438,11 @@ int main(int argc, char *argv[]) {
 	 }
 	 else if (strstr(pch,"line ") == pch) {
 		int x1,y1,x2,y2;
+		int xPoints[9], yPoints[9];
 		pch = pch + 5;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &x2, &y2);
-
+		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &x2, &y2,
+																												&xPoints[1], &yPoints[1], &xPoints[2], &yPoints[2], &xPoints[3], &yPoints[3],
+																												&xPoints[4], &yPoints[4], &xPoints[5], &yPoints[5], &xPoints[6], &yPoints[6]);
 		if (nof == 7) {
 			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 			video = videoCol;
@@ -1254,7 +1450,18 @@ int main(int argc, char *argv[]) {
 			video = videoChar;
 			if (bWriteChars) line(x1, y1, x2, y2, dchar, 1);
 		} else
-			reportArgError(&errH, OP_LINE, opCount);
+			if (nof >= 9) {
+				int nofP = 2 + (nof-7)/2;
+				xPoints[0] = x1; yPoints[0] = y1;
+				xPoints[nofP-1] = x2; yPoints[nofP-1] = y2;
+	
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) bezier(nofP-1, xPoints, yPoints, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) bezier(nofP-1, xPoints, yPoints, dchar);
+			} else 
+				reportArgError(&errH, OP_LINE, opCount);
 	 }
 	 else if (strstr(pch,"pixel ") == pch) {
 		int x1,y1;
@@ -1386,19 +1593,17 @@ int main(int argc, char *argv[]) {
 	 }
 	 else if (strstr(pch,"block ") == pch) {
 		int x1,y1,w,h, nx,ny;
-		char transf[2510], mode[8];
+		char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0};
 
 		pch = pch + 6;
-		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %2500s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, transf);
+		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %2500s %1022s %1022s %1022s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, transf, colorExpr, xExpr, yExpr);
 		
 		transpval = -1;
 		if (nof >= 7) {
 			if (nof > 7)
+				g_errH = &errH; g_opCount = opCount;
 				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-			if (nof > 8)
-				transformBlock(mode, x1, y1, w, h, nx, ny, transf, XRES, YRES, videoCol, videoChar, transpval);
-			else
-				transformBlock(mode, x1, y1, w, h, nx, ny, NULL, XRES, YRES, videoCol, videoChar, transpval);
+				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval);
 		} else
 			reportArgError(&errH, OP_BLOCK, opCount);
 	 }
@@ -1443,6 +1648,8 @@ int main(int argc, char *argv[]) {
 					obj3 = objs[i]; break;
 				}
 			}
+
+			g_errH = &errH; g_opCount = opCount;
 
 			if (!obj3) {
 				if (strstr(fname,".obj"))

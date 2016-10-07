@@ -41,7 +41,7 @@ set /A CNT+=1
 if not defined STOP goto LOOP
 
 endlocal
-del /Q cube-t.obj > nul 2>nul
+rem del /Q cube-t.obj > nul 2>nul
 mode 80,50 & cls
 goto :eof
 

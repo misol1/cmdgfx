@@ -19,14 +19,14 @@ tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2
 image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
-line     fgcol bgcol char x1,y1,x2,y2
+line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
 pixel    fgcol bgcol char x,y
 circle   fgcol bgcol char x,y,r
 fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform]
+block    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform] [colExpr] [xExpr yExpr]
 3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
          face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect 
          fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
