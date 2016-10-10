@@ -54,6 +54,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	if !STARTCNT! lss 0 if !DIV! == 1 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" w!DELAY!kfa:0,0,%W%,%H% !PALETTE!
  	if !STARTCNT! lss 0 if !DIV! == 2 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" w!DELAY!kfa:0,0,%W%,%H% !PALETTE!
+	set STR=
 
 	if !STARTCNT! lss 0 set KEY=!errorlevel!
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
