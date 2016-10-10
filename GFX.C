@@ -417,6 +417,9 @@ void ellipse(int xc, int yc, int rx, int ry, uchar col) {
 	int D1,D2;
 	int y1,y2;
 
+	if(rx < 0) rx=-rx;
+	if(ry < 0) ry=-ry;
+
 	T1=rx*rx;
 	T2=T1<<1;
 	T3=T1<<2;
@@ -432,8 +435,8 @@ void ellipse(int xc, int yc, int rx, int ry, uchar col) {
 
 	x=rx; y=0;
 	while (D2<0) {
-		y1=(vid+y>=video && vid+y<v1);
-		y2=(vid-y>=video && vid-y<v1);
+		y1=(vid+y-xc>=video && vid+y-xc<v1);
+		y2=(vid-y-xc>=video && vid-y-xc<v1);
 		if (x+xc>=0 && x+xc<XRES) {
 			if (y1) vid[x+y]=col;
 			if (y2) vid[x-y]=col;
@@ -456,8 +459,8 @@ void ellipse(int xc, int yc, int rx, int ry, uchar col) {
 		}
 	}
 	repeat {
-		y1=(vid+y>=video && vid+y<v1);
-		y2=(vid-y>=video && vid-y<v1);
+		y1=(vid+y-xc>=video && vid+y-xc<v1);
+		y2=(vid-y-xc>=video && vid-y-xc<v1);
 		if (x+xc>=0 && x+xc<XRES) {
 			if (y1) vid[x+y]=col;
 			if (y2) vid[x-y]=col;
@@ -485,6 +488,9 @@ void filled_ellipse(int xc, int yc, int rx, int ry, uchar col) {
 	int T1,T2,T3,T4,T5,T6,T7,T8,T9;
 	int D1,D2;
 
+	if(rx < 0) rx=-rx;
+	if(ry < 0) ry=-ry;
+	
 	T1=rx*rx;
 	T2=T1<<1;
 	T3=T1<<2;
@@ -505,10 +511,10 @@ void filled_ellipse(int xc, int yc, int rx, int ry, uchar col) {
 		if (bx<0) { if (bx+xx<0) goto stop1; else xx+=bx, dx=xc;}
 		v1=vid-dx-y;
 		if (v1>=video && v1<v2)
-		memset(v1, col, xx);
+			memset(v1, col, xx);
 		v1=vid-dx+y;
 		if (v1>=video && v1<v2)
-		memset(v1, col, xx);
+			memset(v1, col, xx);
 
 stop1:
 		y+=XRES;
@@ -530,10 +536,10 @@ stop1:
 		if (bx<0) { if (bx+xx<0) goto stop2; else xx+=bx, dx=xc;}
 		v1=vid-dx-y;
 		if (v1>=video && v1<v2)
-		memset(v1, col, xx);
+			memset(v1, col, xx);
 		v1=vid-dx+y;
 		if (v1>=video && v1<v2)
-		memset(v1, col, xx);
+			memset(v1, col, xx);
 
 stop2:
 		x--;
@@ -544,7 +550,7 @@ stop2:
 			D2+=T9+T5-T8;
 		}
 		else
-		D2+=T5-T8;
+			D2+=T5-T8;
 	} until (x<0);
 }
 

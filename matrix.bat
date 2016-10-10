@@ -20,7 +20,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 16,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel 2 0 !C1!!C2! !X!,80"
 	for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
 
-	cmdgfx "!OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 & block 0 %W%,2,%W%,75 0,0 00" pk !P%%c!
+	cmdgfx "!OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 & block 0 %W%,2,%W%,75 0,0 00" pk !P%%c!
 	set KEY=!errorlevel!
 	if !KEY! == 32 set /A COL+=1&if !COL! gtr 4 set COL=0
 	if !KEY! == 112 cmdwiz getch

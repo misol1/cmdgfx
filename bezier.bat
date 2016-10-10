@@ -43,7 +43,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (1,1,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"
 	
 	if !DIV! == 1 cmdgfx "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" kf0
-	if !DIV! == 2 cmdgfx "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 - - %SXMID%-x-1 y+0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 - - x+0 %SYMID%-y-1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 - - %SXMID%-x-1 %SYMID%-y-1" kf0
+	if !DIV! == 2 cmdgfx "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" kf0
 		
 	set KEY=!errorlevel!
 	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 16 + 2") & 	for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  

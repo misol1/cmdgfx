@@ -14,16 +14,16 @@ set HELP=%HELPT%
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 	rem Use no storage, a bit slower
-	rem cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 - (1-(lss(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),2)+gtr(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),3)))*col(x,y)+eq(col(x,y)*10+col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),3) & %HELP:~1,-1%" kpw!DELAY!
+	rem cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 - 0 0 (1-(lss(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),2)+gtr(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),3)))*col(x,y)+eq(col(x,y)*10+col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),3) & %HELP:~1,-1%" kpw!DELAY!
 
 	rem With storage, NOTE: "store" needs to be last on the line! (to make tinyexpr evaluate it before other expressions)
-	rem cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 - (1-(lss(s0,2)+gtr(s0,3)))*col(x,y)+eq(col(x,y)*10+s0,3)+store(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),0) & %HELP:~1,-1%" kpw!DELAY!
+	rem cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 0 0 - (1-(lss(s0,2)+gtr(s0,3)))*col(x,y)+eq(col(x,y)*10+s0,3)+store(col(x-1,y-1)+col(x,y-1)+col(x+1,y-1)+col(x-1,y)+col(x+1,y)+col(x-1,y+1)+col(x,y+1)+col(x+1,y+1),0) & %HELP:~1,-1%" kpw!DELAY!
 
 	rem As above, but all colors ok, not just color 1
-	if !MODE!==0 cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 - ((1-(lss(s0,2)+gtr(s0,3)))*gtr(col(x,y),0)+eq(col(x,y)*10+s0,3)+store(gtr(col(x-1,y-1),0)+gtr(col(x,y-1),0)+gtr(col(x+1,y-1),0)+gtr(col(x-1,y),0)+gtr(col(x+1,y),0)+gtr(col(x-1,y+1),0)+gtr(col(x,y+1),0)+gtr(col(x+1,y+1),0),0))*!COL! !HELP:~1,-1!" kpw!DELAY!
+	if !MODE!==0 cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 0 0 - ((1-(lss(s0,2)+gtr(s0,3)))*gtr(col(x,y),0)+eq(col(x,y)*10+s0,3)+store(gtr(col(x-1,y-1),0)+gtr(col(x,y-1),0)+gtr(col(x+1,y-1),0)+gtr(col(x-1,y),0)+gtr(col(x+1,y),0)+gtr(col(x-1,y+1),0)+gtr(col(x,y+1),0)+gtr(col(x+1,y+1),0),0))*!COL! !HELP:~1,-1!" kpw!DELAY!
 
 	rem As above, but with color shifts
-	if !MODE! == 1 cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 - ((1-(lss(s0,2)+gtr(s0,3)))*gtr(col(x,y),0)+eq(col(x,y)*10+s0,3)+store(gtr(col(x-1,y-1),0)+gtr(col(x,y-1),0)+gtr(col(x+1,y-1),0)+gtr(col(x-1,y),0)+gtr(col(x+1,y),0)+gtr(col(x-1,y+1),0)+gtr(col(x,y+1),0)+gtr(col(x+1,y+1),0),0))*s1+store(col(x,y)+1,1) !HELP:~1,-1!" kpw!DELAY!
+	if !MODE! == 1 cmdgfx "block 0 0,0,%W%,!HM! 0,0 -1 0 0 - ((1-(lss(s0,2)+gtr(s0,3)))*gtr(col(x,y),0)+eq(col(x,y)*10+s0,3)+store(gtr(col(x-1,y-1),0)+gtr(col(x,y-1),0)+gtr(col(x+1,y-1),0)+gtr(col(x-1,y),0)+gtr(col(x+1,y),0)+gtr(col(x-1,y+1),0)+gtr(col(x,y+1),0)+gtr(col(x+1,y+1),0),0))*s1+store(col(x,y)+1,1) !HELP:~1,-1!" kpw!DELAY!
 	
 	set KEY=!errorlevel!
 	set /a "XP=!RANDOM! %% %W%,YP=!RANDOM! %% !HM!,XW=!RANDOM! %% 6+2, YH=!RANDOM! %% 10+2" & set /a "XP2=!XP!+!RANDOM! %% 90+20, YP2=!YP!+!RANDOM! %% 60+20, XW2=!RANDOM! %% 20+10, YH2=!RANDOM! %% 20+10"

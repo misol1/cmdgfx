@@ -36,7 +36,7 @@ set /a "MX8=-3, MY8=-8, MX9=-6, MY9=-6, MX10=-8, MY10=-3, MX11=-8, MY11=0, MX12=
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
-	cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 !PAL%%c!" Mp
+	cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" Mp
 	set MR=!errorlevel!
 	set DRAW=""
 

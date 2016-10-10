@@ -742,9 +742,8 @@ double my_bgcol(double x, double y) {
 
 double my_store(double val, double index) {
 	int i = (int)index;
-	if (i < 0 || i > 4)
-		return 0;
-	store[i] = val;
+	if (i >= 0 && i < 5)
+		store[i] = val;
 	return 0;
 }
 
@@ -768,9 +767,9 @@ double my_shr(double v1, double v2) {
 }
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar) {
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY) {
 	uchar *blockCol, *blockChar;
-	int i,j,k,k2, mode = 0, moveChar = 32, nofT = 0, n;
+	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0;
 	int inFg, inBg, inChar;
 	int outFg, outBg, outChar;
@@ -794,7 +793,6 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		}
 	}
 		
-//	w+=1; h+=1; // why was this here? Can't remember...
 	sw = w, sh = h;
 		
 	if (x >= XRES || nx >= XRES) return 0;
@@ -954,15 +952,17 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		if (n2) te_free(n2);
 		free(blockChar2); free(blockCol2);
 	}
-	
+
 	if (nofT < 1) {
 		for (i = 0; i < h; i++) {
-			k = i*w; k2=ny*XRES+i*XRES+nx;
+			i2 = i; if (bFlipY) i2 = h-1-i;
+			k = i2*w; k2=ny*XRES+i*XRES+nx;
 			if (ny+i >= 0 && ny+i < YRES) {
 				for (j = 0; j < w; j++) {
+					j2 = j; if (bFlipX) j2 = w-1-j;
 					if (nx+j >= 0 && nx+j < XRES && blockChar[k+j] != transpchar) {
-						videoCol[k2+j] = blockCol[k+j];
-						videoChar[k2+j] = blockChar[k+j];
+						videoCol[k2+j] = blockCol[k+j2];
+						videoChar[k2+j] = blockChar[k+j2];
 					}
 				}
 			}
@@ -970,12 +970,14 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	} else {
 
 		for (i = 0; i < h; i++) {
-			k = i*w; k2=ny*XRES+i*XRES+nx;
+			i2 = i; if (bFlipY) i2 = h-1-i;
+			k = i2*w; k2=ny*XRES+i*XRES+nx;
 			if (ny+i >= 0 && ny+i < YRES) {
 				for (j = 0; j < w; j++) {
+					j2 = j; if (bFlipX) j2 = w-1-j;
 					if (nx+j >= 0 && nx+j < XRES) {
-						inFg = blockCol[k+j]; inBg = outBg = inFg>>4; inFg &= 0xf; outFg = inFg;
-						inChar = outChar = blockChar[k+j];
+						inFg = blockCol[k+j2]; inBg = outBg = inFg>>4; inFg &= 0xf; outFg = inFg;
+						inChar = outChar = blockChar[k+j2];
 
 						for (n = 0; n < nofT; n++) {
 							if ((inFg == m_inFg[n] || m_inFg[n] == -1) && (inBg == m_inBg[n] || m_inBg[n] == -1) && (inChar == m_inChar[n] || m_inChar[n] == -1)) {
@@ -995,7 +997,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			}
 		}
 	}
-
+	
 	free(blockCol); free(blockChar);
 	if (m_inFg) free(m_inFg); if (m_inBg) free(m_inBg); if (m_inChar) free(m_inChar);
 	if (m_outFg) free(m_outFg); if (m_outBg) free(m_outBg); if (m_outChar) free(m_outChar);
@@ -1026,6 +1028,7 @@ int main(int argc, char *argv[]) {
 	int bSuppressErrors = 0, bWaitAfterErrors = 0;
 	int bWait = 0, waitTime = 0;
 	int bWriteChars, bWriteCols, projectionDepth = 500;
+	int orgW, orgH;
 #ifdef GDI_OUTPUT
 	int fontIndex = 6;
 	uchar fgPalette[16][3] = { {0,0,0}, {128,0,0}, {0,128,0}, {128,128,0}, {0,0,128}, {128,0,128}, {0,128,128}, {192,192,192}, {128,128,128}, {255,0,0}, {0,255,0}, {255,255,0}, {0,0,255}, {255,0,255}, {0,255,255}, {255,255,255} };
@@ -1053,8 +1056,8 @@ int main(int argc, char *argv[]) {
 		objNames[i] = NULL;
 	}
 
-	txres = getConsoleDim(0);
-	tyres = getConsoleDim(1);
+	orgW = txres = getConsoleDim(0);
+	orgH = tyres = getConsoleDim(1);
 
 	errH.errCnt = 0;
 
@@ -1090,7 +1093,7 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nDrawing operations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [transform] [colExpr] [xEx yEx]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
 		return 0;
 	}
 
@@ -1140,9 +1143,12 @@ int main(int argc, char *argv[]) {
 				case 'p': {
 					if (!old) old = readScreenBlock();
 					if (old) {
-						for (j = 0; j < XRES * YRES; j++) {
-							videoCol[j] = old[j].Attributes;
-							videoChar[j] = old[j].Char.AsciiChar;
+						int j2;
+						for (j2 = 0; j2 < orgH; j2++) {
+							for (j = 0; j < orgW; j++) {
+								videoCol[j+j2*XRES] = old[j+j2*orgW].Attributes;
+								videoChar[j+j2*XRES] = old[j+j2*orgW].Char.AsciiChar;
+							}
 						}
 						free(old);
 					}
@@ -1592,18 +1598,17 @@ int main(int argc, char *argv[]) {
 			reportArgError(&errH, OP_FBOX, opCount);
 	 }
 	 else if (strstr(pch,"block ") == pch) {
-		int x1,y1,w,h, nx,ny;
+		int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
 		char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0};
 
 		pch = pch + 6;
-		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %2500s %1022s %1022s %1022s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, transf, colorExpr, xExpr, yExpr);
+		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr);
 		
 		transpval = -1;
 		if (nof >= 7) {
-			if (nof > 7)
-				g_errH = &errH; g_opCount = opCount;
-				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval);
+			g_errH = &errH; g_opCount = opCount;
+			parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+			transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip);
 		} else
 			reportArgError(&errH, OP_BLOCK, opCount);
 	 }

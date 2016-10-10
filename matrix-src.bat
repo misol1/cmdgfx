@@ -38,7 +38,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 16,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel f 0 !C1!!C2! !X!,80"
   for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
 
-  cmdgfx "!OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & image matrix-src-copy.bat ? ? 0 -1 0,0 & block 0 %W%,80,%W%,75 0,76 -1 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0" pk
+  cmdgfx "!OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & image matrix-src-copy.bat ? ? 0 -1 0,0 & block 0 %W%,80,%W%,75 0,76 -1 0 0 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 0 0 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0" pk
   
   set KEY=!errorlevel!
 	

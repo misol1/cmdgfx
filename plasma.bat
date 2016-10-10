@@ -15,11 +15,11 @@ set /a MODE=0, COLCNT=0, COLCNT2=0
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-	if !MODE! == 0 set /a COLCNT+=2,COLCNT2+=9 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 %STREAM% sin((x+!COLCNT!/1)/110)*13*sin((y+!COLCNT2!/5)/65)*8" kf6W25
-   if !MODE! == 1 set /a COLCNT+=4,COLCNT2+=12 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 %STREAM% sin((x+!COLCNT!/4)/110)*8*sin((y+!COLCNT2!/5)/65)*8" kf6W25
-   if !MODE! == 2 set /a COLCNT+=1,COLCNT2+=3 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 %STREAM% sin((x+!COLCNT!)/80)*128+cos((y+!COLCNT2!/1.5)/35)*68" kf6W25
-   if !MODE! == 3 set /a COLCNT+=1,COLCNT2+=3 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 %STREAM% sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98" kf6W25
-	if !MODE! == 4 set /a COLCNT+=2,COLCNT2+=9 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 %STREAM% random()*2+cos(x/60*y/85+!COLCNT!/19)*190" kf6W25
+	if !MODE! == 0 set /a COLCNT+=2,COLCNT2+=9 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 0 0 %STREAM% sin((x+!COLCNT!/1)/110)*13*sin((y+!COLCNT2!/5)/65)*8" kf6W25
+   if !MODE! == 1 set /a COLCNT+=4,COLCNT2+=12 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 0 0 %STREAM% sin((x+!COLCNT!/4)/110)*8*sin((y+!COLCNT2!/5)/65)*8" kf6W25
+   if !MODE! == 2 set /a COLCNT+=1,COLCNT2+=3 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 0 0 %STREAM% sin((x+!COLCNT!)/80)*128+cos((y+!COLCNT2!/1.5)/35)*68" kf6W25
+   if !MODE! == 3 set /a COLCNT+=1,COLCNT2+=3 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 0 0 %STREAM% sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98" kf6W25
+	if !MODE! == 4 set /a COLCNT+=2,COLCNT2+=9 & cmdgfx_gdi "block 0 0,0,%W%,75 0,0 -1 0 0 %STREAM% random()*2+cos(x/60*y/85+!COLCNT!/19)*190" kf6W25
 
 	set KEY=!errorlevel!
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 4 set MODE=0

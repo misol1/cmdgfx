@@ -14,6 +14,7 @@ set STREAM="??90=8?--,??80=7?--,??70=6?--,??60=5?--,??50=4?--,??40=3?--,??30=2?-
 set TRANSF="8???=fb45,7???=fb38,6???=b906,5???=b921,4???=9131,3???=91e6,2???=10c9,1???=10c3,0???=1000"
 
 set /a MODE=0, FINER=1, SCNT=0, V=1, BASEROT=10
+set /a BX=%W%+40,BW=%WW%-40*2 & set /a BM=!BW!/2
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -28,7 +29,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
    if !MODE!==2 set STR=""& (for /L %%a in (1,1,7) do set /a "PX=%W%+!RANDOM! %% %WW%, PY=%HMID%+!RANDOM! %% %H%" & set /a "PX2=!PX!+!RANDOM! %% 10" & set /a "PX3=!PX2!+!RANDOM! %% 10" & set /a "PX4=!PX3!+!RANDOM! %% 10" & set /a "PX5=!PX4!+!RANDOM! %% 10" & set STR="!STR:~1,-1! & line 5 0 50 !PX!,!PY!,!PX2!,!PY! & line 7 0 70 !PX2!,!PY!,!PX3!,!PY! & line 8 0 80 !PX3!,!PY!,!PX4!,!PY! & line 6 0 60 !PX4!,!PY!,!PX5!,!PY!")
 
-	cmdgfx "!STR:~1,-1! & block 0 %W%,0,%WW%,%HH% %W%,0 -1 %STREAM% - (%W%+((x-%W%)*cos(!SCNT!/200)-(y-%H%)*sin(!SCNT!/200)))*!V! (%H%+((x-%W%)*sin(!SCNT!/200)+(y-%H%)*cos(!SCNT!/200)))*!V! & block 0 %WWX%,%HMID%,%W%,%H% 0,0 -1 %TRANSF% & fellipse 0 0 00 %CMX%,%CMY%,7,5" pk
+	cmdgfx "!STR:~1,-1! & block 0 %BX%,0,%BW%,%HH% %BX%,0 -1 0 0 %STREAM% - (%BM%+((x-%BM%)*cos(!SCNT!/200)-(y-%H%)*sin(!SCNT!/200)))*!V! (%H%+((x-%BM%)*sin(!SCNT!/200)+(y-%H%)*cos(!SCNT!/200)))*!V! & block 0 %WWX%,%HMID%,%W%,%H% 0,0 -1 0 0 %TRANSF% & fellipse 0 0 00 %CMX%,%CMY%,7,5" pk
 	
 	set KEY=!errorlevel!
 	if !KEY! == 32 cmdgfx "fbox 0 0 00 0,0,%WWW%,%HH%" & set /a MODE+=1&if !MODE! gtr 2 set MODE=0
