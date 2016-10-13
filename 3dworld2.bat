@@ -10,7 +10,7 @@ for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I n
 cmdgfx.exe "text 8 0 0 Generating_world...\n\n\n___(H_for_help) 82,50"
 
 set /a XMID=%W%/2, YMID=%H%/2-4
-set /a DIST=0, DRAWMODE=0, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
+set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
 set ASPECT=1.13333
 set /a RX=0, RY=720, RZ=0
 
@@ -105,7 +105,7 @@ cmdwiz gettime&set ORGT=!errorlevel!
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not defined STOP (
 	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+146, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
 
-	cmdgfx!RENDERER! "%BKSTR:~1,-1% & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% %GROUNDCOLS% & 3d %FN% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" kf0
+	cmdgfx!RENDERER! "%BKSTR:~1,-1% & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,300,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" kf0Z300
 	set KEY=!ERRORLEVEL!
 
 	if !KEY! == 331 set /A RY+=8&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
@@ -125,7 +125,9 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 	if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set HELP=!HELPT!)&(if !HLP!==0 set HELP=)
 
 	if !KEY! == 114 set /A REND=1-!REND! & (if !REND!==0 set RENDERER=_gdi)&(if !REND!==1 set RENDERER=)
-
+				
+	if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
+				
 	if !KEY! == 32 set /a YMID=%H%/2-4 & set TY=0
 	if !KEY! == 27 set STOP=1
 )
@@ -153,7 +155,7 @@ set TTZ=%TZ%
 set TTX=%TX%
 set /A ZMOD=%MULVAL% & if !TTZ! lss 0 set /A ZMOD=-%MULVAL%
 set /A XMOD=%MULVAL% & if !TTX! lss 0 set /A XMOD=-%MULVAL%
-if %TY% == 0 for /L %%a in (1,1,6) do set /A TTZ+=%AZ%*%1,TTX+=%AX%*%1 & set /A XP=(!TTX!+%XMOD%)/(%MULVAL%*2)+%SLOTS%/2, ZP=(%YSLOTS%)/2-(!TTZ!+%ZMOD%)/(%MULVAL%*2) & if !ZP! geq 0 if !XP! geq 0 if !ZP! lss %YSLOTS% if !XP! lss %SLOTS% for %%x in (!XP!) do for %%z in (!ZP!) do set SS=!WRLD%%z! & set S=!SS:~%%x,1!& if not "!S!"=="-" if not "!S!"=="0" if not "!S!"=="o" goto :eof
+if %TY% == 0 for /L %%a in (1,1,4) do set /A TTZ+=%AZ%*%1,TTX+=%AX%*%1 & set /A XP=(!TTX!+%XMOD%)/(%MULVAL%*2)+%SLOTS%/2, ZP=(%YSLOTS%)/2-(!TTZ!+%ZMOD%)/(%MULVAL%*2) & if !ZP! geq 0 if !XP! geq 0 if !ZP! lss %YSLOTS% if !XP! lss %SLOTS% for %%x in (!XP!) do for %%z in (!ZP!) do set SS=!WRLD%%z! & set S=!SS:~%%x,1!& if not "!S!"=="-" if not "!S!"=="0" if not "!S!"=="o" goto :eof
 ::gotoxy 1 1 "!S!\K" 9 0 & 
 
 ::gotoxy 0 0&for /L %%a in (1,1,6) do set /A TTZ+=%AZ%*%1,TTX+=%AX%*%1 & set /A XP=(!TTX!+%XMOD%)/(%MULVAL%*2)+%SLOTS%/2 & set /A ZP=%YSLOTS%/2-(!TTZ!+!ZMOD!)/(%MULVAL%*2) & for %%x in (!XP!) do for %%z in (!ZP!) do set SS=!WRLD%%z! & set S=!SS:~%%x,1! & set /A XPP=!XP!+1,ZPP=!ZP!+1&gotoxy k k " !XPP! !ZPP! !S! \n" f 0 c

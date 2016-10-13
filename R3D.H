@@ -8,6 +8,8 @@
 #include "math.h"
 #include "bmap.h"
 
+#define MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION 100
+
 typedef struct point3d {
 	int x,y,z;
 	int vx,vy,vz;

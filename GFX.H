@@ -43,7 +43,7 @@ int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal);
 int scanPoly(intVector p[],int points, uchar col, uchar bitOp);
 int scanConvex(intVector vv[], int points, int clipedges[], uchar col);
 int scanConvex_goraud(intVector vv[], int points, int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ);
-int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal);
+int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal, int bPerspectiveCorrected);
 void polyLine(intVector v[], int points, uchar col, uchar connect, int clip);
 void circle(int x, int y, int radius, uchar col);
 void ellipse(int xc, int yc, int rx, int ry, uchar col);
@@ -57,21 +57,5 @@ void hline(int x1, int x2, int y, uchar col);
 int line_clip(int *x1, int *y1, int *x2, int *y2);
 void setpixel(int x, int y, unsigned char col);
 void bezier(long n, int *xPoints, int *yPoints, uchar col);
-
-/*
-typedef struct
-{
-	float x1, y1, z1;
-	float x2, y2, z2;
-	float x3, y3, z3;
-	float u1, v1;
-	float u2, v2;
-	float u3, v3;
-	unsigned char *texture;
-} TPolytri;
-
-void drawtpolyperspdivsubtri(TPolytri *poly);
-void drawtpolyperspsubtri(TPolytri *poly);
-*/
 
 #endif

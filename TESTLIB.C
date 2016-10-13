@@ -394,7 +394,7 @@ return 1;
 					if (text == 0) {
 						scanConvex(v, 4, clipedges, col);
 					} else if (text == 1)
-					scanConvex_tmap(v, 4, clipedges, &b_sides[j], flatType==1? col:0);
+					scanConvex_tmap(v, 4, clipedges, &b_sides[j], flatType==1? col:0, 0);
 					else if (text == 2)
 					scanConvex_goraud(v, 4, clipedges, I, goraudType, flatType==1? col:0, 100,6,11);
 					else
@@ -448,9 +448,9 @@ return 1;
 								scanConvex(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, col);
 							} else if (text == 1) {
 								if (obj3->nofBmaps > 0 && obj3->bmaps[obj3->faceBitmapIndex[j]]) {
-									scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, obj3->bmaps[obj3->faceBitmapIndex[j]], flatType==1? col:0);
+									scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, obj3->bmaps[obj3->faceBitmapIndex[j]], flatType==1? col:0, 0);
 								} else
-								scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, &b_sides[j%6], flatType==1? col:0);
+								scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, &b_sides[j%6], flatType==1? col:0, 0);
 							} else if (text == 2)
 							scanConvex_goraud(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, I, goraudType, flatType==1? col:0, 100,6,11);
 							else
@@ -490,9 +490,9 @@ return 1;
 						scanConvex(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, col);
 					} else if (text == 1) {
 						if (obj3->nofBmaps > 0 && obj3->bmaps[obj3->faceBitmapIndex[j]])
-						scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, obj3->bmaps[obj3->faceBitmapIndex[j]], flatType==1? col:0);
+						scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, obj3->bmaps[obj3->faceBitmapIndex[j]], flatType==1? col:0, 0);
 						else
-						scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, &b_sides[j%6], flatType==1? col:0);
+						scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, &b_sides[j%6], flatType==1? col:0, 0);
 					} else if (text == 2)
 					scanConvex_goraud(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], clipedges, I, goraudType, flatType==1? col:0, 100,6,11);
 					else

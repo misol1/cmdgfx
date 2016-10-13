@@ -35,6 +35,7 @@ typedef struct Bitmap {
 	int extrasType;
 	RGBcol cols[256];
 	int transpVal;
+	int projectionDistance;
 } Bitmap;
 
 int PCXload (Bitmap *bild,char filename[]); // only 256 color image supported

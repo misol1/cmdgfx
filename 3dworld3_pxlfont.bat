@@ -18,7 +18,7 @@ cmdwiz setwindowpos %WPX% %WPY%
 cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
 
 set /a XMID=%W%/2, YMID=%H%/2-10
-set /a DIST=0, DRAWMODE=0, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
+set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
 set ASPECT=1.9
 set /a RX=0, RY=720, RZ=0
 
@@ -136,12 +136,12 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>%FN3%
 	)
 	
-	cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% %DRAWMODE%,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%
+	cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%
 	
 	set RET=!errorlevel!
    if not !RET! == -1 (
 		set /a "ME=!RET! & 1,ML=(!RET!&2)>>1, MR=(!RET!&4)>>2, MWD=MT=(!RET!&8)>>3, MWU=(!RET!&16)>>4, MX=(!RET!>>5)&511, MY=(!RET!>>14)&127"
-		if not "!OLDMX!"=="" if !ME!==1 if !ML!==0 if !MWD!==0 if !MWU!==0 set /a "RY+=(!OLDMX!-!MX!)*2,TY-=(!OLDMY!-!MY!)*2,YMID+=(!OLDMY!-!MY!)"&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
+		if not "!OLDMX!"=="" if !ME!==1 if !ML!==0 if !MWD!==0 if !MWU!==0 set /a "RY+=(!OLDMX!-!MX!),TY-=(!OLDMY!-!MY!),YMID+=(!OLDMY!-!MY!)"&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
 		if !MWD!==1 set /A RY+=720&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
 		if !MWU!==1 set /A RY+=720&(if !RY! gtr 1440 set /A RY=!RY!-1440)&(if !RY! lss 0 set /A RY=1440+!RY!)
 		if !ME!==1 if !MWD!==0 if !MWU!==0 set /a OLDMX=!MX!,OLDMY=!MY!
@@ -156,6 +156,8 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 				if !KEY! == 101 set /A ENEMY=1-!ENEMY! & copy /Y %FN% %FN3%>nul 
 
 				if !KEY! == 32 set /a YMID=%H%/2-4 & set TY=0&set BOUNDSCHECK=1
+				if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
+				
 				if !KEY! == 27 set STOP=1
 				set KEY=0
 			)

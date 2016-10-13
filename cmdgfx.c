@@ -29,11 +29,10 @@
 // 1. Add a real zbuffer
 // 2. Add second rotation (+third move?) after first rotation+second move? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
 // 3. If texture set and face-vertices=1, draw texture as image?
-// 4. Add perspective-correct texture mapping
-// 5. Use part of current buffer as texture map (create texture map object in callback, nonstandard .obj extension)
-// 6: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
-// 7. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
-// 8. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
+// 4. Use part of current buffer as texture map (create texture map object in callback, nonstandard .obj extension)
+// 5: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
+// 6. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
+// 7. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
 
 // Unlikely/discarded:
 // 1. 3d: Flag to run operations given n times. Useful to gain speed for complex 3d objects (but where to *start* for e.g. rx,ry,rz?)
@@ -1093,7 +1092,7 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]\n3d       objectfile drawmode,drawoption rx,ry,rz tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf a pcx file is used, transpcol should be specified, otherwise transpchar. Always set transp to -1 if transparency is not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0 for flat/texture, 1 for flat z-sourced, 2 for goraud-shaded z-sourced, 3 for wireframe, 4 for flat, 5 for persp. correct texture/flat.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: put bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
 		return 0;
 	}
 
@@ -1346,14 +1345,14 @@ int main(int argc, char *argv[]) {
 					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
 					if (transpval < 0) {
 						video = videoCol;
-						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4);
+						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4, 0);
 						video = videoChar;
 						if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
 					} else {
 						int ok;
 						video = videoTransp;
 						memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-						ok = scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4);
+						ok = scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4, 0);
 						if (ok) processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
 					}
 				} else
@@ -1363,18 +1362,18 @@ int main(int argc, char *argv[]) {
 					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 					if (transpval < 0) {
 						video = videoCol;
-						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4);
+						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
 						video = videoChar;
-						if (bWriteChars) scanConvex_tmap(vv, nofp, NULL, &b_chars, 0);
+						if (bWriteChars) scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
 					} else {
 						int ok;
 						video = videoTransp;
 						memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-						ok = scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4);
+						ok = scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
 						if (ok) {
 							video = videoTranspChar;
 							memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-							scanConvex_tmap(vv, nofp, NULL, &b_chars, 0);
+							scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
 							processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
 						}
 					}
@@ -1782,34 +1781,35 @@ int main(int argc, char *argv[]) {
 							if (!z_culling_far || averageZ[j] < z_culling_far)
 							if (!culling || (((v[1].x - v[0].x) * (v[2].y - v[1].y)) - ((v[2].x - v[1].x) * (v[1].y - v[0].y)) < 0)) {
 
-								if (drawmode == 0 || drawmode == 4) {
+								if (drawmode == 0 || drawmode == 4 || drawmode == 5) {
 									fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
 									bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
 
 									video = videoCol;
-									if (obj3->nofBmaps > 0 && bmap && bmap->data && drawmode == 0 ) {
+									if (obj3->nofBmaps > 0 && bmap && bmap->data && (drawmode == 0 || drawmode == 5)) {
 										transpval = drawoption;
 										if (bmap->transpVal != -1) transpval = bmap->transpVal;
+										bmap->projectionDistance = dist;
 										if (transpval >= 0) {
 											int ok;											
 											video = videoTransp;
 											memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-											ok = scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, bmap, fgbg);
+											ok = scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, bmap, fgbg, drawmode == 5);
 											if (ok) {
 												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
 													video = videoTranspChar;
 													memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-													scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, (Bitmap *)bmap->extras, 0);
+													scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, (Bitmap *)bmap->extras, 0, drawmode == 5);
 													processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
 												} else
 													processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
 											}
 										} else {
-											if (bWriteCols) scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, bmap, fgbg);
+											if (bWriteCols) scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, bmap, fgbg, drawmode == 5);
 											video = videoChar;
 											if (bWriteChars) {
 												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP)
-													scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, (Bitmap *)bmap->extras, 0);
+													scanConvex_tmap(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, (Bitmap *)bmap->extras, 0, drawmode == 5);
 												else
 													scanConvex(v, obj3->faceData[j*R3D_MAX_V_PER_FACE], NULL, dchar);
 											}

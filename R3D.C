@@ -170,8 +170,6 @@ void Make_cube_object(point3d obj[]) {
 	}
 }
 
-#define MAGIC_TOO_CLOSE_NUMBER 100
-
 void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth) {
 	float srx, crx, sry, cry, srz ,crz;
 	int i, pe, ped, xpp, ypp, zpp, xpp2, H;
@@ -202,9 +200,10 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 		obj[i].vz += movez;
 		
 		ped = distance+obj[i].vz; if (!ped) ped = 1;
-		if (ped < MAGIC_TOO_CLOSE_NUMBER) {
-			if (bAllowOnlyPositiveZ || (!bAllowOnlyPositiveZ && ped >-MAGIC_TOO_CLOSE_NUMBER))
-				ped = MAGIC_TOO_CLOSE_NUMBER;
+		if (ped < MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION) {
+			if (bAllowOnlyPositiveZ || (!bAllowOnlyPositiveZ && ped >-MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION)) {
+				ped = MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION;
+			}
 		}
 		pe=H/ped;
 
