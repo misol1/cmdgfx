@@ -104,7 +104,6 @@ set MAPTXT=image 3dworld-maze.dat 5 0 0 - 680,5
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
 set FN3=wrld-temp.obj
-set ENEMY=0
 
 set /A "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
@@ -118,23 +117,6 @@ cmdwiz setmousecursorpos %SW% %MPY%
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not defined STOP (
 	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
-	if !ENEMY! == 1 (
-		copy /Y %FN% %FN3%>nul
-		set /A "XP1+=!DELT!, XP2+=!DELT!"
-		if !XP1! gtr 3500 set DELT=-300
-		if !XP1! lss -5000 set DELT=300
-
-		echo v 250 -100 !XP1! >>%FN3%
-		echo v 750 -100 !XP1! >>%FN3%
-		echo v 750 500 !XP1! >>%FN3%
-		echo v 250 500 !XP1! >>%FN3%
-
-		set /A "CNT+=1,FRM=(!CNT!/8) %% 2"
-		echo usemtl img\ugly!FRM!.pcx e >>%FN3%
-		echo f !f0!/1/ !f1!/4/ !f2!/3/ !f3!/2/>>%FN3%
-		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>%FN3%
-	)
-	
    cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN3% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" M0fa:0,0,%W%,%H%Z600
 	
 	set RET=!errorlevel!
@@ -151,8 +133,6 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 				if !KEY! == 109 set MAPP=&set /A MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=%MAPTXT%)
 
 				if !KEY! == 112 cmdwiz getch
-
-				if !KEY! == 101 set /A ENEMY=1-!ENEMY! & copy /Y %FN% %FN3%>nul 
 
 				if !KEY! == 32 set /a YMID=%H%/2-4 & set TY=0&set BOUNDSCHECK=1
 				
