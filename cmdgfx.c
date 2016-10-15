@@ -30,9 +30,10 @@
 // 2. Add second rotation (+third move?) after first rotation+second move? This is needed to make e.g. CmdRunner rotate all cubes with horizon when pressing left/right.
 // 3. If texture set and face-vertices=1, draw texture as image?
 // 4. Use part of current buffer as texture map (create texture map object in callback, nonstandard .obj extension)
-// 5: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
-// 6. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
-// 7. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
+// 5: Code optimization: Speed up persp. correct texture mapping
+// 6: Code optimization: Write entire 3d object as a struct, read on later runs if it already exists (and delete it at the end). Possible to avoid a lot of parsing time...
+// 7. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
+// 8. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
 
 // Unlikely/discarded:
 // 1. 3d: Flag to run operations given n times. Useful to gain speed for complex 3d objects (but where to *start* for e.g. rx,ry,rz?)
