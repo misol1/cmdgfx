@@ -11,7 +11,7 @@ set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*
 set "_SIN="
 
 set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13
-set /a NOFLINES=100, LINEGAP=10, LNCNT=1, DCNT=0, REP=80, COL=10, CCYCLE=0, CCYCLELEN=10, STARTLINE=1
+set /a NOFLINES=100, LINEGAP=10, LNCNT=1, DCNT=0, REP=80, COL=10, CCYCLE=0, CCYCLELEN=10, STARTLINE=1, CHANGE=1, CHANGESTEPS=400 & set /a CHANGECOUNT=!CHANGESTEPS!
 for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
 cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
@@ -33,6 +33,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for %%a in (!SC3!) do for %%b in (!CC3!) do set /a A1=%%a,A2=%%b & set /a "XPOS3=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS3=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
 	for %%a in (!SC4!) do for %%b in (!CC4!) do set /a A1=%%a,A2=%%b & set /a "XPOS4=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS4=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
 
+	set /a CHANGECOUNT-=1 & if !CHANGECOUNT!==0 if !CHANGE!==1 set /a CHANGECOUNT=!CHANGESTEPS!, RAND=!RANDOM! %% 8 + 1 & set /a "P!RAND!+=(!RANDOM! %% 2)*2 - 1" & for %%a in (!RAND!) do (if !P%%a! gtr 2 set P%%a=2)&(if !P%%a! lss -2 set P%%a=-2)
+	
 	for %%a in (!DCNT!) do set LN!LCNT!=line !COL! 0 !DIC:~%%a,1! !XPOS!,!YPOS!,!XPOS2!,!YPOS2! !XPOS3!,!YPOS3!,!XPOS4!,!YPOS4!
 	set STR=""&set REP=1
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"

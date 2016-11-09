@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 6 & cls
+cmdwiz showcursor 0 & cmdwiz setfont 6 & cls
 set /a W=80, H=50
 mode con lines=%H% cols=%W%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
@@ -9,7 +9,7 @@ set /a W*=8, H*=12
 set /a RX=0, RY=0, RZ=0
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set /a DRAWMODE=5, ROTMODE=0, DIST=700
-set ASPECT=1.13333
+set ASPECT=1.133
 
 set OBJINDEX=0
 set NOFOBJECTS=2
@@ -37,8 +37,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto REP
 
-endlocal
-cls
+cmdgfx_gdi "pixel 0 0 0 0,0" & endlocal
+cmdwiz showcursor 1 & cls
 goto :eof
 
 :SETOBJECT

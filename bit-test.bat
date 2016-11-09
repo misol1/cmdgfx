@@ -42,9 +42,9 @@ set OP=XOR
 
 :LOOP
 set CRSTR=""
-for /L %%a in (1,1,3) do set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,%BITOP% %CRX%,%CRY%,%CRZ% 0,0,0 1,1,1,!PX%%a!,!PY%%a!,!PZ%%a! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%a! 0 db"
-for /L %%a in (4,1,6) do set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,%BITOP% %CRX%,%CRY%,%CRZ2% 0,0,0 1,1,1,!PX%%a!,!PY%%a!,!PZ%%a! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%a! 0 db"
-cmdgfx "fbox %BKG% 0 fa 0,0,200,100 & %CRSTR:~1,-1% & text 9 0 0 !OP!(space)\-Bg\-!BKG!(ENTER) 1,78" k
+for /L %%a in (1,1,3) do set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,%BITOP% %CRX%,%CRY%,%CRZ% 0,0,0 1,1,1,!PX%%a!,!PY%%a!,!PZ%%a! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 !COL%%a! 20"
+for /L %%a in (4,1,6) do set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,%BITOP% %CRX%,%CRY%,%CRZ2% 0,0,0 1,1,1,!PX%%a!,!PY%%a!,!PZ%%a! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 !COL%%a! 20"
+cmdgfx "fbox %BKG% 0 fa 0,0,200,100 & %CRSTR:~1,-1% & text 9 ? 0 !OP!(space)\-Bg\-!BKG!(ENTER) 1,78" k
 set KEY=%ERRORLEVEL%
 
 set /A CRZ+=9,CRX+=0	,CRY-=0,CRZ2-=4

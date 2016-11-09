@@ -32,7 +32,7 @@ set RENDERER=&set REND=1
 set STOP=
 :REP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP for %%o in (!DRAWMODE!) do (
-cmdgfx!RENDERER! "fbox 8 0 . 0,0,79,49 & !MSG! & 3d objects\!FNAME! !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL!" k
+cmdgfx!RENDERER! "fbox 8 0 . 0,0,79,49 & !MSG! & 3d objects\!FNAME! !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL!" k!ERR!
 set KEY=!ERRORLEVEL!
 if !ROTMODE! == 0 set /a RX+=2&set /a RY+=6&set /a RZ-=4
 if !KEY! == 32 set /A DRAWMODE+=1&(if !DRAWMODE! gtr 3 set DRAWMODE=0)&for %%a in (!DRAWMODE!) do set PAL=!PAL%%a!
@@ -61,6 +61,7 @@ cls
 goto :eof
 
 :SETOBJECT
+set ERR=
 if %OBJINDEX% == 0 set FNAME=tetrahedron.ply& set MOD=-250,-250,-250, 0,0,0 1
 if %OBJINDEX% == 1 set FNAME=cube.ply& set MOD=-250,-250,-250, 0,0,0 1
 if %OBJINDEX% == 2 set FNAME=icosahedron.ply& set MOD=-400,-400,-400, 0,0,0 1
@@ -75,12 +76,12 @@ if %OBJINDEX% == 10 set FNAME=teapot.ply& set MOD=160,160,160, 0,-0.3,-0.8 0
 if %OBJINDEX% == 11 set FNAME=trashcan.ply& set MOD=11,11,11, 0,0,0 0
 if %OBJINDEX% == 12 set FNAME=urn2.ply& set MOD=300,300,300, 0,0,0 1
 if %OBJINDEX% == 13 set FNAME=torus.plg& set MOD=-1.3,-1.3,-1.3, 0,0,0 0
-::if %OBJINDEX% == 13 set FNAME=..\dev\objs\mountains.obj& set MOD=4,4,4, 0,0,0 0
-::if %OBJINDEX% == 13 set FNAME=..\dev\objs\spaceship2.obj& set MOD=2.5,2.5,2.5, 0,0,0 1
-::if %OBJINDEX% == 13 set FNAME=..\dev\objs\ufo.obj& set MOD=0.015,0.015,0.015, 0,0,0 0
 if %OBJINDEX% == 14 set FNAME=sphere.plg& set MOD=-1.8,-1.8,-1.8, 0,0,0 0
 if %OBJINDEX% == 15 set FNAME=springy1.plg& set MOD=-0.23,-0.23,-0.23, 0,0,0 0
 if %OBJINDEX% == 16 set FNAME=chopper.plg& set MOD=-0.3,-0.3,-0.3, 0,-800,-800 1
 if %OBJINDEX% == 17 set FNAME=humanoid_quad.obj& set MOD=40,40,40, -1.25,0,-8.7 1
 if %OBJINDEX% == 18 set FNAME=fracttree.ply& set MOD=100,100,100, 0,0,0 1
-if %OBJINDEX% == 19 set FNAME=al.obj& set MOD=150,150,150, 0,0,0 0
+if %OBJINDEX% == 19 set FNAME=al.obj& set MOD=150,150,150, 0,0,0 0&set ERR=e
+::set FNAME=..\dev\objs\mountains.obj& set MOD=4,4,4, 0,0,0 0
+::set FNAME=..\dev\objs\spaceship2.obj& set MOD=2.5,2.5,2.5, 0,0,0 1
+::set FNAME=..\dev\objs\ufo.obj& set MOD=0.015,0.015,0.015, 0,0,0 0

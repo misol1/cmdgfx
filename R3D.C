@@ -188,7 +188,6 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 		ypp=obj[i].y*crx + obj[i].z*srx;
 		zpp=obj[i].z*crx - obj[i].y*srx;
 
-		// for two axis only, rename xpp to xpp2 in row below, and comment out last two calcs. Makes no difference except no z rot obviously
 		xpp=obj[i].x*cry + zpp*sry;
 		obj[i].vz=zpp*cry - obj[i].x*sry;
 
@@ -211,6 +210,65 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 		obj[i].vy=((ypp*pe)>>12)*asp+yg;
 	}
 }
+
+
+void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth, float rx2, float ry2, float rz2) {
+	float srx, crx, sry, cry, srz, crz;
+	float srx2, crx2, sry2, cry2, srz2, crz2;
+	int i, pe, ped, xpp, ypp, zpp, xpp2, ypp2, H;
+	float asp;
+
+	if (projectionDepth == 0) projectionDepth = 500;
+	H = projectionDepth << 12; // projectionDepth decides the "narrowness" of projection (the higher, the more narrow)
+	
+	asp = (aspect/((float)XRES/(float)YRES));
+
+	srx=sin(rx); crx=cos(rx); sry=sin(ry);
+	cry=cos(ry); srz=sin(rz); crz=cos(rz);
+
+	srx2=sin(rx2); crx2=cos(rx2); sry2=sin(ry2);
+	cry2=cos(ry2); srz2=sin(rz2); crz2=cos(rz2);
+
+	for (i=0; i<points; i++) {
+
+		ypp=obj[i].y*crx + obj[i].z*srx;
+		zpp=obj[i].z*crx - obj[i].y*srx;
+
+		xpp=obj[i].x*cry + zpp*sry;
+		obj[i].vz=zpp*cry - obj[i].x*sry;
+
+		xpp2=xpp*crz + ypp*srz;
+		ypp=ypp*crz - xpp*srz;
+
+		xpp2 += movex;
+		ypp -= movey;
+		obj[i].vz += movez;
+
+		
+		ypp2=ypp*crx2 + obj[i].vz*srx2;
+		zpp=obj[i].vz*crx2 - ypp*srx2;
+
+		xpp=xpp2*cry2 + zpp*sry2;
+		obj[i].vz=zpp*cry2 - xpp2*sry2;
+
+		xpp2=xpp*crz2 + ypp*srz2;
+		ypp2=ypp2*crz2 - xpp*srz2;
+
+		ped = distance+obj[i].vz; if (!ped) ped = 1;
+		if (ped < MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION) {
+			if (bAllowOnlyPositiveZ || (!bAllowOnlyPositiveZ && ped >-MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION)) {
+				ped = MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION;
+			}
+		}
+		pe=H/ped;
+
+		obj[i].vx=((xpp2*pe)>>12)+xg;
+		obj[i].vy=((ypp2*pe)>>12)*asp+yg;
+	}
+}
+
+
+
 
 void freeObj3d(obj3d *obj) {
 	int i;
@@ -535,7 +593,7 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 	for (j = 0; j < obj->nofFaces; j++) {
 		for (i = 0; i < obj->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
 		  if (obj->faceData[j*R3D_MAX_V_PER_FACE + i] < 0) obj->faceData[j*R3D_MAX_V_PER_FACE + i] = obj->nofPoints + 1 + obj->faceData[j*R3D_MAX_V_PER_FACE + i];
-		  if (obj->faceData[j*R3D_MAX_V_PER_FACE + i] >= obj->nofPoints || obj->faceData[j*R3D_MAX_V_PER_FACE + i] < 0)  { freeObj3d(obj); free(filedata); return NULL; }
+		  if (obj->faceData[j*R3D_MAX_V_PER_FACE + i] > obj->nofPoints || obj->faceData[j*R3D_MAX_V_PER_FACE + i] < 0)  { freeObj3d(obj); free(filedata); return NULL; }
 		}
 	}
 

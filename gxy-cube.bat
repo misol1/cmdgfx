@@ -6,7 +6,7 @@ mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set /a "XMID=%W%/2, YMID=%H%/2"
-set /a DIST=2000, DRAWMODE=0, ROTMODE=0, SHOWHELP=1
+set /a DIST=2000, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
 set ASPECT=1.5
 set /A RX=0,RY=0,RZ=0
 

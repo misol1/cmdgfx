@@ -1,4 +1,4 @@
-:: 3dworld maze with with perspective correct texture mapping : Mikael Sollenborn 2016
+:: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 cls & cmdwiz setfont 0

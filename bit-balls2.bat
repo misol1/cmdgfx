@@ -55,8 +55,8 @@ set /A YRC=!YROT!+180&for %%a in (!YRC!) do set /A cry=!SIN%%a!
 for %%a in (!ZROT!) do set /A srz=!SIN%%a!
 set /A ZRC=!ZROT!+180&for %%a in (!ZRC!) do set /A crz=!SIN%%a!
 
-for /L %%a in (1,1,!NOF!) do set /A "YPP=((!crx!*!YP%%a!)>>14)+((!srx!*!ZP%%a!)>>14),ZPP=((!crx!*!ZP%%a!)>>14)-((!srx!*!YP%%a!)>>14)" & set /A "XPP=((!cry!*!XP%%a!)>>14)+((!sry!*!ZPP!)>>14),ZPP2=((!cry!*!ZPP!)>>14)-((!sry!*!XP%%a!)>>14)" & set /A "XPP2=((!crz!*!XPP!)>>14)+((!srz!*!YPP!)>>14),YPP=((!crz!*!YPP!)>>14)-((!srz!*!XPP!)>>14)" & set /A ZPP2*=4 & set CRSTR="!CRSTR:~1,-1! &3d %WNAME% %DRAWMODE%,!BITOP! !RX!,!RY!,!RZ! !XPP2!,!YPP!,!ZPP2! 1,1,1,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%a! 0 db"
-cmdgfx.exe "fbox !BKG! 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 9 0 0 !OP!(space)\-Bg:!BKG!(ENTER)\-Balls:!NOF!(Left/Right) 1,78" k
+for /L %%a in (1,1,!NOF!) do set /A "YPP=((!crx!*!YP%%a!)>>14)+((!srx!*!ZP%%a!)>>14),ZPP=((!crx!*!ZP%%a!)>>14)-((!srx!*!YP%%a!)>>14)" & set /A "XPP=((!cry!*!XP%%a!)>>14)+((!sry!*!ZPP!)>>14),ZPP2=((!cry!*!ZPP!)>>14)-((!sry!*!XP%%a!)>>14)" & set /A "XPP2=((!crz!*!XPP!)>>14)+((!srz!*!YPP!)>>14),YPP=((!crz!*!YPP!)>>14)-((!srz!*!XPP!)>>14)" & set /A ZPP2*=4 & set CRSTR="!CRSTR:~1,-1! &3d %WNAME% %DRAWMODE%,!BITOP! !RX!,!RY!,!RZ! !XPP2!,!YPP!,!ZPP2! 1,1,1,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 !COL%%a! 20"
+cmdgfx.exe "fbox !BKG! 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 9 ? 0 !OP!(space)\-Bg:!BKG!(ENTER)\-Balls:!NOF!(Left/Right) 1,78" k
 set KEY=!ERRORLEVEL!
 
 set /A XROT+=6,YROT+=4,ZROT+=2

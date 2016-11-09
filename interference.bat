@@ -55,9 +55,9 @@ set STOP=
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP (
 
-set CRSTR=""&for /L %%a in (1,1,2) do for %%b in (!X%%a!) do for %%c in (!Y%%a!) do set /A "XP=((!SIN%%b!*!XM%%a!)>>14),YP=((!SIN%%c!*!YM%%a!)>>14),X%%a+=!XA%%a!,Y%%a+=!YA%%a!" & set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,!BITOP!  0,0,0 0,0,0 1,1,1,!XP!,!YP!,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%a! 0 db"&(if !X%%a! geq 720 set /A X%%a-=720)&(if !X%%a! lss 0 set /A X%%a=720+!X%%a!)&(if !Y%%a! geq 720 set /A Y%%a-=720)&(if !Y%%a! lss 0 set /A Y%%a=720+!Y%%a!)
+set CRSTR=""&for /L %%a in (1,1,2) do for %%b in (!X%%a!) do for %%c in (!Y%%a!) do set /A "XP=((!SIN%%b!*!XM%%a!)>>14),YP=((!SIN%%c!*!YM%%a!)>>14),X%%a+=!XA%%a!,Y%%a+=!YA%%a!" & set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,!BITOP!  0,0,0 0,0,0 1,1,1,!XP!,!YP!,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 !COL%%a! 20"&(if !X%%a! geq 720 set /A X%%a-=720)&(if !X%%a! lss 0 set /A X%%a=720+!X%%a!)&(if !Y%%a! geq 720 set /A Y%%a-=720)&(if !Y%%a! lss 0 set /A Y%%a=720+!Y%%a!)
 
-cmdgfx!RENDERER! "fbox !BKG! 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 9 0 0 !OP!(space)\-Col1:!COL1!(Left/Right)\-Col2:!COL2!(Up/Down) 1,78" kf1
+cmdgfx!RENDERER! "fbox !BKG! 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 9 ? 0 !OP!(space)\-Col1:!COL1!(Left/Right)\-Col2:!COL2!(Up/Down) 1,78" kf1
 set KEY=!ERRORLEVEL!
 
 if !KEY! == 32 set /A BITOP+=1&(if !BITOP! gtr 6 set BITOP=0)&set CNT=0&for %%a in (NORMAL OR AND XOR ADD SUB SUB-n) do (if !CNT!==!BITOP! set OP=%%a)&set /A CNT+=1
