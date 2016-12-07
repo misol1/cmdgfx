@@ -15,14 +15,14 @@ int SCR_XRES, SCR_YRES;
 void wait_vblank(int maxWaitTime) {
 	static int oldTime = 0;
 	
-	int deltaWait = oldTime+maxWaitTime - GetTickCount();
-	while (deltaWait > 0 && deltaWait <= maxWaitTime) {
-		deltaWait = oldTime+maxWaitTime - GetTickCount();
+	int deltaWait = (oldTime+maxWaitTime) - timeGetTime();
+	while (deltaWait > 0) {
+		deltaWait = (oldTime+maxWaitTime) - timeGetTime();
 	}
 	//if (deltaWait > 0 && deltaWait <= maxWaitTime) {
 	//Sleep(deltaWait);
 	
-	oldTime = GetTickCount();
+	oldTime = timeGetTime();
 }
 
 void setResolution(int resX, int resY) {
@@ -247,6 +247,8 @@ int main(int argc, char *argv[]) {
 
 	if (scale == 1) dist = 5000;
 
+	timeBeginPeriod(1);
+	
 	setDefaultTextPalette(palette1);
 	setTextPalette(palette1, 0, p_first8pip, 9);
 	setTextPalette(palette1, 8, p_shade, 11);
@@ -520,7 +522,7 @@ return 1;
 		}
 
 		if (timerMaxCnt == 0 && vblank)
-		wait_vblank(3);
+			wait_vblank(5);
 
 		if (kbhit()) {
 			ch = getch();
@@ -610,8 +612,10 @@ return 1;
 		
 	}
 
+	timeEndPeriod(1);
+
 	if (timerMaxCnt > 0)
-	printf("\n%ld %ld\n", (GetTickCount()-timer)/1000,  GetTickCount()-timer);  
+		printf("\n%ld %ld\n", (GetTickCount()-timer)/1000,  GetTickCount()-timer);  
 
 	free(obj3);
 	free(virtual);

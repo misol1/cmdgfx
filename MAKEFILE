@@ -16,7 +16,7 @@ CC      = gcc -O3
 CCFLAG  =
 
 testlib.exe : $(OBJECTS)
-	$(CC) $(CCFLAG) -o $(TARGET) $(OBJECTS) -lgdi32
+	$(CC) $(CCFLAG) -o $(TARGET) $(OBJECTS) -lgdi32 -lwinmm
 
 cmdgfx.exe : $(OBJECTSLIB)
 	$(CC) $(CCFLAG) -o $(TARGETLIB) $(OBJECTSLIB)
