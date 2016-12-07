@@ -111,9 +111,9 @@ Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat
 
 Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (all hex)
 
-[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
-         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit
-         pattern(see mouse examples), 'fn[:x,y,w,h]' use font n(0-9, default 6).
+[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return
+         key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/
+         mouse bit pattern, 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.
 ```
 
 cmdwiz.exe

@@ -20,6 +20,8 @@ call :SETOBJECT
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
 	cmdgfx_gdi "3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,1.1 !COL! & %TEXT%" kZ%ZP%f%FONT%:0,0,%W%,%H%
+	rem cmdgfx_gdi "fbox 0 0 20 0,0,200,200 & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db &  & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,400,1.5 0 0 db & %TEXT%" kZ%ZP%f%FONT%:0,0,%W%,%H%
+
 	set /a KEY=!ERRORLEVEL!, RZ2-=4
 	if !ROTMODE! == 0 set /a RX+=2, RY+=5, RZ-=3
 	if !KEY! == 13 set /a ROTMODE=1-!ROTMODE!&set RX=0&set RY=0&set RZ=0

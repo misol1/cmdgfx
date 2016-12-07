@@ -1,10 +1,12 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=180, H=80
+set /a W=335, H=110
+set /a W=289, H=100
+::set /a W=180, H=80
 cmdwiz setfont 0 & mode %W%,%H%
 cmdgfx "fbox 0 0 00 0,0,%W%,%H%"
 cmdwiz showcursor 0
-for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if /I not "%%v"=="PATH" set "%%v="
 set /a W*=4, H*=6
 
 set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
@@ -23,16 +25,7 @@ for /L %%a in (1,1,%NOFLINES%) do set LN%%a=
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
 cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
 
-::set /a P1=2,P2=-1,P3=-3,P4=1,P5=5,P6=-3,P7=-4,P8=0,SC=16646,CC=14378,SC2=-26744,CC2=-3419,SC3=53469,CC3=-28874,SC4=-36025,CC4=32631
-::set /a P1=4,P2=-1,P3=1,P4=4,P5=-1,P6=0,P7=2,P8=-3,SC=19402,CC=13477,SC2=-27539,CC2=-1087,SC3=55112,CC3=-30146,SC4=-36767,CC4=31200
-::set /a P1=3,P2=2,P3=3,P4=0,P5=3,P6=-3,P7=-2,P8=4,SC=25047,CC=17312,SC2=-20657,CC2=5003,SC3=62725,CC3=-30318,SC4=-30942,CC4=24972
-::set /a P1=-3,P2=4,P3=0,P4=0,P5=1,P6=-3,P7=-3,P8=-1,SC=25193,CC=27599,SC2=-24718,CC2=-123,SC3=57772,CC3=-32286,SC4=-33181,CC4=34865
-::set /a P1=4,P2=-4,P3=2,P4=-2,P5=-2,P6=-1,P7=-2,P8=1,SC=26592,CC=16079,SC2=-22731,CC2=3291,SC3=57122,CC3=-29829,SC4=-29094,CC4=23034
-::set /a P1=0,P2=3,P3=0,P4=0,P5=-2,P6=-3,P7=-3,P8=4,SC=35962,CC=7098,SC2=-26481,CC2=-5009,SC3=61416,CC3=-41598,SC4=-32963,CC4=26096
-::set /a P1=-2,P2=3,P3=2,P4=1,P5=2,P6=1,P7=4,P8=-2,SC=24454,CC=15765,SC2=-25419,CC2=4724,SC3=56698,CC3=-30342,SC4=-29833,CC4=23158
-::set /a P1=-1,P2=2,P3=2,P4=1,P5=1,P6=1,P7=3,P8=-2,SC=24454,CC=15765,SC2=-25419,CC2=4724,SC3=56698,CC3=-30342,SC4=-29833,CC4=23158
-::set /a P1=1,P2=-2,P3=3,P4=-1,P5=1,P6=-2,P7=0,P8=-3,SC=21496,CC=19113,SC2=-21153,CC2=6025,SC3=60742,CC3=-29677,SC4=-24475,CC4=18990
-set /a P1=-2,P2=2,P3=-3,P4=3,P5=-1,P6=2,P7=-1,P8=3,SC=21211,CC=17675,SC2=-15297,CC2=7463,SC3=60228,CC3=-32628,SC4=-25759,CC4=16335
+set /a P1=-1,P2=1,P3=-1,P4=2,P5=-1,P6=2,P7=-1,P8=2,SC=21211,CC=17675,SC2=-15297,CC2=7463,SC3=60228,CC3=-32628,SC4=-25759,CC4=16335
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -58,11 +51,12 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do for %%b in (!CNT!) do (if not "!LN%%b!"==" " set STR="!STR:~1,-1!&!DRAW! !COLVAL! 0 !LN%%b!")& set /a CNT+=!LINEGAP!,COLVAL+=1 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 
-	if !STARTCNT! lss 0 if !DIV! == 1 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" ew!DELAY!kfa:0,0,%W%,%H% !PAL!
- 	if !STARTCNT! lss 0 if !DIV! == 2 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" ew!DELAY!kfa:0,0,%W%,%H% !PAL!
+	if !STARTCNT! lss 0 if !DIV! == 1 start "" /high /B cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" koefa:0,0,%W%,%H% !PAL!
+ 	if !STARTCNT! lss 0 if !DIV! == 2 start "" /high /B cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" koefa:0,0,%W%,%H% !PAL!
 	set STR=
 
-	if !STARTCNT! lss 0 set KEY=!errorlevel!
+	rem if !STARTCNT! lss 0 getkey /N & set KEY=!ERRORLEVEL!
+	if !STARTCNT! lss 0 set /p KEY=<EL.dat 2>nul & if "!KEY!" == "" set KEY=0
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV! 
 	if !KEY! == 112 cmdwiz getch

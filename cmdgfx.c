@@ -24,6 +24,7 @@
 // Issues:
 // 1. Code optimization: Re-use images used several times, same way as for objects
 // 2. Code fix: Non persp. tmapping (tpoly) causes pixel artifacts for e.g a non-tilted rectangle texture
+// 3. Gdi: possible to optimize bitmap creation by writing ints?
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
@@ -1028,6 +1029,19 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	return 1;
 }
 
+void writeErrorLevelToFile(int bWriteReturnToFile, int value) {
+	FILE *ofp;
+	
+	if (!bWriteReturnToFile)
+		return;
+	
+	ofp = fopen("EL.dat", "w");
+	if (ofp != NULL) {
+		fprintf(ofp, "%d", value);
+		fclose(ofp);
+	}
+}
+
 
 #define MAX_OBJECTS_IN_MEM 16
 
@@ -1037,7 +1051,7 @@ int main(int argc, char *argv[]) {
 	intVector vv[64];
 	CHAR_INFO *old = NULL;
 	char s_fgcol[4], s_bgcol[4], s_dchar[4], s_transpval[4], fname[128];
-	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1;
+	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1, bWriteReturnToFile = 0;
 	Bitmap b_pcx;
 	intVector v[64];
 	float us[4] = {0, 1, 1, 0}, vs[4] = {0, 0, 1, 1};
@@ -1062,7 +1076,7 @@ int main(int argc, char *argv[]) {
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 #endif
-	int i, j, k;
+	int i, j, k, retVal = 0;
 	uchar *cp;
 	unsigned int startT = GetTickCount();
 
@@ -1099,6 +1113,7 @@ int main(int argc, char *argv[]) {
 					nof = sscanf(fin, "%d,%d,%d,%d", &gx, &gy, &txres, &tyres);
 				}
 				break;
+				case 'o': bWriteReturnToFile = 1; break;
 			}
 		}
 	}
@@ -1116,13 +1131,15 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern(see mouse examples)%s, 'Zn' set projection depth.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 char32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern%s, 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.\n", name, dspalette, extras);
+		writeErrorLevelToFile(bWriteReturnToFile, 0);
 		return 0;
 	}
 
 	videoCol = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
 	if (videoCol == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer!\n");
+		writeErrorLevelToFile(bWriteReturnToFile, 0);
 		return 0;
 	}
 
@@ -1130,6 +1147,7 @@ int main(int argc, char *argv[]) {
 	if (videoChar == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer(2)!\n");
 		free(videoCol);
+		writeErrorLevelToFile(bWriteReturnToFile, 0);
 		return 0;
 	}
 
@@ -1138,6 +1156,7 @@ int main(int argc, char *argv[]) {
 		printf("Error: Couldn't allocate memory for transpbuffer!\n");
 		free(videoCol);
 		free(videoChar);
+		writeErrorLevelToFile(bWriteReturnToFile, 0);
 		return 0;
 	}
 
@@ -1147,14 +1166,15 @@ int main(int argc, char *argv[]) {
 		free(videoCol);
 		free(videoChar);
 		free(videoTransp);
+		writeErrorLevelToFile(bWriteReturnToFile, 0);
 		return 0;
 	}
 
 	averageZ = (float *) malloc(32000*sizeof(float));
-	if (!averageZ) { printf("Err: Couldn't allocate memory for averages\n"); free(videoCol); free(videoChar); return 0; }
+	if (!averageZ) { printf("Err: Couldn't allocate memory for averages\n"); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0); return 0; }
 
 	argv1 = (char *) malloc(MAX_OP_SIZE*sizeof(char));
-	if (!argv1) { printf("Err: Couldn't allocate memory for string\n"); free(averageZ); free(videoCol); free(videoChar); return 0; }
+	if (!argv1) { printf("Err: Couldn't allocate memory for string\n"); free(averageZ); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0); return 0; }
 
 	insertedArgs = insertCgx(argv[1]);
 	//printf(insertedArgs); getch();
@@ -2101,7 +2121,9 @@ int main(int argc, char *argv[]) {
 	if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
 		int k = getch();
 		if (k == 224 || k == 0) k = 256 + getch();
-		return k;
+		retVal = k;
+		//writeErrorLevelToFile(bWriteReturnToFile, k);
+		//return k;
 	}
 
 	if (bMouse) {
@@ -2117,7 +2139,7 @@ int main(int argc, char *argv[]) {
 
 		if (mouseWait > -1) {
 			res = WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), mouseWait);
-			if (res & WAIT_TIMEOUT) { return -1; }
+			if (res & WAIT_TIMEOUT) { writeErrorLevelToFile(bWriteReturnToFile, -1); return -1; }
 		}
 
 		res = -1;
@@ -2161,13 +2183,16 @@ int main(int argc, char *argv[]) {
 		}
 
 		SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldfdwMode);
-		return res;
+		retVal = res;
+		//writeErrorLevelToFile(bWriteReturnToFile, res);
+		//return res;
 	}
 
 	if (bWait && waitTime > 0) {
 		if (bWait == 1) startT = GetTickCount();
 		while (GetTickCount() < startT + waitTime) ;
 	}
-
-	return 0;
+	
+	writeErrorLevelToFile(bWriteReturnToFile, retVal);
+	return retVal;
 }
