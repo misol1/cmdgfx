@@ -58,7 +58,7 @@ Use fgpalette/bgpalette to re-arrange colors in the final output, e.g. use fgpal
 				
 [flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
          'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit
-         pattern(see mouse examples).
+         pattern(see mouse examples), 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.
 ```
 
 cmdgfx_gdi.exe
@@ -125,7 +125,7 @@ Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate
                setcursorpos printf saveblock copyblock moveblock inspectblock
                playsound delay stringfind stringlen gettime await getexetype 
                cache setwindowtransparency getwindowpos setwindowpos getdisplaydim
-               getmousecursorpos setmousecursorpos insertbmp savefont setfont] [params]
+               getmousecursorpos setmousecursorpos insertbmp savefont setfont gettitle] [params]
 					
 Use "cmdwiz operation /?" for info on arguments and return values
 ```
