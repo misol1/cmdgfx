@@ -22,7 +22,8 @@ set RENDERER=_gdi&set REND=0
 set STOP=
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP for %%c in (!COLCNT!) do for %%o in (!OBJCNT!) do (
-cmdgfx!RENDERER! "fbox !FBG_%%c! 20 0,0,%W%,%H% & 3d objects\plot-!OBJ%%o!.ply %DRAWMODE%,1 !CRX!,!CRY!,!CRZ! 0,0,0 1.2,1.2,1.2,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLS_%%c! & %HELP% " kf1
+start "" /B /high cmdgfx!RENDERER! "fbox !FBG_%%c! 20 0,0,%W%,%H% & 3d objects\plot-!OBJ%%o!.ply %DRAWMODE%,1 !CRX!,!CRY!,!CRZ! 0,0,0 1.2,1.2,1.2,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLS_%%c! & %HELP% " f1
+cmdgfx_gdi "" f0:0,0,0,0kW10
 set KEY=!ERRORLEVEL!
 set /A CRZ+=5,CRX+=3,CRY-=4
 if !KEY! == 112 cmdwiz getch

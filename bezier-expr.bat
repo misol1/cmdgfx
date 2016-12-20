@@ -45,11 +45,13 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (1,1,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"
 	
 	set /a PLC1+=3, PLC2+=10
-	if !DIV! == 1 if !CCYCLE!==1 cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8" kf0
-	if !DIV! == 1 if !CCYCLE!==0 cmdgfx_gdi "!STR:~1,-1!" kf0
-	if !DIV! == 2 if !CCYCLE!==1 cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8" kf0
-	if !DIV! == 2 if !CCYCLE!==0 cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" kf0
-		
+	if !DIV! == 1 if !CCYCLE!==1 start "" /B cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8" f0
+	if !DIV! == 1 if !CCYCLE!==0 start "" /B cmdgfx_gdi "!STR:~1,-1!" f0
+	if !DIV! == 2 if !CCYCLE!==1 start "" /B cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8" f0
+	if !DIV! == 2 if !CCYCLE!==0 start "" /B cmdgfx_gdi "!STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" f0
+
+	cmdwiz getch nowait
+	
 	set KEY=!errorlevel!
 	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 16 + 2") & 	for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV! 

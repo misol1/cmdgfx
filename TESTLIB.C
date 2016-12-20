@@ -12,17 +12,32 @@ int XRES, YRES, FRAMESIZE;
 uchar *video;
 int SCR_XRES, SCR_YRES;
 
+
+long long milliseconds_now() {
+	static LARGE_INTEGER s_frequency;
+	static BOOL s_use_qpc;
+
+	s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+	if (s_use_qpc) {
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
+		return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+	} else {
+		return GetTickCount();
+	}
+}
+
 void wait_vblank(int maxWaitTime) {
 	static int oldTime = 0;
 	
-	int deltaWait = (oldTime+maxWaitTime) - timeGetTime();
+	int deltaWait = (oldTime+maxWaitTime) - milliseconds_now();
 	while (deltaWait > 0) {
-		deltaWait = (oldTime+maxWaitTime) - timeGetTime();
+		deltaWait = (oldTime+maxWaitTime) - milliseconds_now();
 	}
 	//if (deltaWait > 0 && deltaWait <= maxWaitTime) {
 	//Sleep(deltaWait);
 	
-	oldTime = timeGetTime();
+	oldTime = milliseconds_now();
 }
 
 void setResolution(int resX, int resY) {
@@ -247,8 +262,6 @@ int main(int argc, char *argv[]) {
 
 	if (scale == 1) dist = 5000;
 
-	timeBeginPeriod(1);
-	
 	setDefaultTextPalette(palette1);
 	setTextPalette(palette1, 0, p_first8pip, 9);
 	setTextPalette(palette1, 8, p_shade, 11);
@@ -611,8 +624,6 @@ return 1;
 		timerCnt++;
 		
 	}
-
-	timeEndPeriod(1);
 
 	if (timerMaxCnt > 0)
 		printf("\n%ld %ld\n", (GetTickCount()-timer)/1000,  GetTickCount()-timer);  

@@ -19,20 +19,21 @@ call :SETOBJECT
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	cmdgfx_gdi "3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,1.1 !COL! & %TEXT%" kZ%ZP%f%FONT%:0,0,%W%,%H%
-	rem cmdgfx_gdi "fbox 0 0 20 0,0,200,200 & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db &  & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,400,1.5 0 0 db & %TEXT%" kZ%ZP%f%FONT%:0,0,%W%,%H%
+	start "" /B /high cmdgfx_gdi "3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,1.1 !COL! & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
+	rem start "" /B /high cmdgfx_gdi "fbox 0 0 20 0,0,200,200 & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db &  & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,400,1.5 0 0 db & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
 
+	cmdgfx_gdi "" f0:0,0,0,0kW10
 	set /a KEY=!ERRORLEVEL!, RZ2-=4
 	if !ROTMODE! == 0 set /a RX+=2, RY+=5, RZ-=3
-	if !KEY! == 13 set /a ROTMODE=1-!ROTMODE!&set RX=0&set RY=0&set RZ=0
-	if !KEY! == 331 if !ROTMODE!==1 set /a RY+=20
-	if !KEY! == 333 if !ROTMODE!==1 set /a RY-=20
-	if !KEY! == 328 if !ROTMODE!==1 set /a RX+=20
-	if !KEY! == 336 if !ROTMODE!==1 set /a RX-=20
-	if !KEY! == 122 if !ROTMODE!==1 set /a RZ+=20
-	if !KEY! == 90 if !ROTMODE!==1 set /a RZ-=20
-	if !KEY! == 100 set /a DIST+=100
-	if !KEY! == 68 set /a DIST-=100
+	if !KEY! == 13 set /a ROTMODE=1-!ROTMODE!&set /a RX=0, RY=0, RZ=0
+	if !KEY! == 331 if !ROTMODE!==1 set /a RY+=15
+	if !KEY! == 333 if !ROTMODE!==1 set /a RY-=15
+	if !KEY! == 328 if !ROTMODE!==1 set /a RX+=15
+	if !KEY! == 336 if !ROTMODE!==1 set /a RX-=15
+	if !KEY! == 122 if !ROTMODE!==1 set /a RZ+=15
+	if !KEY! == 90 if !ROTMODE!==1 set /a RZ-=15
+	if !KEY! == 100 set /a DIST+=50
+	if !KEY! == 68 set /a DIST-=50
 	if !KEY! == 32 set /a "OBJINDEX=(!OBJINDEX! + 1) %% %NOFOBJECTS%"&call :SETOBJECT
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1

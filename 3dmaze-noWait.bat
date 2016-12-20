@@ -104,7 +104,7 @@ cmdwiz gettime & set ORGT=!errorlevel!
 for /l %%1 in (1,1,300) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
-	start "" /B /high cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" fa:0,0,%W%,%H%Z600
+	start "" /B /high cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" W20fa:0,0,%W%,%H%Z600
 	
 	cmdgfx_gdi.exe "" M0fa:0,0,0,0
 
@@ -131,17 +131,17 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	)
 
 	if not !KEY! == 0 (
-		if !KEY! == 331 set /a RY+=16&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
-		if !KEY! == 333 set /a RY-=16&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
-		if !KEY! == 106 set /a RY+=16&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
-		if !KEY! == 107 set /a RY-=16&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 331 set /a RY+=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 333 set /a RY-=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 106 set /a RY+=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 107 set /a RY-=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 97 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&call :MOVE 1 2&set RY=!ORY!
 		if !KEY! == 100 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&call :MOVE -1 2&set RY=!ORY!
 
-		if !KEY! == 328 call :MOVE 1 1
-		if !KEY! == 336 call :MOVE -1 1
-		if !KEY! == 119 call :MOVE 1 1
-		if !KEY! == 115 call :MOVE -1 1
+		if !KEY! == 328 call :MOVE 1 2
+		if !KEY! == 336 call :MOVE -1 2
+		if !KEY! == 119 call :MOVE 1 2
+		if !KEY! == 115 call :MOVE -1 2
 
 		if !KEY! == 337 set /a TY-=30&set BOUNDSCHECK=0
 		if !KEY! == 329 set /a TY+=30&set BOUNDSCHECK=0

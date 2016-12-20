@@ -11,13 +11,14 @@ set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/1536
 set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
 set "_SIN="
 
-set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=0, KEY=0
+set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=12, KEY=0
 set /a NOFLINES=55, LINEGAP=5, LNCNT=1, DCNT=0, REP=80, COL=10, STARTLINE=1, REALCOL=1, CHANGE=1, CHANGESTEPS=400 & set /a CHANGECOUNT=!CHANGESTEPS!,STARTCNT=!NOFLINES!
 set PALETTE=000000,000000,000000,000000,000000,000080,0050a0,0050a0,0050a0,0070c0,2090e0,50b0ff,80d0ff,b0f0ff,f0ffff& set PAL=!PALETTE!
 set DRAWOP=1&set D0=line&set D1=ipoly&set D2=fellipse&set D3=fbox&set D4=fcircle&set D5=ellipse&set BITOP=3
 for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
 cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
+del CGXMS.dat >nul 2>nul
 
 ::set /a P1=2,P2=-1,P3=-3,P4=1,P5=5,P6=-3,P7=-4,P8=0,SC=16646,CC=14378,SC2=-26744,CC2=-3419,SC3=53469,CC3=-28874,SC4=-36025,CC4=32631
 ::set /a P1=4,P2=-1,P3=1,P4=4,P5=-1,P6=0,P7=2,P8=-3,SC=19402,CC=13477,SC2=-27539,CC2=-1087,SC3=55112,CC3=-30146,SC4=-36767,CC4=31200
@@ -52,10 +53,12 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do for %%b in (!CNT!) do (if not "!LN%%b!"==" " set STR="!STR:~1,-1!&!DRAW! !COLVAL! 0 !LN%%b!")& set /a CNT+=!LINEGAP!,COLVAL+=1 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 
-	if !STARTCNT! lss 0 if !DIV! == 1 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" w!DELAY!kfa:0,0,%W%,%H% !PALETTE!
- 	if !STARTCNT! lss 0 if !DIV! == 2 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" w!DELAY!kfa:0,0,%W%,%H% !PALETTE!
+	if !STARTCNT! lss 0 if !DIV! == 1 start "" /B /high cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" fa:0,0,%W%,%H% !PALETTE!
+ 	if !STARTCNT! lss 0 if !DIV! == 2 start "" /B /high  cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" fa:0,0,%W%,%H% !PALETTE!
 	set STR=
 
+	cmdgfx_gdi "" kf0:0,0,0,0W!DELAY!
+	
 	if !STARTCNT! lss 0 set KEY=!errorlevel!
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV! 

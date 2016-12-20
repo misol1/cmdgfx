@@ -716,7 +716,7 @@ void reportArgError(ErrorHandler *errHandler, OperationType opType, int index) {
 double my_random(void) {
 	static int setSeed = 1;
 	if (setSeed) { setSeed = 0; srand(GetTickCount()); }
-	return  (double)(rand() % 65536) / 65535.0;
+	return (double)(rand() % 32768) / 32768.0;
 }
 
 double my_eq(double n, double comp) {
@@ -755,7 +755,7 @@ double my_col(double x, double y) {
 double my_fgcol(double x, double y) {
 	if (x < 0 || y < 0 || x >= sw || y >= sh)
 		return 0;
-	return (activeCols[(int)y * sw + (int)x]) & 0xff;
+	return (activeCols[(int)y * sw + (int)x]) & 0xf;
 }
 
 double my_bgcol(double x, double y) {
@@ -1042,6 +1042,45 @@ void writeErrorLevelToFile(int bWriteReturnToFile, int value) {
 	}
 }
 
+long long milliseconds_now(void) {
+	static LARGE_INTEGER s_frequency;
+	static BOOL s_use_qpc;
+
+	s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+	if (s_use_qpc) {
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
+		return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+	} else {
+		return GetTickCount();
+	}
+}
+
+void process_waiting(int bWait, int waitTime) { 
+	if (bWait==1 && waitTime > 0) {
+		long long sT = milliseconds_now();
+		while (milliseconds_now() < sT + waitTime) ;
+	}
+	
+	if (bWait==2 && waitTime > 0) {
+		long long sT;
+		FILE *fp = fopen("CGXMS.dat", "r");
+
+		if (fp != NULL) {
+			fscanf(fp, "%lld", &sT);
+			fclose(fp);
+			if (milliseconds_now() >= sT)
+				while (milliseconds_now() < sT + waitTime) ;
+		}
+		
+		fp = fopen("CGXMS.dat", "w");
+		if (fp != NULL) {
+			fprintf(fp, "%lld", milliseconds_now());
+			fclose(fp);
+		}
+	}
+}
+	
 
 #define MAX_OBJECTS_IN_MEM 16
 
@@ -2122,8 +2161,6 @@ int main(int argc, char *argv[]) {
 		int k = getch();
 		if (k == 224 || k == 0) k = 256 + getch();
 		retVal = k;
-		//writeErrorLevelToFile(bWriteReturnToFile, k);
-		//return k;
 	}
 
 	if (bMouse) {
@@ -2139,7 +2176,7 @@ int main(int argc, char *argv[]) {
 
 		if (mouseWait > -1) {
 			res = WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), mouseWait);
-			if (res & WAIT_TIMEOUT) { writeErrorLevelToFile(bWriteReturnToFile, -1); return -1; }
+			if (res & WAIT_TIMEOUT) { process_waiting(bWait, waitTime); writeErrorLevelToFile(bWriteReturnToFile, -1); return -1; }
 		}
 
 		res = -1;
@@ -2184,14 +2221,9 @@ int main(int argc, char *argv[]) {
 
 		SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldfdwMode);
 		retVal = res;
-		//writeErrorLevelToFile(bWriteReturnToFile, res);
-		//return res;
 	}
 
-	if (bWait && waitTime > 0) {
-		if (bWait == 1) startT = GetTickCount();
-		while (GetTickCount() < startT + waitTime) ;
-	}
+	process_waiting(bWait, waitTime);
 	
 	writeErrorLevelToFile(bWriteReturnToFile, retVal);
 	return retVal;

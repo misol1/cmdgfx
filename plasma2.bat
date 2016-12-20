@@ -38,14 +38,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
 	
-	if !MODE! == 0 set /a A1+=1, A2-=2 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3) & !HELP!" kf0:0,0,%W%,%H%
-	if !MODE! == 1 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+tan((x+!COLCNT!/1)/160)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H% 	
-	if !MODE! == 2 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+tan((x+!COLCNT!/1)/160)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H%	
-	if !MODE! == 3 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x+!COLCNT!/1)/110)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(sin((y+x)/100)*10) & !HELP!" kf0:0,0,%W%,%H%	
-   if !MODE! == 4 set /a A1+=4, A2-=2 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!" kf0:0,0,%W%,%H%
-   if !MODE! == 5 set /a A1+=2, A2+=1 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!" kf0:0,0,%W%,%H%
-	if !MODE! == 6 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+tan((x+!COLCNT!/1)/60)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H% 	
-	if !MODE! == 7 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin(tan((x+!COLCNT!/1)/60)/(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10))*15 & !HELP!" kf0:0,0,%W%,%H% 	
+	if !MODE! == 0 set /a A1+=1, A2-=2 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3) & !HELP!" kf0:0,0,%W%,%H%
+	if !MODE! == 1 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H% 	
+	if !MODE! == 2 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H%	
+	if !MODE! == 3 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/1)/110)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(sin((y+x)/100)*10) & !HELP!" kf0:0,0,%W%,%H%	
+   if !MODE! == 4 set /a A1+=4, A2-=2 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!" kf0:0,0,%W%,%H%
+   if !MODE! == 5 set /a A1+=2, A2+=1 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!" kf0:0,0,%W%,%H%
+	if !MODE! == 6 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/60)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP!" kf0:0,0,%W%,%H% 	
+	if !MODE! == 7 set /a A1+=1, A2-=3 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin(tan((x+!COLCNT!/1)/60)/(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10))*15 & !HELP!" kf0:0,0,%W%,%H% 	
 
 	set KEY=!errorlevel!
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 7 set MODE=0

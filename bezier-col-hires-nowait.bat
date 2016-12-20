@@ -71,5 +71,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 endlocal
+cmdwiz delay 30
 cmdwiz setfont 6 & mode 80,50 & cls
 cmdwiz showcursor 1

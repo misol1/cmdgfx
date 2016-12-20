@@ -4,12 +4,13 @@ cmdwiz setfont 1 & cls & mode 120,80
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XMID=120/2, YMID=80/2-1, XMID2=120/2+120
-set /a DIST=4000, ROTMODE=0, RX=0, RY=0, RZ=0, MODE=0
+set /a DIST=4000, ROTMODE=0, RX=0, RY=0, RZ=0, MODE=1
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-  if !MODE!==0 cmdgfx_gdi "fbox 1 0 b2 0,0,200,200 & 3d objects\ball-object.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 0.9,0.9,0.9,0,0,0 0,0,0,50 %XMID%,%YMID%,!DIST!,1.0 0 0 0" kf1
-  if !MODE!==1 cmdgfx_gdi "fbox 1 0 b2 0,0,120,80 & fbox 1 0 08 120,0,120,80 & 3d objects\ball-object.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 0.9,0.9,0.9,0,0,0 0,0,0,50 %XMID2%,%YMID%,!DIST!,2.0 0 0 0 & & block 0 120,0,120,80 9,4 08 0 0 ????=10b1& block 0 120,0,120,80 0,0 08" kf1:0,0,240,80
+  if !MODE!==0 start /B /HIGH cmdgfx_gdi "fbox 1 0 b2 0,0,200,200 & 3d objects\ball-object.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 0.9,0.9,0.9,0,0,0 0,0,0,50 %XMID%,%YMID%,!DIST!,1.0 0 0 0" f1
+  if !MODE!==1 start /B /HIGH cmdgfx_gdi "fbox 1 0 b2 0,0,120,80 & fbox 1 0 08 120,0,120,80 & 3d objects\ball-object.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 0.9,0.9,0.9,0,0,0 0,0,0,50 %XMID2%,%YMID%,!DIST!,2.0 0 0 0 & & block 0 120,0,120,80 9,4 08 0 0 ????=10b1& block 0 120,0,120,80 0,0 08" f1:0,0,240,80
+  cmdwiz getch nowait
   set KEY=!errorlevel!
   if !KEY! == 32 set /A MODE=1-!MODE!
   if !KEY! == 112 cmdwiz getch
