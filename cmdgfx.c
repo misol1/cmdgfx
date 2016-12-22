@@ -25,6 +25,7 @@
 // 1. Code optimization: Re-use images used several times, same way as for objects
 // 2. Code fix: Non persp. tmapping (tpoly) causes pixel artifacts for e.g a non-tilted rectangle texture
 // 3. Gdi: possible to optimize bitmap creation by writing ints?
+// 4. Gdi: allow writing all but the last op with WriteConsoleOutput. The actual visible part (where the gdi output goes) should NOT be written by WriteConsoleoutput, or flickering will happen
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
