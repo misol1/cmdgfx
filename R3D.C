@@ -212,7 +212,7 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 }
 
 
-void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth, float rx2, float ry2, float rz2) {
+void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth, float rx2, float ry2, float rz2, int movex2, int movey2, int movez2 ) {
 	float srx, crx, sry, cry, srz, crz;
 	float srx2, crx2, sry2, cry2, srz2, crz2;
 	int i, pe, ped, xpp, ypp, zpp, xpp2, ypp2, H;
@@ -254,6 +254,10 @@ void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int d
 		xpp2=xpp*crz2 + ypp*srz2;
 		ypp2=ypp2*crz2 - xpp*srz2;
 
+		xpp2 += movex2;
+		ypp2 -= movey2;
+		obj[i].vz += movez2;		
+		
 		ped = distance+obj[i].vz; if (!ped) ped = 1;
 		if (ped < MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION) {
 			if (bAllowOnlyPositiveZ || (!bAllowOnlyPositiveZ && ped >-MAGIC_NUMBER_TOO_CLOSE_FOR_PROJECTION)) {

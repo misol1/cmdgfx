@@ -23,7 +23,7 @@ void Make_torus_object(point3d obj[], float shaper);
 void Make_ball_object(point3d obj[], float shaper);
 void Make_cube_object(point3d obj[]);
 void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth);
-void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth, float rx2, float ry2, float rz2);
+void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth, float rx2, float ry2, float rz2, int movex2, int movey2, int movez2);
 
 #define R3D_MAX_V_PER_FACE 28
 

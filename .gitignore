@@ -35,3 +35,5 @@ dev
 distrib.bat
 altmakeall.bat
 cpmake.bat
+EL.dat
+CGXMS.dat

@@ -27,9 +27,9 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]
-3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
-         face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect 
-         fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
+3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2]
+         scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect
+         fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 insert   file
 
 Fgcol and bgcol can be specified either as decimal or hex.

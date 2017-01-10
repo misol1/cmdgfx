@@ -1,0 +1,15 @@
+# plane.obj
+
+v -5 -5 0
+v  5 -5 0
+v  5  5 0
+v -5  5 0
+
+vt 0 1
+vt 1 1
+vt 1 0
+vt 0 0
+
+usemtl img\emma.txt
+
+f 1/1/ 2/2/ 3/3/ 4/4/

@@ -24,7 +24,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   if !KEY! == 336 if !ROTMODE!==1 set /A RX-=20
   if !KEY! == 122 if !ROTMODE!==1 set /A RZ+=20
   if !KEY! == 90 if !ROTMODE!==1 set /A RZ-=20
-  if !ROTMODE! == 0 set /a RY-=6, RX+=5, RZ+=2
+  if !ROTMODE! == 0 set /a RY-=7, RX+=5, RZ+=2	
 )
 if not defined STOP goto REP
 
