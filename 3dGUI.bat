@@ -31,10 +31,9 @@ set MENUFILE=3dGUI.dat
 if not "%~1"=="" set MENUFILE=%~1
 if not exist %MENUFILE% cls & echo Error: could not load %MENUFILE%. & cmdwiz getch & goto :ESCAPE
 
-set /a CNT=-1 & for /f "tokens=1,2,3,4 delims=;" %%i in (%MENUFILE%) do set /a CNT+=1 & (if !CNT!==0 set BGIMG=%%i&set MSCALE=%%j) & if !CNT! gtr 0 call :MKTEXTUREPLANE !CNT! %%i %%j&set TT=%%k&set T!CNT!=!TT:_=\-!&set C!CNT!=%%l&set G!CNT!=1&(cmdwiz stringfind "%%i" ".txt" & if !errorlevel! geq 0 set G!CNT!=0)
+set /a CNT=-1 & for /f "tokens=1,2,3,4 delims=;" %%i in (%MENUFILE%) do set /a CNT+=1 & (if !CNT!==0 set BGIMG=%%i&set MSCALE=%%j&set MSWING=%%k) & if !CNT! gtr 0 call :MKTEXTUREPLANE !CNT! %%i %%j&set TT=%%k&set T!CNT!=!TT:_=\-!&set C!CNT!=%%l&set G!CNT!=1&(cmdwiz stringfind "%%i" ".txt" & if !errorlevel! geq 0 set G!CNT!=0)
 set /a MAXPLANES=!CNT!
 
-:: also nice: SCALE=55, 65
 set /a MINRY=320, MAXRY=1000, KEY=0, SCALE=45
 if not "%MSCALE%" == "" set /a SCALE=%MSCALE%
 set /a RY=!MINRY!, RYP=0, RYSPAN=%MAXRY%-%MINRY%, FORCEDRYP=0, ENDREACH=0, TP=86
@@ -42,6 +41,7 @@ set /a RYDELTA=%RYSPAN%/%MAXPLANES%
 set /a MD=0, RYPMUL=4, SWING=3, ENDCOUNT=-1
 set /a RYPMAX=15*!RYPMUL!
 set /a SELYMID=!YMID!, SELPLANE=-1, SELRZ=0, SELSCALE=-!SCALE!
+if not "%MSWING%" == "" set /a SWING=%MSWING%
 set SELCMD=
 
 :: Ad hoc, how can I properly calculate these values?
