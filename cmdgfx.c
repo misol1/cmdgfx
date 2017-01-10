@@ -29,6 +29,7 @@
 // 5. Support Unicode? (especially if supporting Unicode for cmdwiz/gotoxy)
 // 6. (Setting bg in bit-test and bit-balls2 no longer seems to work/have effect. Bug? EDIT: No bug, related to 7)
 // 7. Allow use of e.g. ! for text/image to use "opposite" existing color (for fg use bg, for bg use fg)
+// 8. Make aspect for 3d buffer size independent
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
@@ -1868,7 +1869,7 @@ int main(int argc, char *argv[]) {
 				rry = (float)(ry/4) * 3.14159265359 / 180.0;
 				rrz = (float)(rz/4) * 3.14159265359 / 180.0;
 
-				if (rx2 == 0 && ry2 == 0 && rz2 == 0) {
+				if (rx2 == 0 && ry2 == 0 && rz2 == 0 && postmodx2 == 0 && postmody2 == 0 && postmodz2 == 0) {
 					rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
 				} else {
 					rrx2 = (float)(rx2/4) * 3.14159265359 / 180.0;

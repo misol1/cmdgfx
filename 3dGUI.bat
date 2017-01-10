@@ -68,7 +68,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	if !SELPLANE! geq 0 set /a SELYMID+=2, SELRZ+=8, SELSCALE-=1, MOD=!ENDCOUNT! %% 3 & if !ENDCOUNT! lss 15 if !MOD! == 0 set /a TP+=1
 	set /a ENDINDEX=!ENDREACH!*!SELPLANE!
 	
-	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) & for %%i in (!INDEX!) do set /a "RY+=!RYDELTA!,SYMID=!YMID!,SRZ=0,SSCALE=-!SCALE!, RYC=(!RY!-!MINRY!)/80" & (if !SELPLANE! lss 0 if !RY! gtr !OBSMIN! if !RY! lss !OBSMAX! set text=!T%%i!&set OBSPLANE=%%i) & (if !RYC! gtr 8 set /a RYC=8) & for %%c in (!RYC!) do (if !SELPLANE! geq 0 if %%i neq !SELPLANE! set /a SYMID=!SELYMID!) & (if !SELPLANE! geq 0 if %%i equ !SELPLANE! set /a SRZ=!SELRZ!,SSCALE=!SELSCALE!) & set /a FGCOL=0&(if !G%%i!==0 set FGCOL=!PCOL%%c:~0,2!)&(if %%i neq !ENDINDEX! set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,-750:-400,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0 0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !PCOL%%c! & 3d plane-t%%i.obj 5,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,-750:-400,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0  0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !FGCOL! 0 b1") & if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
+	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) & for %%i in (!INDEX!) do set /a "RY+=!RYDELTA!,SYMID=!YMID!,SRZ=0,SSCALE=-!SCALE!, RYC=(!RY!-!MINRY!)/80" & (if !SELPLANE! lss 0 if !RY! gtr !OBSMIN! if !RY! lss !OBSMAX! set text=!T%%i!&set OBSPLANE=%%i) & (if !RYC! gtr 8 set /a RYC=8) & for %%c in (!RYC!) do (if !SELPLANE! geq 0 if %%i neq !SELPLANE! set /a SYMID=!SELYMID!) & (if !SELPLANE! geq 0 if %%i equ !SELPLANE! set /a SRZ=!SELRZ!,SSCALE=!SELSCALE!) & set /a FGCOL=0&(if !G%%i!==0 set FGCOL=!PCOL%%c:~0,2!)&(if %%i neq !ENDINDEX! set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0 0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !PCOL%%c! & 3d plane-t%%i.obj 5,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0  0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !FGCOL! 0 b1") & if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
 	start /B /High cmdgfx_gdi "%BKSTR:~1,-1% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!" Z400f0:0,0,%W%,%H%
 	cmdgfx_gdi "" M0f0:0,0,0,0W12
@@ -137,9 +137,9 @@ goto :eof
 	set CRSTR=!CRSTR:%ASPECT%=%ASPECT_HALF%!
 	if !INDEX! geq %MAXPLANES% set /a INDEX=0 
 	set /a RY+=!RYDELTA!*!INDEX!& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
-	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) &set /a RY+=!RYDELTA!&set /a "RYC=(!RY!-!MINRY!)/80" & (if !RYC! gtr 8 set /a RYC=8) & for %%e in (!RYC!) do for %%c in (!INDEX!) do set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,0:0 -3500:0,-750:-400,0:7000 -!SCALE!,-!SCALE!,-!SCALE!,0,0,0 0,0,0,10 %XMID%,%YMIDCLICK%,!DIST!,%ASPECT_HALF% 1 0 !CH%%c!"& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
+	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) &set /a RY+=!RYDELTA!&set /a "RYC=(!RY!-!MINRY!)/80" & (if !RYC! gtr 8 set /a RYC=8) & for %%e in (!RYC!) do for %%c in (!INDEX!) do set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,0:0 -3500:0,0:-1150,0:7000 -!SCALE!,-!SCALE!,-!SCALE!,0,0,0 0,0,0,10 %XMID%,%YMIDCLICK%,!DIST!,%ASPECT_HALF% 1 0 !CH%%c!"& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
-	cmdgfx "%BKSTR:~1,-1% & fbox 0 0 20 0,%H%,%W%,%H% & !CRSTR:~1,-1!" Z400
+	cmdgfx "%BKSTR:~1,-1% & fbox 0 0 20 0,%H%,%W%,%H% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!" Z400
 
 	set /a CHKY=!MY!+%H%
 	cmdwiz getcharat !MX! !CHKY!

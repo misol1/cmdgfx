@@ -1,4 +1,4 @@
-::img\dos_shade4.pcx ; 45
+::img\dos_shade4.pcx
 emma.txt ; 9      ;Emma;      echo Emma
 evild.txt ; 9     ;Evil_Dead; echo Evil Dead
 fract.txt ; 9     ;Fractal;   echo Fractal
