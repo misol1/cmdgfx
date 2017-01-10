@@ -7,6 +7,13 @@ mode %W%,%H%
 cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
+cmdwiz getwindowbounds w & set WINW=!errorlevel!
+cmdwiz getwindowbounds h & set WINH=!errorlevel!
+set /a WPX=%SW%/2-%WINW%/2,WPY=%SH%/2-%WINH%/2
+cmdwiz setwindowpos %WPX% %WPY%
+
 set /a CNT=0& for %%a in (00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f) do set CH!CNT!=%%a& set /a CNT+=1
 
 set /a XMID=%W%/2-135, YMID=%H%/2-64
