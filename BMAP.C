@@ -51,29 +51,32 @@ int PCXload (Bitmap *bild,char filename[]) {
 			}
 
 			for (i=0; i<c; i++)
-			bild->data[j++]=d;
+				bild->data[j++]=d;
 		}
 		free(filedata);
 		return 1;
 	}
 
 	if (filedata) free(filedata);
+	
 	return 0;
 }
 
 
-void freeBitmap(Bitmap *bild) {
+void freeBitmap(Bitmap *bild, int bFreeBasePointer) {
 	if (!bild)
-	return;
+		return;
 	if (bild->data)
-	free(bild->data);
+		free(bild->data);
 	if (bild->extras) {
 		if (bild->extrasType == EXTRAS_BITMAP) {
-			freeBitmap((Bitmap *)bild->extras);
-		} else
-		free(bild->extras);
+			freeBitmap((Bitmap *)bild->extras, 1);
+		} else {
+			free(bild->extras);
+		}
 	}
-	free(bild);
+	if (bFreeBasePointer)
+		free(bild);
 }
 
 void putBitmap (int x, int y, Bitmap *bild) {
@@ -81,7 +84,7 @@ void putBitmap (int x, int y, Bitmap *bild) {
 	register int i, xsize = bild->xSize;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
-	return;
+		return;
 	if (x<0) { vid-=x; bmp-=x; xsize+=x; x=0; }
 	if (x+xsize>=XRES) { xsize-=(x+xsize)-XRES; }
 
@@ -98,7 +101,7 @@ void put_transparent_Bitmap (int x, int y, Bitmap *bild) {
 	register int i,j, xsize = bild->xSize;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
-	return;
+		return;
 	if (x<0) { vid-=x; bmp-=x; xsize+=x; x=0;}
 	if (x+xsize>=XRES) { xsize-=(x+xsize)-XRES; }
 
@@ -120,7 +123,7 @@ void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild) {
 	float dx,dy,x0,y0=0,xs=0;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+xrange<0) || (y<0 && y+yrange<0) )
-	return;
+		return;
 
 	dx=(float)(bild->xSize)/(float)(xrange);
 	dy=(float)(bild->ySize)/(float)(yrange);
@@ -149,7 +152,7 @@ void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild)
 	float dx,dy,x0,y0=0,xs=0;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+xrange<0) || (y<0 && y+yrange<0) )
-	return;
+		return;
 
 	dx=(float)(bild->xSize)/(float)(xrange);
 	dy=(float)(bild->ySize)/(float)(yrange);
@@ -177,7 +180,7 @@ void shadeBitmap (int x, int y, Bitmap *bild, int addon) {
 	register uchar *vid=video+x+y*XRES,*bmap=bild->data,*vvid,*v1=video+FRAMESIZE;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
-	return;
+		return;
 	if (x<0) { vid-=x; bmap-=x; xsize+=x; x=0; }
 	if (x+xsize>=XRES) { xsize-=(x+xsize)-XRES; }
 

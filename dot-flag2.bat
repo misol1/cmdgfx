@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 1 & cls & mode 180,80 & cmdwiz showcursor 0
+bg font 1 & cls & mode 180,80 & cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XC=0, YC=0, XCP=8, YCP=5, MXC=600, MYC=0, SHR=13
@@ -26,7 +26,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
   start /B /HIGH cmdgfx_gdi "fbox 1 0 db 180,0,180,80 & fbox 1 0 b1 0,0,180,80 & image btemp.gxy 0 0 0 -1 180,0 & block 0 0,0,330,80 0,0 -1 0 0 ? ? 17+x-180+sin(!XC!/100+floor((x-180)/!BXA!)*0.!D1!+floor(y/!BYA!)*0.!D2!)*!XMUL!+eq(fgcol(x,y),1)*500  !YMOD!+y+cos(!YC!/100+floor((x-180)/!BXA!)*0.!D3!+floor(y/!BYA!)*0.!D4!)*!YMUL!" f1:0,0,330,80
   
-  cmdgfx_gdi.exe "" kfa:0,0,0,0W10
+  cmdgfx.exe "" knW10
   set KEY=!errorlevel!
   if !KEY! == 331 set /a XCP-=1 & if !XCP! lss 0 set /a XCP=0
   if !KEY! == 333 set /a XCP+=1
@@ -48,5 +48,5 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 100 & mode 80,50 & cls
-cmdwiz setfont 6 & cmdwiz showcursor 1
+bg font 6 & cmdwiz showcursor 1
 del /Q btemp.gxy >nul 2>nul

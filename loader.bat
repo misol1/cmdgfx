@@ -1,15 +1,15 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 0 & cls
+bg font 0 & cls
 set /a W=200, H=90
-mode con lines=%H% cols=%W%
+mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set /a W*=4, H*=6, RX=0, RY=0, RZ=0
 
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set /a DRAWMODE=0, ROTMODE=0, DIST=500,WIRE=0,RANDVAL=5
-set ASPECT=1.777
+set ASPECT=1.19948
 
 set PAL=0 0 db 0 0 b1 
 
@@ -50,7 +50,7 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 150
-cmdwiz setfont 6&mode 80,50&cls
+bg font 6&mode 80,50&cls
 goto :eof
 
 :SETOBJECT

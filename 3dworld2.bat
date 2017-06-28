@@ -1,9 +1,9 @@
 :: 3dworld with textures : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 0
-set W=180&set H=110
-mode con lines=%H% cols=%W%
+cls & bg font 0
+set /a W=180, H=110
+mode %W%,%H%
 mode con rate=31 delay=0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
@@ -11,7 +11,7 @@ cmdgfx.exe "text 8 0 0 Generating_world...\n\n\n___(H_for_help) 82,50"
 
 set /a XMID=%W%/2, YMID=%H%/2-4
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
-set ASPECT=1.13333
+set ASPECT=0.69259
 set /a RX=0, RY=720, RZ=0
 
 set CUBECOLS=0 4 b1 0 4 b1  0 4 b1  0 4 b1  0 4 b0 0 4 b0  0 1 b1 0 1 b1  0 1 b1  0 1 b1  0 1 b0 0 1 b0
@@ -140,9 +140,9 @@ if not defined STOP goto LOOP
 del /Q %FN%
 del /Q %FN2%
 endlocal
-mode con cols=80 lines=50
+mode 80,50
 cls
-cmdwiz setfont 6
+bg font 6
 goto :eof
 
 :MOVE <direction>

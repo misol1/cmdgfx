@@ -1,5 +1,5 @@
 # cmdgfx
-Windows command line graphic primitives, for text based games/demos by Mikael Sollenborn (2016)
+Windows command line graphic primitives, for text based games/demos by Mikael Sollenborn (2016-2017)
 
 Sorry about the current lack of documentation; have a look at the example files and all will be (kind of) clear...
 
@@ -26,7 +26,7 @@ fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]
+block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2]
          scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect
          fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
@@ -57,8 +57,9 @@ Use fgpalette/bgpalette to re-arrange colors in the final output, e.g. use fgpal
 0222222244444444 to let foreground colors 1-7 be color 2 and colors 8-15 be color 4.
 				
 [flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
-         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit
-         pattern(see mouse examples), 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.
+         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key and mouse bit
+         pattern(see mouse examples), 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save
+         (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server.
 ```
 
 cmdgfx_gdi.exe
@@ -82,7 +83,7 @@ fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr]
+block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
          face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect
          fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
@@ -111,9 +112,11 @@ Drawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat
 
 Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (all hex)
 
-[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return
-         key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/
-         mouse bit pattern, 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.
+[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key
+         'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key
+         and mouse bit pattern, 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save (/non-0)
+         errorlevel to 'EL.dat', 'fn[:x,y,w,h]' use font n(0-9,default 6), 'P' read/write buffer
+         to 'GDIbuf.dat', 'n' no output, 'z' sleep, 'S' start as server.
 ```
 
 cmdwiz.exe

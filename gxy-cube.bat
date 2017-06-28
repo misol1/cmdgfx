@@ -1,13 +1,13 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 0 & cls & cmdwiz showcursor 0
+bg font 0 & cls & cmdwiz showcursor 0
 set /a W=200, H=90
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set /a "XMID=%W%/2, YMID=%H%/2"
 set /a DIST=2000, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
-set ASPECT=1.5
+set ASPECT=0.675
 set /A RX=0,RY=0,RZ=0
 
 set HELPMSG=text 3 0 0 N/n\-D/d 2,88
@@ -45,7 +45,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto REP
 
 endlocal
-cmdwiz setfont 6
+bg font 6
 mode 80,50 & cls & cmdwiz showcursor 1
 goto :eof
 

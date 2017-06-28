@@ -10,7 +10,7 @@ vt 1 0
 vt 1 1
 vt 0 1
 
-usemtl cmdblock 110 0 140 90
+usemtl cmdblock 90 0 140 90
 #usemtl cmdblock 90 20 90 70
 
 f 1/1/ 2/2/ 3/3/ 4/4/

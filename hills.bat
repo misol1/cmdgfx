@@ -1,9 +1,9 @@
 :: Hills parallax scroller : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 0
-set W=240&set H=110
-mode con lines=%H% cols=%W%
+cls & bg font 0
+set /a W=240, H=110
+mode %W%,%H%
 
 set MIN_ADV_L1=60
 set /A HILLS_L1=%W%/%MIN_ADV_L1% + 2
@@ -44,5 +44,5 @@ goto SHOWLOOP
 
 :ESCAPE
 endlocal
-mode con cols=80 lines=50
-cls & cmdwiz setfont 6
+mode 80,50
+cls & bg font 6

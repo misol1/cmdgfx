@@ -2,7 +2,7 @@
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=220, H=95
 
-cmdwiz setfont 0 & mode %W%,%H%
+bg font 0 & mode %W%,%H%
 cmdgfx "fbox 0 0 00 0,0,%W%,%H%"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
@@ -11,7 +11,7 @@ set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/1536
 set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
 set "_SIN="
 
-set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13
+set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=12
 set /a NOFLINES=100, LINEGAP=10, LNCNT=1, DCNT=0, REP=80, COL=10, CCYCLE=1, CCYCLELEN=20, STARTLINE=1
 set /a ENDCYCLE=!CCYCLELEN!*16-1, CCNT=10*!CCYCLELEN!
 for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
@@ -42,8 +42,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 	
-	if !DIV! == 1 cmdgfx "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" kf0
-	if !DIV! == 2 cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 0 0 - - %SXMID%-x-1 y+0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 0 - - x+0 %SYMID%-y-1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 0 0 - - %SXMID%-x-1 %SYMID%-y-1" kf0
+	if !DIV! == 1 start /B /High cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" f0
+	if !DIV! == 2 start /B /High cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 0 0 - - %SXMID%-x-1 y+0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 0 - - x+0 %SYMID%-y-1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 0 0 - - %SXMID%-x-1 %SYMID%-y-1" f0
+	
+	cmdgfx "" knW!DELAY!
 	
 	set KEY=!errorlevel!
 	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & 	for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
@@ -57,5 +59,5 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 endlocal
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

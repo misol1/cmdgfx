@@ -1,34 +1,29 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 6 & cls
-set W=80&set H=50
-mode con lines=%H% cols=%W%
+bg font 6 & cls
+set /a W=80, H=50
+mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
-call sintable.bat
 
-set SC=90&set /a CC=!SC!+180
-set SC2=270&set /a CC2=!SC2!+180
-set SC3=450&set /a CC3=!SC3!+180
-set SC4=630&set /a CC4=!SC4!+180&set /A CC4=!CC4!-720
-set SD=0
+set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
+set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
+set "_SIN="& set /A SHR=13
 
-set /a XMID=%W%/2&set /a YMID=%H%/2
-set ROTSPEED=8
+set /a SC1=45, CC1=SC1+90, SC2=CC1, CC2=SC2+90, SC3=CC2, CC3=SC3+90, SC4=CC3, CC4=SC4+90
+
+set /a XMID=%W%/2, YMID=%H%/2
+set /a SD=0, ROTSPEED=4, DISTMUL=8
 
 :REP
-set /a "XMUL=35+(!SIN%SD%!*10>>14), YMUL=25+(!SIN%SD%!*10>>14)"
-set /a "XPOS=%XMID%+(!SIN%SC%!*%XMUL%>>14), YPOS=%YMID%+(!SIN%CC%!*%YMUL%>>14), XPOS2=%XMID%+(!SIN%SC2%!*%XMUL%>>14), YPOS2=%YMID%+(!SIN%CC2%!*%YMUL%>>14)"
-set /a "XPOS3=%XMID%+(!SIN%SC3%!*%XMUL%>>14), YPOS3=%YMID%+(!SIN%CC3%!*%YMUL%>>14), XPOS4=%XMID%+(!SIN%SC4%!*%XMUL%^>^>14), YPOS4=%YMID%+(!SIN%CC4%!*%YMUL%>>14)"
-cmdgfx "fbox 8 0 . 0,0,79,49 & tpoly img\dos_shade.pcx 0 0 db -1 %XPOS%,%YPOS%,0,0, %XPOS2%,%YPOS2%,1,0, %XPOS3%,%YPOS3%,1,1, %XPOS4%,%YPOS4%,0,1 " k
-set /a SC+=%ROTSPEED% & if !SC! geq 720 set /A SC=!SC!-720
-set /a CC+=%ROTSPEED% & if !CC! geq 720 set /A CC=!CC!-720
-set /a SC2+=%ROTSPEED% & if !SC2! geq 720 set /A SC2=!SC2!-720
-set /a CC2+=%ROTSPEED% & if !CC2! geq 720 set /A CC2=!CC2!-720
-set /a SC3+=%ROTSPEED% & if !SC3! geq 720 set /A SC3=!SC3!-720
-set /a CC3+=%ROTSPEED% & if !CC3! geq 720 set /A CC3=!CC3!-720
-set /a SC4+=%ROTSPEED% & if !SC4! geq 720 set /A SC4=!SC4!-720
-set /a CC4+=%ROTSPEED% & if !CC4! geq 720 set /A CC4=!CC4!-720
-set /a SD+=10 & if !SD! geq 720 set /A SD=!SD!-720
+	set /a "XMUL=35+(%SINE(x):x=!SD!*31416/180%*!DISTMUL!>>%SHR%), YMUL=25+(%SINE(x):x=!SD!*31416/180%*!DISTMUL!>>%SHR%)"
+	
+	for /l %%a in (1,1,4) do set /a SV=!SC%%a!, CV=!CC%%a!& set /a "XPOS%%a=%XMID%+(%SINE(x):x=!SV!*31416/180%*!XMUL!>>%SHR%), YPOS%%a=%YMID%+(%SINE(x):x=!CV!*31416/180%*!YMUL!>>%SHR%)"
+	
+	cmdgfx "fbox 8 0 . 0,0,79,49 & tpoly img\dos_shade.pcx 0 0 db -1 %XPOS1%,%YPOS1%,0,0, %XPOS2%,%YPOS2%,1,0, %XPOS3%,%YPOS3%,1,1, %XPOS4%,%YPOS4%,0,1 " k
+	
+	set /a SC1+=%ROTSPEED%, CC1+=%ROTSPEED%, SC2+=%ROTSPEED%, CC2+=%ROTSPEED%, SC3+=%ROTSPEED%, CC3+=%ROTSPEED%, SC4+=%ROTSPEED%, CC4+=%ROTSPEED%, SD+=4
+	
+	if %ERRORLEVEL% == 112 cmdwiz getch
 if not %ERRORLEVEL% == 27 goto REP
 
 endlocal

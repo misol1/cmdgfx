@@ -13,7 +13,7 @@
 
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 2 & mode 150,75 & cls
+bg font 2 & mode 150,75 & cls
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 cmdwiz setbuffersize 350 k
 cmdwiz getquickedit & set QE=!errorlevel!&cmdwiz setquickedit 0
@@ -56,13 +56,14 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 			set OUTP=
 		)
 	)
-	if !KEY! == 32 if !KD!==0 set /a COL+=1&if !COL! gtr 2 set COL=0
+	if !KEY! == 32 set /a COL+=1&if !COL! gtr 2 set COL=0
 	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
 if not defined STOP goto LOOP
 
 cmdwiz setquickedit %QE%
 endlocal
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 del /Q bkg.gxy>nul 2>nul
 cmdwiz showcursor 1

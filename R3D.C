@@ -69,7 +69,7 @@ char *strgets(char *in, char *ut, int max) {
 
 	ch = strchr(in, '\n');
 	if (ch == NULL) 
-	nof = strlen(in);
+		nof = strlen(in);
 	else {
 		nof = ch - in;
 	}
@@ -178,7 +178,8 @@ void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float 
 	if (projectionDepth == 0) projectionDepth = 500;
 	H = projectionDepth << 12; // projectionDepth decides the "narrowness" of projection (the higher, the more narrow)
 	
-	asp = (aspect/((float)XRES/(float)YRES));
+	asp = aspect;
+	/// asp = (aspect/((float)XRES/(float)YRES));
 
 	srx=sin(rx); crx=cos(rx); sry=sin(ry);
 	cry=cos(ry); srz=sin(rz); crz=cos(rz);
@@ -221,7 +222,8 @@ void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int d
 	if (projectionDepth == 0) projectionDepth = 500;
 	H = projectionDepth << 12; // projectionDepth decides the "narrowness" of projection (the higher, the more narrow)
 	
-	asp = (aspect/((float)XRES/(float)YRES));
+//	asp = (aspect/((float)XRES/(float)YRES));
+	asp = aspect;
 
 	srx=sin(rx); crx=cos(rx); sry=sin(ry);
 	cry=cos(ry); srz=sin(rz); crz=cos(rz);
@@ -251,7 +253,7 @@ void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int d
 		xpp=xpp2*cry2 + zpp*sry2;
 		obj[i].vz=zpp*cry2 - xpp2*sry2;
 
-		xpp2=xpp*crz2 + ypp*srz2;
+		xpp2=xpp*crz2 + ypp2*srz2;
 		ypp2=ypp2*crz2 - xpp*srz2;
 
 		xpp2 += movex2;
@@ -273,7 +275,6 @@ void rot3dPoints_doubleRotation(point3d obj[], int points, int xg, int yg, int d
 
 
 
-
 void freeObj3d(obj3d *obj) {
 	int i;
 	if (!obj) return;
@@ -283,7 +284,7 @@ void freeObj3d(obj3d *obj) {
 	if (obj->texData) free(obj->texData);
 	if (obj->bmaps) {
 		for (i = 0; i < obj->nofBmaps; i++)
-		if (obj->bmaps[i]) free(obj->bmaps[i]);
+			if (obj->bmaps[i]) freeBitmap(obj->bmaps[i], 1); 
 		free(obj->bmaps);
 	}
 	if (obj->faceBitmapIndex) free(obj->faceBitmapIndex);
@@ -301,7 +302,7 @@ obj3d *readPly(char *fname, float scale, float modx, float mody, float modz) {
 
 	fp = fopen(fname, "r");
 	if (!fp)
-	return NULL;
+		return NULL;
 
 	obj = (obj3d *) calloc(sizeof(obj3d), 1);
 	if (!obj) {
@@ -409,7 +410,7 @@ for (j = 0; j < obj->nofFaces; j++) {
 }
 
 
-obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture) {
+obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures) {
 	char keywords[8][64] = { "v ", "vn ", "vt ", "f ", "usemtl " };
 	int nofV = 0, nofN = 0, nofT = 0, nofF = 0, nofB = 0;
 	int i,j, bmapIndex = 0, nofread;
@@ -421,7 +422,7 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 
 	fp = fopen(fname, "r");
 	if (!fp)
-	return NULL;
+		return NULL;
 
 	filedata = (char *)malloc(3000000 * sizeof(char));
 	if (!filedata) {
@@ -531,9 +532,9 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 				
 				if (nofread == 2) {
 					if (x<0) x=-x;
-					if (x>1) x=1;
+					if (x>1 && !bAllowRepeated3dTextures) x=1;
 					if (y<0) y=-y;
-					if (y>1) y=1;
+					if (y>1 && !bAllowRepeated3dTextures) y=1;
 					obj->texCoords[nofT*2] = x;
 					obj->texCoords[nofT*2+1] = y;
 					nofT++;
@@ -546,7 +547,7 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 				*lfpos = '\0';
 
 				if (obj->bmaps[bmapIndex]) {
-					freeBitmap(obj->bmaps[bmapIndex]);
+					freeBitmap(obj->bmaps[bmapIndex], 1);
 				}
 				
 				obj->bmaps[bmapIndex] = (Bitmap *) malloc(sizeof(Bitmap));
@@ -709,7 +710,7 @@ obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz) {
 		strcpy(texname, "");
 		nofread = sscanf(bufp, "%s %d %d %s", name, &nv, &polys, texname);
 		if (nofread < 3 || nv < 1 || polys < 1)
-		return NULL;
+			return NULL;
 		
 		obj = (obj3d *) calloc(sizeof(obj3d), 1);
 		if (!obj) {

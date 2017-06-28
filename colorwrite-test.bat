@@ -1,14 +1,14 @@
 :: Colorwrite test : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 6 & cls
+bg font 6 & cls
 set W=80&set H=54
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set DIST=1000
-set ASPECT=1	
+set ASPECT=0.675
 set DRAWMODE=0
 set /A CRX=0,CRY=0,CRZ=0
 set COLS=a 2 ?  a 2 ?  9 0 ?  9 0 ?  c 4 ?  c 4 ?

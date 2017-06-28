@@ -1,9 +1,9 @@
 :: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 0
+cls & bg font 0
 set /a W=180, H=80
-mode con lines=%H% cols=%W%
+mode %W%,%H%
 mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==W if not %%v==H set "%%v="
 
@@ -17,7 +17,7 @@ cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
 
 set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"
-set ASPECT=1.9
+set ASPECT=1.26667
 
 set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
@@ -106,7 +106,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 
 	start "" /B /high cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" fa:0,0,%W%,%H%Z600
 	
-	cmdgfx_gdi.exe "" M0fa:0,0,0,0W13
+	cmdgfx.exe "" M0unW13
 
 	set RET=!errorlevel!
    if not !RET! == -1 (
@@ -122,7 +122,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=%MAPTXT%)
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4 & set TY=0&set BOUNDSCHECK=1
-				if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
+				rem if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
 				if !KEY! == 27 set STOP=1
 				set KEY=0
 			)
@@ -150,13 +150,13 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	)
 )
 if not defined STOP goto LOOP
-:: cmdwiz setfont 6 & cmdwiz gettime&set /a TLAPSE=(!errorlevel!-%ORGT%)/100&echo !TLAPSE! cs&pause&pause
+:: bg font 6 & cmdwiz gettime&set /a TLAPSE=(!errorlevel!-%ORGT%)/100&echo !TLAPSE! cs&pause&pause
 
 ::del /q %FN% %FN2%
 endlocal
-mode con cols=80 lines=50
+mode 80,50
 mode con rate=31 delay=0
-cls & cmdwiz setfont 6
+cls & bg font 6
 goto :eof
 
 :MOVE <direction> <div>

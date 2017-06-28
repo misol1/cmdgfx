@@ -1,7 +1,7 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180, H=80
-cmdwiz setfont 0 & mode %W%,%H%
+bg font 0 & mode %W%,%H%
 cmdgfx "fbox 0 0 00 0,0,%W%,%H%"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
@@ -57,7 +57,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
  	if !STARTCNT! lss 0 if !DIV! == 2 start "" /B /high  cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" fa:0,0,%W%,%H% !PALETTE!
 	set STR=
 
-	cmdgfx_gdi "" kf0:0,0,0,0W!DELAY!
+	cmdgfx "" knW!DELAY!
 	
 	if !STARTCNT! lss 0 set KEY=!errorlevel!
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
@@ -74,5 +74,5 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 endlocal
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

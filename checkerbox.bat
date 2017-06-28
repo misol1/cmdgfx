@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 0 & cls
+bg font 0 & cls
 set /a W=200, H=110
 if not "%~1" == "" set /a W=120, H=70
 mode %W%,%H%
@@ -8,8 +8,9 @@ for /f "tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%
 
 set TEXT=text 7 ? 0 SPACE,_ENTER(cursor),_D/d 1,108
 set /a ZP=200, DIST=700, FONT=0, ROTMODE=0, NOFOBJECTS=5, RX=0, RY=0, RZ=0, RZ2=160
+set ASPECT=0.605
 
-if not "%~1" == "" set /a W*=4, H*=6, ZP=500, NOFOBJECTS=3 &set TEXT=&set FONT=a
+if not "%~1" == "" set /a W*=4, H*=6, ZP=500, NOFOBJECTS=3 &set TEXT=&set FONT=a&set ASPECT=0.9075
 
 set /a XMID=%W%/2, YMID=%H%/2, OBJINDEX=0
 set OBJTEMP=box-temp.obj
@@ -19,10 +20,10 @@ call :SETOBJECT
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	start "" /B /high cmdgfx_gdi "3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,1.1 !COL! & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
-	rem start "" /B /high cmdgfx_gdi "fbox 0 0 20 0,0,200,200 & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,1.1 0 !PLANEMOD! db &  & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,400,1.5 0 0 db & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
+	start "" /B /high cmdgfx_gdi "3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COL! & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
+	rem start "" /B /high cmdgfx_gdi "fbox 0 0 20 0,0,200,200 & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db &  & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,400,%ASPECT% 0 0 db & %TEXT%" Z%ZP%f%FONT%:0,0,%W%,%H%
 
-	cmdgfx_gdi "" f0:0,0,0,0kW10
+	cmdgfx "" nkW10
 	set /a KEY=!ERRORLEVEL!, RZ2-=4
 	if !ROTMODE! == 0 set /a RX+=2, RY+=5, RZ-=3
 	if !KEY! == 13 set /a ROTMODE=1-!ROTMODE!&set /a RX=0, RY=0, RZ=0
@@ -43,7 +44,7 @@ if not defined STOP goto REP
 
 endlocal
 del /Q plane-temp.obj box-temp.obj > nul 2>nul
-cmdwiz setfont 6 & cls
+bg font 6 & cls
 mode 80,50
 goto :eof
 

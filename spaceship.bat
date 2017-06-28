@@ -1,12 +1,12 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 6 & cls & mode 80,50
+bg font 6 & cls & mode 80,50
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XMID=80/2, YMID=50/2-1
 set /a DIST=4000, DRAWMODE=1, END=0
 set /a RX=700, RY=0, RZ=0
-set ASPECT=1.5
+set ASPECT=0.9375
 
 set STOP=
 :REP

@@ -1,6 +1,6 @@
-/********************************************
- * Cmdgfx v 0.99 (c) Mikael Sollenborn 2016 *
- ********************************************/
+/************************************************
+ * Cmdgfx v 0.999 (c) Mikael Sollenborn 2016-17 *
+ ************************************************/
 
 //#define GDI_OUTPUT
 
@@ -23,20 +23,12 @@
 
 // Issues:
 // 1. Code optimization: Re-use images used several times, same way as for objects
-// 2. Code fix: Non persp. tmapping (tpoly) causes pixel artifacts for e.g a non-tilted rectangle texture
-// 3. Gdi: possible to optimize bitmap creation by writing ints?
-// 4. Gdi: allow writing all but the last op with WriteConsoleOutput. The actual visible part (where the gdi output goes) should NOT be written by WriteConsoleoutput, or flickering will happen
-// 5. Support Unicode? (especially if supporting Unicode for cmdwiz/gotoxy)
-// 6. (Setting bg in bit-test and bit-balls2 no longer seems to work/have effect. Bug? EDIT: No bug, related to 7)
-// 7. Allow use of e.g. ! for text/image to use "opposite" existing color (for fg use bg, for bg use fg)
-// 8. Make aspect for 3d buffer size independent
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
 // 2. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
-// 3: Code optimization: Speed up persp. correct texture mapping
-// 4. Code fix: Persp correct tmapping edge bug
-// 5. Code fix: Figure out/fix why RX rotation is not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat example)
+// 3. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
+// 4. Code fix: Figure out why RX rotation not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat)
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -61,7 +53,36 @@ uchar colLookup[256];
 #define MAX_STR_SIZE 300000
 #define MAX_OP_SIZE 128000
 
+
+int MouseClicked(MOUSE_EVENT_RECORD mer) {
+	static int bReportNext = 0;
+	int res = 0;
+
+	switch(mer.dwEventFlags) {
+		case DOUBLE_CLICK: case MOUSE_WHEELED:	bReportNext = 1; res = 1; break;
+		
+		case 0: case MOUSE_MOVED:
+			if(mer.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED || mer.dwButtonState & RIGHTMOST_BUTTON_PRESSED) {
+				bReportNext = 1;
+				res = 1;
+			} else if (bReportNext) {
+				bReportNext = 0;
+				res = 1;
+			} else {
+				bReportNext = 0;
+				res = 0;
+			}
+			break;
+		default:
+			break;
+	}
+		
+	return res;
+}
+
 int MouseEventProc(MOUSE_EVENT_RECORD mer) {
+	static int bReportNext = 0;
+	
 	int res;
 	res = (mer.dwMousePosition.X << 5) | (mer.dwMousePosition.Y << 14);
 
@@ -250,11 +271,15 @@ ErrorHandler *g_errH;
 int g_opCount;
 void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras);
 unsigned char *g_videoCol, *g_videoChar;
+int g_bSleepingWait = 0;
+int g_bFlushAfterELwrite = 0;
 
 int readCmdGfxTexture(Bitmap *bmap, char *fname) {
+	char *orgFnameP = fname;
 	int res = 0;
 	if (!bmap || !fname) return res;
 	bmap->transpVal = -1;
+	
 	if (strstr(fname, ".pcx")) {
 		char transp[4], inpname[256];
 		int nofargs, dum1, dum2, transpVal = -1;
@@ -264,14 +289,18 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		res = PCXload(bmap, inpname);
 
 		bmap->transpVal = transpVal;
+		bmap->bCmdBlock = 0;
+		bmap->extras = NULL;
+		bmap->extrasType = EXTRAS_NONE;
+
 	} else if (strstr(fname, "cmdblock")) {
-		int x, y, w, h, transpval, i, j, ii, vi, nofargs, transpVal;
+		int x, y, w, h, transpval, i, j, ii, vi, nofargs, transpVal = -1, blockRefresh = 0;
 		Bitmap *bmap2;
 	
 		fname = strstr(fname, "cmdblock ") + strlen("cmdblock ");
 		while (*fname==32) fname++;
 
-		nofargs = sscanf(fname, "%d %d %d %d %d", &x, &y, &w, &h, &transpval);
+		nofargs = sscanf(fname, "%d %d %d %d %x %d", &x, &y, &w, &h, &transpval, &blockRefresh);
 		if (nofargs < 4)
 			return 0;
 		
@@ -286,8 +315,14 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap->xSize = bmap2->xSize = w;
 		bmap->ySize = bmap2->ySize = h;
 		bmap->extrasType = EXTRAS_BITMAP;
-		bmap->transpVal = bmap2->transpVal = transpVal;
+		bmap->transpVal = -1;
+		bmap2->transpVal = transpVal;
 
+		bmap->bCmdBlock = 1;
+		strncpy(bmap->pathOrBlockString, orgFnameP, strlen(orgFnameP));
+		bmap->pathOrBlockString[strlen(orgFnameP)] = 0;
+		bmap->blockRefresh = blockRefresh == 2? 2 : 0;
+		
 		for (i = 0; i < h; i++) {
 			ii = w*i; vi = x + y * XRES + i * XRES;
 			for (j = 0; j < w; j++) {
@@ -327,6 +362,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		if (!bmap->extras) return res;
 		bmap->data = NULL;
  		bmap->extrasType = EXTRAS_ARRAY;
+		bmap->bCmdBlock = 0;
 			
 		for (i = 0; i < nofcols; i++) {
 			parseInput(s_fgcols[i%nofcols], s_bgcols[i%nofcols], s_dchars[i%nofcols], &fgcol, &bgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
@@ -354,6 +390,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap->extrasType = EXTRAS_BITMAP;
 		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1);
 		bmap->transpVal = transpVal;
+		bmap->bCmdBlock = 0;
 	}
 	
 	if (!res) reportFileError(g_errH, OP_3D, ERR_IMAGE_LOAD, g_opCount, fname);
@@ -439,6 +476,128 @@ void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *v
 
 #ifdef GDI_OUTPUT
 
+HWND g_hWnd = NULL;
+HDC g_hDc = NULL, g_hDcBmp = NULL;
+
+
+// Writing ints instead of chars
+void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh) {
+	HBITMAP hBmp1 = NULL;
+	HGDIOBJ hGdiObj = NULL;
+	BITMAP bmp = {0};
+	LONG w = 0, h = 0;
+	int iRet = EXIT_FAILURE;
+	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol;
+	int i,j,ccol,cchar,l,m, index;
+	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
+	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
+	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
+	int fw, fh, *data, val, bpp = 4;
+	unsigned int *palFg, *palBg;
+
+	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
+	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
+
+	if (fontIndex < 0 || fontIndex > 12)
+		return;
+
+	fw = fontWidth[fontIndex];
+	fh = fontHeight[fontIndex];
+	data = fontData[fontIndex];
+
+	x *= fw; y *= fh;
+
+	if (g_hDc == NULL) {
+		if ((g_hWnd = GetConsoleWindow())) {
+			if ((g_hDc = GetDC(g_hWnd))) {
+				g_hDcBmp = CreateCompatibleDC(g_hDc);
+			}
+		}
+	}
+	
+	if (g_hDcBmp)
+	{
+		w = outw * fw;
+		h = outh * fh;
+		outdata = (unsigned int *)malloc(w*h*sizeof(unsigned int));
+		if (!outdata) { printf("#ERR: Could not allocate memory for output buffer\n"); return; }
+
+		if (fontIndex < 10) {
+			for (i = 0; i < outh; i++) {
+				for (j = 0; j < outw; j++) {
+					cchar = videoChar[j+i*XRES];
+					ccol = videoCol[j+i*XRES];
+					fgcol = &palFg[(ccol&0xf)];
+					bgcol = &palBg[(ccol>>4)];
+					for (l = 0; l < fh; l++) {
+						index = (j*fw + (i*fh+l)*outw*fw);
+						val = data[cchar*fh+l];
+						outt = &outdata[index];
+						for (m = 0; m < fw; m++) {
+							*outt++ = (val & 1) ? *fgcol : *bgcol;
+							val >>= 1;
+						}
+					}
+				}
+			}
+		} else { // pixelfont
+			if (fw == 1) {
+				for (i = 0; i < outh; i++) {
+					for (j = 0; j < outw; j++) {
+						cchar = videoChar[j+i*XRES];
+						ccol = videoCol[j+i*XRES];
+						fgcol = &palFg[(ccol&0xf)];
+						bgcol = &palBg[(ccol>>4)];
+						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+						outdata[j + i*outw] = *pcol;
+					}
+				}
+			} else {
+				for (i = 0; i < outh; i++) {
+					for (j = 0; j < outw; j++) {
+						cchar = videoChar[j+i*XRES];
+						ccol = videoCol[j+i*XRES];
+						fgcol = &palFg[(ccol&0xf)];
+						bgcol = &palBg[(ccol>>4)];
+						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+
+						for (l = 0; l < fh; l++) {
+							index = (j*fw + (i*fh+l)*outw*fw);
+							outt = &outdata[index];
+							for (m = 0; m < fw; m++) {
+								*outt++ = *pcol;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, outdata);
+		if (hBmp1)
+		{
+			if (GetObject(hBmp1, sizeof(bmp), &bmp))
+			{
+				w = bmp.bmWidth; h = bmp.bmHeight;
+				if ((hGdiObj = SelectObject(g_hDcBmp, hBmp1)) && hGdiObj != HGDI_ERROR)
+				{
+					if (BitBlt(g_hDc, (int)x, (int)y, (int)w, (int)h, g_hDcBmp, 0, 0, SRCCOPY)) {
+						iRet = EXIT_SUCCESS;
+					}
+					DeleteObject(hGdiObj);
+				} 
+			}
+
+			DeleteObject(hBmp1);
+		}
+	}
+			
+	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
+	if (outdata) free(outdata);
+}
+
+/*
 void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, uchar *cmdPaletteFg, uchar *cmdPaletteBg, int x, int y) {
 	HWND hWnd = NULL;
 	HDC hDc = NULL, hDcBmp = NULL;
@@ -478,12 +637,11 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 				h = YRES * fh;
 				outdata = (unsigned char *)malloc(w*h*4);
 				if (!outdata) { printf("#ERR: Could not allocate memory for output buffer\n"); ReleaseDC(hWnd, hDcBmp); ReleaseDC(hWnd, hDc); return; }
-/*				
-				hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL);
-				if (!hBmp1) { bpp = 3; hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL); }
-				if (!hBmp1) { printf("#ERR: Could not create 24 or 32 bpp output bitmap\n"); free(outdata); ReleaseDC(hWnd, hDcBmp); ReleaseDC(hWnd, hDc); return; }
-				DeleteObject(hBmp1);
-				*/
+
+//				hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL);
+//				if (!hBmp1) { bpp = 3; hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL); }
+//				if (!hBmp1) { printf("#ERR: Could not create 24 or 32 bpp output bitmap\n"); free(outdata); ReleaseDC(hWnd, hDcBmp); /	//				ReleaseDC(hWnd, hDc); return; }
+//				DeleteObject(hBmp1);
 
 				if (fontIndex < 10) {
 					for (i = 0; i < YRES; i++) {
@@ -555,6 +713,8 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 	if (outdata) free(outdata);
 }
+*/
+
 #endif
 
 int getConsoleDim(int bH) {
@@ -799,7 +959,7 @@ double my_shr(double v1, double v2) {
 int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo) {
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
-	char moveFg = 7, moveBg = 0;
+	char moveFg = 7, moveBg = 0, moveCol=7;
 	int inFg, inBg, inChar;
 	int outFg, outBg, outChar;
 	int *m_inFg = NULL, *m_inBg = NULL, *m_inChar = NULL;
@@ -808,6 +968,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	for (i=0; i < 5; i++) store[i] = 0;
 	
 	if (s_mode) {
+		i = 0;
 		if (s_mode[i]=='1') {
 			mode = 1; i+=2;
 			if (s_mode[i-1] != 0 && s_mode[i] != 0) {
@@ -817,6 +978,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 					if (s_mode[i] != 0 && s_mode[i+1] != 0) {
 						sscanf(&s_mode[i], "%x", &moveChar);
 					}
+					moveCol = (moveBg << 4) | moveFg;
 				}
 			}
 		}
@@ -875,7 +1037,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 
 	if (mode == 1) {
 		video = videoCol;
-		fbox(x, y, w-1, h-1, (moveBg << 4) | moveFg);
+		fbox(x, y, w-1, h-1, moveCol);
 		video = videoChar;
 		fbox(x, y, w-1, h-1, moveChar);
 	}
@@ -925,7 +1087,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		}
 	}
 
-	if (strlen(xExpr) > 1 && strlen(yExpr) > 1) {
+	if (strlen(xExpr) > 1 || strlen(yExpr) > 1) {
 		int err, errX, nx, ny;
 		double ex, ey;
 		uchar *blockCol2, *blockChar2;
@@ -970,6 +1132,8 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 					}
 				}
 			}
+			free(blockChar2); free(blockCol2);
+
 		} else {
 			char errS[64];
 			if (!n) {
@@ -984,7 +1148,6 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 
 		if (n) te_free(n);
 		if (n2) te_free(n2);
-		free(blockChar2); free(blockCol2);
 	}
 
 	if (nofT < 1) {
@@ -1039,17 +1202,49 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	return 1;
 }
 
-void writeErrorLevelToFile(int bWriteReturnToFile, int value) {
+void writeErrorLevelToFile(int bWriteReturnToFile, int value, int bMouse) {
 	FILE *ofp;
 	
 	if (!bWriteReturnToFile)
 		return;
 	
-	ofp = fopen("EL.dat", "w");
-	if (ofp != NULL) {
-		fprintf(ofp, "%d", value);
-		fclose(ofp);
+	if (bWriteReturnToFile == 2) {
+		if (!bMouse && value == 0)
+			return;
+		if (bMouse && value < 0)
+			return;
+
+		if (g_bFlushAfterELwrite)
+			fflush(stdin);
 	}
+	
+	ofp = fopen("EL.dat", "w"); // "a+" ?
+	if (ofp != NULL) {
+		fprintf(ofp, "%d\n", value);
+		fclose(ofp);
+	}	
+}
+
+
+/* Windows ns high-precision sleep */
+BOOLEAN nanosleep(LONGLONG ns){
+    HANDLE timer;
+    LARGE_INTEGER li;
+
+    if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
+        return FALSE;
+    li.QuadPart = -ns;
+    if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
+        CloseHandle(timer);
+        return FALSE;
+    }
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+    return TRUE;
+}
+
+BOOLEAN millisleep(LONGLONG ms){
+	return nanosleep(ms * 10000);
 }
 
 long long milliseconds_now(void) {
@@ -1066,33 +1261,174 @@ long long milliseconds_now(void) {
 	}
 }
 
-void process_waiting(int bWait, int waitTime) { 
+void process_waiting(int bWait, int waitTime, int bServer) { 
+	static long long lastTime = -1;
+
 	if (bWait==1 && waitTime > 0) {
 		long long sT = milliseconds_now();
-		while (milliseconds_now() < sT + waitTime) ;
+		if (g_bSleepingWait)
+			millisleep(waitTime);
+		else
+			while (milliseconds_now() < sT + waitTime) ;
 	}
 	
 	if (bWait==2 && waitTime > 0) {
 		long long sT;
-		FILE *fp = fopen("CGXMS.dat", "r");
-
-		if (fp != NULL) {
-			fscanf(fp, "%lld", &sT);
-			fclose(fp);
-			if (milliseconds_now() >= sT)
-				while (milliseconds_now() < sT + waitTime) ;
-		}
 		
-		fp = fopen("CGXMS.dat", "w");
-		if (fp != NULL) {
-			fprintf(fp, "%lld", milliseconds_now());
-			fclose(fp);
+		if (!bServer) {
+			FILE *fp = fopen("CGXMS.dat", "r");
+
+			if (fp != NULL) {
+				fscanf(fp, "%lld", &sT);
+				fclose(fp);
+				if (milliseconds_now() >= sT) {
+					if (g_bSleepingWait) {
+						int sleepTime = sT + waitTime - milliseconds_now();
+						if (sleepTime > 0)
+							millisleep(sleepTime);
+					} else
+						while (milliseconds_now() < sT + waitTime) ;
+				}
+			}
+			
+			fp = fopen("CGXMS.dat", "w");
+			if (fp != NULL) {
+				fprintf(fp, "%lld", milliseconds_now());
+				fclose(fp);
+			}
+		} else {
+				if (lastTime >= 0) {
+					if (milliseconds_now() >= lastTime) {
+					if (g_bSleepingWait) {
+						int sleepTime = lastTime + waitTime - milliseconds_now();
+						if (sleepTime > 0)
+							millisleep(sleepTime);
+					} else
+						while (milliseconds_now() < lastTime + waitTime) ;
+					}
+				}
+				lastTime = milliseconds_now();
 		}
 	}
 }
 	
 
-#define MAX_OBJECTS_IN_MEM 16
+char DecToHex(int i) {
+	switch(i) {
+	case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9: i=i+'0'; break;
+	case 10:case 11:case 12:case 13:case 14:case 15: i = 'A'+(i-10); break;
+	default: i = '0';
+	}
+	return i;
+}
+
+char *GetAttribs(WORD attributes, char *utp) {
+	int i;
+	utp[0] = '\\';
+	utp[1] = DecToHex(attributes & 0xf);
+	utp[2] = DecToHex((attributes >> 4) & 0xf);
+	utp[3] = 0;
+	return utp;
+}
+int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
+	WORD oldAttrib = 6666;
+	FILE *ofp = NULL;
+	unsigned char ch;
+	char fName[128];
+	int i, j;
+	char *output, attribS[16], charS[8];
+
+	output = (char*) malloc(10 * w*h);
+	if (!output) return 3;
+	output[0] = 0;
+	
+	if (bEncode == 0)
+		sprintf(fName, "capture-%d.txt", indexNr);
+	else
+		sprintf(fName, "capture-%d.gxy", indexNr);
+	ofp = fopen(fName, "w");
+	if (!ofp) return 1;
+	
+	for (j=0; j < h; j++) {
+		output[0]=0;
+		for (i=0; i < w; i++) {
+			ch = g_videoChar[x + i + j*XRES + y*XRES];
+			if (bEncode == 0) {
+				charS[0] = ch == 0? 32 : ch; charS[1]=0;
+			}
+			else if (!(ch ==32 || (ch >='0' && ch <='9') || (ch >='A' && ch <='Z') || (ch >='a' && ch <='z'))) {
+				int v;
+				charS[0] = '\\'; charS[1] = 'g';
+				v = ch / 16; charS[2]=DecToHex(v);
+				v = ch % 16; charS[3]=DecToHex(v);
+				charS[4]=0;
+			} else {
+				charS[0] = ch; charS[1]=0;
+			}
+			if (oldAttrib == g_videoCol[x + i + j*XRES + y*XRES] || bEncode == 0)
+				sprintf(output, "%s%s", output, charS);
+			else
+				sprintf(output, "%s%s%s", output, GetAttribs(g_videoCol[x + i + j*XRES + y*XRES], attribS), charS);
+			oldAttrib = g_videoCol[x + i + j*XRES + y*XRES];
+		}
+		if (bEncode == 0) fprintf(ofp, "%s\n", output); else fprintf(ofp, "%s\\n", output);
+	}
+
+	free(output);
+
+	fclose(ofp);
+	return 0;
+}
+	
+	
+#ifdef GDI_OUTPUT
+void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
+	if (argv3) {
+		int nofc, gr,gg,gb,i;
+		nofc = (strlen(argv3)+1) / 7;
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++) {
+			gr = (GetHex(argv3[i*7]) << 4) | GetHex(argv3[i*7+1]);
+			gg = (GetHex(argv3[i*7+2]) << 4) | GetHex(argv3[i*7+3]);
+			gb = (GetHex(argv3[i*7+4]) << 4) | GetHex(argv3[i*7+5]);
+			fgPalette[i] = bgPalette[i] = (0xff << 24) | (gr << 16) | (gg << 8) | (gb); 
+		}
+	}
+
+	if (argv4) {
+		int nofc, gr,gg,gb,i;
+		nofc = (strlen(argv4)+1) / 7;
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++) {
+			gr = (GetHex(argv4[i*7]) << 4) | GetHex(argv4[i*7+1]);
+			gg = (GetHex(argv4[i*7+2]) << 4) | GetHex(argv4[i*7+3]);
+			gb = (GetHex(argv4[i*7+4]) << 4) | GetHex(argv4[i*7+5]);
+			bgPalette[i] = (0xff << 24) | (gr << 16) | (gg << 8) | (gb); 
+		}
+	}
+}
+#else
+
+void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, int *bPaletteSet) {	
+	if (argv3) {
+		int i, nofc = strlen(argv3);
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++)
+			fgPalette[i] = GetHex(argv3[i]); bgPalette[i] = fgPalette[i];
+		*bPaletteSet = 1;
+	}
+
+	if (argv4) {
+		int i, nofc = strlen(argv4);
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++)
+			bgPalette[i] = GetHex(argv4[i]);
+	}
+}
+#endif	
+
+	
+#define MAX_OBJECTS_IN_MEM 64
 
 int main(int argc, char *argv[]) {
 	uchar *videoCol, *videoChar, *videoTransp, *videoTranspChar;
@@ -1114,21 +1450,33 @@ int main(int argc, char *argv[]) {
 	int bSuppressErrors = 0, bWaitAfterErrors = 0;
 	int bWait = 0, waitTime = 0;
 	int bWriteChars, bWriteCols, projectionDepth = 500;
-	int orgW, orgH;
+	int orgW, orgH, rem = 0;
+	int bPaletteSet = 0;
+	int bAllowRepeated3dTextures = 0;
+	int captX = 0, captY=0, captW, captH, captFormat=1, captureCount = 0, bCapture = 0;
+	char sFlags[130];
+	
 #ifdef GDI_OUTPUT
 	int fontIndex = 6;
-	uchar fgPalette[16][3] = { {0,0,0}, {128,0,0}, {0,128,0}, {128,128,0}, {0,0,128}, {128,0,128}, {0,128,128}, {192,192,192}, {128,128,128}, {255,0,0}, {0,255,0}, {255,255,0}, {0,0,255}, {255,0,255}, {0,255,255}, {255,255,255} };
-	uchar bgPalette[16][3] = { {0,0,0}, {128,0,0}, {0,128,0}, {128,128,0}, {0,0,128}, {128,0,128}, {0,128,128}, {192,192,192}, {128,128,128}, {255,0,0}, {0,255,0}, {255,255,0}, {0,0,255}, {255,0,255}, {0,255,255}, {255,255,255} };
+	unsigned int fgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	unsigned int bgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	int gx = 0, gy = 0;
+	int bWriteGdiToFile = 0;
+	int outw = 0, outh = 0;
+	unsigned int orgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 	0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 #else
-	int bPaletteSet = 0;
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+	uchar orgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 #endif
-	int i, j, k, retVal = 0;
+	int i, j, k, retVal = 0, ii, bSendKeyUp = 0;
+	int bServer = 0, bDoNothing = 0, bInserted = 0, frameCounter = 0;
+	HANDLE h_stdin;
+	DWORD oldfdwMode;
 	uchar *cp;
 	unsigned int startT = GetTickCount();
 
+	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
 		memset(cp, k, 256);
@@ -1145,28 +1493,35 @@ int main(int argc, char *argv[]) {
 	orgW = txres = getConsoleDim(0);
 	orgH = tyres = getConsoleDim(1);
 
+#ifdef GDI_OUTPUT
+	outw = txres; outh = tyres;
+#endif
+
 	errH.errCnt = 0;
 
-#ifdef GDI_OUTPUT
 	if (argc > 2) {
 		char *fnd, fin[64];
 		int nof;
 		for (i=0; i < strlen(argv[2]); i++) {
 			switch(argv[2][i]) {
+#ifdef GDI_OUTPUT
 				case 'f': 
 				i++; fontIndex = GetHex(argv[2][i]);
 				if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
 				if (argv[2][i+1] == ':' && argv[2][i+2]) {
 					fnd = strchr(&argv[2][i+2], ';');
 					if (!fnd) strcpy(fin, &argv[2][i+2]); else { nof = fnd-&argv[2][i+2]; strncpy(fin, &argv[2][i+2], nof); fin[nof]=0; }
-					nof = sscanf(fin, "%d,%d,%d,%d", &gx, &gy, &txres, &tyres);
+					nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
+					if (nof >= 3 && nof < 5) outw = txres;
+					if (nof >= 4 && nof < 6) outh = tyres;
 				}
 				break;
+#endif
 				case 'o': bWriteReturnToFile = 1; break;
+				case 'O': bWriteReturnToFile = 2; break;
 			}
 		}
 	}
-#endif
 
 	setResolution(txres, tyres);
 
@@ -1175,20 +1530,20 @@ int main(int argc, char *argv[]) {
 	if (argc < 2) {
 #ifdef GDI_OUTPUT
 		char name[16] = "_gdi";
-		char extras[64] = ", 'fn[:x,y,w,h]' use font n(0-9, default 6)";
+		char extras[128] = ", 'fn[:x,y,w,h[,outw,outh]]' use font n(0-9,default 6), 'P' read/write buffer to 'GDIbuf.dat'";
 		char dspalette[256] = "Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (hex)\n\n";
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\n\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M[wait]' return key/mouse bit pattern%s, 'Zn' set projection depth, 'o' save errorlevel to 'EL.dat'.\n", name, dspalette, extras);
-		writeErrorLevelToFile(bWriteReturnToFile, 0);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key/mouse bit pattern%s, 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server.\n", name, dspalette, extras);
+		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
 	videoCol = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
 	if (videoCol == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer!\n");
-		writeErrorLevelToFile(bWriteReturnToFile, 0);
+		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
@@ -1196,7 +1551,7 @@ int main(int argc, char *argv[]) {
 	if (videoChar == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer(2)!\n");
 		free(videoCol);
-		writeErrorLevelToFile(bWriteReturnToFile, 0);
+		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
@@ -1205,7 +1560,7 @@ int main(int argc, char *argv[]) {
 		printf("Error: Couldn't allocate memory for transpbuffer!\n");
 		free(videoCol);
 		free(videoChar);
-		writeErrorLevelToFile(bWriteReturnToFile, 0);
+		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
@@ -1215,19 +1570,20 @@ int main(int argc, char *argv[]) {
 		free(videoCol);
 		free(videoChar);
 		free(videoTransp);
-		writeErrorLevelToFile(bWriteReturnToFile, 0);
+		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
 	averageZ = (float *) malloc(32000*sizeof(float));
-	if (!averageZ) { printf("Err: Couldn't allocate memory for averages\n"); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0); return 0; }
+	if (!averageZ) { printf("Err: Couldn't allocate memory for averages\n"); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0, 0); return 0; }
 
 	argv1 = (char *) malloc(MAX_OP_SIZE*sizeof(char));
-	if (!argv1) { printf("Err: Couldn't allocate memory for string\n"); free(averageZ); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0); return 0; }
+	if (!argv1) { printf("Err: Couldn't allocate memory for string\n"); free(averageZ); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0, 0); return 0; }
 
+	bInserted = 1;
 	insertedArgs = insertCgx(argv[1]);
 	//printf(insertedArgs); getch();
-	if (!insertedArgs) insertedArgs = argv[1];
+	if (!insertedArgs) { insertedArgs = argv[1]; bInserted = 0; }
 
 	if (argc > 2) {
 		for (i=0; i < strlen(argv[2]); i++) {
@@ -1235,19 +1591,58 @@ int main(int argc, char *argv[]) {
 				case 'p': {
 					if (!old) old = readScreenBlock();
 					if (old) {
-						int j2;
-						for (j2 = 0; j2 < orgH; j2++) {
-							for (j = 0; j < orgW; j++) {
-								videoCol[j+j2*XRES] = old[j+j2*orgW].Attributes;
-								videoChar[j+j2*XRES] = old[j+j2*orgW].Char.AsciiChar;
+						int j2, gstart = 0;
+#ifdef GDI_OUTPUT
+						gstart = gx + gy*orgW;
+#endif
+						for (j2 = 0; j2 < YRES; j2++) {
+							for (j = 0; j < XRES; j++) {
+								int fromPos = j+j2*orgW + gstart;
+								if (j < orgW && j2 < orgH && fromPos < orgW * orgH) {
+									videoCol[j+j2*XRES] = old[fromPos].Attributes;
+									videoChar[j+j2*XRES] = old[fromPos].Char.AsciiChar;
+								}
 							}
 						}
+
 						free(old);
 					}
 				}
 				break;
+				
+				case 'P': {
+						FILE *fp; 
+						int rep = 0, nofread;
+						do {
+							fp = fopen("GDIbuf.dat", "rb");
+							nofread = 0;
+							if (fp != NULL) {
+								int width, height, blockSize;
+								nofread = 0;
+								nofread += fread(&width, sizeof(int), 1, fp);
+								nofread += fread(&height, sizeof(int), 1, fp);
+								blockSize = width * height;
+								if (blockSize > XRES * YRES)
+									blockSize = XRES * YRES;
+								nofread += fread(videoCol, sizeof(unsigned char)*blockSize, 1, fp);
+								nofread += fread(videoChar, sizeof(unsigned char)*blockSize, 1, fp);
+								fclose(fp);
+							}
+						} while (rep++ < 100 && nofread != 4 && fp != NULL);
+#ifdef GDI_OUTPUT
+						if (nofread == 4 || fp == NULL)
+							bWriteGdiToFile = 1;
+						else {
+							free(averageZ); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
+							return 0;
+						}
+#endif
+				}
+				break;
+				case 'n': bDoNothing = 1; break;
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
+				case 'u': bSendKeyUp = 1; break;
 				case 'Z': {
 					char pDepth[64];
 					j = 0; i++;
@@ -1256,9 +1651,9 @@ int main(int argc, char *argv[]) {
 					if (j) projectionDepth = atoi(pDepth);
 					break;
 				}
-				case 'M': {
+				case 'M': case 'm': {
 					char wTime[64];
-					bMouse = 1; j = 0; i++;
+					bMouse = argv[2][i] == 'M'? 2 : 1; j = 0; i++;
 					while (argv[2][i] >= '0' && argv[2][i] <= '9') wTime[j++] = argv[2][i++];
 					i--; wTime[j] = 0;
 					if (j) mouseWait = atoi(wTime);
@@ -1274,84 +1669,64 @@ int main(int argc, char *argv[]) {
 				}
 				case 'e': bSuppressErrors = 1; break;
 				case 'E': bWaitAfterErrors = 1; break;
+				case 'S': bServer = 1; break;
+				case 'T': bAllowRepeated3dTextures = 1; break;
+				case 'z': g_bSleepingWait = 1; break;
+				case 'I': g_bFlushAfterELwrite = 1; break;
+				case 'c': 
+				{
+					char *fnd, fin[64];
+					int nof = 0;
+					captX = 0, captY=0, captW=txres, captH=tyres, captFormat=1, bCapture = 1;
+					if (argv[2][i+1] == ':' && argv[2][i+2]) {
+						fnd = strchr(&argv[2][i+2], ';');
+						if (!fnd) strcpy(fin, &argv[2][i+2]); else { nof = fnd-&argv[2][i+2]; strncpy(fin, &argv[2][i+2], nof); fin[nof]=0; }
+						nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &captX, &captY, &captW, &captH, &captFormat, &captureCount);
+					}
+					if (nof < 3) captW = txres - captX;
+					if (nof < 4) captH = tyres - captY;
+					break;
+				}
 			}
 		}
 	}
 
-#ifdef GDI_OUTPUT
-	if (argc > 3) {
-		int nofc = (strlen(argv[3])+1) / 7;
-		if (nofc > 16) nofc = 16;
-		for (i = 0; i < nofc; i++) {
-			fgPalette[i][2] = (GetHex(argv[3][i*7]) << 4) | GetHex(argv[3][i*7+1]); bgPalette[i][2] = fgPalette[i][2];
-			fgPalette[i][1] = (GetHex(argv[3][i*7+2]) << 4) | GetHex(argv[3][i*7+3]); bgPalette[i][1] = fgPalette[i][1];
-			fgPalette[i][0] = (GetHex(argv[3][i*7+4]) << 4) | GetHex(argv[3][i*7+5]); bgPalette[i][0] = fgPalette[i][0];
-		}
-	}
-
-	if (argc > 4) {
-		int nofc = (strlen(argv[4])+1) / 7;
-		if (nofc > 16) nofc = 16;
-		for (i = 0; i < nofc; i++) {
-			bgPalette[i][2] = (GetHex(argv[4][i*7]) << 4) | GetHex(argv[4][i*7+1]);
-			bgPalette[i][1] = (GetHex(argv[4][i*7+2]) << 4) | GetHex(argv[4][i*7+3]);
-			bgPalette[i][0] = (GetHex(argv[4][i*7+4]) << 4) | GetHex(argv[4][i*7+5]);
-		}
-	}
-#else
-	if (argc > 3) {
-		int nofc = strlen(argv[3]);
-		if (nofc > 16) nofc = 16;
-		for (i = 0; i < nofc; i++)
-			fgPalette[i] = GetHex(argv[3][i]); bgPalette[i] = fgPalette[i];
-		bPaletteSet = 1;
-	}
-
-	if (argc > 4) {
-		int nofc = strlen(argv[4]);
-		if (nofc > 16) nofc = 16;
-		for (i = 0; i < nofc; i++)
-			bgPalette[i] = GetHex(argv[4][i]);
-	}
-#endif
+	if (argc > 3)
+		readPalette(argv[3], argc > 4? argv[4] : NULL, fgPalette, bgPalette, &bPaletteSet);
 
 	g_videoCol = videoCol;
 	g_videoChar = videoChar;
 
+	if (bServer)
+		setvbuf ( stdin , NULL , _IOLBF , 128000 );
+	
+	if (bServer)
+		h_stdin = CreateFile("CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
+	else
+		h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+			
+	GetConsoleMode(h_stdin, &oldfdwMode);
+
 	/* START MAIN LOOP */ 
 	strcpy(argv1, insertedArgs);
-	pch = strtok(argv1, "&");
+	
+	do {
+		rem = 0;
+		retVal = 0;
+		pch = strtok(argv1, "&");
 
-	while (pch != NULL) {
-		//printf ("%s\n",pch);
+		while (pch != NULL) {
+			//printf ("%s\n",pch);
 
-		while(*pch == ' ')
-			pch++;
+			while(*pch == ' ')
+				pch++;
 
-		if (strstr(pch,"poly ") == pch) {
-			pch = pch + 5;
-			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", 																			s_fgcol, s_bgcol, s_dchar, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
-																																&vv[3].x, &vv[3].y, &vv[4].x, &vv[4].y, &vv[5].x, &vv[5].y,
-																																&vv[6].x, &vv[6].y, &vv[7].x, &vv[7].y, &vv[8].x, &vv[8].y,
-																																&vv[9].x, &vv[9].y, &vv[10].x, &vv[10].y, &vv[11].x, &vv[11].y,
-																																&vv[12].x, &vv[12].y, &vv[13].x, &vv[13].y, &vv[14].x, &vv[14].y,
-																																&vv[15].x, &vv[15].y, &vv[16].x, &vv[16].y, &vv[17].x, &vv[17].y,
-																																&vv[18].x, &vv[18].y, &vv[19].x, &vv[19].y, &vv[20].x, &vv[20].y,
-																																&vv[21].x, &vv[21].y, &vv[22].x, &vv[22].y, &vv[23].x, &vv[23].y);
-			if (nof >= 9) {
-				int nofp = 3 + (nof-9) / 2;
-				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-				video = videoCol;
-				if (bWriteCols) scanConvex(vv, nofp, NULL, (bgcol << 4) | fgcol);
-				video = videoChar;
-				if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
-			} else
-				reportArgError(&errH, OP_POLY, opCount);
-		}
-		else if (strstr(pch,"ipoly ") == pch) {
-			int bitOp;
-			pch = pch + 6;
-			nof = sscanf(pch, "%2s %2s %2s %d %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",																				s_fgcol, s_bgcol, s_dchar, &bitOp, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
+			if (strstr(pch,"rem ") == pch || rem) {
+				rem = 1;
+				// do nothing, skip rest
+			} else if (strstr(pch,"poly ") == pch) {
+				pch = pch + 5;
+				nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", 																			s_fgcol, s_bgcol, s_dchar, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
 																																	&vv[3].x, &vv[3].y, &vv[4].x, &vv[4].y, &vv[5].x, &vv[5].y,
 																																	&vv[6].x, &vv[6].y, &vv[7].x, &vv[7].y, &vv[8].x, &vv[8].y,
 																																	&vv[9].x, &vv[9].y, &vv[10].x, &vv[10].y, &vv[11].x, &vv[11].y,
@@ -1359,437 +1734,455 @@ int main(int argc, char *argv[]) {
 																																	&vv[15].x, &vv[15].y, &vv[16].x, &vv[16].y, &vv[17].x, &vv[17].y,
 																																	&vv[18].x, &vv[18].y, &vv[19].x, &vv[19].y, &vv[20].x, &vv[20].y,
 																																	&vv[21].x, &vv[21].y, &vv[22].x, &vv[22].y, &vv[23].x, &vv[23].y);
-			if (nof >= 10) {
-				int nofp = 3 + (nof-10) / 2;
-				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-				video = videoCol;
-				if (bWriteCols) scanPoly(vv, nofp, (bgcol << 4) | fgcol, bitOp);
-				video = videoChar;
-				if (bWriteChars) scanPoly(vv, nofp, dchar, BIT_OP_NORMAL);
-			} else
-				reportArgError(&errH, OP_IPOLY, opCount);
-		 }
-	 else if (strstr(pch,"gpoly ") == pch) {
-		char goraudPalette[512], gfgbg[256];
-		int gValue[32], gchar[256];
-		int m;
+				if (nof >= 9) {
+					int nofp = 3 + (nof-9) / 2;
+					parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+					video = videoCol;
+					if (bWriteCols) scanConvex(vv, nofp, NULL, (bgcol << 4) | fgcol);
+					video = videoChar;
+					if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
+				} else
+					reportArgError(&errH, OP_POLY, opCount);
+			}
+			else if (strstr(pch,"ipoly ") == pch) {
+				int bitOp;
+				pch = pch + 6;
+				nof = sscanf(pch, "%2s %2s %2s %d %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",																				s_fgcol, s_bgcol, s_dchar, &bitOp, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
+																																		&vv[3].x, &vv[3].y, &vv[4].x, &vv[4].y, &vv[5].x, &vv[5].y,
+																																		&vv[6].x, &vv[6].y, &vv[7].x, &vv[7].y, &vv[8].x, &vv[8].y,
+																																		&vv[9].x, &vv[9].y, &vv[10].x, &vv[10].y, &vv[11].x, &vv[11].y,
+																																		&vv[12].x, &vv[12].y, &vv[13].x, &vv[13].y, &vv[14].x, &vv[14].y,
+																																		&vv[15].x, &vv[15].y, &vv[16].x, &vv[16].y, &vv[17].x, &vv[17].y,
+																																		&vv[18].x, &vv[18].y, &vv[19].x, &vv[19].y, &vv[20].x, &vv[20].y,
+																																		&vv[21].x, &vv[21].y, &vv[22].x, &vv[22].y, &vv[23].x, &vv[23].y);
+				if (nof >= 10) {
+					int nofp = 3 + (nof-10) / 2;
+					parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+					video = videoCol;
+					if (bWriteCols) scanPoly(vv, nofp, (bgcol << 4) | fgcol, bitOp);
+					video = videoChar;
+					if (bWriteChars) scanPoly(vv, nofp, dchar, BIT_OP_NORMAL);
+				} else
+					reportArgError(&errH, OP_IPOLY, opCount);
+			 }
+		 else if (strstr(pch,"gpoly ") == pch) {
+			char goraudPalette[512], gfgbg[256];
+			int gValue[32], gchar[256];
+			int m;
 
-		memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
-		
-		pch = pch + 6;
-		nof = sscanf(pch, "%500s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", goraudPalette,
-																										&vv[0].x, &vv[0].y, &gValue[0], &vv[1].x, &vv[1].y, &gValue[1],&vv[2].x, &vv[2].y, &gValue[2],
-																										&vv[3].x, &vv[3].y, &gValue[3], &vv[4].x, &vv[4].y, &gValue[4],&vv[5].x, &vv[5].y, &gValue[5], 
-																										&vv[6].x, &vv[6].y, &gValue[6], &vv[7].x, &vv[7].y, &gValue[7],&vv[8].x, &vv[8].y, &gValue[8],
-																										&vv[9].x, &vv[9].y, &gValue[9], &vv[10].x, &vv[10].y, &gValue[10],&vv[11].x, &vv[11].y, &gValue[11],
-																										&vv[12].x, &vv[12].y, &gValue[12], &vv[13].x, &vv[13].y, &gValue[13],&vv[14].x, &vv[14].y, &gValue[14],
-																										&vv[15].x, &vv[15].y, &gValue[15], &vv[16].x, &vv[16].y, &gValue[16],&vv[17].x, &vv[17].y, &gValue[17],
-																										&vv[18].x, &vv[18].y, &gValue[18], &vv[19].x, &vv[19].y, &gValue[19],&vv[20].x, &vv[20].y, &gValue[20],
-																										&vv[21].x, &vv[21].y, &gValue[21], &vv[22].x, &vv[22].y, &gValue[22],&vv[23].x, &vv[23].y, &gValue[23]);
-		if (nof >= 10) {
-			int nofp, nofc;
-			nofp = 3 + (nof-10) / 3;
-			nofc = (strlen(goraudPalette)+1) / 5;
-			for (i = 0; i < nofc; i++) {
-				if (goraudPalette[i*5+2] == '?' && goraudPalette[i*5+3] == '?')
-					gchar[i] = -1;
-				else
-					gchar[i] = (GetHex(goraudPalette[i*5+2]) << 4) | GetHex(goraudPalette[i*5+3]);
-				gfgbg[i] = (GetHex(goraudPalette[i*5+1]) << 4) | GetHex(goraudPalette[i*5]);
-			}
-			video = videoTransp;
-			scanConvex_goraud(vv, nofp, NULL, gValue, GORAUD_TYPE_STATIC, 0, 0,0,0);
-			for (i = 0; i < YRES; i++) {
-				k = i*XRES;
-				for (j = 0; j < XRES; j++) {
-					if (videoTransp[k] != 255) {
-						m = videoTransp[k] % nofc;
-						videoCol[k] = gfgbg[m];
-						if (gchar[m] != -1) videoChar[k] = gchar[m];
-					}
-					k++;
-				}
-			}
-		} else
-			reportArgError(&errH, OP_GPOLY, opCount);
-	 }
-	 else if (strstr(pch,"tpoly ") == pch) {
-		int nofp, w,h;
-		Bitmap b_cols, b_chars;
-		
-		pch = pch + 6;
-		nof = sscanf(pch, "%128s %2s %2s %2s %2s %d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, 
-																		&vv[0].x, &vv[0].y, &vv[0].tex_coord.x, &vv[0].tex_coord.y, &vv[1].x, &vv[1].y, &vv[1].tex_coord.x, &vv[1].tex_coord.y,
-																		&vv[2].x, &vv[2].y, &vv[2].tex_coord.x, &vv[2].tex_coord.y, &vv[3].x, &vv[3].y, &vv[3].tex_coord.x, &vv[3].tex_coord.y,
-																		&vv[4].x, &vv[4].y, &vv[4].tex_coord.x, &vv[4].tex_coord.y, &vv[5].x, &vv[5].y, &vv[5].tex_coord.x, &vv[5].tex_coord.y,
-																		&vv[6].x, &vv[6].y, &vv[6].tex_coord.x, &vv[6].tex_coord.y, &vv[7].x, &vv[7].y, &vv[7].tex_coord.x, &vv[7].tex_coord.y,
-																		&vv[8].x, &vv[8].y, &vv[8].tex_coord.x, &vv[8].tex_coord.y, &vv[9].x, &vv[8].y, &vv[9].tex_coord.x, &vv[9].tex_coord.y,
-																		&vv[10].x, &vv[10].y, &vv[10].tex_coord.x, &vv[10].tex_coord.y, &vv[11].x, &vv[11].y, &vv[11].tex_coord.x, &vv[11].tex_coord.y,
-																		&vv[12].x, &vv[12].y, &vv[12].tex_coord.x, &vv[12].tex_coord.y, &vv[13].x, &vv[13].y, &vv[13].tex_coord.x, &vv[13].tex_coord.y,
-																		&vv[14].x, &vv[14].y, &vv[14].tex_coord.x, &vv[14].tex_coord.y, &vv[15].x, &vv[15].y, &vv[15].tex_coord.x, &vv[15].tex_coord.y,
-																		&vv[16].x, &vv[16].y, &vv[16].tex_coord.x, &vv[16].tex_coord.y, &vv[17].x, &vv[17].y, &vv[17].tex_coord.x, &vv[17].tex_coord.y,
-																		&vv[18].x, &vv[18].y, &vv[18].tex_coord.x, &vv[18].tex_coord.y, &vv[19].x, &vv[19].y, &vv[19].tex_coord.x, &vv[19].tex_coord.y,
-																		&vv[20].x, &vv[20].y, &vv[10].tex_coord.x, &vv[20].tex_coord.y, &vv[21].x, &vv[21].y, &vv[11].tex_coord.x, &vv[21].tex_coord.y,
-																		&vv[22].x, &vv[22].y, &vv[12].tex_coord.x, &vv[22].tex_coord.y, &vv[23].x, &vv[23].y, &vv[13].tex_coord.x, &vv[23].tex_coord.y);
-		if (nof >= 17) {
-			nofp = 3 + (nof-17) / 4;
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+			memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
 			
-			if (strstr(fname,".pcx")) {
-				if (b_pcx.data) { free(b_pcx.data); b_pcx.data = NULL; }
-				if (PCXload (&b_pcx,fname)) {
-					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
-					if (transpval < 0) {
-						video = videoCol;
-						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4, 0);
-						video = videoChar;
-						if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
-					} else {
-						int ok;
-						video = videoTransp;
-						memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-						ok = scanConvex_tmap(vv, nofp, NULL, &b_pcx, bgcol<<4, 0);
-						if (ok) processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
-					}
-				} else
-					reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
-			} else {
-				if (readGxy(fname, &b_cols, &b_chars, &w, &h, fgcol, dchar, 1)) {
-					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-					if (transpval < 0) {
-						video = videoCol;
-						if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
-						video = videoChar;
-						if (bWriteChars) scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
-					} else {
-						int ok;
-						video = videoTransp;
-						memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-						ok = scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
-						if (ok) {
-							video = videoTranspChar;
-							memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-							scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
-							processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
+			pch = pch + 6;
+			nof = sscanf(pch, "%500s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", goraudPalette,
+																											&vv[0].x, &vv[0].y, &gValue[0], &vv[1].x, &vv[1].y, &gValue[1],&vv[2].x, &vv[2].y, &gValue[2],
+																											&vv[3].x, &vv[3].y, &gValue[3], &vv[4].x, &vv[4].y, &gValue[4],&vv[5].x, &vv[5].y, &gValue[5], 
+																											&vv[6].x, &vv[6].y, &gValue[6], &vv[7].x, &vv[7].y, &gValue[7],&vv[8].x, &vv[8].y, &gValue[8],
+																											&vv[9].x, &vv[9].y, &gValue[9], &vv[10].x, &vv[10].y, &gValue[10],&vv[11].x, &vv[11].y, &gValue[11],
+																											&vv[12].x, &vv[12].y, &gValue[12], &vv[13].x, &vv[13].y, &gValue[13],&vv[14].x, &vv[14].y, &gValue[14],
+																											&vv[15].x, &vv[15].y, &gValue[15], &vv[16].x, &vv[16].y, &gValue[16],&vv[17].x, &vv[17].y, &gValue[17],
+																											&vv[18].x, &vv[18].y, &gValue[18], &vv[19].x, &vv[19].y, &gValue[19],&vv[20].x, &vv[20].y, &gValue[20],
+																											&vv[21].x, &vv[21].y, &gValue[21], &vv[22].x, &vv[22].y, &gValue[22],&vv[23].x, &vv[23].y, &gValue[23]);
+			if (nof >= 10) {
+				int nofp, nofc;
+				nofp = 3 + (nof-10) / 3;
+				nofc = (strlen(goraudPalette)+1) / 5;
+				for (i = 0; i < nofc; i++) {
+					if (goraudPalette[i*5+2] == '?' && goraudPalette[i*5+3] == '?')
+						gchar[i] = -1;
+					else
+						gchar[i] = (GetHex(goraudPalette[i*5+2]) << 4) | GetHex(goraudPalette[i*5+3]);
+					gfgbg[i] = (GetHex(goraudPalette[i*5+1]) << 4) | GetHex(goraudPalette[i*5]);
+				}
+				video = videoTransp;
+				scanConvex_goraud(vv, nofp, NULL, gValue, GORAUD_TYPE_STATIC, 0, 0,0,0);
+				for (i = 0; i < YRES; i++) {
+					k = i*XRES;
+					for (j = 0; j < XRES; j++) {
+						if (videoTransp[k] != 255) {
+							m = videoTransp[k] % nofc;
+							videoCol[k] = gfgbg[m];
+							if (gchar[m] != -1) videoChar[k] = gchar[m];
 						}
-					}
-					free(b_chars.data);
-					free(b_cols.data);
-				} else
-					reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
-			}
-		} else
-			reportArgError(&errH, OP_TPOLY, opCount);
-	 }
-	 else if (strstr(pch,"fcircle ") == pch) {
-		int rc,xc,yc;
-		pch = pch + 8;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rc);
-
-		if (nof == 6) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) filled_circle(xc, yc, rc, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) filled_circle(xc, yc, rc, dchar);
-		} else
-			reportArgError(&errH, OP_FCIRCLE, opCount);
-	}
-	else if (strstr(pch,"circle ") == pch) {
-		int rc,xc,yc;
-		pch = pch + 7;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rc);
-
-		if (nof == 6) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) circle(xc, yc, rc, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) circle(xc, yc, rc, dchar);
-		} else
-			reportArgError(&errH, OP_CIRCLE, opCount);
-	}
-	else if (strstr(pch,"fellipse ") == pch) {
-		int rcx,rcy,xc,yc;
-		pch = pch + 9;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rcx, &rcy);
-
-		if (nof == 7) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) filled_ellipse(xc, yc, rcx, rcy, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) filled_ellipse(xc, yc, rcx, rcy, dchar);
-		} else
-			reportArgError(&errH, OP_FELLIPSE, opCount);
-	}
-	else if (strstr(pch,"ellipse ") == pch) {
-		int rcx,rcy,xc,yc;
-		pch = pch + 8;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rcx, &rcy);
-
-		if (nof == 7) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) ellipse(xc, yc, rcx, rcy, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) ellipse(xc, yc, rcx, rcy, dchar);
-		} else
-			reportArgError(&errH, OP_ELLIPSE, opCount);
-	 }
-	 else if (strstr(pch,"line ") == pch) {
-		int x1,y1,x2,y2;
-		int xPoints[9], yPoints[9];
-		pch = pch + 5;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &x2, &y2,
-																												&xPoints[1], &yPoints[1], &xPoints[2], &yPoints[2], &xPoints[3], &yPoints[3],
-																												&xPoints[4], &yPoints[4], &xPoints[5], &yPoints[5], &xPoints[6], &yPoints[6]);
-		if (nof == 7) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) line(x1, y1, x2, y2, (bgcol << 4) | fgcol, 1);
-			video = videoChar;
-			if (bWriteChars) line(x1, y1, x2, y2, dchar, 1);
-		} else
-			if (nof >= 9) {
-				int nofP = 2 + (nof-7)/2;
-				xPoints[0] = x1; yPoints[0] = y1;
-				xPoints[nofP-1] = x2; yPoints[nofP-1] = y2;
-	
-				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-				video = videoCol;
-				if (bWriteCols) bezier(nofP-1, xPoints, yPoints, (bgcol << 4) | fgcol);
-				video = videoChar;
-				if (bWriteChars) bezier(nofP-1, xPoints, yPoints, dchar);
-			} else 
-				reportArgError(&errH, OP_LINE, opCount);
-	 }
-	 else if (strstr(pch,"pixel ") == pch) {
-		int x1,y1;
-		pch = pch + 6;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1);
-
-		if (nof == 5) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) setpixel(x1, y1, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) setpixel(x1, y1, dchar);
-		} else
-			reportArgError(&errH, OP_PIXEL, opCount);
-	 }
-	 else if (strstr(pch,"text ") == pch) {
-		Bitmap b_cols, b_chars;
-		char tstring[12096];
-		int x1,y1,w1,h1,xb,xdb,res;
-		int writeCols;
-		pch = pch + 5;
-		nof = sscanf(pch, "%2s %2s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
-
-		if (nof == 6) {
-			writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-
-			b_cols.data = b_chars.data = NULL;
-			for (i = 0; i < strlen(tstring); i++)
-				if (tstring[i] == '_') tstring[i] = ' ';
-			res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0);
-
-			if (res) {
-				for (j=0; j < h1; j++) {
-					if (y1+j < YRES && y1+j >= 0) {
-						xb = y1*XRES + x1 + j*XRES;
-						xdb = j*w1;
-						for (i=0; i < w1; i++) {
-							if (x1 + i < XRES && x1 + i >= 0 && b_chars.data[xdb] != 255) { 
-								if (writeCols == 3) videoCol[xb + i] = b_cols.data[xdb];
-								else if (writeCols == 1) videoCol[xb + i] = (videoCol[xb + i] & 0xf0) | (b_cols.data[xdb] & 0x0f);
-								else if (writeCols == 2) videoCol[xb + i] = (videoCol[xb + i] & 0x0f) | (b_cols.data[xdb] & 0xf0);
-								if (bWriteChars) videoChar[xb + i] = b_chars.data[xdb];
-							}
-							xdb+=1;
-						}
+						k++;
 					}
 				}
-
-				if (b_cols.data) free(b_cols.data); 
-				if (b_chars.data) free(b_chars.data); 
-			}
-		} else
-			reportArgError(&errH, OP_TEXT, opCount);
-	 }
-	 else if (strstr(pch,"image ") == pch) {
-		int x1,y1,w1,h1, res, xflip=0, yflip=0, xb, xdb, xdir=1, w2=-1, h2=-1, writeCols;
-		Bitmap b_cols, b_chars;
-		b_cols.data = b_chars.data = NULL;
-
-		pch = pch + 6;
-		nof = sscanf(pch, "%127s %2s %2s %2s %2s %d,%d %d %d %d,%d", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, &x1, &y1, &xflip, &yflip, &w2, &h2);
-		if (xflip) xdir = -1;
-		if (nof >= 7) {
-			writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			if (strstr(fname, ".pcx")){
-				parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
-				res = PCXload (&b_cols,fname);
-				if (res) {
-					b_chars.data = (unsigned char *) malloc(b_cols.xSize*b_cols.ySize);
-					if (!b_chars.data) {
-						free(b_cols.data);
-						res = 0;
-					} else {
-						for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
-							b_chars.data[i] = b_cols.data[i] == transpval? 255 : dchar;
+			} else
+				reportArgError(&errH, OP_GPOLY, opCount);
+		 }
+		 else if (strstr(pch,"tpoly ") == pch) {
+			int nofp, w,h;
+			Bitmap b_cols, b_chars;
+			
+			pch = pch + 6;
+			nof = sscanf(pch, "%128s %2s %2s %2s %2s %d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, 
+																			&vv[0].x, &vv[0].y, &vv[0].tex_coord.x, &vv[0].tex_coord.y, &vv[1].x, &vv[1].y, &vv[1].tex_coord.x, &vv[1].tex_coord.y,
+																			&vv[2].x, &vv[2].y, &vv[2].tex_coord.x, &vv[2].tex_coord.y, &vv[3].x, &vv[3].y, &vv[3].tex_coord.x, &vv[3].tex_coord.y,
+																			&vv[4].x, &vv[4].y, &vv[4].tex_coord.x, &vv[4].tex_coord.y, &vv[5].x, &vv[5].y, &vv[5].tex_coord.x, &vv[5].tex_coord.y,
+																			&vv[6].x, &vv[6].y, &vv[6].tex_coord.x, &vv[6].tex_coord.y, &vv[7].x, &vv[7].y, &vv[7].tex_coord.x, &vv[7].tex_coord.y,
+																			&vv[8].x, &vv[8].y, &vv[8].tex_coord.x, &vv[8].tex_coord.y, &vv[9].x, &vv[8].y, &vv[9].tex_coord.x, &vv[9].tex_coord.y,
+																			&vv[10].x, &vv[10].y, &vv[10].tex_coord.x, &vv[10].tex_coord.y, &vv[11].x, &vv[11].y, &vv[11].tex_coord.x, &vv[11].tex_coord.y,
+																			&vv[12].x, &vv[12].y, &vv[12].tex_coord.x, &vv[12].tex_coord.y, &vv[13].x, &vv[13].y, &vv[13].tex_coord.x, &vv[13].tex_coord.y,
+																			&vv[14].x, &vv[14].y, &vv[14].tex_coord.x, &vv[14].tex_coord.y, &vv[15].x, &vv[15].y, &vv[15].tex_coord.x, &vv[15].tex_coord.y,
+																			&vv[16].x, &vv[16].y, &vv[16].tex_coord.x, &vv[16].tex_coord.y, &vv[17].x, &vv[17].y, &vv[17].tex_coord.x, &vv[17].tex_coord.y,
+																			&vv[18].x, &vv[18].y, &vv[18].tex_coord.x, &vv[18].tex_coord.y, &vv[19].x, &vv[19].y, &vv[19].tex_coord.x, &vv[19].tex_coord.y,
+																			&vv[20].x, &vv[20].y, &vv[10].tex_coord.x, &vv[20].tex_coord.y, &vv[21].x, &vv[21].y, &vv[11].tex_coord.x, &vv[21].tex_coord.y,
+																			&vv[22].x, &vv[22].y, &vv[12].tex_coord.x, &vv[22].tex_coord.y, &vv[23].x, &vv[23].y, &vv[13].tex_coord.x, &vv[23].tex_coord.y);
+			if (nof >= 17) {
+				nofp = 3 + (nof-17) / 4;
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				
+				if (strstr(fname,".pcx")) {
+					if (b_pcx.data) { free(b_pcx.data); b_pcx.data = NULL; }
+					if (PCXload (&b_pcx,fname)) {
+						parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
+						if (transpval < 0) {
+							video = videoCol;
+							if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_pcx, (bgcol<<4) | fgcol, 0);
+							video = videoChar;
+							if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
+						} else {
+							int ok;
+							video = videoTransp;
+							memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
+							ok = scanConvex_tmap(vv, nofp, NULL, &b_pcx, (bgcol<<4) | fgcol, 0);
+							if (ok) processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
 						}
-						w1 = b_cols.xSize; h1 = b_cols.ySize;
-						dchar = 255;
-					}
-				} else
-					reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
-			} else {
-				parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-				res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1);
-				if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
-			}
+					} else
+						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
+				} else {
+					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1)) {
+						parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+						if (transpval < 0) {
+							video = videoCol;
+							if (bWriteCols) scanConvex_tmap(vv, nofp, NULL, &b_cols, (bgcol<<4) | fgcol, 0);
+							video = videoChar;
+							if (bWriteChars) scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
+						} else {
+							int ok;
+							video = videoTransp;
+							memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
+							ok = scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
+							if (ok) {
+								video = videoTranspChar;
+								memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
+								scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
+								processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
+							}
+						}
+						free(b_chars.data);
+						free(b_cols.data);
+					} else
+						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
+				}
+			} else
+				reportArgError(&errH, OP_TPOLY, opCount);
+		 }
+		 else if (strstr(pch,"fcircle ") == pch) {
+			int rc,xc,yc;
+			pch = pch + 8;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rc);
 
-			if (res) {
-				if (w2 == -1 && h2 == -1) {
+			if (nof == 6) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) filled_circle(xc, yc, rc, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) filled_circle(xc, yc, rc, dchar);
+			} else
+				reportArgError(&errH, OP_FCIRCLE, opCount);
+		}
+		else if (strstr(pch,"circle ") == pch) {
+			int rc,xc,yc;
+			pch = pch + 7;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rc);
+
+			if (nof == 6) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) circle(xc, yc, rc, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) circle(xc, yc, rc, dchar);
+			} else
+				reportArgError(&errH, OP_CIRCLE, opCount);
+		}
+		else if (strstr(pch,"fellipse ") == pch) {
+			int rcx,rcy,xc,yc;
+			pch = pch + 9;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rcx, &rcy);
+
+			if (nof == 7) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) filled_ellipse(xc, yc, rcx, rcy, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) filled_ellipse(xc, yc, rcx, rcy, dchar);
+			} else
+				reportArgError(&errH, OP_FELLIPSE, opCount);
+		}
+		else if (strstr(pch,"ellipse ") == pch) {
+			int rcx,rcy,xc,yc;
+			pch = pch + 8;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &xc, &yc, &rcx, &rcy);
+
+			if (nof == 7) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) ellipse(xc, yc, rcx, rcy, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) ellipse(xc, yc, rcx, rcy, dchar);
+			} else
+				reportArgError(&errH, OP_ELLIPSE, opCount);
+		 }
+		 else if (strstr(pch,"line ") == pch) {
+			int x1,y1,x2,y2;
+			int xPoints[9], yPoints[9];
+			pch = pch + 5;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &x2, &y2,
+																													&xPoints[1], &yPoints[1], &xPoints[2], &yPoints[2], &xPoints[3], &yPoints[3],
+																													&xPoints[4], &yPoints[4], &xPoints[5], &yPoints[5], &xPoints[6], &yPoints[6]);
+			if (nof == 7) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) line(x1, y1, x2, y2, (bgcol << 4) | fgcol, 1);
+				video = videoChar;
+				if (bWriteChars) line(x1, y1, x2, y2, dchar, 1);
+			} else
+				if (nof >= 9) {
+					int nofP = 2 + (nof-7)/2;
+					xPoints[0] = x1; yPoints[0] = y1;
+					xPoints[nofP-1] = x2; yPoints[nofP-1] = y2;
+		
+					parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+					video = videoCol;
+					if (bWriteCols) bezier(nofP-1, xPoints, yPoints, (bgcol << 4) | fgcol);
+					video = videoChar;
+					if (bWriteChars) bezier(nofP-1, xPoints, yPoints, dchar);
+				} else 
+					reportArgError(&errH, OP_LINE, opCount);
+		 }
+		 else if (strstr(pch,"pixel ") == pch) {
+			int x1,y1;
+			pch = pch + 6;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1);
+
+			if (nof == 5) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) setpixel(x1, y1, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) setpixel(x1, y1, dchar);
+			} else
+				reportArgError(&errH, OP_PIXEL, opCount);
+		 }
+		 else if (strstr(pch,"text ") == pch) {
+			Bitmap b_cols, b_chars;
+			char tstring[12096];
+			int x1,y1,w1,h1,xb,xdb,res;
+			int writeCols;
+			pch = pch + 5;
+			nof = sscanf(pch, "%2s %2s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
+
+			if (nof == 6) {
+				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+
+				b_cols.data = b_chars.data = NULL;
+				for (i = 0; i < strlen(tstring); i++)
+					if (tstring[i] == '_') tstring[i] = ' ';
+				
+				if (bServer) {
+					char *fndFrame = strstr(tstring, "[FRAMECOUNT]");
+					if (fndFrame) {
+						char FCT[64];
+						sprintf(FCT, "%d", frameCounter);
+						for (j = 0; j < 12; j++) {
+							if (j < strlen(FCT))
+								fndFrame[j] = FCT[j];
+							else
+								fndFrame[j] = ' ';
+						}
+						
+					}
+				}
+				
+				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0);
+
+				if (res) {
 					for (j=0; j < h1; j++) {
 						if (y1+j < YRES && y1+j >= 0) {
 							xb = y1*XRES + x1 + j*XRES;
-							xdb = (yflip? (h1-1-j)*w1 : j*w1); 
-							xdb += (xflip? w1-1 : 0);
+							xdb = j*w1;
 							for (i=0; i < w1; i++) {
-								if (x1 + i < XRES && x1 + i >= 0 && b_chars.data[xdb] != 255 && b_chars.data[xdb] != transpval) {
+								if (x1 + i < XRES && x1 + i >= 0 && b_chars.data[xdb] != 255) { 
 									if (writeCols == 3) videoCol[xb + i] = b_cols.data[xdb];
 									else if (writeCols == 1) videoCol[xb + i] = (videoCol[xb + i] & 0xf0) | (b_cols.data[xdb] & 0x0f);
 									else if (writeCols == 2) videoCol[xb + i] = (videoCol[xb + i] & 0x0f) | (b_cols.data[xdb] & 0xf0);
 									if (bWriteChars) videoChar[xb + i] = b_chars.data[xdb];
 								}
-								xdb+=xdir;
+								xdb+=1;
 							}
 						}
 					}
-				} else { // stretched
-					if (w2 <= 0 || h2 <= 0)
-						reportArgError(&errH, OP_IMAGE, opCount);
-					else {
-						float xdbf, xdirf, ydbf = 0, ydirf;
-						xdirf = (float)w1 / (float)w2;
-						if (xflip) xdirf = -xdirf;
-						ydirf = (float)h1 / (float)h2;
-						if (yflip) { ydirf = -ydirf; ydbf = h1-1; }
-						
-						for (j=0; j < h2; j++) {
+
+					if (b_cols.data) free(b_cols.data); 
+					if (b_chars.data) free(b_chars.data); 
+				}
+			} else
+				reportArgError(&errH, OP_TEXT, opCount);
+		 }
+		 else if (strstr(pch,"image ") == pch) {
+			int x1,y1,w1,h1, res, xflip=0, yflip=0, xb, xdb, xdir=1, w2=-1, h2=-1, writeCols;
+			Bitmap b_cols, b_chars;
+			b_cols.data = b_chars.data = NULL;
+
+			pch = pch + 6;
+			nof = sscanf(pch, "%127s %2s %2s %2s %2s %d,%d %d %d %d,%d", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, &x1, &y1, &xflip, &yflip, &w2, &h2);
+			if (xflip) xdir = -1;
+			if (nof >= 7) {
+				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				if (strstr(fname, ".pcx")){
+					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
+					res = PCXload (&b_cols,fname);
+					if (res) {
+						b_chars.data = (unsigned char *) malloc(b_cols.xSize*b_cols.ySize);
+						if (!b_chars.data) {
+							free(b_cols.data);
+							res = 0;
+						} else {
+							for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
+								b_chars.data[i] = b_cols.data[i] == transpval? 255 : dchar;
+							}
+							w1 = b_cols.xSize; h1 = b_cols.ySize;
+							dchar = 255;
+						}
+					} else
+						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
+				} else {
+					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1);
+					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
+				}
+
+				if (res) {
+					if (w2 == -1 && h2 == -1) {
+						for (j=0; j < h1; j++) {
 							if (y1+j < YRES && y1+j >= 0) {
 								xb = y1*XRES + x1 + j*XRES;
-								xdbf = ((int)ydbf) * w1; 
-								xdbf += (xflip? w1-0.01 : 0);
-								for (i=0; i < w2; i++) {
-									xdb = xdbf;
+								xdb = (yflip? (h1-1-j)*w1 : j*w1); 
+								xdb += (xflip? w1-1 : 0);
+								for (i=0; i < w1; i++) {
 									if (x1 + i < XRES && x1 + i >= 0 && b_chars.data[xdb] != 255 && b_chars.data[xdb] != transpval) {
 										if (writeCols == 3) videoCol[xb + i] = b_cols.data[xdb];
 										else if (writeCols == 1) videoCol[xb + i] = (videoCol[xb + i] & 0xf0) | (b_cols.data[xdb] & 0x0f);
 										else if (writeCols == 2) videoCol[xb + i] = (videoCol[xb + i] & 0x0f) | (b_cols.data[xdb] & 0xf0);
 										if (bWriteChars) videoChar[xb + i] = b_chars.data[xdb];
 									}
-									xdbf+=xdirf;
+									xdb+=xdir;
 								}
 							}
-							ydbf+=ydirf;
+						}
+					} else { // stretched
+						if (w2 <= 0 || h2 <= 0)
+							reportArgError(&errH, OP_IMAGE, opCount);
+						else {
+							float xdbf, xdirf, ydbf = 0, ydirf;
+							xdirf = (float)w1 / (float)w2;
+							if (xflip) xdirf = -xdirf;
+							ydirf = (float)h1 / (float)h2;
+							if (yflip) { ydirf = -ydirf; ydbf = h1-1; }
+							
+							for (j=0; j < h2; j++) {
+								if (y1+j < YRES && y1+j >= 0) {
+									xb = y1*XRES + x1 + j*XRES;
+									xdbf = ((int)ydbf) * w1; 
+									xdbf += (xflip? w1-0.01 : 0);
+									for (i=0; i < w2; i++) {
+										xdb = xdbf;
+										if (x1 + i < XRES && x1 + i >= 0 && b_chars.data[xdb] != 255 && b_chars.data[xdb] != transpval) {
+											if (writeCols == 3) videoCol[xb + i] = b_cols.data[xdb];
+											else if (writeCols == 1) videoCol[xb + i] = (videoCol[xb + i] & 0xf0) | (b_cols.data[xdb] & 0x0f);
+											else if (writeCols == 2) videoCol[xb + i] = (videoCol[xb + i] & 0x0f) | (b_cols.data[xdb] & 0xf0);
+											if (bWriteChars) videoChar[xb + i] = b_chars.data[xdb];
+										}
+										xdbf+=xdirf;
+									}
+								}
+								ydbf+=ydirf;
+							}
 						}
 					}
 				}
-			}
+				
+				if (b_cols.data) free(b_cols.data); 
+				if (b_chars.data) free(b_chars.data);
+
+			} else
+				reportArgError(&errH, OP_IMAGE, opCount);
+		 }
+		 else if (strstr(pch,"box ") == pch) {
+			int x1,y1,w,h;
+			pch = pch + 4;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
+
+			if (nof == 7) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) box(x1, y1, w, h, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) box(x1, y1, w, h, dchar);
+			} else
+				reportArgError(&errH, OP_BOX, opCount);
+		 }
+		 else if (strstr(pch,"fbox ") == pch) {
+			int x1,y1,w,h;
+			pch = pch + 5;
+			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
+
+			if (nof == 7) {
+				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				video = videoCol;
+				if (bWriteCols) fbox(x1, y1, w, h, (bgcol << 4) | fgcol);
+				video = videoChar;
+				if (bWriteChars) fbox(x1, y1, w, h, dchar);
+			} else
+				reportArgError(&errH, OP_FBOX, opCount);
+		 }
+		 else if (strstr(pch,"block ") == pch) {
+			int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
+			char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0}, xyExprToCh[16] = {0};
+
+			pch = pch + 6;
+			nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s %10s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh);
 			
-			if (b_cols.data) free(b_cols.data); 
-			if (b_chars.data) free(b_chars.data);
+			transpval = -1;
+			if (nof >= 7) {
+				g_errH = &errH; g_opCount = opCount;
+				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f');
+			} else
+				reportArgError(&errH, OP_BLOCK, opCount);
+		 }
+		 else if (strstr(pch,"3d ") == pch) {
+			obj3d *obj3 = NULL;
+			int culling = 1, z_culling_near = 0, z_culling_far = 0;
+			float scalex, scaley, scalez, modx, mody, modz, postmodx, postmody, postmodz, postmodx2 = 0, postmody2 = 0, postmodz2 = 0;
+			int drawmode, drawoption;
+			char s_fgcols[34][64], s_bgcols[34][4], s_dchars[34][4];
+			int nofcols, nof_ext;
+			int l,colIndex=0, nofFacePoints, bDrawPerspective;
+			int divZ, plusZ, z_levels;;
+			unsigned char pfgbg[64], fgbg;
+			int m, pchar[64], pbWriteChars[64], pbWriteCols[64];
+			Bitmap *paletteBmap = NULL, *bmap = NULL;
+			int rx,ry,rz;
+			float rrx,rry,rrz;
+			int rx2=0,ry2=0,rz2=0;
+			float rrx2=0,rry2=0,rrz2=0;
+			int xg, yg, dist = 5500;
+			float aspect;
 
-		} else
-			reportArgError(&errH, OP_IMAGE, opCount);
-	 }
-	 else if (strstr(pch,"box ") == pch) {
-		int x1,y1,w,h;
-		pch = pch + 4;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
+			pch = pch + 3;
 
-		if (nof == 7) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) box(x1, y1, w, h, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) box(x1, y1, w, h, dchar);
-		} else
-			reportArgError(&errH, OP_BOX, opCount);
-	 }
-	 else if (strstr(pch,"fbox ") == pch) {
-		int x1,y1,w,h;
-		pch = pch + 5;
-		nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
-
-		if (nof == 7) {
-			parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-			video = videoCol;
-			if (bWriteCols) fbox(x1, y1, w, h, (bgcol << 4) | fgcol);
-			video = videoChar;
-			if (bWriteChars) fbox(x1, y1, w, h, dchar);
-		} else
-			reportArgError(&errH, OP_FBOX, opCount);
-	 }
-	 else if (strstr(pch,"block ") == pch) {
-		int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
-		char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0}, xyExprToCh[16] = {0};
-
-		pch = pch + 6;
-		nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s %10s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh);
-		
-		transpval = -1;
-		if (nof >= 7) {
-			g_errH = &errH; g_opCount = opCount;
-			parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-			transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f');
-		} else
-			reportArgError(&errH, OP_BLOCK, opCount);
-	 }
-	 else if (strstr(pch,"3d ") == pch) {
-		obj3d *obj3 = NULL;
-		int culling = 1, z_culling_near = 0, z_culling_far = 0;
-		float scalex, scaley, scalez, modx, mody, modz, postmodx, postmody, postmodz, postmodx2 = 0, postmody2 = 0, postmodz2 = 0;
-		int drawmode, drawoption;
-		char s_fgcols[34][64], s_bgcols[34][4], s_dchars[34][4];
-		int nofcols, nof_ext;
-		int l,colIndex=0, nofFacePoints, bDrawPerspective;
-		int divZ, plusZ, z_levels;;
-		unsigned char pfgbg[64], fgbg;
-		int m, pchar[64], pbWriteChars[64], pbWriteCols[64];
-		Bitmap *paletteBmap = NULL, *bmap = NULL;
-		int rx,ry,rz;
-		float rrx,rry,rrz;
-		int rx2=0,ry2=0,rz2=0;
-		float rrx2=0,rry2=0,rrz2=0;
-		int xg, yg, dist = 5500;
-		float aspect;
-
-		pch = pch + 3;
-
-		nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f:%f,%f:%f,%f:%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmodx2,&postmody,&postmody2,&postmodz,&postmodz2,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
-																			s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
-																			s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
-																			s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
-																			s_fgcols[9], s_bgcols[9], s_dchars[9],	s_fgcols[10], s_bgcols[10], s_dchars[10],	s_fgcols[11], s_bgcols[11], s_dchars[11],
-																			s_fgcols[12], s_bgcols[12], s_dchars[12],	s_fgcols[13], s_bgcols[13], s_dchars[13],	s_fgcols[14], s_bgcols[14], s_dchars[14],
-																			s_fgcols[15], s_bgcols[15], s_dchars[15], s_fgcols[16], s_bgcols[16], s_dchars[16], s_fgcols[17], s_bgcols[17], s_dchars[17],
-																			s_fgcols[18], s_bgcols[18], s_dchars[18],	s_fgcols[19], s_bgcols[19], s_dchars[19], s_fgcols[20], s_bgcols[20], s_dchars[20],
-																			s_fgcols[21], s_bgcols[21], s_dchars[21], s_fgcols[22], s_bgcols[22], s_dchars[22], s_fgcols[23], s_bgcols[23], s_dchars[23],
-																			s_fgcols[24], s_bgcols[24], s_dchars[24], s_fgcols[25], s_bgcols[25], s_dchars[25], s_fgcols[26], s_bgcols[26], s_dchars[26],
-																			s_fgcols[27], s_bgcols[27], s_dchars[27], s_fgcols[28], s_bgcols[28], s_dchars[28], s_fgcols[29], s_bgcols[29], s_dchars[29],
-																			s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
-		if (nof >= 32) {
-			nof -= 6;
-		} else {
-			
-			postmodx2 = postmody2 = postmodz2 = 0;
-			
-			// name drawmode,option rx:rx2,ry:ry2,rz:rz2 postmodx,pmody,pmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
-			nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+			nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f:%f,%f:%f,%f:%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmodx2,&postmody,&postmody2,&postmodz,&postmodz2,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
 																				s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
 																				s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
 																				s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
@@ -1801,225 +2194,292 @@ int main(int argc, char *argv[]) {
 																				s_fgcols[24], s_bgcols[24], s_dchars[24], s_fgcols[25], s_bgcols[25], s_dchars[25], s_fgcols[26], s_bgcols[26], s_dchars[26],
 																				s_fgcols[27], s_bgcols[27], s_dchars[27], s_fgcols[28], s_bgcols[28], s_dchars[28], s_fgcols[29], s_bgcols[29], s_dchars[29],
 																				s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
-			if (nof >= 29) {
-				nof -= 3;
+			if (nof >= 32) {
+				nof -= 6;
 			} else {
-				// name drawmode,option rx,ry,rz postmodx,postmody,postmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
-				nof = sscanf(pch, "%128s %d,%x %d,%d,%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&ry,&rz,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
-																			s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
-																			s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
-																			s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
-																			s_fgcols[9], s_bgcols[9], s_dchars[9],	s_fgcols[10], s_bgcols[10], s_dchars[10],	s_fgcols[11], s_bgcols[11], s_dchars[11],
-																			s_fgcols[12], s_bgcols[12], s_dchars[12],	s_fgcols[13], s_bgcols[13], s_dchars[13],	s_fgcols[14], s_bgcols[14], s_dchars[14],
-																			s_fgcols[15], s_bgcols[15], s_dchars[15], s_fgcols[16], s_bgcols[16], s_dchars[16], s_fgcols[17], s_bgcols[17], s_dchars[17],
-																			s_fgcols[18], s_bgcols[18], s_dchars[18],	s_fgcols[19], s_bgcols[19], s_dchars[19], s_fgcols[20], s_bgcols[20], s_dchars[20],
-																			s_fgcols[21], s_bgcols[21], s_dchars[21], s_fgcols[22], s_bgcols[22], s_dchars[22], s_fgcols[23], s_bgcols[23], s_dchars[23],
-																			s_fgcols[24], s_bgcols[24], s_dchars[24], s_fgcols[25], s_bgcols[25], s_dchars[25], s_fgcols[26], s_bgcols[26], s_dchars[26],
-																			s_fgcols[27], s_bgcols[27], s_dchars[27], s_fgcols[28], s_bgcols[28], s_dchars[28], s_fgcols[29], s_bgcols[29], s_dchars[29],
-																			s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
-			}
-		}
-		
-		if (nof >= 26) {
-			nofcols = 1+(nof-26)/3;
-			for (i = 0; i < MAX_OBJECTS_IN_MEM; i++) {
-				if (objNames[i] && strstr(fname, objNames[i])) {
-					obj3 = objs[i]; break;
+				
+				postmodx2 = postmody2 = postmodz2 = 0;
+				
+				// name drawmode,option rx:rx2,ry:ry2,rz:rz2 postmodx,pmody,pmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
+				nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+																					s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
+																					s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
+																					s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
+																					s_fgcols[9], s_bgcols[9], s_dchars[9],	s_fgcols[10], s_bgcols[10], s_dchars[10],	s_fgcols[11], s_bgcols[11], s_dchars[11],
+																					s_fgcols[12], s_bgcols[12], s_dchars[12],	s_fgcols[13], s_bgcols[13], s_dchars[13],	s_fgcols[14], s_bgcols[14], s_dchars[14],
+																					s_fgcols[15], s_bgcols[15], s_dchars[15], s_fgcols[16], s_bgcols[16], s_dchars[16], s_fgcols[17], s_bgcols[17], s_dchars[17],
+																					s_fgcols[18], s_bgcols[18], s_dchars[18],	s_fgcols[19], s_bgcols[19], s_dchars[19], s_fgcols[20], s_bgcols[20], s_dchars[20],
+																					s_fgcols[21], s_bgcols[21], s_dchars[21], s_fgcols[22], s_bgcols[22], s_dchars[22], s_fgcols[23], s_bgcols[23], s_dchars[23],
+																					s_fgcols[24], s_bgcols[24], s_dchars[24], s_fgcols[25], s_bgcols[25], s_dchars[25], s_fgcols[26], s_bgcols[26], s_dchars[26],
+																					s_fgcols[27], s_bgcols[27], s_dchars[27], s_fgcols[28], s_bgcols[28], s_dchars[28], s_fgcols[29], s_bgcols[29], s_dchars[29],
+																					s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
+				if (nof >= 29) {
+					nof -= 3;
+				} else {
+					// name drawmode,option rx,ry,rz postmodx,postmody,postmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
+					nof = sscanf(pch, "%128s %d,%x %d,%d,%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&ry,&rz,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+																				s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
+																				s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
+																				s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
+																				s_fgcols[9], s_bgcols[9], s_dchars[9],	s_fgcols[10], s_bgcols[10], s_dchars[10],	s_fgcols[11], s_bgcols[11], s_dchars[11],
+																				s_fgcols[12], s_bgcols[12], s_dchars[12],	s_fgcols[13], s_bgcols[13], s_dchars[13],	s_fgcols[14], s_bgcols[14], s_dchars[14],
+																				s_fgcols[15], s_bgcols[15], s_dchars[15], s_fgcols[16], s_bgcols[16], s_dchars[16], s_fgcols[17], s_bgcols[17], s_dchars[17],
+																				s_fgcols[18], s_bgcols[18], s_dchars[18],	s_fgcols[19], s_bgcols[19], s_dchars[19], s_fgcols[20], s_bgcols[20], s_dchars[20],
+																				s_fgcols[21], s_bgcols[21], s_dchars[21], s_fgcols[22], s_bgcols[22], s_dchars[22], s_fgcols[23], s_bgcols[23], s_dchars[23],
+																				s_fgcols[24], s_bgcols[24], s_dchars[24], s_fgcols[25], s_bgcols[25], s_dchars[25], s_fgcols[26], s_bgcols[26], s_dchars[26],
+																				s_fgcols[27], s_bgcols[27], s_dchars[27], s_fgcols[28], s_bgcols[28], s_dchars[28], s_fgcols[29], s_bgcols[29], s_dchars[29],
+																				s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
 				}
 			}
+			
+			if (nof >= 26) {
+				nofcols = 1+(nof-26)/3;
+				for (i = 0; i < MAX_OBJECTS_IN_MEM; i++) {
+					if (objNames[i] && strstr(fname, objNames[i])) {
+						obj3 = objs[i]; break;
+					}
+				}
 
-			g_errH = &errH; g_opCount = opCount;
+				g_errH = &errH; g_opCount = opCount;
 
-			if (!obj3) {
-				if (strstr(fname,".obj"))
-					obj3 = readObj(fname, 1, 0,0,0, 0, readCmdGfxTexture);
-				else if (strstr(fname,".plg"))
-					obj3 = readPlg(fname, 1, 0,0,0);
-				else
-					obj3 = readPly(fname, 1, 0,0,0);
+				if (!obj3) {
+					if (strstr(fname,".obj"))
+						obj3 = readObj(fname, 1, 0,0,0, 0, readCmdGfxTexture, bAllowRepeated3dTextures);
+					else if (strstr(fname,".plg"))
+						obj3 = readPlg(fname, 1, 0,0,0);
+					else
+						obj3 = readPly(fname, 1, 0,0,0);
+
+					if (obj3) {
+						if (objs[objCnt])
+							freeObj3d(objs[objCnt]);
+						objs[objCnt] = obj3;
+						objNames[objCnt] = (char *) malloc(132);
+						strcpy(objNames[objCnt], fname);
+						
+						objCnt++;
+						if (objCnt >= MAX_OBJECTS_IN_MEM) objCnt = 0;				
+					}
+				}
 
 				if (obj3) {
-					if (objs[objCnt])
-						freeObj3d(objs[objCnt]);
-					objs[objCnt] = obj3;
-					objNames[objCnt] = (char *) malloc(132);
-					strcpy(objNames[objCnt], fname);
-					
-					objCnt++;
-					if (objCnt >= MAX_OBJECTS_IN_MEM) objCnt = 0;				
-				}
-			}
+					if (drawmode == 2)
+						memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
 
-			if (obj3) {
-				if (drawmode == 2)
-					memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
-
-				for (i = 0; i < nofcols; i++) {
-					parseInput(s_fgcols[i%nofcols], s_bgcols[i%nofcols], s_dchars[i%nofcols], &fgcol, &bgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
-					pfgbg[i] = (bgcol << 4) | fgcol;
-				}
-
-				for (j = 0; j < obj3->nofPoints; j++) {
-					obj3->objData[j].x = (obj3->objData[j].ox + modx) * scalex;
-					obj3->objData[j].y = (obj3->objData[j].oy + mody) * scaley;
-					obj3->objData[j].z = (obj3->objData[j].oz + modz) * scalez;
-				}
-
-				rrx = (float)(rx/4) * 3.14159265359 / 180.0;
-				rry = (float)(ry/4) * 3.14159265359 / 180.0;
-				rrz = (float)(rz/4) * 3.14159265359 / 180.0;
-
-				if (rx2 == 0 && ry2 == 0 && rz2 == 0 && postmodx2 == 0 && postmody2 == 0 && postmodz2 == 0) {
-					rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
-				} else {
-					rrx2 = (float)(rx2/4) * 3.14159265359 / 180.0;
-					rry2 = (float)(ry2/4) * 3.14159265359 / 180.0;
-					rrz2 = (float)(rz2/4) * 3.14159265359 / 180.0;
-
-					rot3dPoints_doubleRotation(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth, rrx2, rry2, rrz2, postmodx2, postmody2, postmodz2);
-				}
-				 
-				 lowZ = 99999999; highZ = -99999999;
-				 for(j=0; j<obj3->nofFaces; j++) {
-					addZ = 0;
-					for(i=0; i<obj3->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
-						addZ += obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz;
+					for (i = 0; i < nofcols; i++) {
+						parseInput(s_fgcols[i%nofcols], s_bgcols[i%nofcols], s_dchars[i%nofcols], &fgcol, &bgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
+						pfgbg[i] = (bgcol << 4) | fgcol;
 					}
-					addZ /= (float)i;
-					if (addZ > highZ) highZ = addZ;
-					if (addZ < lowZ) lowZ = addZ;
-					averageZ[j] = addZ;
-				 }
 
-				 if (z_levels < 10) z_levels = 10;
-				 addZ = (highZ - lowZ) / z_levels;
-				 currZ = highZ;
-				 
-				 divZ = (highZ - lowZ) / nofcols;
-				 plusZ = -(lowZ / divZ);
-				 
-				 if (addZ < 0) { addZ = 0.000001; } // some sort of rounding error, should not happen (but does :) )
-				 
-				 for (k = 0; k <= z_levels+1; k++) {
-					 for(j=0, colIndex=0; j<obj3->nofFaces; j++, colIndex++) {
-						
-						if (obj3->nofBmaps > 0) {
-							bmap=obj3->bmaps[obj3->faceBitmapIndex[j]];
-							if (bmap && !bmap->data && bmap != paletteBmap && bmap->extras && bmap->extrasType == EXTRAS_ARRAY) {
-								uchar *cols, nof;
-								cols = (uchar *)bmap->extras;
-								nof = *cols++;
+					for (j = 0; j < obj3->nofPoints; j++) {
+						obj3->objData[j].x = (obj3->objData[j].ox + modx) * scalex;
+						obj3->objData[j].y = (obj3->objData[j].oy + mody) * scaley;
+						obj3->objData[j].z = (obj3->objData[j].oz + modz) * scalez;
+					}
 
-								if (nof > 0 && nof <= 32) {
-									
-									if (drawmode == 2 ) {
-										int j, k;
-										for (i = 0; i < YRES; i++) {
-											k = i*XRES;
-											for (j = 0; j < XRES; j++) {
-												if (videoTransp[k] != 255) {
-													m = videoTransp[k] - 8;
-													if (m < 0 ) m = 0;
-													if (m >= nofcols) m = nofcols - 1;
-													
-													if (pbWriteCols[m]) videoCol[k] = pfgbg[m];
-													if (pbWriteChars[m]) videoChar[k] = pchar[m];
-												}
-												k++;
-											}
-										}
-										memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
-									}									
+					rrx = (float)(rx/4) * 3.14159265359 / 180.0;
+					rry = (float)(ry/4) * 3.14159265359 / 180.0;
+					rrz = (float)(rz/4) * 3.14159265359 / 180.0;
 
-									nofcols = nof;
-									paletteBmap = bmap;
-									colIndex=0;
-									for (i = 0; i < nofcols; i++) {
-										pfgbg[i] = *cols++;
-										pchar[i] = *cols++;
-										pbWriteChars[i] = *cols++;
-										pbWriteCols[i] = *cols++;
-									}
-									divZ = (highZ - lowZ) / nofcols;
-									plusZ = -(lowZ / divZ);
-								}
-							}
+					if (rx2 == 0 && ry2 == 0 && rz2 == 0 && postmodx2 == 0 && postmody2 == 0 && postmodz2 == 0) {
+						rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
+					} else {
+						rrx2 = (float)(rx2/4) * 3.14159265359 / 180.0;
+						rry2 = (float)(ry2/4) * 3.14159265359 / 180.0;
+						rrz2 = (float)(rz2/4) * 3.14159265359 / 180.0;
+
+						rot3dPoints_doubleRotation(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth, rrx2, rry2, rrz2, postmodx2, postmody2, postmodz2);
+					}
+					 
+					 lowZ = 99999999; highZ = -99999999;
+					 for(j=0; j<obj3->nofFaces; j++) {
+						addZ = 0;
+						for(i=0; i<obj3->faceData[j*R3D_MAX_V_PER_FACE]; i++) {
+							addZ += obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz;
 						}
+						addZ /= (float)i;
+						if (addZ > highZ) highZ = addZ;
+						if (addZ < lowZ) lowZ = addZ;
+						averageZ[j] = addZ;
+					 }
 
-						nofFacePoints = obj3->faceData[j*R3D_MAX_V_PER_FACE];
-						
-						if (averageZ[j] != 99999999 && averageZ[j] >= currZ && averageZ[j] <= currZ + addZ) {
-							for(i=0; i<nofFacePoints; i++) {
-								v[i].x=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vx; v[i].y=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vy;
-								v[i].z=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz;
-								
-								if (obj3->texCoords) {
-									v[i].tex_coord.x=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2];
-									v[i].tex_coord.y=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2+1];
-								} else {
-									v[i].tex_coord.x=us[i%3]; v[i].tex_coord.y=vs[i%3];
+					 if (z_levels < 10) z_levels = 10;
+					 addZ = (highZ - lowZ) / z_levels;
+					 currZ = highZ;
+					 
+					 divZ = (highZ - lowZ) / nofcols;
+					 plusZ = -(lowZ / divZ);
+					 
+					 if (addZ < 0) { addZ = 0.000001; } // some sort of rounding error, should not happen (but does :) )
+					 
+					 for (k = 0; k <= z_levels+1; k++) {
+						 for(j=0, colIndex=0; j<obj3->nofFaces; j++, colIndex++) {
+							
+							if (obj3->nofBmaps > 0) {
+								bmap=obj3->bmaps[obj3->faceBitmapIndex[j]];
+								if (bmap && !bmap->data && bmap != paletteBmap && bmap->extras && bmap->extrasType == EXTRAS_ARRAY) {
+									uchar *cols, nof;
+									cols = (uchar *)bmap->extras;
+									nof = *cols++;
+
+									if (nof > 0 && nof <= 32) {
+										
+										if (drawmode == 2 ) {
+											int j, k;
+											for (i = 0; i < YRES; i++) {
+												k = i*XRES;
+												for (j = 0; j < XRES; j++) {
+													if (videoTransp[k] != 255) {
+														m = videoTransp[k] - 8;
+														if (m < 0 ) m = 0;
+														if (m >= nofcols) m = nofcols - 1;
+														
+														if (pbWriteCols[m]) videoCol[k] = pfgbg[m];
+														if (pbWriteChars[m]) videoChar[k] = pchar[m];
+													}
+													k++;
+												}
+											}
+											memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
+										}									
+
+										nofcols = nof;
+										paletteBmap = bmap;
+										colIndex=0;
+										for (i = 0; i < nofcols; i++) {
+											pfgbg[i] = *cols++;
+											pchar[i] = *cols++;
+											pbWriteChars[i] = *cols++;
+											pbWriteCols[i] = *cols++;
+										}
+										divZ = (highZ - lowZ) / nofcols;
+										plusZ = -(lowZ / divZ);
+									}
 								}
-								v[i].tex_coord.z=1.0;
 							}
 
-							if (!z_culling_near || averageZ[j] > z_culling_near)
-							if (!z_culling_far || averageZ[j] < z_culling_far)
-							if (!culling || (((v[1].x - v[0].x) * (v[2].y - v[1].y)) - ((v[2].x - v[1].x) * (v[1].y - v[0].y)) < 0)) {
+							nofFacePoints = obj3->faceData[j*R3D_MAX_V_PER_FACE];
+							
+							if (bmap && bmap->data && bmap->bCmdBlock && bmap->blockRefresh > 0 && obj3->nofBmaps > 0) {
+								int ok;
+								freeBitmap(bmap, 0);	
+								ok = readCmdGfxTexture(bmap, bmap->pathOrBlockString);
+								if (bmap->blockRefresh != 2) bmap->blockRefresh = 0;
+								if (!ok) bmap = NULL;
+							}
+										
+							if (averageZ[j] != 99999999 && averageZ[j] >= currZ && averageZ[j] <= currZ + addZ) {
+								for(i=0; i<nofFacePoints; i++) {
+									v[i].x=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vx; v[i].y=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vy;
+									v[i].z=obj3->objData[obj3->faceData[i+1+j*R3D_MAX_V_PER_FACE]].vz;
+									
+									if (obj3->texCoords) {
+										v[i].tex_coord.x=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2];
+										v[i].tex_coord.y=obj3->texCoords[obj3->texData[i+1+j*R3D_MAX_V_PER_FACE] * 2+1];
+									} else {
+										v[i].tex_coord.x=us[i%3]; v[i].tex_coord.y=vs[i%3];
+									}
+									v[i].tex_coord.z=1.0;
+								}
 
-								if (drawmode == 0 || drawmode == 4 || drawmode == 5 || drawmode == 6) {
-									fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
-									bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
+								if (!z_culling_near || averageZ[j] > z_culling_near)
+								if (!z_culling_far || averageZ[j] < z_culling_far)
+								if (!culling || (((v[1].x - v[0].x) * (v[2].y - v[1].y)) - ((v[2].x - v[1].x) * (v[1].y - v[0].y)) < 0)) {
 
-									video = videoCol;
-									if (obj3->nofBmaps > 0 && bmap && bmap->data && (drawmode == 0 || drawmode == 5 || drawmode == 6)) {
-										transpval = drawoption;
-										if (bmap->transpVal != -1) transpval = bmap->transpVal;
+									if (drawmode == 0 || drawmode == 4 || drawmode == 5 || drawmode == 6) {
+										fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
+										bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
+
+										video = videoCol;
 										
-										bmap->projectionDistance = dist;
-										if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP && drawmode != 6)
-											((Bitmap *)(bmap->extras))->projectionDistance = dist;
-										
-										bDrawPerspective = (drawmode == 5 || drawmode == 6);
-										
-										if (nofFacePoints == 1) {
-										   int ox = v[0].x, oy = v[0].y;
-											int bw = bmap->xSize - 1, bh = bmap->ySize - 1;
-											v[0].tex_coord.z = v[1].tex_coord.z = v[2].tex_coord.z = v[3].tex_coord.z = 1; v[1].z = v[2].z = v[3].z = v[0].z;
-											v[0].x = ox - bw / 2; v[0].y = oy - bh / 2; v[0].tex_coord.x = 0; v[0].tex_coord.y = 0;
-											v[1].x = ox + bw / 2 + bw % 2; v[1].y = oy - bh / 2; v[1].tex_coord.x = 1.01; v[1].tex_coord.y = 0;
-											v[2].x = ox + bw / 2 + bw % 2; v[2].y = oy + bh / 2 + bh % 2; v[2].tex_coord.x = 1.01; v[2].tex_coord.y = 1;
-											v[3].x = ox - bw / 2; v[3].y = oy + bh / 2 + bh % 2; v[3].tex_coord.x = 0; v[3].tex_coord.y = 1.01;
-											nofFacePoints = 4; bDrawPerspective = 0;
-										}
-										
-										if (transpval >= 0) {
-											int ok;											
-											video = videoTransp;
-											memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-											ok = scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
-											if (ok) {
-												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
-													video = videoTranspChar;
-													memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-													scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
-													processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
-												} else
-													processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
+										if (obj3->nofBmaps > 0 && bmap && bmap->data && (drawmode == 0 || drawmode == 5 || drawmode == 6)) {
+											transpval = drawoption;
+											
+											if (bmap->transpVal != -1) transpval = bmap->transpVal;
+											
+											bmap->projectionDistance = dist;
+											if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP && drawmode != 6)
+												((Bitmap *)(bmap->extras))->projectionDistance = dist;
+											
+											bDrawPerspective = (drawmode == 5 || drawmode == 6);
+											
+											if (nofFacePoints == 1) {
+												int ox = v[0].x, oy = v[0].y;
+												int bw = bmap->xSize - 1, bh = bmap->ySize - 1;
+												v[0].tex_coord.z = v[1].tex_coord.z = v[2].tex_coord.z = v[3].tex_coord.z = 1; v[1].z = v[2].z = v[3].z = v[0].z;
+												v[0].x = ox - bw / 2; v[0].y = oy - bh / 2; v[0].tex_coord.x = 0; v[0].tex_coord.y = 0;
+												v[1].x = ox + bw / 2 + bw % 2; v[1].y = oy - bh / 2; v[1].tex_coord.x = 1.01; v[1].tex_coord.y = 0;
+												v[2].x = ox + bw / 2 + bw % 2; v[2].y = oy + bh / 2 + bh % 2; v[2].tex_coord.x = 1.01; v[2].tex_coord.y = 1;
+												v[3].x = ox - bw / 2; v[3].y = oy + bh / 2 + bh % 2; v[3].tex_coord.x = 0; v[3].tex_coord.y = 1.01;
+												nofFacePoints = 4; bDrawPerspective = 0;
+											}
+											
+											if (transpval >= 0) {
+												int ok;											
+												video = videoTransp;
+												memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
+												ok = scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
+												if (ok) {
+													if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
+														video = videoTranspChar;
+														memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
+														scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
+														processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
+													} else
+														processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
+												}
+											} else {
+												if (bWriteCols) scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
+												video = videoChar;
+												if (bWriteChars) {
+													if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP)
+														scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
+													else
+														scanConvex(v, nofFacePoints, NULL, dchar);
+												}
 											}
 										} else {
-											if (bWriteCols) scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
-											video = videoChar;
-											if (bWriteChars) {
-												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP)
-													scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
-												else
-													scanConvex(v, nofFacePoints, NULL, dchar);
+											if (nofFacePoints > 2) {
+												if (drawoption > 0 && drawoption <= BIT_NORMAL_IPOLY) {
+													int option = drawoption; if (option == BIT_NORMAL_IPOLY) option=0;
+													if (bWriteCols) scanPoly(v, nofFacePoints, fgbg, option);
+													video = videoChar;
+													if (bWriteChars) scanPoly(v, nofFacePoints, dchar, BIT_OP_NORMAL);
+												} else {
+													if (bWriteCols) scanConvex(v, nofFacePoints, NULL, fgbg);
+													video = videoChar;
+													if (bWriteChars) scanConvex(v, nofFacePoints, NULL, dchar);
+												}
+											} else if (nofFacePoints > 1) {
+												if (bWriteCols) line(v[0].x, v[0].y, v[1].x, v[1].y, fgbg, 1);
+												video = videoChar;
+												if (bWriteChars) line(v[0].x, v[0].y, v[1].x, v[1].y, dchar, 1);
+											} else {
+												if (bWriteCols) setpixel(v[0].x, v[0].y, fgbg);
+												video = videoChar;
+												if (bWriteChars) setpixel(v[0].x, v[0].y, dchar);
 											}
 										}
-									} else {
+										
+									} else if (drawmode == 1) {
+										int zcol = 0;
+										for (l=0; l < nofFacePoints; l++) {
+											if ((drawoption & 1) == 0)
+												zcol += v[l].z/25+16;
+											else
+												zcol += v[l].z/divZ+plusZ;
+										}
+										zcol /= nofFacePoints;
+										if (zcol < 0) zcol=0;
+										if (zcol >= nofcols) zcol=nofcols-1;
+
+										fgbg = pfgbg[zcol]; dchar = pchar[zcol];
+										bWriteChars = pbWriteChars[zcol]; bWriteCols = pbWriteCols[zcol];
+
+										video = videoCol;
 										if (nofFacePoints > 2) {
-											if (drawoption > 0 && drawoption <= BIT_NORMAL_IPOLY) {
-												int option = drawoption; if (option == BIT_NORMAL_IPOLY) option=0;
+											if ((drawoption>>4) > 0 && (drawoption>>4) <= BIT_NORMAL_IPOLY) {
+												int option = drawoption>>4; if (option == BIT_NORMAL_IPOLY) option=0;
 												if (bWriteCols) scanPoly(v, nofFacePoints, fgbg, option);
 												video = videoChar;
 												if (bWriteChars) scanPoly(v, nofFacePoints, dchar, BIT_OP_NORMAL);
@@ -2037,134 +2497,426 @@ int main(int argc, char *argv[]) {
 											video = videoChar;
 											if (bWriteChars) setpixel(v[0].x, v[0].y, dchar);
 										}
-									}
-									
-								} else if (drawmode == 1) {
-									int zcol = 0;
-									for (l=0; l < nofFacePoints; l++) {
-										if ((drawoption & 1) == 0)
-											zcol += v[l].z/25+16;
+									} else if (drawmode == 2) {
+										int gValue[16];
+										video = videoTransp;
+										if (drawoption == 0)
+											scanConvex_goraud(v, nofFacePoints, NULL, gValue, GORAUD_TYPE_Z, 0, 25, 16, nofcols);
 										else
-											zcol += v[l].z/divZ+plusZ;
-									}
-									zcol /= nofFacePoints;
-									if (zcol < 0) zcol=0;
-									if (zcol >= nofcols) zcol=nofcols-1;
+											scanConvex_goraud(v, nofFacePoints, NULL, gValue, GORAUD_TYPE_Z, 0, divZ, plusZ, nofcols);
 
-									fgbg = pfgbg[zcol]; dchar = pchar[zcol];
-									bWriteChars = pbWriteChars[zcol]; bWriteCols = pbWriteCols[zcol];
+									} else {
+										fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
+										bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
 
-									video = videoCol;
-									if (nofFacePoints > 2) {
-										if ((drawoption>>4) > 0 && (drawoption>>4) <= BIT_NORMAL_IPOLY) {
-											int option = drawoption>>4; if (option == BIT_NORMAL_IPOLY) option=0;
-											if (bWriteCols) scanPoly(v, nofFacePoints, fgbg, option);
+										video = videoCol;
+										if (nofFacePoints > 2) {
+											if (bWriteCols) polyLine(v, nofFacePoints, fgbg, 1, 1);
 											video = videoChar;
-											if (bWriteChars) scanPoly(v, nofFacePoints, dchar, BIT_OP_NORMAL);
+											if (bWriteChars) polyLine(v, nofFacePoints, dchar, 1, 1);
+										} else if (nofFacePoints > 1) {
+											if (bWriteCols) line(v[0].x, v[0].y, v[1].x, v[1].y, fgbg, 1);
+											video = videoChar;
+											if (bWriteChars) line(v[0].x, v[0].y, v[1].x, v[1].y, dchar, 1);
 										} else {
-											if (bWriteCols) scanConvex(v, nofFacePoints, NULL, fgbg);
+											if (bWriteCols) setpixel(v[0].x, v[0].y, fgbg);
 											video = videoChar;
-											if (bWriteChars) scanConvex(v, nofFacePoints, NULL, dchar);
+											if (bWriteChars) setpixel(v[0].x, v[0].y, dchar);
 										}
-									} else if (nofFacePoints > 1) {
-										if (bWriteCols) line(v[0].x, v[0].y, v[1].x, v[1].y, fgbg, 1);
-										video = videoChar;
-										if (bWriteChars) line(v[0].x, v[0].y, v[1].x, v[1].y, dchar, 1);
-									} else {
-										if (bWriteCols) setpixel(v[0].x, v[0].y, fgbg);
-										video = videoChar;
-										if (bWriteChars) setpixel(v[0].x, v[0].y, dchar);
-									}
-								} else if (drawmode == 2) {
-									int gValue[16];
-									video = videoTransp;
-									if (drawoption == 0)
-										scanConvex_goraud(v, nofFacePoints, NULL, gValue, GORAUD_TYPE_Z, 0, 25, 16, nofcols);
-									else
-										scanConvex_goraud(v, nofFacePoints, NULL, gValue, GORAUD_TYPE_Z, 0, divZ, plusZ, nofcols);
-
-								} else {
-									fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
-									bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
-
-									video = videoCol;
-									if (nofFacePoints > 2) {
-										if (bWriteCols) polyLine(v, nofFacePoints, fgbg, 1, 1);
-										video = videoChar;
-										if (bWriteChars) polyLine(v, nofFacePoints, dchar, 1, 1);
-									} else if (nofFacePoints > 1) {
-										if (bWriteCols) line(v[0].x, v[0].y, v[1].x, v[1].y, fgbg, 1);
-										video = videoChar;
-										if (bWriteChars) line(v[0].x, v[0].y, v[1].x, v[1].y, dchar, 1);
-									} else {
-										if (bWriteCols) setpixel(v[0].x, v[0].y, fgbg);
-										video = videoChar;
-										if (bWriteChars) setpixel(v[0].x, v[0].y, dchar);
 									}
 								}
+								averageZ[j] = 99999999; 
 							}
-							averageZ[j] = 99999999; 
+						}
+						currZ = currZ - addZ;
+					}
+
+					if (drawmode == 2 ) {
+						for (i = 0; i < YRES; i++) {
+							k = i*XRES;
+							for (j = 0; j < XRES; j++) {
+								if (videoTransp[k] != 255) {
+									m = videoTransp[k] - 8;
+									if (m < 0 ) m = 0;
+									if (m >= nofcols) m = nofcols - 1;
+									
+									if (pbWriteCols[m]) videoCol[k] = pfgbg[m];
+									if (pbWriteChars[m]) videoChar[k] = pchar[m];
+								}
+								k++;
+							}
 						}
 					}
-					currZ = currZ - addZ;
-				}
+				} else
+					reportFileError(&errH, OP_3D, ERR_OBJECT_LOAD, opCount, fname);
 
-				if (drawmode == 2 ) {
-					for (i = 0; i < YRES; i++) {
-						k = i*XRES;
-						for (j = 0; j < XRES; j++) {
-							if (videoTransp[k] != 255) {
-								m = videoTransp[k] - 8;
-								if (m < 0 ) m = 0;
-								if (m >= nofcols) m = nofcols - 1;
-								
-								if (pbWriteCols[m]) videoCol[k] = pfgbg[m];
-								if (pbWriteChars[m]) videoChar[k] = pchar[m];
-							}
-							k++;
+				// stupid strtok, I use it in the load functions for plg and obj files, thus screwing up the existing strtok. Rereading, ugly fix...
+				strcpy(argv1, insertedArgs);
+				pch = strtok(argv1, "&");
+				for (i = 0; i < opCount; i++) { pch = strtok (NULL, "&"); }
+
+			}
+			else
+				reportArgError(&errH, OP_3D, opCount);
+		}	else if (strstr(pch,"skip ") == pch) {
+			// do nothing
+		} else {
+			char faultyOp[42], *fnd;
+			strncpy(faultyOp, pch, 40);
+			faultyOp[40] = 0;
+			fnd = strchr(faultyOp, ' ');
+			if (fnd) *fnd = 0;
+			if (faultyOp[0])
+				reportError(&errH, OP_UNKNOWN, ERR_OPTYPE, opCount, faultyOp);
+		}
+
+		pch = strtok (NULL, "&");
+		opCount++;
+		}	
+		
+		if (!bSuppressErrors) {
+			displayErrors(&errH, videoCol, videoChar);
+			if (bWaitAfterErrors && errH.errCnt > 0)
+				bWaitKey = 1;
+		}
+
+		if (!bDoNothing) {
+	#ifdef GDI_OUTPUT
+			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh);
+		//	convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0][0], &bgPalette[0][0], gx, gy);
+			
+			if (bWriteGdiToFile) {
+					FILE *fp = fopen("GDIbuf.dat", "wb");
+					if (fp != NULL) {
+						int blockSize;
+						fwrite(&XRES, sizeof(int), 1, fp);
+						fwrite(&YRES, sizeof(int), 1, fp);
+						blockSize = XRES * YRES;
+						fwrite(videoCol, sizeof(unsigned char), blockSize, fp);
+						fwrite(videoChar, sizeof(unsigned char), blockSize, fp);
+					}
+			}
+	#else
+			if (bPaletteSet)
+				convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette);
+			else
+				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL);
+	#endif
+		}
+		
+		for (i = 0; i < errH.errCnt; i++) if (errH.extras[i]) free(errH.extras[i]);
+		errH.errCnt = 0;
+
+		if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
+			int k = getch();
+			if (k == 224 || k == 0) k = 256 + getch();
+			retVal = k;
+		}
+
+		if (bMouse) {
+			DWORD fdwMode, cNumRead = 0, iOut; 
+			INPUT_RECORD irInBuf[128];
+			int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0, bTimeout = 0, bOk;
+			
+			if (bServer)
+				h_stdin = CreateFile("CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
+			else
+				h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+			
+			//GetConsoleMode(h_stdin, &oldfdwMode);
+
+			fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
+			fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
+			SetConsoleMode(h_stdin, fdwMode);
+			
+			bOk = 1;
+			if (mouseWait > -1) {
+				res = WaitForSingleObject(h_stdin, mouseWait);
+				// bug is reason it works. Don't reset old fdwMode in non-server mode
+				if (res & WAIT_TIMEOUT) { if (!bServer) { process_waiting(bWait, waitTime, bServer); writeErrorLevelToFile(bWriteReturnToFile, -1, bMouse); /* SetConsoleMode(h_stdin, oldfdwMode); */ return -1; } else bOk = 0; }
+			}
+
+			res = -1;
+			if (bOk)
+				ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);
+			for (i = 0; i < cNumRead; i++) {
+				switch(irInBuf[i].EventType) { 
+				case MOUSE_EVENT:
+					bOk = 1;
+					if (bMouse == 1) bOk = MouseClicked(irInBuf[i].Event.MouseEvent);
+					if (bOk)
+						res = MouseEventProc(irInBuf[i].Event.MouseEvent);
+					break;
+				case KEY_EVENT:
+					bKeyDown = irInBuf[i].Event.KeyEvent.bKeyDown;
+					if (irInBuf[i].Event.KeyEvent.uChar.AsciiChar > 0)
+						key = irInBuf[i].Event.KeyEvent.uChar.AsciiChar;
+					else
+						key = 256 + irInBuf[i].Event.KeyEvent.wVirtualScanCode;
+					irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
+					irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
+					bWroteKey = 1;
+
+	//				printf("DWN:%d REP:%d %d %d %d %d key:%d CK:%ld\n", irInBuf[i].Event.KeyEvent.bKeyDown, irInBuf[i].Event.KeyEvent.wRepeatCount, irInBuf[i].Event.KeyEvent.wVirtualKeyCode, irInBuf[i].Event.KeyEvent.wVirtualScanCode, irInBuf[i].Event.KeyEvent.uChar.UnicodeChar, irInBuf[i].Event.KeyEvent.uChar.AsciiChar, key, irInBuf[i].Event.KeyEvent.dwControlKeyState);
+					break;
+				case WINDOW_BUFFER_SIZE_EVENT:
+				case FOCUS_EVENT:
+				case MENU_EVENT:
+					break;
+				}
+			}
+
+			if (bWroteKey) {
+				if (kbhit()) {
+					key=getch();
+					if (key == 224 || key == 0) key = 256 + getch();
+					while(kbhit()) getch();
+				}
+				res2 = WaitForSingleObject(h_stdin, 1);
+				if (!(res2 & WAIT_TIMEOUT))
+					ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);			
+
+				if (bKeyDown || bSendKeyUp) {
+					res = (res > 0? res : 0) | (key<<22);
+					res = res | (bKeyDown<<21);
+				}
+			}
+			
+			retVal = res;
+		}
+
+		process_waiting(bWait, waitTime, bServer);
+		
+		writeErrorLevelToFile(bWriteReturnToFile, retVal, bMouse);
+
+		if (bCapture && captX >= 0 && captX < txres && captY >= 0 && captY < tyres && captW >= 0 && captX+captW <= txres && captY >= 0 && captY+captH <= tyres) {
+			int saveRes = SaveBlock(captureCount, captX, captY, captW, captH, captFormat);
+			if (saveRes == 0)
+				captureCount++;
+		}
+		bCapture = 0;
+		
+		if (bServer) {
+			char *input = NULL, *fndMe = NULL, *fndMeEcho;
+			FILE	*flushFile;
+			
+			if (input == NULL) {
+				do {
+					input = fgets(argv1, MAX_OP_SIZE-1, stdin); // this call blocks if there is no input
+					if (input != NULL) {
+						fndMe = strstr(input, "cmdgfx:");
+						if (!fndMe) {
+							puts(input);
 						}
 					}
+
+				} while (fndMe == NULL && input != NULL);
+			}
+									
+			flushFile = fopen("servercmd.dat", "r");
+			if (flushFile) {
+				input = fgets(argv1, MAX_OP_SIZE-1, flushFile);
+				fclose(flushFile);
+				remove("servercmd.dat");
+				//puts(input); getch();
+				fndMe = strchr(input, '\"');
+				if (fndMe) {
+					memmove(argv1, (char *)fndMe, strlen(fndMe)+1);
+					argv1[0] = ' ';
+					fndMe = NULL;
 				}
-			} else
-				reportFileError(&errH, OP_3D, ERR_OBJECT_LOAD, opCount, fname);
+			}
+			
+			if (input != NULL) {
+				if ((strstr(input, "quit") != NULL || strstr(input, "exit") != NULL) && strlen(input) < 20) {
+					bServer = 0;
+				} else {
+					if (fndMe != NULL)
+						memmove(argv1, (char *)fndMe + strlen("cmdgfx:"), strlen(input));
+				}
+			} else {
+				if (!bSuppressErrors) {
+					printf("\nCMDGFX: Client appears to have ended prematurely. Use the 'quit' command to stop the server.\n\nExit server... Press a key.\n");
+					getch();
+				}
+				bServer = 0;
+			}
+			
+			if (bServer){
+				int ast = 1;
+				for (i = 0; i < strlen(argv1); i++) {
+					if (argv1[i] == ' ' && ast) argv1[i] = 1;
+					if (argv1[i] == '\"') { ast = 1 - ast; argv1[i] = ' '; }
+				}
 
-			// stupid strtok, I use it in the load functions for plg and obj files, thus screwing up the existing strtok. Rereading, ugly fix...
-			strcpy(argv1, insertedArgs);
-			pch = strtok(argv1, "&");
-			for (i = 0; i < opCount; i++) { pch = strtok (NULL, "&"); }
-
-		} else
-			reportArgError(&errH, OP_3D, opCount);
-	} else {
-		char faultyOp[42], *fnd;
-		strncpy(faultyOp, pch, 40);
-		faultyOp[40] = 0;
-		fnd = strchr(faultyOp, ' ');
-		if (fnd) *fnd = 0;
-		if (faultyOp[0])
-			reportError(&errH, OP_UNKNOWN, ERR_OPTYPE, opCount, faultyOp);
-	}
-
-	pch = strtok (NULL, "&");
-	opCount++;
-	}
-
-	if (!bSuppressErrors) {
-		displayErrors(&errH, videoCol, videoChar);
-		if (bWaitAfterErrors && errH.errCnt > 0)
-			bWaitKey = 1;
-	}
-
+				frameCounter++;
+				
+				pch = strtok(argv1, " \n");
+				strcpy(argv1, pch);
+				for (i = 0; i < strlen(argv1); i++)
+					if (argv1[i] == 1) argv1[i] = ' ';
+				
+				pch = strtok (NULL, " \n");
+				
+				if (pch) {
+					int neg = 0;
+					for (i = 0; i < strlen(pch); i++) {
+						
+						neg = 0;
+						if (pch[i] == '-') { neg = 1; i++; }
+						
+						switch(pch[i]) {
 #ifdef GDI_OUTPUT
-	convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0][0], &bgPalette[0][0], gx, gy);
-#else
-	if (bPaletteSet)
-		convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette);
-	else
-		convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL);
+							case 'P': bWriteGdiToFile = neg? 0 : 1; break;
 #endif
+							case 'n': bDoNothing = neg? 0 : 1; break;
+							case 'k': bReadKey = neg? 0 : 1; break;
+							case 'K': bWaitKey = neg? 0 : 1; break;
+							case 'Z': {
+								char pDepth[64];
+								j = 0; i++;
+								while (pch[i] >= '0' && pch[i] <= '9') pDepth[j++] = pch[i++];
+								i--; pDepth[j] = 0;
+								if (j) projectionDepth = atoi(pDepth);
+								break;
+							}
+							case 'M': case 'm':{
+								if (neg)
+									bMouse = 0;
+								else {
+									char wTime[64];
+									bMouse = pch[i] == 'M'? 2 : 1; j = 0; i++;
+									while (pch[i] >= '0' && pch[i] <= '9') wTime[j++] = pch[i++];
+									i--; wTime[j] = 0;
+									if (j) mouseWait = atoi(wTime);
+								}
+								break;
+							}
+							case 'W': case 'w': {
+								if (neg)
+									bWait = 0;
+								else {
+									char wTime[64];
+									bWait = 1; if (pch[i] == 'W') bWait = 2; j = 0; i++;
+									while (pch[i] >= '0' && pch[i] <= '9') wTime[j++] = pch[i++];
+									i--; wTime[j] = 0;
+									if (j) waitTime = atoi(wTime);
+								}
+								break;
+							}
+							case 'u': bSendKeyUp = neg? 0 : 1; break;
+							case 'e': bSuppressErrors = neg? 0 : 1; break;
+							case 'E': bWaitAfterErrors = neg? 0 : 1; break;
+							case 'o': bWriteReturnToFile = neg? 0 : 1; break;
+							case 'O': bWriteReturnToFile = neg? 0 : 2; break;
+							case 'C': frameCounter = 0; break;
+							case 'T': bAllowRepeated3dTextures = neg? 0 : 1; break;
+							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
+							case 'I': g_bFlushAfterELwrite = neg? 0 : 1; break;
+							
+#ifdef GDI_OUTPUT
+							case 'f': 
+							{
+								int oldtx=txres, oldty=tyres;
+								char *fnd, fin[64];
+								int nof;
+								i++; fontIndex = GetHex(pch[i]);
+								if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+								if (pch[i+1] == ':' && pch[i+2]) {
+									fnd = strchr(&pch[i+2], ';');
+									if (!fnd) strcpy(fin, &pch[i+2]); else { nof = fnd-&pch[i+2]; strncpy(fin, &pch[i+2], nof); fin[nof]=0; }
+									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
+									if (nof >= 3 && nof < 5) outw = txres;
+									if (nof >= 4 && nof < 6) outh = tyres;
+								}
+							
+								if (oldtx != txres || oldty != tyres) {
+									setResolution(txres, tyres);
+									free(videoCol); free(videoChar);	free(videoTransp); free(videoTranspChar);
+									videoCol = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
+									videoChar = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
+									videoTransp = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
+									videoTranspChar = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
+									g_videoCol = videoCol;
+									g_videoChar = videoChar;
+									if (!videoCol || !videoChar || !videoTransp || !videoTranspChar) {
+										printf("\nPANIC: Server could not re-allocate space for buffer!\n\nExit server...\n");
+										return 0;
+									}
+								}
+								break;
+							}
+#endif
+							case 'c': 
+							{
+								char *fnd, fin[64];
+								int nof = 0;
+								captX = 0, captY=0, captW=txres, captH=tyres, captFormat=1, bCapture = 1;
+								if (pch[i+1] == ':' && pch[i+2]) {
+									fnd = strchr(&pch[i+2], ';');
+									if (!fnd) strcpy(fin, &pch[i+2]); else { nof = fnd-&pch[i+2]; strncpy(fin, &pch[i+2], nof); fin[nof]=0; }
+									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &captX, &captY, &captW, &captH, &captFormat, &captureCount);
+								}
+								if (nof < 3) captW = txres - captX;
+								if (nof < 4) captH = tyres - captY;
+								break;
+							}
+							
+							case 'D':
+							{
+								for (j = 0; j < MAX_OBJECTS_IN_MEM; j++) {
+									if (objs[j]) {
+										freeObj3d(objs[j]);
+										free(objNames[j]);
+										objs[j] = NULL;
+										objNames[j] = NULL;
+									}
+								}
+								break;
+							}
+														
+							case 'F': fflush(stdin); break; // should this be before the loop rather than after?
+						}
+					}
+										
+					pch = strtok (NULL, " \n");
+					if (pch) {
+						char fgPal[6400];
+						strcpy(fgPal, pch);
+						for (ii = 0; ii < 16; ii++) { fgPalette[ii] = orgPalette[ii]; }
+						pch = strtok (NULL, " \n");
+						if (pch) for (ii = 0; ii < 16; ii++) { bgPalette[ii] = orgPalette[ii]; }
 
-	if(insertedArgs != argv[1])
+						readPalette(fgPal, pch, fgPalette, bgPalette, &bPaletteSet);
+					}
+				}
+				
+			}
+						
+			if (bInserted)
+				free(insertedArgs);
+			
+			bInserted = 1;
+			insertedArgs = insertCgx(argv1);
+			if (!insertedArgs) { insertedArgs = (char *) malloc(strlen(argv1) + 10); strcpy(insertedArgs, argv1); }
+			opCount = 0;
+			if (bServer) {
+				for (i = 0; i < MAX_OBJECTS_IN_MEM; i++) {
+					obj3d *obj = objs[i];
+					if (obj && obj->bmaps) {
+						for (j = 0; j < obj->nofBmaps; j++) {
+							if (obj->bmaps[j] && obj->bmaps[j]->bCmdBlock && obj->bmaps[j]->blockRefresh == 0)
+								obj->bmaps[j]->blockRefresh = 1;
+						}
+					}
+				}
+			}
+		}
+
+	} while (bServer);
+
+
+	if(bInserted)
 		free(insertedArgs);
 
 	free(videoCol);
@@ -2181,79 +2933,20 @@ int main(int argc, char *argv[]) {
 	}
 
 	for (i = 0; i < errH.errCnt; i++) if (errH.extras[i]) free(errH.extras[i]);
+	errH.errCnt = 0;
 
+#ifdef GDI_OUTPUT
+	if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
+	if (g_hDcBmp) ReleaseDC(g_hWnd, g_hDcBmp);
+#endif
+	
 	if (b_pcx.data) free(b_pcx.data);
 	free(averageZ);
 	free(argv1);
-
-	if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
-		int k = getch();
-		if (k == 224 || k == 0) k = 256 + getch();
-		retVal = k;
-	}
-
-	if (bMouse) {
-		DWORD fdwMode, oldfdwMode, cNumRead, iOut; 
-		INPUT_RECORD irInBuf[128];
-		int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0;
-
-		GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &oldfdwMode);
-
-		fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
-		fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
-		SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), fdwMode);
-
-		if (mouseWait > -1) {
-			res = WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), mouseWait);
-			if (res & WAIT_TIMEOUT) { process_waiting(bWait, waitTime); writeErrorLevelToFile(bWriteReturnToFile, -1); return -1; }
-		}
-
-		res = -1;
-		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), irInBuf, 128, &cNumRead);
-		for (i = 0; i < cNumRead; i++) {
-			switch(irInBuf[i].EventType) { 
-			case MOUSE_EVENT:
-				res = MouseEventProc(irInBuf[i].Event.MouseEvent);
-				break; 
-			case KEY_EVENT:
-				bKeyDown = irInBuf[i].Event.KeyEvent.bKeyDown;
-				if (irInBuf[i].Event.KeyEvent.uChar.AsciiChar > 0)
-					key = irInBuf[i].Event.KeyEvent.uChar.AsciiChar;
-				else
-					key = 256 + irInBuf[i].Event.KeyEvent.wVirtualScanCode;
-				irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &irInBuf[i], 1, &iOut);
-				irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &irInBuf[i], 1, &iOut);
-				bWroteKey = 1;
-
-//				printf("DWN:%d REP:%d %d %d %d %d key:%d CK:%ld\n", irInBuf[i].Event.KeyEvent.bKeyDown, irInBuf[i].Event.KeyEvent.wRepeatCount, irInBuf[i].Event.KeyEvent.wVirtualKeyCode, irInBuf[i].Event.KeyEvent.wVirtualScanCode, irInBuf[i].Event.KeyEvent.uChar.UnicodeChar, irInBuf[i].Event.KeyEvent.uChar.AsciiChar, key, irInBuf[i].Event.KeyEvent.dwControlKeyState);
-				break;
-			case WINDOW_BUFFER_SIZE_EVENT:
-			case FOCUS_EVENT:
-			case MENU_EVENT:
-				break;
-			}
-		}
-
-		if (bWroteKey) {
-			if (kbhit()) {
-				key=getch();
-				if (key == 224 || key == 0) key = 256 + getch();
-				while(kbhit()) getch();
-			}
-			res2 = WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 1);
-			if (!(res2 & WAIT_TIMEOUT))
-				ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), irInBuf, 128, &cNumRead);			
-
-			res = (res > 0? res : 0) | (key<<22);
-			res = res | (bKeyDown<<21);
-		}
-
-		SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldfdwMode);
-		retVal = res;
-	}
-
-	process_waiting(bWait, waitTime);
 	
-	writeErrorLevelToFile(bWriteReturnToFile, retVal);
+	SetConsoleMode(h_stdin, oldfdwMode);
+
 	return retVal;
 }
+
+

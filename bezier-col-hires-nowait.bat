@@ -3,7 +3,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=335, H=110
 set /a W=289, H=100
 ::set /a W=180, H=80
-cmdwiz setfont 0 & mode %W%,%H%
+bg font 0 & mode %W%,%H%
 cmdgfx "fbox 0 0 00 0,0,%W%,%H%"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if /I not "%%v"=="PATH" set "%%v="
@@ -52,11 +52,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 
 	if !STARTCNT! lss 0 if !DIV! == 1 start "" /high /B cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" koefa:0,0,%W%,%H% !PAL!
- 	if !STARTCNT! lss 0 if !DIV! == 2 start "" /high /B cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" koefa:0,0,%W%,%H% !PAL!
+ 	if !STARTCNT! lss 0 if !DIV! == 2 start "" /high /B cmdgfx_gdi "fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" kOefa:0,0,%W%,%H% !PAL!
 	set STR=
 
 	rem if !STARTCNT! lss 0 getkey /N & set KEY=!ERRORLEVEL!
-	if !STARTCNT! lss 0 set /p KEY=<EL.dat 2>nul & if "!KEY!" == "" set KEY=0
+	if !STARTCNT! lss 0 if exist EL.dat set /p KEY=<EL.dat 2>nul & del /Q EL.dat >nul 2>nul & if "!KEY!" == "" set KEY=0
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV! 
 	if !KEY! == 112 cmdwiz getch
@@ -68,9 +68,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 98 set /a BITOP+=1 & if !BITOP! gtr 10 set BITOP=1
 	if !KEY! == 97 cls&echo set /a P1=!P1!,P2=!P2!,P3=!P3!,P4=!P4!,P5=!P5!,P6=!P6!,P7=!P7!,P8=!P8!,SC=!SC!,CC=!CC!,SC2=!SC2!,CC2=!CC2!,SC3=!SC3!,CC3=!CC3!,SC4=!SC4!,CC4=!CC4! & pause
 	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
 if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 30
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1
+del /Q EL.dat >nul 2>nul

@@ -13,7 +13,7 @@
 
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 2 & mode 150,75 & cls
+bg font 2 & mode 150,75 & cls
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 cmdwiz setbuffersize 350 k
 cmdwiz getquickedit & set QE=!errorlevel!&cmdwiz setquickedit 0
@@ -36,7 +36,7 @@ set /a "MX8=-3, MY8=-8, MX9=-6, MY9=-6, MX10=-8, MY10=-3, MX11=-8, MY11=0, MX12=
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
-	cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" Mp
+	cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" mp
 	set MR=!errorlevel!
 	set DRAW=""
 
@@ -53,12 +53,13 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 			set OUTP=
 		)
 	)
-	if !KEY! == 32 if !KD!==0 set /a COL+=1&if !COL! gtr 4 set COL=0
+	if !KEY! == 32 set /a COL+=1&if !COL! gtr 4 set COL=0
 	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
 if not defined STOP goto LOOP
 
 cmdwiz setquickedit %QE%
 endlocal
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

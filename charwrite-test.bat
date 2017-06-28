@@ -2,14 +2,14 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
-cls & cmdwiz setfont 1
+cls & bg font 1
 set W=200&set H=80
 mode %W%,%H%
-for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set DIST=700
-set ASPECT=1.5
+set ASPECT=0.6
 set c=0
 set /A RX=0,RY=0,RZ=0
 set FN=genplane.obj
@@ -68,14 +68,13 @@ set XP=30
 set /A SX=0,SXA=3,XMUL=40
 set /A SX2=0,SXA2=2,XMUL2=10
 set /A SY=0,SYA=2,YMUL=10
-set /A XMP=%XMID%, YMP=300
+set /A XMP=%XMID%, YMP=300, SHR=13
 
-call sintable.bat
-set CNT=0& for /L %%a in (0,2,720) do set S!CNT!=!SIN%%a!&set /A CNT+=1
-for /L %%a in (0,1,720) do set SIN%%a=
+set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
+set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
+set "_SIN="
 
 set CNT=0
-set RENDERER=&set REND=1
 
 set STOP=
 :LOOP
@@ -85,7 +84,8 @@ set BKG2=""
 if !LENS!==1 set BKG2=" & fellipse 7 0 fa !XMP!,!YMP!,30,25 & fellipse 4 0 20 !XMP!,!YMP!,27,24 & fellipse c 0 20 !XMP!,!YMP!,23,24 & fellipse e 0 20 !XMP!,!YMP!,18,24 & fellipse f 0 20 !XMP!,!YMP!,6,5 "
 if !MARIO!==1 set /A "MN=(!CNT! %% 10)/5 + 1"&set BKG2="!BKG2:~1,-1! & image img\mario!MN!.gxy 0 0 0 0 9,28"
 
-cmdgfx!RENDERER! "%BKG:~1,-1% !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0  !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% ? 0 !CHAR! & !HELP!" kf1
+start "" /B /High cmdgfx_gdi "%BKG:~1,-1% !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0  !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% ? 0 !CHAR! & !HELP!" f1
+cmdgfx "" nkW12
 set KEY=!ERRORLEVEL!
 set BKG2=
 
@@ -93,7 +93,9 @@ set /A CNT+=1
 if !CNT! lss 350 set /A YMP-=1 & if !YMP! lss %YMID% set YMP=%YMID%
 if !CNT! == 140 set YROT=1
 if !CNT! gtr 350 (
-	for %%a in (!SX!) do for %%b in (!SX2!) do for %%c in (!SY!) do set /a "XMP=%XMID%+(!S%%a!*%XMUL%>>14)-(!S%%b!*%XMUL2%>>14),YMP=%YMID%+(!S%%c!*%YMUL%>>14)" 
+	set /a "XMP=%XMID%+(%SINE(x):x=!SX!*31416/180%*!XMUL!>>!SHR!)-(%SINE(x):x=!SX2!*31416/180%*!XMUL2!>>!SHR!)"
+	set /a "YMP=%YMID%+(%SINE(x):x=!SY!*31416/180%*!YMUL!>>!SHR!)"
+	
 	set /A SX+=!SXA!&if !SX! gtr 359 set SX=0
 	set /A SX2+=!SXA2!&if !SX2! gtr 359 set SX2=0
 	set /A SY+=!SYA!&if !SY! gtr 359 set SY=0
@@ -118,11 +120,10 @@ if !KEY! == 112 cmdwiz getch
 if !KEY! == 108 set /A LENS=1-!LENS!
 if !KEY! == 109 set /A MARIO=1-!MARIO!
 if !KEY! == 121 set /A YROT=1-!YROT!
-if !KEY! == 114 set /A REND=1-!REND! & (if !REND!==0 set RENDERER=_gdi)&(if !REND!==1 set RENDERER=)
 if !KEY! == 27 set STOP=1
 )
 if not defined STOP goto LOOP
 
 endlocal
-mode 80,50 & cls & cmdwiz setfont 6
+mode 80,50 & cls & bg font 6
 del /Q genplane.obj>nul 2>nul

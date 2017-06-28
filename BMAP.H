@@ -35,15 +35,18 @@ typedef struct Bitmap {
 	int extrasType;
 	RGBcol cols[256];
 	int transpVal;
-	int projectionDistance;
+	int projectionDistance; // needed in perspective correct texture mapping
+	int bCmdBlock, blockRefresh;
+	char pathOrBlockString[256];
+	struct Bitmap *next;
 } Bitmap;
-
+	
 int PCXload (Bitmap *bild,char filename[]); // only 256 color image supported
 void putBitmap (int x, int y, Bitmap *bild);
 void put_transparent_Bitmap (int x, int y, Bitmap *bild);
 void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild);
 void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild);
 void shadeBitmap (int x, int y, Bitmap *bild, int addon);
-void freeBitmap(Bitmap *bild);
+void freeBitmap(Bitmap *bild, int bFreeBasePointer);
 
 #endif

@@ -1,7 +1,7 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=260,H=102
-cmdwiz setfont 0 & mode %W%,%H%
+bg font 0 & mode %W%,%H%
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
 
@@ -15,8 +15,6 @@ set "_SIN="
 
 set /a MODE=0, XMUL=300, YMUL=280, SHR=13, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2
 set HELP=text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100
-
-:: & 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ? & & 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,1.5 0 c ?
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -46,5 +44,5 @@ if not defined STOP goto LOOP
 
 endlocal
 cmdwiz delay 30
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

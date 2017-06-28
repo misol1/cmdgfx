@@ -1,6 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 2 & mode 120,75 & cls
+bg font 2 & mode 120,75 & cls
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 cmdwiz setbuffersize 350 k
 cmdwiz getquickedit & set QE=!errorlevel!&cmdwiz setquickedit 0
@@ -18,6 +18,8 @@ set PAL0=00??=0???,10??=40b0,20??=40b2,30??=40db,40??=c4b0,50??=c4b1,60??=c4b2,7
 set PAL1=00??=0???,10??=10b0,20??=10b2,30??=10db,40??=91b0,50??=91b2,60??=91db,70??=b9b0,80??=b9b2,90??=b9db,a0??=fbb0,b0??=fbb2,c0??=fbdb,d0??=efb1,e0??=ecb1,f0??=c8b2
 set PAL2=00??=0???,10??=50b0,20??=50b2,30??=50db,40??=d5b0,50??=d5b1,60??=d5b2,70??=d5db,80??=d5db,90??=7db0,a0??=7db2,b0??=f7b0,c0??=f7b2,d0??=afb1,e0??=2ab0,f0??=2ab2
 
+set HELP=text b 0 0 _ENTER=auto/mouse,_SPACE=color,_c=clear,_Up/Down=size,_n=negative,_p=pause,_h=hide_help_ 15,73
+
 :: a circle shape
 set /a "MX0=0, MY0=7, MX1=3, MY1=7, MX2=6, MY2=5, MX3=7, MY3=2, MX4=7, MY4=-2, MX5=6, MY5=-5, MX6=4, MY6=-7, MX7=0, MY7=-8"
 set /a "MX8=-3, MY8=-8, MX9=-6, MY9=-6, MX10=-8, MY10=-3, MX11=-8, MY11=0, MX12=-7, MY12=3, MX13=-5, MY13=6, MX14=-2, MY14=7"
@@ -28,7 +30,7 @@ set /a P1=4,P2=3,P3=-2,P4=-1, SC=285,CC=-30,SC2=-295,CC2=-113
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 
    if !MODE! == 0 (
-		cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" Mp
+		cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c! & !HELP!" Mp
 		set MR=!errorlevel!
 		set DRAW=""
 
@@ -46,14 +48,17 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 			)
 		)
 		
+		if !KEY! == 328 if !KD! == 0 set /a SIZE+=1&if !SIZE! gtr 4 set SIZE=4
+		if !KEY! == 336 if !KD! == 0 set /a SIZE-=1&if !SIZE! lss 1 set SIZE=1
 		if !KEY! == 32 if !KD!==0 set /a COL+=1&if !COL! gtr 2 set COL=0
 		if !KEY! == 13 if !KD!==0 if !JUSTSWITCHED! leq 0 set /a MODE=1-!MODE!,SIZE=1
 		if !KEY! == 99 cmdgfx "fbox 0 0 db 0,0,350,75"
+		if !KEY! == 104 set HELP=
 		set JUSTSWITCHED=0
 		
    ) else (
 	
-		cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" kp
+		cmdgfx "!DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c! & !HELP!" kp
 		set KEY=!errorlevel!
 		set DRAW=""
 
@@ -77,6 +82,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 		if !KEY! == 13 set /a MODE=1-!MODE!, JUSTSWITCHED=1,SIZE=1
 		if !KEY! == 99 cmdgfx "fbox 0 0 db 0,0,350,75"
 		if !KEY! == 112 cmdwiz getch
+		if !KEY! == 104 set HELP=
 		if !KEY! == 110 (if !DRWMODE!==8 set TEMP=9)&(if !DRWMODE!==9 set TEMP=8)&set DRWMODE=!TEMP!
 	)
 	
@@ -86,5 +92,5 @@ if not defined STOP goto LOOP
 
 cmdwiz setquickedit %QE%
 endlocal
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

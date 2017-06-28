@@ -1,13 +1,13 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 1
+bg font 1
 set W=160&set H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set DIST=6000
-set ASPECT=1.5
+set ASPECT=0.75
 set DRAWMODE=1
 set /A CRX=0,CRY=0,CRZ=0
 set COLS_0=f 0 fe   f 0 fe   f 0 04  7	 0 04   7 0 04   8 0  09  8 0 .  8 0 .  8 0 .   8 0 .   8 0 fa
@@ -51,6 +51,6 @@ if !KEY! == 27 set STOP=1
 if not defined STOP goto LOOP
 
 endlocal
-cmdwiz setfont 6
+bg font 6
 mode 80,50
 del /Q pixels.ply

@@ -1,8 +1,8 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 1 & cls & mode 180,80 & cmdwiz showcursor 0
+bg font 1 & cls & mode 180,80 & cmdwiz showcursor 0
 set FNT=1& rem 1 or a
-if "%FNT%"=="a" mode 30,10
+if "%FNT%"=="a" mode 30,10s
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==FNT set "%%v="
 
 set /a XC=0, YC=0, XCP=10, YCP=11, MODE=0
@@ -16,7 +16,7 @@ cmdwiz setbuffersize 180 80
 set BALLS=
 if "%FNT%"=="a" cmdwiz setbuffersize 30 10
 
-set /a FCNT=0, NOF_STARS=400, SDIST=3000
+set /a FCNT=0, NOF_STARS=200, SDIST=3000
 set /a XMID=90/2&set /a YMID=80/2
 set /A TX=0,TX2=-2600,RX=0,RY=0,RZ=0,TZ=0,TZ2=0
 set BGCOL=0
@@ -37,7 +37,7 @@ set COLS=f %BGCOL% 04   f %BGCOL% .  f %BGCOL% . f %BGCOL% .  f %BGCOL% . f %BGC
 if %FCNT% lss 2 goto SETUPLOOP
 
 set I0=myface.txt&set I1=evild.txt&set I2=ugly0.pcx&set I3=mario1.gxy&set I4=emma.txt&set I5=glass.txt&set I6=fract.txt&set I7=checkers.gxy&set I8=mm.txt&set I9=wall.pcx&set I10=btemp.gxy
-set /a IC=0, CC=15
+set /a IC=4, CC=15
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (!CC!) do (
@@ -45,12 +45,12 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
   set /a TX+=7&if !TX! gtr 2600 set TX=-2600
   set /a TX2+=7&if !TX2! gtr 2600 set TX2=-2600
   
-  if !MODE!==0 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,1.133 %COLS% & 3d starfield1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,1.133 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 140,60& block 0 0,0,330,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(-9+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(-17+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,330,80
+  if !MODE!==0 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 140,60& block 0 0,0,330,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(-9+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(-17+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,330,80
   
-  if !MODE!==1 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,1.133 %COLS% & 3d starfield1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,1.133 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 180,80& block 0 0,0,360,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(0+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(0+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,360,80
+  if !MODE!==1 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.5 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.5 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 180,80& block 0 0,0,360,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(0+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(0+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,360,80
   
 
-  cmdgfx_gdi.exe "" kfa:0,0,0,0W10
+  cmdgfx.exe "" knW12
   set KEY=!errorlevel!
   if !KEY! == 331 set /a XCP-=1 & if !XCP! lss 0 set /a XCP=0
   if !KEY! == 333 set /a XCP+=1
@@ -67,6 +67,6 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 100 & mode 80,50 & cls
-cmdwiz setfont 6 & cmdwiz showcursor 1
+bg font 6 & cmdwiz showcursor 1
 del /Q img\btemp.gxy >nul 2>nul
 del /Q starfield?.ply >nul

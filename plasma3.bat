@@ -1,7 +1,7 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=260,H=102
-cmdwiz setfont 0 & mode %W%,%H%
+bg font 0 & mode %W%,%H%
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
 
@@ -15,19 +15,20 @@ set "_SIN="
 
 set /a MODE=0, XMUL=300, YMUL=280, SHR=13, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2
 set HELP=text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100
+set ASPECT=0.58846
 
-:: & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,1.5 0 0 0
-:: & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,600,1.5 0 0 0
-:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 0 db
-:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db
-:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,1.5 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db 
-:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,1.5 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db & block 0 30,0,%WH%,%H% 130,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x+130-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*((x+130)/3) & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db
-:: & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,400,1.5 0 c ?
-:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 c ?
-:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ?
-:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ? & & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 60,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2400,1.5 0 c ?
-:: & 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ? & & 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,1.5 0 c ? 
-:: & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,1.5 0 9 ?
+:: & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 0 0
+:: & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,600,%ASPECT% 0 0 0
+:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 0 db
+:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db
+:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,%ASPECT% 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db 
+:: & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,%ASPECT% 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db & block 0 30,0,%WH%,%H% 130,0 -1 0 0 !STREAM! random()*!RANDPIX!+sin((x+130-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*((x+130)/3) & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db
+:: & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,400,%ASPECT% 0 c ?
+:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 c ?
+:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ?
+:: & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 60,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2400,%ASPECT% 0 c ?
+:: & 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & & 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ? 
+:: & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 9 ?
  
 rem if !MODE! == 0 set /a A1+=1, A2-=2 & cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM% sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3)" kf0:0,0,%W%,%H% 000000,000033,881166,cc1199,e49555,923322,000000,000000,000000,66bb00,7730ee,9949ff,bb59ff,dd66ff
 
@@ -38,17 +39,16 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
 
-	if !MODE! == 0 set /a A1+=1, A2-=2 & start "" /high /B cmdgfx_gdi.exe "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3) & !HELP! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db" f0:0,0,%W%,%H%
-	if !MODE! == 1 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP! & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,1.5 0 0 0  0 0 0  0 0 1 0 0 0" f0:0,0,%W%,%H% 
-	if !MODE! == 2 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(tan((y+x)/500)*10) & !HELP! & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 0 db	" f0:0,0,%W%,%H%
-	if !MODE! == 3 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/1)/110)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(sin((y+x)/100)*10) & !HELP!& 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ? & & 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,1.5 0 c ?" f0:0,0,%W%,%H%
-   if !MODE! == 4 set /a A1+=4, A2-=2 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!& 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,1.5 0 6 ?" f0:0,0,%W%,%H%
-   if !MODE! == 5 set /a A1+=2, A2+=1 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!& 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,1.5 0 9 0  0 9 0  0 9 1 0 9 0" f0:0,0,%W%,%H%
-	if !MODE! == 6 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/60)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP! & & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,600,1.5 0 0 0" f0:0,0,%W%,%H%
-	if !MODE! == 7 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin(tan((x+!COLCNT!/1)/60)/(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10))*15 & !HELP! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,1.5 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,1.5 0 0 db" f0:0,0,%W%,%H%
+	if !MODE! == 0 set /a A1+=1, A2-=2 & start "" /high /B cmdgfx_gdi.exe "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3) & !HELP! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db" f0:0,0,%W%,%H%
+	if !MODE! == 1 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP! & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 0 0  0 0 0  0 0 1 0 0 0" f0:0,0,%W%,%H% 
+	if !MODE! == 2 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/160)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(tan((y+x)/500)*10) & !HELP! & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 0 db	" f0:0,0,%W%,%H%
+	if !MODE! == 3 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/1)/110)*(cos(x/(y+30))*8)*sin((y+!COLCNT2!/5)/65)*(sin((y+x)/100)*10) & !HELP!& 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & & 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" f0:0,0,%W%,%H%
+   if !MODE! == 4 set /a A1+=4, A2-=2 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!& 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ?" f0:0,0,%W%,%H%
+   if !MODE! == 5 set /a A1+=2, A2+=1 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!& 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 9 0  0 9 0  0 9 1 0 9 0" f0:0,0,%W%,%H%
+	if !MODE! == 6 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+tan((x+!COLCNT!/1)/60)*(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10) & !HELP! & & 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,600,%ASPECT% 0 0 0" f0:0,0,%W%,%H%
+	if !MODE! == 7 set /a A1+=1, A2-=3 & start "" /high /B cmdgfx_gdi "block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin(tan((x+!COLCNT!/1)/60)/(tan(x/(y+30))*3)*tan((y+!COLCNT2!/5)/165)*(tan((y+x)/500)*10))*15 & !HELP! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 170,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,1200,%ASPECT% 0 0 db & 3d objects\plane-block2.obj 5,-1 !RZ!,!RX!,75 -40,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db" f0:0,0,%W%,%H%
 
-	rem getkey /N
-	cmdgfx_gdi "" kf0:0,0,0,0W12
+	cmdgfx "" knW12
 	set KEY=!errorlevel!
 	
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 7 set MODE=0
@@ -63,5 +63,5 @@ if not defined STOP goto LOOP
 
 endlocal
 cmdwiz delay 30
-cmdwiz setfont 6 & mode 80,50 & cls
+bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

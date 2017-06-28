@@ -1,19 +1,19 @@
 :: 3dworld with textures and moving "enemy" : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 0
-set W=320&set H=110
-mode con lines=%H% cols=%W%
+cls & bg font 0
+set /a W=320,H=110
+mode %W%,%H%
 mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 
-set W=1280&set H=680
+set /a W=1280,H=680
 
 cmdgfx.exe "text 8 0 0 Generating_world... 142,51"
 
 set /a XMID=%W%/2, YMID=%H%/2-10
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
-set ASPECT=1.9
+set ASPECT=1.00937
 set /a RX=0, RY=720, RZ=0
 
 ::set CUBECOLS=0 4 b1 0 4 b1  0 4 b1  0 4 b1  0 4 b0 0 4 b0  0 1 b1 0 1 b1  0 1 b1  0 1 b1  0 1 b0 0 1 b0
@@ -133,7 +133,7 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 	
 	start "" /B /high cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" fa:0,0,%W%,%H%Z800
 	
-	cmdgfx_gdi.exe "" M0fa:0,0,0,0W15
+	cmdgfx.exe "" M0unW15
 	
 	set RET=!errorlevel!
    if not !RET! == -1 (
@@ -153,7 +153,7 @@ for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,10) do if not d
 				if !KEY! == 101 set /A ENEMY=1-!ENEMY! & copy /Y %FN% %FN4%>nul 
 
 				if !KEY! == 32 set /a YMID=%H%/2-4 & set TY=0&set BOUNDSCHECK=1
-				if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
+				rem if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
 				if !KEY! == 27 set STOP=1
 				set KEY=0
 			)
@@ -186,10 +186,10 @@ if not defined STOP goto LOOP
 
 del /Q %FN% %FN2% %FN4% wrld-temp?.obj
 endlocal
-mode con cols=80 lines=50
+mode 80,50
 mode con rate=31 delay=0
 cls
-cmdwiz setfont 6
+bg font 6
 goto :eof
 
 :MOVE <direction> <div>

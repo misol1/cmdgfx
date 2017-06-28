@@ -84,7 +84,6 @@ int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, i
 			v[j].tex_coord.y *= (float)bild->ySize - 1;
 			v[j].tex_coord.z = 1;
 		}
-
 		ok += scan3_tmap(v, clipedges, bild,plusVal);
 	}
 	return (ok > 0);
@@ -935,7 +934,7 @@ int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal) {
 	int i,MINy,MAXy,MIDy=0,yEND, j;
 	int lut1,lut2,x1,x2;
 	intVector *cp;
-	int upp,vpp;
+	unsigned int upp,vpp;
 	float temp;
 	vec_interpolate tex_ip;
 
@@ -1033,6 +1032,7 @@ int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal) {
 			vid[i]=I + plusVal;
 			vecpol_addxdelt(&tex_ip);
 		}
+
 ut:
 		ysweep++;
 		vid+=XRES;

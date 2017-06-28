@@ -40,11 +40,12 @@ typedef struct obj3d {
 	int *faceBitmapIndex;
 	Bitmap **bmaps;
 	int nofBmaps;
+	struct obj3d *next;
 } obj3d;
 
 typedef int (*readTexture)(Bitmap *bmap, char *fname);
 
-obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture);
+obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures);
 obj3d *readPly(char *fname, float scale, float modx, float mody, float modz);
 obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz);
 void freeObj3d(obj3d *obj);

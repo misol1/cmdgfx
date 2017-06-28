@@ -1,15 +1,28 @@
-:: BlockOut : Mikael Sollenborn 2016
+:: BlockOut Server version: Mikael Sollenborn 2017
+
 @echo off
+bg font 1 & cls & cmdwiz showcursor 0
+if defined __ goto :START
+mode 220,110
+set __=.
+call %0 %* | cmdgfx_gdi.exe "" SkOW12f0e
+set __=
+cls
+bg font 6 & cmdwiz showcursor 1 & mode 80,50
+goto :eof
+
+:START
 setlocal ENABLEDELAYEDEXPANSION
-cls&cmdwiz setfont 0
+cls & bg font 0
 set /a W=220,H=110
 mode %W%,%H% & cls
 cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+del /Q EL.dat >nul 2>nul
 
 set /a XMID=%W%/2, YMID=%H%/2
 set DIST=0
-set ASPECT=1.333
+set ASPECT=0.6666
 set HISCORE=0&if exist hiscore.dat for /F "tokens=*" %%i in (hiscore.dat) do set HISCORE=%%i
 
 set /a WW=4,WH=4,WD=8
@@ -70,6 +83,10 @@ set MULVAL=100
 set /a ZMULVAL=%MULVAL%*8
 set /a ZMUL2=%ZMULVAL%*2
 
+set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
+
+goto OUTERLOOP
+
 set FBG=bg.obj&del /Q !FBG!>nul 2>nul
 for /L %%z in (0,%ZMUL2%,13000) do for /L %%a in (-5,2,5) do for /L %%b in (-5,2,5) do set /a X=%%b*%MULVAL%& set /a Y=%%a*%MULVAL%&set /a Z=-%%z&echo v !X! !Y! !Z!>>%FBG%
 for /L %%a in (0,1,5) do set /a f1=%%a*6+1&set /a f2=%%a*6+1+5&set /a f3=%%a+1&set /a f4=%%a+1+30&echo f !f1!// !f2!//>>%FBG%&echo f !f3!// !f4!//>>%FBG%
@@ -83,8 +100,8 @@ for /L %%a in (0,1,5) do set /a f1=1+%%a+30&set /a f2=1+%%a+36*7+30&echo f !f1!/
 for /L %%a in (0,1,5) do set /a f1=1+6*%%a&set /a f2=1+6*%%a+36*7&echo f !f1!// !f2!//>>%FBG%
 for /L %%a in (0,1,5) do set /a f1=1+6*%%a+5&set /a f2=1+6*%%a+36*7+5&echo f !f1!// !f2!//>>%FBG%
 
-cmdgfx "fbox 2 0 20 0,0,%W%,%H% & 3d %FBG% 1,0 0,0,0 0,0,0 1,1,1,0,0,0 0,0,0,0 %XMID%,!YMID!,12500,%ASPECT% 2 0 ."
-cmdwiz saveblock bgbl 0 0 %W% %H% encode
+echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & 3d %FBG% 1,0 0,0,0 0,0,0 1,1,1,0,0,0 0,0,0,0 %XMID%,!YMID!,12500,%ASPECT% 2 0 ." c:0,0,%W%,%H%,1,0
+echo "cmdgfx: " c:0,0,%W%,%H%,1,1
 
 goto OUTERLOOP
 
@@ -113,28 +130,34 @@ for /L %%j in (0,1,4) do (
 for /L %%a in (0,1,4) do set logo%%a=
 
 :OUTERLOOP
+
 set /a GAMEOVER=0, SCORE=0, ADDVAL=10, ZD=0, CNT=0
 set /a RX=0,RY=0,RZ=0
 
-copy /Y bgbl.gxy bgbl-r.gxy>nul
+set STOP=&set ESCKEY=
+ 
+copy /Y capture-0.gxy capture-1.gxy >nul 2>nul
 
-set STOP=
+echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-1.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1" f0
+echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & box 2 0 fa 0,0,28,19 & & text e 0 0 Press_SPACE_to_play\n\n\c0\-Press_ESC_to_quit 6,2 & text 9 0 0 \a0\-\-\-INGAME_KEYS:\r\n\n\70Cursor_Keys\r_-_Move\n\n\70Z/z_\r_-_Rotate_Z\n\n\70X/x_\r_-_Rotate_X\n\n\70C/c_\r_-_Rotate_Y\n\n\70SPACE\r_-_Drop 6,7" f6:40,29,29,20
+
 :IDLELOOP
-for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP (
-cmdgfx "image bgbl-r.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1 & text e 0 0 Press_SPACE_to_play\n\n\n\n\c0\-Press_ESC_to_quit 100,57 & text 9 0 0 \a0\-\-\-INGAME_KEYS:\r\n\n\n\n\70Cursor_Keys\r_-_Move\n\n\n\70Z/z_\r_-_Rotate_Z\n\n\n\70X/x_\r_-_Rotate_X\n\n\n\70C/c_\r_-_Rotate_Y\n\n\n\70SPACE\r_-_Drop 100,70" k
-set KEY=!errorlevel!
+for /L %%1 in (1,1,300) do if not defined STOP (
+	echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-1.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" W12f0:0,0,%W%,50
+		
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+		
+	if !CNT! lss 480 set /A RX+=12
+	if !CNT! gtr 480 set /A RY+=12
+	if !CNT! gtr 840 set /A CNT=-1&set RX=0&set RY=0
+	set /A CNT+=1
 
-if !CNT! lss 480 set /A RX+=12
-if !CNT! gtr 480 set /A RY+=12
-if !CNT! gtr 840 set /A CNT=-1&set RX=0&set RY=0
-set /A CNT+=1
-
-if !KEY! == 32 set STOP=1
-if !KEY! == 27 set STOP=1
+	if !KEY! == 32 set STOP=1
+	if !KEY! == 27 set STOP=1&set ESCKEY=1
+	set /a KEY=0
 )
 if not defined STOP goto IDLELOOP
-if !KEY!==27 goto OUTOF
-
+if defined ESCKEY goto OUTOF
 
 call :NEXTBLOCK
 set P=!P%P_I%!
@@ -150,56 +173,60 @@ call :MKBLOCKS
 
 set STOP=
 :LOOP
-for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP for %%p in (!P_I!) do (
+for /L %%1 in (1,1,300) do if not defined STOP for %%p in (!P_I!) do (
 
-set /A X=!XP!*%MULVAL%*2
-set /A Y=!YP!*%MULVAL%*-2
-set COL=!P%%p_c!
-set /a "BI=(!ZD!-450) / (%ZMUL2%)"
-set /a "DD=(!ZD!-450) %% (%ZMUL2%)" & if !DD! lss 100 if !DD! geq 0 for %%a in (!BI!) do if !CL%%a!==0 set CL%%a=1&call :ISCOLLIDE 0 0 0 %%a
-set ERR=&if !VALID!==0 set ERR=box f 0 db 0,0,219,109
+	set /A X=!XP!*%MULVAL%*2
+	set /A Y=!YP!*%MULVAL%*-2
+	set COL=!P%%p_c!
+	set /a "BI=(!ZD!-450) / (%ZMUL2%)"
+	set /a "DD=(!ZD!-450) %% (%ZMUL2%)" & if !DD! lss 100 if !DD! geq 0 for %%a in (!BI!) do if !CL%%a!==0 set CL%%a=1&call :ISCOLLIDE 0 0 0 %%a
+	set ERR=&if !VALID!==0 set ERR=box f 0 db 0,0,219,109
 
-cmdgfx "image bgbl-r.gxy 2 0 0 -1 0,0 & 3d %FN% 3,-1 !RX!,!RY!,!RZ! !X!,!Y!,0 1,1,1,0,0,!ZD! 0,800,0,0 %XMID%,!YMID!,!DIST!,%ASPECT% !COL! 0 fe & text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1 & !ERR!" k
-set KEY=!ERRORLEVEL!
+	echo "cmdgfx: image capture-1.gxy 2 0 0 -1 0,0 & 3d %FN% 3,-1 !RX!,!RY!,!RZ! !X!,!Y!,0 1,1,1,0,0,!ZD! 0,800,0,0 %XMID%,!YMID!,!DIST!,%ASPECT% !COL! 0 fe & text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1 & !ERR! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" DW16f0:0,0,%W%,%H%
 
-set /A ZD+=!ADDVAL!
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul		
 
-if !GAMEOVER!==1 set STOP=1
+	set /A ZD+=!ADDVAL!
 
-if !KEY! == 120 call :ROT X 1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 88 call :ROT X -1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 99 call :ROT Y 1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 67 call :ROT Y -1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 122 call :ROT Z 1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 90 call :ROT Z -1&if !VALID!==1 call :MKBLOCKS
-if !KEY! == 32 set ADDVAL=90
+	if !GAMEOVER!==1 set STOP=1
 
-if !KEY! == 331 set /A B=!MINX!+!XP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 -1 0 %%a&if !VALID!==1 set /A XP-=1
-if !KEY! == 333 set /A B=!MAXX!+!XP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 1 0 %%a&if !VALID!==1 set /A XP+=1
-if !KEY! == 328 set /A B=!MINY!+!YP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 0 -1 %%a&if !VALID!==1 set /A YP-=1
-if !KEY! == 336 set /A B=!MAXY!+!YP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 0 1 %%a&if !VALID!==1 set /A YP+=1
+	if !KEY! == 120 call :ROT X 1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 88 call :ROT X -1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 99 call :ROT Y 1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 67 call :ROT Y -1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 122 call :ROT Z 1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 90 call :ROT Z -1&if !VALID!==1 call :MKBLOCKS
+	if !KEY! == 32 set ADDVAL=90
 
-if !KEY! == 115 call :DEBUG
-if !KEY! == 112 cmdwiz getch
-if !KEY! == 27 set STOP=1
+	if !KEY! == 331 set /A B=!MINX!+!XP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 -1 0 %%a&if !VALID!==1 set /A XP-=1
+	if !KEY! == 333 set /A B=!MAXX!+!XP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 1 0 %%a&if !VALID!==1 set /A XP+=1
+	if !KEY! == 328 set /A B=!MINY!+!YP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 0 -1 %%a&if !VALID!==1 set /A YP-=1
+	if !KEY! == 336 set /A B=!MAXY!+!YP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 0 1 %%a&if !VALID!==1 set /A YP+=1
+
+	if !KEY! == 115 call :DEBUG
+	if !KEY! == 112 cmdwiz getch
+	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
 if not defined STOP goto LOOP
 
 if !GAMEOVER!==0 goto OUTERLOOP
-cmdgfx "text f 0 0 G_A_M_E___O_V_E_R\n\n\n\n\c0\-\-\-PRESS_A_KEY 101,50" pK
+echo "cmdgfx: text f 0 0 G_A_M_E___O_V_E_R\n\n\n\n\c0\-\-\-PRESS_A_KEY 6,4" f2:41,34,29,14
+cmdwiz getch
+echo "cmdgfx: " f0:0,0,%W%,%H%
 goto OUTERLOOP
 
 :OUTOF
+echo "" F>servercmd.dat
+echo "cmdgfx: quit"
 echo %HISCORE%>hiscore.dat
 del /Q %FN%>nul 2>nul
-::del /Q %FL%>nul 2>nul
 del /Q %FBG%>nul 2>nul
-del /Q bgbl.gxy>nul 2>nul
-del /Q bgbl-r.gxy>nul 2>nul
+del /Q capture-1.gxy>nul 2>nul
 del /Q lay?.obj>nul 2>nul
 endlocal
 cmdwiz showcursor 1
-cmdwiz setfont 6
+bg font 6
 mode 80,50 & cls
 goto :eof
 
@@ -270,10 +297,10 @@ del /Q lay?.obj>nul 2>nul
 
 for /L %%a in (%WD%,-1,0) do set NOF_B=0&set FCB=lay%%a.obj&set BC=!PAL:~%%a,1!&for /L %%b in (0,1,%WH%) do for /L %%c in (0,1,%WW%) do set S=!LINE%%a_%%b:~%%c,1!&(if not !S!==- (for /L %%d in (0,1,7) do set /a vx=!SVX!+!Vx%%d!+%%c*2&set /a vx=!vx!*%MULVAL% & set /a vy=!SVY!+!Vy%%d!+%%b*2&set /a vy=!vy!*%MULVAL% & set /a vz=!SVZ!+!Vz%%d!+%%a*2&set /a vz=!vz!*%ZMULVAL%+500&echo v !vx! !vy! !vz!>>!FCB!) & (for %%e in (!NOF_B!) do for /L %%f in (0,1,5) do set /a f0=!F%%f_0!+%%e*8+1&set /a f1=!F%%f_1!+%%e*8+1&set /a f2=!F%%f_2!+%%e*8+1&set /a f3=!F%%f_3!+%%e*8+1&echo f !f0!// !f1!// !f2!// !f3!// >>!FCB!) & set /a NOF_B+=1)&if %%b==%WH% if %%c==%WW% if !NOF_B! gtr 0 set CUBES="!CUBES:~1,-1! & 3d !FCB! 0,-1 0,0,0 0,0,0 1,1,1,0,0,0 1,800,0,100 %XMID%,!YMID!,!DIST!,%ASPECT% !BC! 0 db !BC! 0 db !BC! 0 b1 !BC! 0 b1 !BC! 0 b1 !BC! 0 b1"
 
-cmdgfx "image bgbl.gxy 2 0 0 -1 0,0 & %CUBES:~1,-1% & text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1" e
+echo "cmdgfx: image capture-0.gxy 2 0 0 -1 0,0 & %CUBES:~1,-1% & text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1" Dec:0,0,%W%,%H%,1,1
+
 set CUBES=
 
-cmdwiz saveblock bgbl-r 0 0 %W% %H% encode
 goto :eof
 
 

@@ -1,9 +1,9 @@
 :: 3dworld : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cmdwiz setfont 0 & cls
-set W=180&set H=110
-mode con lines=%H% cols=%W%
+bg font 0 & cls
+set /a W=180, H=110
+mode %W%,%H%
 mode con rate=31 delay=0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
@@ -98,9 +98,9 @@ if not defined STOP goto LOOP
 
 del /Q %WNAME%
 endlocal
-mode con cols=80 lines=50
+mode 80,50
 cls
-cmdwiz setfont 6
+bg font 6
 goto :eof
 
 :STRLEN <result> <string>

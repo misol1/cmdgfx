@@ -1,7 +1,7 @@
 :: Stars & Cube : Mikael Sollenborn 2016
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 1
+cls & bg font 1
 set W=200&set H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
@@ -11,7 +11,7 @@ set NOF_STARS=400&if not "%~1"=="" set /A NOF_STARS=%~1
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set DIST=11000
 set SDIST=5500
-set ASPECT=1.13333
+set ASPECT=0.4533
 set DRAWMODE=1
 set DIR=0
 if !DIR!==0 set /A TX=0,TX2=-2600,RX=0,RY=0,RZ=0,CRX=0,CRY=0,CRZ=0,TZ=0,TZ2=0
@@ -49,7 +49,7 @@ set RENDERER=&set REND=1
 set STOP=
 :LOOP
 for /L %%1 in (1,1,30) do if not defined STOP for /L %%2 in (1,1,30) do if not defined STOP for %%c in (!COLCNT!) do (
-start "" /B /high cmdgfx_gdi "3d starfield0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d starfield1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,1.9 !COLS2_%%c! & %HELP%" f1
+start "" /B /high cmdgfx_gdi "3d starfield0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d starfield1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,0.75 !COLS2_%%c! & %HELP%" f1
 cmdwiz getch noWait
 set KEY=!ERRORLEVEL!
 
@@ -74,5 +74,5 @@ if !KEY! == 27 set STOP=1
 if not defined STOP goto LOOP
 
 endlocal
-mode 80,50 & cls & cmdwiz setfont 6
+mode 80,50 & cls & bg font 6
 del /Q starfield?.ply >nul

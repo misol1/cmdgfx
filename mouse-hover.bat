@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
-cmdwiz setfont 2
+set OLMB=0
+bg font 2
 set /a SCRW=120 & set /a SCRWW=!SCRW!*2
 mode %SCRW%,70
 cmdwiz setbuffersize %SCRWW% k
@@ -71,12 +72,13 @@ for /L %%1 in (1,1,300) do if not defined STOP (
          set /a MX=!NEW_MX!, MY=!NEW_MY!
       )
 
-      if !LMB! == 1 if !HOVERINDEX! leq %NOFB% (
+      if !LMB! == 1 if !OLMB! == 0 if !HOVERINDEX! leq %NOFB% (
          for %%a in (!HOVERINDEX!) do set OUTP=!B%%aP!
          cmdgfx !OUTP! p
          set /a STOP=1, %3=!HOVERINDEX!
       )
    )
+   set OLMB=!LMB!
 
    if !KEY! geq 49 if !KEY! leq 57 (
       set /a KCHOICE=!KEY!-48
