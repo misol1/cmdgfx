@@ -26,10 +26,15 @@ set PAL1=000000,000000,022476,000000,000000,000000,000000,000000,000000,000000,0
 set PAL2=000000,000000,793400,000000,000000,000000,000000,000000,000000,000000,f89200
 set /a PALC=0
 set /a IMGI=0
-set IMG0=img\spiral.txt
-set IMG1=img\myface.txt
-set IMG2=img\-.txt
-set /a XP=36,YP=4
+set IMG0=img\spiral\_.txt
+set IMG1=img\spiral.txt
+set IMG2=img\myface.txt
+set IMG3=img\-.txt
+set /a XP=36,YP=4,IMGC=0
+
+set /a SHOWHELP=1
+set HELPMSG=text a 0 0 SPACE\-ENTER\-\g11\g10\g1e\g1f\-h 1,53
+if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -40,19 +45,21 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 16,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel f 0 !C1!!C2! !X!,80"
   for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
 
-  for %%c in (!PALC!) do for %%i in (!IMGI!) do echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & fbox ? ? 20 0,0,154,54 & image !IMG%%i! ? ? 0 -1 !XP!,!YP! & block 0 %W%,80,%W%,75 0,76 -1 0 0 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 0 0 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0" - !PAL%%c!
+  for %%c in (!PALC!) do for %%i in (!IMGI!) do for %%n in (!IMGCD!) do set IMAGE=!IMG%%i! & set IMAGE=!IMAGE:_=%%n! & echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & fbox ? ? 20 0,0,154,54 & image !IMAGE! ? ? 0 -1 !XP!,!YP! & block 0 %W%,80,%W%,75 0,76 -1 0 0 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 0 0 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0 & !MSG!" - !PAL%%c!
   
   if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 
+  if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
   if !KEY! == 112 cmdwiz getch
   if !KEY! == 27 set STOP=1
   if !KEY! == 331 set /a XP-=2
   if !KEY! == 333 set /a XP+=2
   if !KEY! == 328 set /a YP-=1
   if !KEY! == 336 set /a YP+=1
-  if !KEY! == 13 set /a "IMGI=(!IMGI! + 1) %% 3" & (if !IMGI! == 1 set /a YP-=3) & (if !IMGI! == 2 set /a YP+=3)
+  if !KEY! == 13 set /a "IMGI=(!IMGI! + 1) %% 4" & (if !IMGI! == 2 set /a YP-=3) & (if !IMGI! == 3 set /a YP+=3)
   if !KEY! == 32 set /a PALC+=1 & if !PALC! gtr 2 set /a PALC=0
   set /a KEY=0
+  set /a "IMGC=(!IMGC!+1) %% (10 * 5), IMGCD=IMGC/5"
 )
 if not defined STOP goto LOOP
 

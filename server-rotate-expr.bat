@@ -27,6 +27,7 @@ set /a MODE=0, FINER=1, SCNT=0, BASEROT=10
 set /a BX=%W%+40,BW=%WW%-40*2 & set /a BM=!BW!/2
 set V=1.0
 del /Q EL.dat >nul 2>nul
+set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -41,7 +42,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
    if !MODE!==2 set STR=""& (for /L %%a in (1,1,7) do set /a "PX=%W%+!RANDOM! %% %WW%, PY=%HMID%+!RANDOM! %% %H%" & set /a "PX2=!PX!+!RANDOM! %% 10" & set /a "PX3=!PX2!+!RANDOM! %% 10" & set /a "PX4=!PX3!+!RANDOM! %% 10" & set /a "PX5=!PX4!+!RANDOM! %% 10" & set STR="!STR:~1,-1! & line 5 0 50 !PX!,!PY!,!PX2!,!PY! & line 7 0 70 !PX2!,!PY!,!PX3!,!PY! & line 8 0 80 !PX3!,!PY!,!PX4!,!PY! & line 6 0 60 !PX4!,!PY!,!PX5!,!PY!")
 
-	echo "cmdgfx: !STR:~1,-1! & block 0 %BX%,0,%BW%,%HH% %BX%,0 -1 0 0 %STREAM:~1,-1% - %BM%+(((x-%BM%)*cos(!SCNT!/200)-(y-%H%)*sin(!SCNT!/200)))*!V! %H%+(((x-%BM%)*sin(!SCNT!/200)+(y-%H%)*cos(!SCNT!/200)))*!V! & block 0 %WWX%,%HMID%,%W%,%H% 0,0 -1 0 0 %TRANSF:~1,-1% & fellipse 0 0 00 %CMX%,%CMY%,7,5"
+	echo "cmdgfx: !STR:~1,-1! & block 0 %BX%,0,%BW%,%HH% %BX%,0 -1 0 0 %STREAM:~1,-1% - %BM%+(((x-%BM%)*cos(!SCNT!/200)-(y-%H%)*sin(!SCNT!/200)))*!V! %H%+(((x-%BM%)*sin(!SCNT!/200)+(y-%H%)*cos(!SCNT!/200)))*!V! & block 0 %WWX%,%HMID%,%W%,%H% 0,0 -1 0 0 %TRANSF:~1,-1% & fellipse 0 0 00 %CMX%,%CMY%,7,5 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 

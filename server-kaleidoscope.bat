@@ -47,6 +47,10 @@ set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C
 
 del /Q EL.dat >nul 2>nul
 
+set /a SHOWHELP=1
+set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-d/D\-p\-h 1,108
+if !SHOWHELP!==1 set MSG=%HELPMSG%
+
 set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
@@ -63,7 +67,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & text 7 0 0 [FRAMECOUNT] 103,108"
+	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!"
 	set OUTP=
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
@@ -84,6 +88,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !CNT! gtr 1400 set /a CNT=0
 	if !KEY! == 112 cmdwiz getch & set /a CKEY=!errorlevel! & if !CKEY! == 115 echo "cmdgfx: " c:0,0,%W%,%H%
 	if !KEY! == 102 if !CS!==0 set /a CS=1,CCNT=0
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 100 set /A DIST+=50
 	if !KEY! == 68 set /A DIST-=50
 	if !KEY! == 13 set /A TRANSP=1-!TRANSP!&(if !TRANSP!==1 set /a TV=20)&(if !TRANSP!==0 set /a TV=-1)

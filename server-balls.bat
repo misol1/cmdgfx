@@ -45,6 +45,11 @@ call :SETCOLS
 
 set MUL=&set OW=&set CNT=&set CNTV=&set COS=&set W=&set H=&set STOP=
 del /Q EL.dat >nul 2>nul
+set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
+
+set /a SHOWHELP=1
+set HELPMSG=text 8 0 0 SPACE\-\g11\g10\-b\-h 1,78
+if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -63,7 +68,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set CRSTR="!CRSTR:~1,-1!&3d %WNAME% !DRAWMODE!,!BITOP! 0,0,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 1,1,1,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
 
-	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1!"
+	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & !MSG! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 	
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 
@@ -73,6 +78,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 331 set /A NOF-=1&if !NOF! lss 2 set NOF=2
 	if !KEY! == 333 set /A NOF+=1&if !NOF! gtr 6 set NOF=6
 	if !KEY! == 32 set /a DRAWMODE=1-!DRAWMODE!&call :SETCOLS
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
 	set /a KEY=0

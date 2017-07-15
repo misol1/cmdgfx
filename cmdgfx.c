@@ -2579,7 +2579,7 @@ int main(int argc, char *argv[]) {
 			if (bWaitAfterErrors && errH.errCnt > 0)
 				bWaitKey = 1;
 		}
-
+		
 		if (!bDoNothing) {
 	#ifdef GDI_OUTPUT
 			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh);
@@ -2699,6 +2699,23 @@ int main(int argc, char *argv[]) {
 		if (bServer) {
 			char *input = NULL, *fndMe = NULL, *fndMeEcho;
 			FILE	*flushFile;
+
+			flushFile = fopen("servercmd.dat", "r");
+			if (flushFile) {
+				char *inputTemp;
+				inputTemp = fgets(argv1, MAX_OP_SIZE-1, flushFile);
+				fclose(flushFile);
+				if (inputTemp){
+					input = inputTemp;
+					remove("servercmd.dat");
+					fndMe = strchr(input, '\"');
+					if (fndMe) {
+						memmove(argv1, (char *)fndMe, strlen(fndMe)+1);
+						argv1[0] = ' ';
+						fndMe = NULL;
+					}
+				}
+			}
 			
 			if (input == NULL) {
 				do {
@@ -2713,20 +2730,6 @@ int main(int argc, char *argv[]) {
 				} while (fndMe == NULL && input != NULL);
 			}
 									
-			flushFile = fopen("servercmd.dat", "r");
-			if (flushFile) {
-				input = fgets(argv1, MAX_OP_SIZE-1, flushFile);
-				fclose(flushFile);
-				remove("servercmd.dat");
-				//puts(input); getch();
-				fndMe = strchr(input, '\"');
-				if (fndMe) {
-					memmove(argv1, (char *)fndMe, strlen(fndMe)+1);
-					argv1[0] = ' ';
-					fndMe = NULL;
-				}
-			}
-			
 			if (input != NULL) {
 				if ((strstr(input, "quit") != NULL || strstr(input, "exit") != NULL) && strlen(input) < 20) {
 					bServer = 0;
@@ -2757,7 +2760,7 @@ int main(int argc, char *argv[]) {
 					if (argv1[i] == 1) argv1[i] = ' ';
 				
 				pch = strtok (NULL, " \n");
-				
+
 				if (pch) {
 					int neg = 0;
 					for (i = 0; i < strlen(pch); i++) {

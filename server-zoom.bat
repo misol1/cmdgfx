@@ -36,6 +36,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 	
+	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
 	set /a KEY=0
 )

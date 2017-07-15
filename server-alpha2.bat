@@ -1,6 +1,15 @@
 @echo off
-setlocal ENABLEDELAYEDEXPANSION
 bg font 1 & cls & cmdwiz showcursor 0
+if defined __ goto :START
+set __=.
+call %0 %* | cmdgfx_gdi "" SkOZ300f1:0,0,160,80W12
+set __=
+cls
+bg font 6 & cmdwiz showcursor 1 & mode 80,50
+goto :eof
+
+:START
+setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
 mode %W%,%H%
 call centerwindow.bat
@@ -57,9 +66,16 @@ set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*
 set "_SIN="
 
 set /a XMUL=300, YMUL=280, SHR=13, A1=155, A2=0, RANDPIX=2, DIV=1
-set /a CM1=0 & set /a CM2=1
+set /a CM1=1 & set /a CM2=1
 
 set /a STREAMCNT=0 & call :SETSTREAM
+
+set /a SHOWHELP=1
+set HELPMSG=text 8 0 0 SPACE\-\g11\g10\g1e\g1f\-s\-d/D\-(ENTER:\g11\g10\g1e\g1fzZ)\-h 1,78
+if !SHOWHELP!==1 set MSG=%HELPMSG%
+
+del /Q EL.dat >nul 2>nul
+set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 
 set STOP=
 :LOOP
@@ -68,10 +84,9 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), COLCNT3-=1
 
 	set /a A1+=1, A2-=1, BGCOL=!COLADD!+1
-	start "" /B /High cmdgfx_gdi "fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %FN% %DRAWMODE%,!COLADD! !CRX!,!CRY!,!CRZ! 0,0,0 3,3,3,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLADD! 0 db & block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM! (neq(fgcol(x,y),!BGCOL!)*!CM2!+!CM1!)/!DIV!*(random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3))" Z100f1
+	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %FN% %DRAWMODE%,!COLADD! !CRX!,!CRY!,!CRZ! 0,0,0 3,3,3,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLADD! 0 db & block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! (neq(fgcol(x,y),!BGCOL!)*!CM2!+!CM1!)/!DIV!*(random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3)) & !MSG! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" Z100
 	
-	cmdgfx.exe "" knW12
-	set KEY=!ERRORLEVEL!
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 	
 	if !ROTMODE! == 0 set /a CRX+=0,CRY+=0,CRZ+=11
 	if !KEY! == 100 set /A DIST+=50
@@ -80,6 +95,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 110 set /a STREAMCNT+=1 & call :SETSTREAM
 	if !KEY! == 32 set /a CM1=1-!CM1! & set /a CM2=%CM1%+1	
 	if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a CRX=0, CRY=0, CRZ=0
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 331 if !ROTMODE!==1 set /A CRY+=20
 	if !KEY! == 333 if !ROTMODE!==1 set /A CRY-=20
 	if !KEY! == 328 if !ROTMODE!==1 set /A CRX+=20
@@ -92,10 +108,12 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 331 if !ROTMODE!==0 set /a RANDPIX-=1 & if !RANDPIX! lss 0 set RANDPIX=0
 	if !KEY! == 115 cmdwiz stringfind "!STREAM!" "04," & (if !errorlevel! gtr -1 set STREAM=!STREAM:04,=b1,!) & (if !errorlevel! equ -1 set STREAM=!STREAM:b1,=04,!)
 	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
 if not defined STOP goto LOOP
 	
 endlocal
+echo "cmdgfx: quit"
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 

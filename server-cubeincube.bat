@@ -32,10 +32,14 @@ set COL2=- -
 set /a XP=190, RW=350, CNT=0
 del /Q EL.dat >nul 2>nul
 
+set /a SHOWHELP=1
+set HELPMSG=text 8 0 0 SPACE\-d/D\-h 1,78
+if !SHOWHELP!==1 set MSG=%HELPMSG%
+
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
-	echo "cmdgfx: fbox 0 0 db 0,0,%RW%,%H% & 3d objects\cube.ply 4,0 !CRX1!,!CRY1!,!CRZ1! 0,0,0 -790,-790,-790,0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% %COLS5% & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX2!,!CRY2!,!CRZ2! 0,0,0 -480,-480,-480,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS4% & block 0 0,0,%RW%,80 0,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX3!,!CRY3!,!CRZ3! 0,0,0 -270,-270,-270,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS3% & block 0 20,0,310,80 20,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX4!,!CRY4!,!CRZ4! 0,0,0 -160,-160,-160,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS2% & block 0 40,10,270,60 40,10 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX5!,!CRY5!,!CRZ5! 0,0,0 -60,-60,-60,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS1% & block 0 50,30,240,20 50,30 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) " - !COL%%c!
+	echo "cmdgfx: fbox 0 0 db 0,0,%RW%,%H% & 3d objects\cube.ply 4,0 !CRX1!,!CRY1!,!CRZ1! 0,0,0 -790,-790,-790,0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% %COLS5% & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX2!,!CRY2!,!CRZ2! 0,0,0 -480,-480,-480,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS4% & block 0 0,0,%RW%,80 0,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX3!,!CRY3!,!CRZ3! 0,0,0 -270,-270,-270,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS3% & block 0 20,0,310,80 20,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX4!,!CRY4!,!CRZ4! 0,0,0 -160,-160,-160,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS2% & block 0 40,10,270,60 40,10 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX5!,!CRY5!,!CRZ5! 0,0,0 -60,-60,-60,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS1% & block 0 50,30,240,20 50,30 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) & !MSG!" - !COL%%c!
 	
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 		
@@ -44,6 +48,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
 	if !KEY! == 100 set /A DIST+=100
 	if !KEY! == 68 set /A DIST-=100
 	if !KEY! == 27 set STOP=1
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 32 set /a COLCNT+=1&if !COLCNT! geq !COLNOF! set /a COLCNT=0
 	set /a CNT+=1 & if !CNT! gtr 300 set /a "CNT=0, RND=!RANDOM! %% %NOFCUBES%, V=(!RANDOM! %% 2)*2-1, XYZ=!RANDOM! %% 3" & for %%a in (!RND!) do (if !XYZ!==0 set /a CRXA%%a+=!V!) & (if !XYZ!==1 set /a CRYA%%a+=!V!) & (if !XYZ!==2 set /a CRZA%%a+=!V!) 
 	set /a KEY=0

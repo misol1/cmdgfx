@@ -72,7 +72,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		if !KEY! == 100 set /A DIST+=50
 		if !KEY! == 68 set /A DIST-=50
 		if !KEY! == 112 cmdwiz getch
-		if !KEY! == 32 set /a COLADD+=1&if !COLADD! gtr 6 set COLADD=0
 		if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a CRX=0, CRY=0, CRZ=0
 		if !KEY! == 331 if !ROTMODE!==1 set /A CRY+=20
 		if !KEY! == 333 if !ROTMODE!==1 set /A CRY-=20
@@ -80,6 +79,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		if !KEY! == 336 if !ROTMODE!==1 set /A CRX-=20
 		if !KEY! == 122 if !ROTMODE!==1 set /A CRZ+=20
 		if !KEY! == 90 if !ROTMODE!==1 set /A CRZ-=20
+		if !KEY! == 32 if !EXIT! == 0 set /a EXIT=1 & for /L %%a in (0,1,%SENTLEN%) do set /a "RX%%a=!RX%%a! %% 1440,RY%%a=!RY%%a! %% 1440,RZ%%a=!RZ%%a! %% 1440, RXP%%a=12,RYP%%a=12,RZP%%a=12"
 		if !KEY! == 27 if !EXIT! == 0 set /a EXIT=1 & for /L %%a in (0,1,%SENTLEN%) do set /a "RX%%a=!RX%%a! %% 1440,RY%%a=!RY%%a! %% 1440,RZ%%a=!RZ%%a! %% 1440, RXP%%a=12,RYP%%a=12,RZP%%a=12"
 		set /a KEY=0
 	)
