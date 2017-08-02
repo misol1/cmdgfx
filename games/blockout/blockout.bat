@@ -357,7 +357,7 @@ set ZD=0&(for /L %%a in (0,1,%WDB%) do set CL%%a=0)&set /a ADDVAL=10+!SCORE!/200
 
 set SCOREPLUS=0
 :CHKLOOP
-for /L %%a in (%WD%,-1,0) do set /a ISFULL=1 & for /L %%b in (0,1,%WH%) do (if not !LINE%%a_%%b!==!LINEF! set ISFULL=0) & if !ISFULL!==1 if %%b==%WH% set /A SCORE+=100+!SCOREPLUS!&set /a SCOREPLUS+=200&call :REMOVE %%a& goto CHKLOOP
+for /L %%a in (%WD%,-1,0) do set /a ISFULL=1 & for /L %%b in (0,1,%WH%) do (if not !LINE%%a_%%b!==!LINEF! set ISFULL=0) & if !ISFULL!==1 if %%b==%WH% set /A SCORE+=100+!SCOREPLUS!&set /a SCOREPLUS+=400&call :REMOVE %%a& goto CHKLOOP
 if !SCORE! gtr !HISCORE! set HISCORE=!SCORE!
 
 if !SCOREPLUS! gtr 0 call :RENDERFILLED
