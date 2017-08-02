@@ -602,124 +602,6 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	if (outdata) free(outdata);
 }
 
-/*
-void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, uchar *cmdPaletteFg, uchar *cmdPaletteBg, int x, int y) {
-	HWND hWnd = NULL;
-	HDC hDc = NULL, hDcBmp = NULL;
-	HBITMAP hBmp1 = NULL;
-	HGDIOBJ hGdiObj = NULL;
-	BITMAP bmp = {0};
-	LONG w = 0, h = 0;
-	int iRet = EXIT_FAILURE;
-	unsigned char *outdata = NULL, *pcol, *outt, *fgcol, *bgcol;
-	int i,j,ccol,cchar,l,m, index;
-	static uchar cmdPalette[16][3] = { {0,0,0}, {128,0,0}, {0,128,0}, {128,128,0}, {0,0,128}, {128,0,128}, {0,128,128}, {192,192,192}, {128,128,128}, {255,0,0}, {0,255,0}, {255,255,0}, {0,0,255}, {255,0,255}, {0,255,255}, {255,255,255} };
-	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
-	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
-	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
-	int fw, fh, *data, val, bpp = 4;
-	uchar *palFg, *palBg;
-
-	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0][0]; else palFg = cmdPaletteFg;
-	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0][0]; else palBg = cmdPaletteBg;
-
-	if (fontIndex < 0 || fontIndex > 12)
-		return;
-
-	fw = fontWidth[fontIndex];
-	fh = fontHeight[fontIndex];
-	data = fontData[fontIndex];
-
-	x *= fw; y *= fh;
-
-	if ((hWnd = GetConsoleWindow()))
-	{
-		if ((hDc = GetDC(hWnd)))
-		{
-			if ((hDcBmp = CreateCompatibleDC(hDc)))
-			{
-				w = XRES * fw;
-				h = YRES * fh;
-				outdata = (unsigned char *)malloc(w*h*4);
-				if (!outdata) { printf("#ERR: Could not allocate memory for output buffer\n"); ReleaseDC(hWnd, hDcBmp); ReleaseDC(hWnd, hDc); return; }
-
-//				hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL);
-//				if (!hBmp1) { bpp = 3; hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, NULL); }
-//				if (!hBmp1) { printf("#ERR: Could not create 24 or 32 bpp output bitmap\n"); free(outdata); ReleaseDC(hWnd, hDcBmp); /	//				ReleaseDC(hWnd, hDc); return; }
-//				DeleteObject(hBmp1);
-
-				if (fontIndex < 10) {
-					for (i = 0; i < YRES; i++) {
-						for (j = 0; j < XRES; j++) {
-							cchar = videoChar[j+i*XRES];
-							ccol = videoCol[j+i*XRES];
-							fgcol = &palFg[(ccol&0xf)*3];
-							bgcol = &palBg[(ccol>>4)*3];
-							for (l = 0; l < fh; l++) {
-								index = (j*fw + (i*fh+l)*XRES*fw)*bpp;
-								val = data[cchar*fh+l];
-								outt = &outdata[index];
-								for (m = 0; m < fw; m++) {
-									pcol = val & 1 ? fgcol : bgcol;
-									*outt++ = *pcol++; // B
-									*outt++ = *pcol++; // G
-									*outt++ = *pcol++; // R
-									if (bpp == 4) *outt++ = 255; // A?
-									val >>= 1;
-								}
-							}
-						}
-					}
-				} else { // pixelfont
-					for (i = 0; i < YRES; i++) {
-						for (j = 0; j < XRES; j++) {
-							cchar = videoChar[j+i*XRES];
-							ccol = videoCol[j+i*XRES];
-							fgcol = &palFg[(ccol&0xf)*3];
-							bgcol = &palBg[(ccol>>4)*3];
-							pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
-							for (l = 0; l < fh; l++) {
-								index = (j*fw + (i*fh+l)*XRES*fw)*bpp;
-								outt = &outdata[index];
-								for (m = 0; m < fw; m++) {
-									*outt++ = pcol[0]; // B
-									*outt++ = pcol[1]; // G
-									*outt++ = pcol[2]; // R
-									if (bpp == 4) *outt++ = 255; // A?
-								}
-							}
-						}
-					}
-				}
-
-				hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, outdata);
-				if (hBmp1)
-				{
-					if (GetObject(hBmp1, sizeof(bmp), &bmp))
-					{
-						w = bmp.bmWidth; h = bmp.bmHeight;
-						if ((hGdiObj = SelectObject(hDcBmp, hBmp1)) && hGdiObj != HGDI_ERROR)
-						{
-							if (BitBlt(hDc, (int)x, (int)y, (int)w, (int)h, hDcBmp, 0, 0, SRCCOPY)) {
-								iRet = EXIT_SUCCESS;
-							}
-						DeleteObject(hGdiObj);
-						}
-					}
-					DeleteObject(hBmp1);
-				}
-
-				ReleaseDC(hWnd, hDcBmp);
-			}
-			ReleaseDC(hWnd, hDc);
-		}
-	}
-
-	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
-	if (outdata) free(outdata);
-}
-*/
-
 #endif
 
 int getConsoleDim(int bH) {
@@ -1047,6 +929,13 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		fbox(x, y, w-1, h-1, moveChar);
 	}
 
+	if (mvx < 0 || mvy < 0 || mvw < 0 || mvh < 0) { mvx=mvy=0; mvw=w; mvh=h; }
+	mvw += mvx;
+	mvh += mvy;
+	if (mvh > h) mvh=h;
+	if (mvw > w) mvw=w;
+			
+	
 	if (strlen(colorExpr) > 1) {
 		int err, r;
 		double ex, ey;
@@ -1074,9 +963,9 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			memcpy(blockCol2, blockCol, w*h*sizeof(uchar));
 			memcpy(blockChar2, blockChar, w*h*sizeof(uchar));
 			
-			for (i = 0; i < h; i++) {
+			for (i = mvy; i < mvh; i++) {
 				k = i*w;
-				for (j = 0; j < w; j++) {
+				for (j = mvx; j < mvw; j++) {
 					ex = j; ey = i;
 					r = (int) te_eval(n);
 					// printf("Result:\n\t%f\n", r);
@@ -1118,12 +1007,6 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			memcpy(blockCol2, blockCol, w*h*sizeof(uchar));
 			memcpy(blockChar2, blockChar, w*h*sizeof(uchar));
 
-			if (mvx < 0 || mvy < 0 || mvw < 0 || mvh < 0) { mvx=mvy=0; mvw=w; mvh=h; }
-			mvw += mvx;
-			mvh += mvy;
-			if (mvh > h) mvh=h;
-			if (mvw > w) mvw=w;
-			
 			for (i = mvy; i < mvh; i++) {
 				k = i*w;
 				for (j = mvx; j < mvw; j++) {
@@ -2977,5 +2860,3 @@ int main(int argc, char *argv[]) {
 
 	return retVal;
 }
-
-
