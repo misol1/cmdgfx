@@ -12,7 +12,7 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
 mode %W%,%H%
-call centerwindow.bat
+call centerwindow.bat 0 -20
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
  
 set /a NOF_STARS=60, SDIST=4500, BGCOL=0

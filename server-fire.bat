@@ -1,11 +1,10 @@
 @echo off
-set /a W=80
-set /a WW=%W%*2
+set /a W=80, WW=W*2
 bg font 2 & mode %W%,75
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf2:0,0,160,130,%W%,75W14
+call %0 %* | cmdgfx_gdi "" kOSf2:0,0,%WW%,130,%W%,75W14
 set __=
 set W=&set WW=
 cls
@@ -14,6 +13,8 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
+
+call centerwindow.bat 0 -10
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
 echo "cmdgfx: fbox f 0 30 0,0,%WW%,130 & fbox f 0 20 0,0,%WW%,120 & fbox e 0 20 %W%,0,%W%,95"
 set OUT=""&(for /L %%a in (1,1,75) do set /a "X=!RANDOM! %% %W%+%W%,FG=!RANDOM! %% 6+10" & set OUT="!OUT:~1,-1! & pixel !FG! 0 30 !X!,126")&echo "cmdgfx: !OUT:~1,-1!"
@@ -41,7 +42,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 	
-	if !KEY! == 102 echo "cmdgfx: image img\fire.txt f 0 0 20 87,79 & image img\fire.txt f 0 0 20 89,79 & image img\fire.txt f 0 0 20 88,78 & image img\fire.txt f 0 0 20 88,80 & image img\fire.txt f 0 0 20 88,79"
+	if !KEY! == 102 set /a "LXP1=%W%+(%W%-62)/2, LXP2=LXP1-1, LXP3=LXP1+1" & echo "cmdgfx: image img\fire.txt f 0 0 20 !LXP2!,79 & image img\fire.txt f 0 0 20 !LXP3!,79 & image img\fire.txt f 0 0 20 !LXP1!,78 & image img\fire.txt f 0 0 20 !LXP1!,80 & image img\fire.txt f 0 0 20 !LXP1!,79"
 	if !KEY! == 32 set /A COL+=1&if !COL! gtr 1 set COL=0
 	if !KEY! == 333 set /A PW+=1&if !PW! gtr 5 set PW=5
 	if !KEY! == 331 set /A PW-=1&if !PW! lss 1 set PW=1

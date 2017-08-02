@@ -18,6 +18,8 @@ set /a RX=700, RY=0, RZ=0
 set ASPECT=0.9375
 del /Q EL.dat >nul 2>nul
 
+call centerwindow.bat 0 -20
+
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (

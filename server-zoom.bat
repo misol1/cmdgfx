@@ -16,13 +16,13 @@ for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%
 set /a XMID=%W%/2, YMID=%H%/2
 set /a RX=0,RY=0,RZ=0, DIST=1000
 set ASPECT=0.66
+call centerwindow.bat 0 -18
 set STOP=
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
+del /Q EL.dat >nul 2>nul
 
-set /a MUL=2000, MMID=2600, SHR=13, SC=0
+set /a MUL=2000, MMID=2600, SC=0
 set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 
 :LOOP
@@ -32,13 +32,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	echo "cmdgfx: 3d objects\plane-apa.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 
-	set /a RZ+=10
-
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 	
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
-	set /a KEY=0
+	set /a RZ+=10, KEY=0
 )
 if not defined STOP goto LOOP
 

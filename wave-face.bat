@@ -45,7 +45,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
   set /a TX+=7&if !TX! gtr 2600 set TX=-2600
   set /a TX2+=7&if !TX2! gtr 2600 set TX2=-2600
 
-  start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 140,60& block 0 0,0,330,80 0,0 -1 0 0 ? ? 17+x-180+sin(!XC!/100+((x-180)/!BXA!)*0.4+(y/!BYA!)*0.4)*10+(eq(char(x,y),46)+eq(char(x,y),4)+eq(char(x,y),32))*1000  9+y+cos(!YC!/100+((x-180)/!BXA!)*0.4+(y/!BYA!)*0.4)*12 & text 9 0 0 Space_c_\g11\g10\g1e\g1f 1,78" f%FNT%:0,0,330,80
+  start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 140,60& block 0 0,0,330,80 0,0 -1 0 0 ? ? 17+x-180+sin(!XC!/100+((x-180)/!BXA!)*0.4+(y/!BYA!)*0.4)*10+(eq(char(x,y),46)+eq(char(x,y),4)+eq(char(x,y),32))*1000  9+y+cos(!YC!/100+((x-180)/!BXA!)*0.4+(y/!BYA!)*0.4)*12 to 180,0,150,80 & text 9 0 0 Space_c_\g11\g10\g1e\g1f 1,78" f%FNT%:0,0,330,80,180,80
   
   cmdgfx.exe "" knW12
   set KEY=!errorlevel!

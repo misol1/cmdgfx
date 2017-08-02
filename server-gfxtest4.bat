@@ -15,6 +15,8 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
+call centerwindow.bat 0 -16
+
 set /a RX=0, RY=0, RZ=0
 set /a XMID=%W%/2, YMID=%H%/2
 set /a DIST=2500, DRAWMODE=2, ROTMODE=0, SHOWHELP=1

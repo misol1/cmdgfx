@@ -20,6 +20,13 @@ mode con rate=31 delay=0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 set HISCORE=0&if exist hiscore.dat for /F "tokens=*" %%i in (hiscore.dat) do set /A HISCORE=%%i
 
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
+cmdwiz getwindowbounds w & set WINW=!errorlevel!
+cmdwiz getwindowbounds h & set WINH=!errorlevel!
+set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
+cmdwiz setwindowpos %WPX% %WPY%
+
 set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 del /Q EL.dat >nul 2>nul
 

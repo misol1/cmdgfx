@@ -45,12 +45,11 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
   set /a TX+=7&if !TX! gtr 2600 set TX=-2600
   set /a TX2+=7&if !TX2! gtr 2600 set TX2=-2600
   
-  if !MODE!==0 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d objects\cube-t2.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 250,31,600,0.75 0 0 db & block 0 0,0,330,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(-9+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(-17+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,330,80
+  if !MODE!==0 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d objects\cube-t2.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 250,31,600,0.75 0 0 db & block 0 0,0,330,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(-9+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(-17+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from 0,0,180,80 & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,330,80,176,80
   
-  if !MODE!==1 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 180,80& block 0 0,0,360,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(0+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(0+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,360,80
+  if !MODE!==1 start /B /HIGH cmdgfx_gdi "fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d starfield0.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image img\!I%%i! %%c 0 0 e 180,0 0 0 180,80& block 0 0,0,360,80 0,0 -1 0 0 ? ? s0+(eq(s2,46)+eq(s2,4)+eq(s2,32)+eq(s2,0))*1000+store(char(s0,s1),2)+store(0+y+cos(!YC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*12,1)+store(0+x+180+sin(!XC!/100+((x)/!BXA!)*0.4+(y/!BYA!)*0.4)*10,0) s1 from 0,0,180,80 & text 9 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78" f%FNT%:0,0,360,80,176,80
   
-
-  cmdgfx.exe "" knW10
+  cmdgfx.exe "" knW12
   set KEY=!errorlevel!
   if !KEY! == 331 set /a XCP-=1 & if !XCP! lss 0 set /a XCP=0
   if !KEY! == 333 set /a XCP+=1

@@ -3,7 +3,7 @@ setlocal ENABLEDELAYEDEXPANSION
 bg font 1 & cls & mode 180,80 & cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
-set /a XC=0, YC=0, XCP=8, YCP=5, MXC=600, MYC=0, SHR=13
+set /a XC=0, YC=0, XCP=8, YCP=5, MXC=600, MYC=0
 set /a D1=2, D2=2, D3=2, D4=2
 set /a BXA=6, BYA=4 & set /a BY=-!BYA!
 set BALLS=""
@@ -15,9 +15,7 @@ cmdwiz saveblock btemp 180 0 180 80
 cmdwiz setbuffersize 180 k
 set BALLS=
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (

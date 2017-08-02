@@ -14,6 +14,7 @@ set /a W=82, WW=W*2
 mode %W%,54
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
 set CNT=0&for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set HX!CNT!=%%a&set /a CNT+=1
+call centerwindow.bat 0 -16
 
 echo "cmdgfx: fbox a 0 00 0,0,%WW%,160"
 set STREAM="??00=??00,??40=2?41,??41=a000,??80=2?81,??81=a000,??c0=2?c1,??c1=a?00,????=??++"

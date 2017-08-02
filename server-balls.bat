@@ -18,9 +18,8 @@ set /a XMID=%W%/2, YMID=%H%/2, DIST=2500
 set /a DRAWMODE=1, NOF=6
 set ASPECT=0.75
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call centerwindow.bat 0 -20
+call sindef.bat
 
 set OW=16
 set /A CNT=360/%OW%
@@ -28,7 +27,7 @@ set /A CNTV=%CNT%+1
 set WNAME=circle.ply
 cmdwiz print "ply\nformat ascii 1.0\nelement vertex %CNTV%\nelement face 1\nend_header\n">%WNAME%
 
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, SHR=13, BITOP=-1
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, BITOP=-1
 
 set /A MUL=120
 for /L %%a in (0,%OW%,360) do set /a S=%%a,COS=S+90 & set /a "XPOS=(%SINE(x):x=!S!*31416/180%*%MUL%>>%SHR%)" & set /A "YPOS=(%SINE(x):x=!COS!*31416/180%*%MUL%>>%SHR%)" & echo !XPOS! !YPOS! 0 >>%WNAME%

@@ -38,3 +38,6 @@ cpmake.bat
 EL.dat
 CGXMS.dat
 alphcomb.obj
+GDIbuf.dat
+servercmd.dat
+inputflags.dat

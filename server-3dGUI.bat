@@ -4,10 +4,8 @@ cls & bg font 0
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 mode 180,90
-cmdwiz setbuffersize 180 180
 set __=.
 cmdgfx_input.exe M0unW12x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400
-rem call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400
 set __=
 mode 80,50
 mode con rate=31 delay=0
@@ -21,12 +19,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=180,H=90
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
-cmdwiz getdisplaydim w & set SW=!errorlevel!
-cmdwiz getdisplaydim h & set SH=!errorlevel!
-cmdwiz getwindowbounds w & set WINW=!errorlevel!
-cmdwiz getwindowbounds h & set WINH=!errorlevel!
-set /a WPX=%SW%/2-%WINW%/2,WPY=%SH%/2-%WINH%/2
-cmdwiz setwindowpos %WPX% %WPY%
+call centerwindow.bat
 
 set /a CNT=0& for %%a in (00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f) do set CH!CNT!=%%a& set /a CNT+=1
 
@@ -92,7 +85,6 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	echo "cmdgfx: %BKSTR:~1,-1% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!"
 
 	set /p INPUT=
-	rem echo !INPUT!
 	
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, MX=%%F, MY=%%G, ML=%%H, MR=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
 		

@@ -19,11 +19,9 @@ for /L %%a in (-%OW%,1,%OW%) do for /L %%b in (-%OW%,1,%OW%) do for /L %%c in (-
 set /a CNT=-1&for /L %%a in (-%OW%,1,%OW%) do for /L %%b in (-%OW%,1,%OW%) do for /L %%c in (-%OW%,1,%OW%) do set /a CNT+=1&echo 1 !CNT! >>%WNAME%
 
 :SKIPGEN
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
 
-set /a XMUL=2200, SHR=13, CNT=0, BOU=0, SC=50, CRX=12, CRY=47, XPOS=200
+set /a XMUL=2200, CNT=0, BOU=0, SC=50, CRX=12, CRY=47, XPOS=200
 	
 set STOP=
 :LOOP

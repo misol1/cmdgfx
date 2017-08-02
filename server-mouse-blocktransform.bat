@@ -13,6 +13,7 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
+call centerwindow.bat 0 -16
 if "%~1"=="" echo "cmdgfx: image img\mm.txt 0 0 0 -1 200,0 & image img\mm.txt 0 0 0 -1 275,0"
 if not "%~1"=="" echo "cmdgfx: image img\fract.txt 0 0 0 -1 200,0 & image img\fract.txt 0 0 0 -1 275,0"
 

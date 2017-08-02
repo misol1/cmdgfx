@@ -19,7 +19,7 @@ set BALLS=
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-  start /B /HIGH cmdgfx_gdi "fbox 1 0 db 180,0,180,80 & fbox 1 0 b1 0,0,180,80 & image btemp.gxy 0 0 0 -1 180,0 & block 0 0,0,330,80 0,0 -1 0 0 ? ? 17+x-180+sin(!XC!/100+floor((x-180)/!BXA!)*0.4+floor(y/!BYA!)*0.4)*10+eq(fgcol(x,y),1)*500  9+y+cos(!YC!/100+floor((x-180)/!BXA!)*0.4+floor(y/!BYA!)*0.4)*12" f1:0,0,330,80,180,80
+  start /B /HIGH cmdgfx_gdi "fbox 1 0 db 180,0,180,80 & fbox 1 0 b1 0,0,180,80 & image btemp.gxy 0 0 0 -1 180,0 & block 0 0,0,330,80 0,0 -1 0 0 ? ? 17+x-180+sin(!XC!/100+floor((x-180)/!BXA!)*0.4+floor(y/!BYA!)*0.4)*10+eq(fgcol(x,y),1)*500  9+y+cos(!YC!/100+floor((x-180)/!BXA!)*0.4+floor(y/!BYA!)*0.4)*12 to 180,0,150,70" f1:0,0,330,80,180,80
   
   cmdgfx.exe "" knW10
   set KEY=!errorlevel!

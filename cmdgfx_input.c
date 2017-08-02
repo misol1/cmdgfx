@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <windows.h>
 
+// Compilation: gcc -o cmdgfx_input.exe -O2 cmdgfx_input.c
 // TODO: Check for CLICKS/RCLICKS ,make sure sent event includes doubleclicks,sums of wheel, horizontal wheel?
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
@@ -183,6 +184,8 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
+	remove("inputflags.dat");
+
 	if (argc > 1) {
 		for (i=0; i < strlen(argv[1]); i++) {
 			switch(argv[1][i]) {
@@ -233,6 +236,7 @@ int main(int argc, char *argv[]) {
 			else
 				sprintf(sEventOutput, "KEY_EVENT 1 DOWN 1 VALUE %d  MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0", k);
 			eventCount += forward_event(bSendNoEvent, bMouse, k, sEventOutput, bPadding);
+			bWaitKey = 0;
 		}
 
 		if (bMouse) {
@@ -344,8 +348,8 @@ int main(int argc, char *argv[]) {
 					
 					switch(pch[i]) {
 						case 'q': case 'Q': bServer = 0; break;
-						case 'k': bReadKey = neg? 0 : 1; break;
-						case 'K': bWaitKey = neg? 0 : 1; break;
+						case 'k': bReadKey = neg? 0 : 1; if (bReadKey) bMouse = 0; break;
+						case 'K': bWaitKey = 1; break;
 						case 'n': bSendNoEvent = neg? 0 : 1; break;
 						case 'u': bSendKeyUp = neg? 0 : 1; break;
 						case 'A': bSendAll = neg? 0 : 1; break;
@@ -384,7 +388,8 @@ int main(int argc, char *argv[]) {
 
 		if (eventCount == 0) {
 			eventCount += forward_event(bSendNoEvent, bMouse, retVal, "NO_EVENT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding);
-		} else if (bSendAll && bMouse) {
+		}
+		if (bSendAll) {
 			eventCount += forward_event(1, 1, 1, "END_EVENTS 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding);
 		}
 

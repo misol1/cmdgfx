@@ -18,12 +18,11 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 echo "cmdgfx: fbox 0 0 db 0,0,350,75"
+call centerwindow.bat 0 -20
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
 
-set /a DL=0, DR=0, KEY=0, COL=0, SIZE=1, KD=0, SHR=13, MODE=1, YMID=75/2, XMID=120/2, XMUL=110/3, YMUL=55/2, XMUL2=110/4, YMUL2=55/4, SWCNT=0, DRWMODE=8
+set /a DL=0, DR=0, KEY=0, COL=0, SIZE=1, KD=0, MODE=1, YMID=75/2, XMID=120/2, XMUL=110/3, YMUL=55/2, XMUL2=110/4, YMUL2=55/4, SWCNT=0, DRWMODE=8
 set DRAW=""&set STOP=&set OUTP=&set OUTP2=
 
 set PAL0=00??=0???,10??=40b0,20??=40b2,30??=40db,40??=c4b0,50??=c4b1,60??=c4b2,70??=c4db,80??=ecb0,90??=ecb2,a0??=ecdb,b0??=feb0,c0??=feb2,d0??=7fb1,e0??=87b1,f0??=80b1

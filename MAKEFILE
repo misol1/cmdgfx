@@ -9,6 +9,8 @@ OBJECTSLIB = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx.o
 TARGETLIB  = cmdgfx.exe
 OBJECTSLIBGDI = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx_gdi.o
 TARGETLIBGDI  = cmdgfx_gdi.exe
+INPUTLIB = cmdgfx_input.o
+TARGETINPUT  = cmdgfx_input.exe
 #CC      = cl
 #CC      = C:\Dos\tcc\tcc32\tcc.exe
 #CC      = gcc -O3 -Wall
@@ -20,9 +22,15 @@ testlib.exe : $(OBJECTS)
 
 cmdgfx.exe : $(OBJECTSLIB)
 	$(CC) $(CCFLAG) -o $(TARGETLIB) $(OBJECTSLIB)
-	
+		
 cmdgfx_gdi.exe : $(OBJECTSLIBGDI)
 	$(CC) $(CCFLAG) -o $(TARGETLIBGDI) $(OBJECTSLIBGDI) -lgdi32
+	
+cmdgfx_input.exe : $(INPUTLIB)
+	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB)
+	
+cmdgfx_input.o : cmdgfx_input.c
+	$(CC) $(CCFLAG) -c cmdgfx_input.c
 	
 testlib.o : testlib.c gfx.h bmap.h rgbcol.h r3d.h
 	$(CC) $(CCFLAG) -c testlib.c

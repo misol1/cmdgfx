@@ -19,25 +19,25 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
 
   set BKG="fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & image img\!I%%i! %%c 0 0 e 180,0 0 0 198,100"
  
-  if !MODE!==0 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==0 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==1 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==1 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==2 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+sin(!YC!/150+x/200+y/!BXA!+y/!BYA!)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==2 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+sin(!YC!/150+x/200+y/!BXA!+y/!BYA!)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==3 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/300+y/60+x/!BYA!+x/!BXA!)*10 10+y+sin(!YC!/150+x/50+y/!BXA!+y/!BYA!)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==3 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/300+y/60+x/!BYA!+x/!BXA!)*10 10+y+sin(!YC!/150+x/50+y/!BXA!+y/!BYA!)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==4 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 10+y+cos(!YC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==4 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 10+y+cos(!YC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==5 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!*3+y/!BYA!*2)*6 10+y+cos(!YC!/100+x/!BXA!*2+y/!BYA!*2)*4 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==5 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!*3+y/!BYA!*2)*6 10+y+cos(!YC!/100+x/!BXA!*2+y/!BYA!*2)*4 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==6 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+tan(!YC!/100+x/!BXA!*40+y/!BYA!*40)*1 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==6 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+tan(!YC!/100+x/!BXA!*40+y/!BYA!*40)*1 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==7 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/40+x/!BXA!*5+y/!BYA!*8)*tan(!YC!/700+x/!BXA!*0.3+y/!BYA!*0.3)*2 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==7 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/40+x/!BXA!*5+y/!BYA!*8)*tan(!YC!/700+x/!BXA!*0.3+y/!BYA!*0.3)*2 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==8 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/90+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/20+x/5+y/4)*tan(!YC!/1700+cos(!XC!/600)*x/90+sin(!YC!/700)*y/70)+sin(!XC!/400-!YC!/220)*8 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==8 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? x+190+sin(!XC!/90+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/20+x/5+y/4)*tan(!YC!/1700+cos(!XC!/600)*x/90+sin(!YC!/700)*y/70)+sin(!XC!/400-!YC!/220)*8 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
-  if !MODE!==9 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? y+x/20+170+sin(!XC!/300+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/225+x/!BXA!+y/!BYA!)*10 from & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
+  if !MODE!==9 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,100 0,0 -1 0 0 ? ? y+x/20+170+sin(!XC!/300+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/225+x/!BXA!+y/!BYA!)*10 from 0,0,180,80 & !TEXT:~1,-1!" f%FNT%:0,0,380,100,180,80
   
   cmdgfx.exe "" knW12
   set /a KEY=!errorlevel!

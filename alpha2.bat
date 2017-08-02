@@ -52,11 +52,9 @@ if "%~1"=="" call :MAKECOMBINEDALPHA "SEX" 0 220
 ::if "%~1"=="" call :MAKECOMBINEDALPHA "DAWG|" 1 380 
 if not "%~1"=="" call :MAKECOMBINEDALPHA "%~1" %2 %3
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
 
-set /a XMUL=300, YMUL=280, SHR=13, A1=155, A2=0, RANDPIX=2, DIV=1
+set /a XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=2, DIV=1
 set /a CM1=0 & set /a CM2=1
 
 set /a STREAMCNT=0 & call :SETSTREAM

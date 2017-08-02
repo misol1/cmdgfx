@@ -13,6 +13,9 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=200, H=110
 if not "%~1" == "" set /a W=120, H=70
+
+call centerwindow.bat 0 -20
+
 mode con rate=31 delay=0
 for /f "tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
@@ -42,7 +45,7 @@ set /A SWBLH=(%H%-1)/%SWIPEBLOCKSIZE%
 
 set /a FADECOL=0, BLCNTORG=%XMID%+%XMID%/2, TDELAY=600
 set /a EXPB=3, EXPE=EXPB+11
-set /a EXT1=EXPE+1
+set /a EXT1=EXPE+1,EXT2=EXPE+2
 set OUTFADE=""
 
 set /a SWM=%W%-1, SHM=%H%-1
@@ -75,7 +78,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			if !SWBLW! lss 0 set /a DOTRANS=0
 			set OUTFADE=""&(for /L %%a in (0,1,%SWBLH%) do set /a "BLX=%W%-!SWBLW!,BLY=%%a*%SWIPEBLOCKSIZE%,ISEVEN=%%a %% 2"&(if !ISEVEN!==0 set /a BLX=0)&set OUTFADE="!OUTFADE:~1,-1!&fbox %FADECOL% 0 db !BLX!,!BLY!,!SWBLW!,%SWIPEBLOCKSIZE%")& (if !REV!==0 set /a SWBLW+=1)& (if !REV!==1 set /a SWBLW-=1)
 		)
-		
+
 		if !TRANS! == 1 (
 			if !BLNOFB! lss 0 if !REV! == 0 set /a REV=1 & cmdwiz delay %TDELAY%
 			if !REV! == 0 if !BLNOFB! geq 0 set /A "CP=(!RANDOM! %% !BLNOFB!)*4" & for %%b in (!CP!) do set CBX=!BLPT:~%%b,2!& set /A CPY=!CP!+2 & for %%c in (!CPY!) do set CBY=!BLPT:~%%c,2!&set /A CPQ=!CP!+4 & set /a "CBX=(!CBX!-10)*%BLOCKSIZE%"& set /a "CBY=(!CBY!-10)*%BLOCKSIZE%" & set OUTTMP=fbox %FADECOL% 0 db !CBX!,!CBY!,%BLOCKSIZE%,%BLOCKSIZE%          & set OUTFADE="!OUTFADE:~1,-1!&!OUTTMP:~0,26!"& for %%d in (!CPQ!) do set BLPT=!BLPT:~0,%%b!!BLPT:~%%d!& set /A BLNOFB-=1, BLSTRLEN+=27
@@ -122,6 +125,15 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			set OUTFADE=" & block 0 0,0,%W%,%H% 0,0 -1 0 0 - gtr(y,!SWBLW!)*col(x,y) x y+((floor(x/30)%%2)*2-1)*!SWBLW!"
 			(if !REV!==0 set /a SWBLW+=1) & (if !REV!==1 set /a SWBLW-=1)
 		)
+
+		if !TRANS! == %EXT2% (
+			set /a "SWBLW+=-!REV!*2+1"
+			set OUTFADE=""
+			set /a "BLY=%H%-!SWBLW!/3, HDBL=%H%*3"
+			for /L %%a in (!BLY!,1,%H%) do set OUTFADE="!OUTFADE:~1,-1!&block 0 0,!BLY!,!W!,1 0,%%a -1"
+			if !SWBLW! gtr !HDBL! set /a REV=1 & echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H%" & cmdwiz delay %TDELAY%
+			if !SWBLW! leq 0 set /a DOTRANS=0
+		)
 		
 		if !TRANS! == -66 (
 			if !SWBLW! gtr 55 set /a REV=1 & cmdwiz delay %TDELAY%
@@ -135,7 +147,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			set OUTFADE=""
 			set t1=!time: =0!
 			set /a TRANS+=1
-			if !TRANS! gtr %EXT1% set /a TRANS=0
+			if !TRANS! gtr %EXT2% set /a TRANS=0
 			set /a BLCNT=%BLCNTORG%
 			if !TRANS! == 0 set /a SWBLW=0
 			if !TRANS! == 1 set BLPT=&set /a "BLSTRLEN=0, BLNOFB=(%BLW%+1)*(%BLH%+1)" & for /L %%a in (0,1,%BLH%) do for /L %%b in (0,1,%BLW%) do set /A BLXP=10+%%b&set /A BLYP=10+%%a&set BLPT=!BLPT!!BLXP!!BLYP!

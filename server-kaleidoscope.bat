@@ -14,6 +14,7 @@ rem start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
 set /a W=220, H=110
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+call centerwindow.bat 0 -16
 del /Q EL.dat >nul 2>nul
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=7000, DRAWMODE=0, MODE=0
@@ -48,7 +49,7 @@ set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C
 del /Q EL.dat >nul 2>nul
 
 set /a SHOWHELP=1
-set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-d/D\-p\-h 1,108
+set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,108
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set STOP=

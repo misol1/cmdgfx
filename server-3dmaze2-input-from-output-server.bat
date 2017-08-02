@@ -5,7 +5,6 @@ if defined __ goto :START
 mode 180,80
 set __=.
 call %0 %* | cmdgfx_gdi "" SOM15ufa:0,0,720,480Z600W35
-rem call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600
 set __=
 mode 80, 50
 mode con rate=31 delay=0
@@ -121,7 +120,7 @@ set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
 for /l %%1 in (1,1,300) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" F
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 	
 	set /a RET=-1
 	if exist EL.dat set /p RET=<EL.dat & del /Q EL.dat >nul 2>nul

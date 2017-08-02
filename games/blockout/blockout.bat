@@ -20,6 +20,13 @@ cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 del /Q EL.dat >nul 2>nul
 
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
+cmdwiz getwindowbounds w & set WINW=!errorlevel!
+cmdwiz getwindowbounds h & set WINH=!errorlevel!
+set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
+cmdwiz setwindowpos %WPX% %WPY%
+
 set /a XMID=%W%/2, YMID=%H%/2
 set DIST=0
 set ASPECT=0.6666

@@ -11,9 +11,11 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=110,H=65
+set /a W=110, H=65
 bg font 1 & mode %W%,%H%
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+call centerwindow.bat 0 -10
+
 set /a WW=!W!*2, WWW=!W!*3, HH=!H!*2, WMID=%W%/2, HMID=%H%/2
 set /a WWX=%W%+%WMID%, CMX=%WMID%+3,CMY=%HMID%-3
 cmdwiz showcursor 0

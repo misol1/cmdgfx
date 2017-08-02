@@ -23,12 +23,15 @@
 
 // Issues:
 // 1. Code optimization: Re-use images used several times, same way as for objects
+// 2. TinyExpr: optimize recursion
+// (3. Use *10 for rotations instead of *4?)
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
 // 2. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
 // 3. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
 // 4. Code fix: Figure out why RX rotation not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat)
+// (5. Not likely: z-buffer)
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -111,7 +114,7 @@ int MouseEventProc(MOUSE_EVENT_RECORD mer) {
 	return res;
 }
 
-int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile) {
+int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor) {
 	char *text, ch, *pbcol, *pbchar;
 	int fr, i, j, 	inlen;
 	int x = 0, y = 0, yp=0;
@@ -190,9 +193,11 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 				}
 				default: {
 					oldColor = color;
-					fgCol = GetCol(ch, fgCol);
+					if (!bIgnoreFgColor)
+						fgCol = GetCol(ch, fgCol);
 					i++;
-					bgCol = GetCol(text[i], bgCol);
+					if (!bIgnoreBgColor)
+						bgCol = GetCol(text[i], bgCol);
 					color = fgCol | (bgCol<<4);
 				}
 			}
@@ -388,7 +393,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap->extras = (Bitmap *) calloc(sizeof(Bitmap), 1);
 		if (!bmap->extras) return res;
 		bmap->extrasType = EXTRAS_BITMAP;
-		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1);
+		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1, 0, 0);
 		bmap->transpVal = transpVal;
 		bmap->bCmdBlock = 0;
 	}
@@ -956,7 +961,7 @@ double my_shr(double v1, double v2) {
 }
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo) {
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0, moveCol=7;
@@ -1113,9 +1118,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			memcpy(blockCol2, blockCol, w*h*sizeof(uchar));
 			memcpy(blockChar2, blockChar, w*h*sizeof(uchar));
 
-			for (i = 0; i < h; i++) {
+			if (mvx < 0 || mvy < 0 || mvw < 0 || mvh < 0) { mvx=mvy=0; mvw=w; mvh=h; }
+			mvw += mvx;
+			mvh += mvy;
+			if (mvh > h) mvh=h;
+			if (mvw > w) mvw=w;
+			
+			for (i = mvy; i < mvh; i++) {
 				k = i*w;
-				for (j = 0; j < w; j++) {
+				for (j = mvx; j < mvw; j++) {
 					ex = j; ey = i;
 					nx = (int) te_eval(n);
 					ny = (int) te_eval(n2);
@@ -1474,7 +1485,7 @@ int main(int argc, char *argv[]) {
 	HANDLE h_stdin;
 	DWORD oldfdwMode;
 	uchar *cp;
-	unsigned int startT = GetTickCount();
+	long long startT = milliseconds_now();
 
 	
 	cp = hexLookup; k = 0;
@@ -1535,7 +1546,7 @@ int main(int argc, char *argv[]) {
 #else
 		char name[2] = "", extras[2] = "", dspalette[2] = "";
 #endif
-		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key/mouse bit pattern%s, 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server.\n", name, dspalette, extras);
+		printf("\nUsage: cmdgfx%s [operations] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char x,y,w,h\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\n\nFgcol and bgcol can be specified either as decimal or hex.\nChar is specified either as a char or a two-digit hexadecimal ASCII code.\nFor both char and fgcol+bgcol, specify ? to use existing.\nBitop: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=Normal ipoly.\n\nImage: 256 color pcx file (first 16 colors used), or gxy file, or text file.\nIf using pcx, specify transpcol, otherwise transpchar. Use -1 if not needed!\n\nGpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).\nTransform follows '1233=1233,' repeated, ?+- supported. Mode 0=copy, 1=move\n\nString for text op has all _ replaced with ' '. Supports a subset of gxy codes.\n\nObjectfile should point to either a plg, ply or obj file.\nDrawmode: 0=flat/texture, 1=flat z-sourced, 2=goraud-shaded z-sourced, 3=wireframe, 4=flat, 5=persp. correct texture/flat, 6=affine char/persp col.\nDrawoption: Mode 0 textured=transpchar/transpcol(-1 if not used!). Mode 0/4 flat=bitop. Mode 1/2: 0=static col, 1=even col. Mode 1: bitop in high byte.\n\n%s[flags]: 'p' keep buffer content, 'k' return last keypress, 'K' wait for/return key, 'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key/mouse bit pattern%s, 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server.\n", name, dspalette, extras);
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
@@ -1669,7 +1680,7 @@ int main(int argc, char *argv[]) {
 				}
 				case 'e': bSuppressErrors = 1; break;
 				case 'E': bWaitAfterErrors = 1; break;
-				case 'S': bServer = 1; break;
+				case 'S': bServer = 1; 	remove("EL.dat"); remove("servercmd.dat"); break;
 				case 'T': bAllowRepeated3dTextures = 1; break;
 				case 'z': g_bSleepingWait = 1; break;
 				case 'I': g_bFlushAfterELwrite = 1; break;
@@ -1810,11 +1821,12 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_GPOLY, opCount);
 		 }
 		 else if (strstr(pch,"tpoly ") == pch) {
+			int bIgnoreFgCol=0, bIgnoreBgCol=0;
 			int nofp, w,h;
 			Bitmap b_cols, b_chars;
 			
 			pch = pch + 6;
-			nof = sscanf(pch, "%128s %2s %2s %2s %2s %d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, 
+			nof = sscanf(pch, "%128s %3s %3s %2s %2s %d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f,%d,%d,%f,%f", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, 
 																			&vv[0].x, &vv[0].y, &vv[0].tex_coord.x, &vv[0].tex_coord.y, &vv[1].x, &vv[1].y, &vv[1].tex_coord.x, &vv[1].tex_coord.y,
 																			&vv[2].x, &vv[2].y, &vv[2].tex_coord.x, &vv[2].tex_coord.y, &vv[3].x, &vv[3].y, &vv[3].tex_coord.x, &vv[3].tex_coord.y,
 																			&vv[4].x, &vv[4].y, &vv[4].tex_coord.x, &vv[4].tex_coord.y, &vv[5].x, &vv[5].y, &vv[5].tex_coord.x, &vv[5].tex_coord.y,
@@ -1829,6 +1841,10 @@ int main(int argc, char *argv[]) {
 																			&vv[22].x, &vv[22].y, &vv[12].tex_coord.x, &vv[22].tex_coord.y, &vv[23].x, &vv[23].y, &vv[13].tex_coord.x, &vv[23].tex_coord.y);
 			if (nof >= 17) {
 				nofp = 3 + (nof-17) / 4;
+				
+				if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
+				
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				
 				if (strstr(fname,".pcx")) {
@@ -1850,7 +1866,7 @@ int main(int argc, char *argv[]) {
 					} else
 						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
 				} else {
-					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1)) {
+					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1, bIgnoreFgCol, bIgnoreBgCol)) {
 						parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 						if (transpval < 0) {
 							video = videoCol;
@@ -1993,7 +2009,12 @@ int main(int argc, char *argv[]) {
 					char *fndFrame = strstr(tstring, "[FRAMECOUNT]");
 					if (fndFrame) {
 						char FCT[64];
-						sprintf(FCT, "%d", frameCounter);
+						int FPS = 0;
+						float elapsedS = (float)(milliseconds_now() - startT) / (float)1000;
+						if (elapsedS > 0)
+							FPS = (float)frameCounter / elapsedS;
+						
+						sprintf(FCT, "%d (%d)", frameCounter, FPS);
 						for (j = 0; j < 12; j++) {
 							if (j < strlen(FCT))
 								fndFrame[j] = FCT[j];
@@ -2004,7 +2025,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
-				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0);
+				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0, 0, 0);
 
 				if (res) {
 					for (j=0; j < h1; j++) {
@@ -2030,14 +2051,17 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_TEXT, opCount);
 		 }
 		 else if (strstr(pch,"image ") == pch) {
+			int bIgnoreFgCol=0, bIgnoreBgCol=0;
 			int x1,y1,w1,h1, res, xflip=0, yflip=0, xb, xdb, xdir=1, w2=-1, h2=-1, writeCols;
 			Bitmap b_cols, b_chars;
 			b_cols.data = b_chars.data = NULL;
 
 			pch = pch + 6;
-			nof = sscanf(pch, "%127s %2s %2s %2s %2s %d,%d %d %d %d,%d", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, &x1, &y1, &xflip, &yflip, &w2, &h2);
+			nof = sscanf(pch, "%127s %3s %3s %2s %2s %d,%d %d %d %d,%d", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, &x1, &y1, &xflip, &yflip, &w2, &h2);
 			if (xflip) xdir = -1;
 			if (nof >= 7) {
+				if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
 				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				if (strstr(fname, ".pcx")){
 					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
@@ -2058,7 +2082,7 @@ int main(int argc, char *argv[]) {
 						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
 				} else {
 					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1);
+					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1, bIgnoreFgCol, bIgnoreBgCol);
 					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
 				}
 
@@ -2148,16 +2172,17 @@ int main(int argc, char *argv[]) {
 		 }
 		 else if (strstr(pch,"block ") == pch) {
 			int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
+			int mvx=-1, mvy=-1, mvw=-1, mvh=-1;
 			char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0}, xyExprToCh[16] = {0};
 
 			pch = pch + 6;
-			nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s %10s", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh);
+			nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s %10s %d,%d,%d,%d", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh, &mvx, &mvy, &mvw, &mvh);
 			
 			transpval = -1;
 			if (nof >= 7) {
 				g_errH = &errH; g_opCount = opCount;
 				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f');
+				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
 			} else
 				reportArgError(&errH, OP_BLOCK, opCount);
 		 }
@@ -2603,6 +2628,7 @@ int main(int argc, char *argv[]) {
 				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL);
 	#endif
 		}
+		bDoNothing = 0;
 		
 		for (i = 0; i < errH.errCnt; i++) if (errH.extras[i]) free(errH.extras[i]);
 		errH.errCnt = 0;
@@ -2611,13 +2637,13 @@ int main(int argc, char *argv[]) {
 			int k = getch();
 			if (k == 224 || k == 0) k = 256 + getch();
 			retVal = k;
+			bWaitKey = 0;
 		}
 
 		if (bMouse) {
 			DWORD fdwMode, cNumRead = 0, iOut; 
 			INPUT_RECORD irInBuf[128];
 			int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0, bTimeout = 0, bOk;
-			
 			if (bServer)
 				h_stdin = CreateFile("CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
 			else
@@ -2772,9 +2798,9 @@ int main(int argc, char *argv[]) {
 #ifdef GDI_OUTPUT
 							case 'P': bWriteGdiToFile = neg? 0 : 1; break;
 #endif
-							case 'n': bDoNothing = neg? 0 : 1; break;
-							case 'k': bReadKey = neg? 0 : 1; break;
-							case 'K': bWaitKey = neg? 0 : 1; break;
+							case 'n': bDoNothing = 1; break;
+							case 'k': bReadKey = neg? 0 : 1; if (bReadKey) bMouse = 0; break;
+							case 'K': bWaitKey = 1; break;
 							case 'Z': {
 								char pDepth[64];
 								j = 0; i++;

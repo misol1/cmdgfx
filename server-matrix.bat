@@ -9,13 +9,13 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=155
-set /a WW=!W!*2
+set /a W=155, WW=W*2
 set /a WT=%W%-1 & mode !WT!,55
 
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
 set /a CNT=0 & for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set /a HX!CNT!=%%a, CNT+=1
 set IMG=img\myface.txt& if not "%~1" == "" set IMG=%1
+call centerwindow.bat 0 -20
 
 echo "cmdgfx: fbox 2 0 00 0,0,%WW%,160"
 set STREAM="??00=??00,??40=2?41,??41=2000,??80=2?81,??81=2000,??d0=2?d1,??d1=2000,????=??++"

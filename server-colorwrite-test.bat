@@ -15,6 +15,8 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=80, H=54
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
+call centerwindow.bat 0 -16
+
 set /a XMID=%W%/2&set /a YMID=%H%/2
 set DIST=1000
 set ASPECT=0.675

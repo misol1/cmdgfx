@@ -13,6 +13,7 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180, H=90
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+call centerwindow.bat 0 -18
 
 set /a RX=0, RY=0, RZ=0
 set /a XMID=%W%/2, YMID=%H%/2
@@ -66,9 +67,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
 		if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!, RX=0,RY=0,RZ=0
 		if !KEY! == 32 set /A OBJ+=1&if !OBJ! gtr 6 set /a OBJ=0
-		rem if !KEY! == 99 set /A COLP=4-!COLP!
 		if !KEY! == 98 set /A CLEAR=1-!CLEAR!&(if !CLEAR!==0 set CLS=skip)&(if !CLEAR!==1 set CLS=)
-		if !KEY! == 99 set /A DIST=-600
+		if !KEY! == 99 set /a TMPV=!DIST!,DIST=-600 & if !TMPV!==-600 set /a DIST=1500
 		if !KEY! == 112 cmdwiz getch
 		if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 		if !KEY! == 27 set STOP=1

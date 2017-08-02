@@ -13,6 +13,9 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=200, H=110
 if not "%~1" == "" set /a W=120, H=70
+
+call centerwindow.bat 0 -20
+
 mode con rate=31 delay=0
 for /f "tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 

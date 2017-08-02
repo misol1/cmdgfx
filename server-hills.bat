@@ -16,11 +16,12 @@ setlocal ENABLEDELAYEDEXPANSION
 cls & bg font 0
 set /a W=240, H=110
 mode %W%,%H%
-mode con rate=31 delay=0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 del /Q EL.dat >nul 2>nul
+
+call centerwindow.bat 0 -16
 
 set MIN_ADV_L1=60
 set /A HILLS_L1=%W%/%MIN_ADV_L1% + 2

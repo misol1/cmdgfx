@@ -8,9 +8,7 @@ set /a XMID=%W%/2, YMID=%H%/2
 set /a DRAWMODE=1, NOF=6, DIST=2500, MODE=0
 set ASPECT=0.75
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
+call sindef.bat
 
 set /A XP1=0,YP1=0,ZP1=-250
 set /A XP2=0,YP2=0,ZP2=250
@@ -20,7 +18,7 @@ set /A XP5=0,YP5=-250,ZP5=0
 set /A XP6=0,YP6=250,ZP6=0
 
 set /a XRA1=5, YRA1=8, XRA2=1,YRA2=-7, XRA3=-5,YRA3=5, XRA4=-10,YRA4=-4, XRA5=3,YRA5=-12, XRA6=5,YRA6=9
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, SHR=13
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000
 
 call :SETCOLS
 

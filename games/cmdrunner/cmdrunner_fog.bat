@@ -20,6 +20,13 @@ for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%
 set RY=0
 del /Q EL.dat >nul 2>nul
 
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
+cmdwiz getwindowbounds w & set WINW=!errorlevel!
+cmdwiz getwindowbounds h & set WINH=!errorlevel!
+set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
+cmdwiz setwindowpos %WPX% %WPY%
+
 set /a XMID=%W%/2&set /a YMID=%H%/2-53
 
 set /a DIST=2500, DRAWMODE=0, GROUNDCOL=3
@@ -75,9 +82,9 @@ set STOP=
 for /L %%1 in (1,1,300) do if not defined STOP (
 	set /A INDEX=!STARTINDEX!-1
 	echo "cmdgfx: %BKSTR:~1,-1%" W0n
-	for /L %%b in (1,1,%MAXCUBES%) do set /A INDEX+=1&(if !INDEX! gtr %MAXCUBES% set INDEX=1)& for %%a in (!INDEX!) do set /A COLD=^(!PZ%%a!-5000^)/10500&for %%c in (!COLD!) do for %%d in (!CPAL%%a!) do echo "cmdgfx: 3d cube.ply %DRAWMODE%,-1 0,!RY!,0 !PX%%a!,-1800,!PZ%%a! -250,-250,-250,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !CUBECOL%%c_%%d!"&set /A PZ%%a-=%ACCSPEED% & if !PZ%%a! lss 1000 set /a PZ%%a=30000, PX%%a=!RANDOM! %% 8000 - 4000, STARTINDEX-=1&if !STARTINDEX! lss 1 set STARTINDEX=%MAXCUBES%
+	for /L %%b in (1,1,%MAXCUBES%) do set /A INDEX+=1&(if !INDEX! gtr %MAXCUBES% set INDEX=1)& for %%a in (!INDEX!) do set /A COLD=^(!PZ%%a!-5000^)/10500&for %%c in (!COLD!) do for %%d in (!CPAL%%a!) do echo "cmdgfx: 3d cube.ply %DRAWMODE%,-1 0,!RY!,0 !PX%%a!,-1800,!PZ%%a! -250,-250,-250,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !CUBECOL%%c_%%d!" n & set /A PZ%%a-=%ACCSPEED% & if !PZ%%a! lss 1000 set /a PZ%%a=30000, PX%%a=!RANDOM! %% 8000 - 4000, STARTINDEX-=1&if !STARTINDEX! lss 1 set STARTINDEX=%MAXCUBES%
 	
-	echo "cmdgfx: image CR2.gxy 0 0 0 20 28,2 & text f 1 0 _Press_SPACE_to_play_ 80,15 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" W14-n
+	echo "cmdgfx: image CR2.gxy 0 0 0 20 28,2 & text f 1 0 _Press_SPACE_to_play_ 80,15 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" W14
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 			
@@ -94,9 +101,9 @@ set STOP=&set DEATH=
 for /L %%1 in (1,1,300) do if not defined STOP (
 	set /A INDEX=!STARTINDEX!-1
 	echo "cmdgfx: %BKSTR:~1,-1%" W0n
-	for /L %%b in (1,1,%MAXCUBES%) do (set /A INDEX+=1&(if !INDEX! gtr %MAXCUBES% set INDEX=1)& for %%a in (!INDEX!) do set /A COLD=^(!PZ%%a!-5000^)/10500&for %%c in (!COLD!) do for %%d in (!CPAL%%a!) do echo "cmdgfx: 3d cube.ply %DRAWMODE%,-1 0,!RY!,0 !PX%%a!,!PY%%a!,!PZ%%a! -250,-250,-250,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !CUBECOL%%c_%%d!"&set /A PZ%%a-=%ACCSPEED% & if !PZ%%a! lss 1000 set PZ%%a=30000&set /A PX%%a=!RANDOM! %% 8000 - 4000 - !TILT!*50 &(if !ACTIVECUBES! leq !NOFCUBES! if !PY%%a! lss -1800 if !RANDOM! lss 10922 set /A PY%%a=-1800, ACTIVECUBES+=1)&set /A STARTINDEX-=1&if !STARTINDEX! lss 1 set STARTINDEX=%MAXCUBES%) & if !PY%%b! gtr -15000 if !PZ%%b! lss 4000 if !PZ%%b! gtr 3500 if !PX%%b! gtr -300 if !PX%%b! lss 300 set DEATH=1
+	for /L %%b in (1,1,%MAXCUBES%) do (set /A INDEX+=1&(if !INDEX! gtr %MAXCUBES% set INDEX=1)& for %%a in (!INDEX!) do set /A COLD=^(!PZ%%a!-5000^)/10500&for %%c in (!COLD!) do for %%d in (!CPAL%%a!) do echo "cmdgfx: 3d cube.ply %DRAWMODE%,-1 0,!RY!,0 !PX%%a!,!PY%%a!,!PZ%%a! -250,-250,-250,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !CUBECOL%%c_%%d!" n &set /A PZ%%a-=%ACCSPEED% & if !PZ%%a! lss 1000 set PZ%%a=30000&set /A PX%%a=!RANDOM! %% 8000 - 4000 - !TILT!*50 &(if !ACTIVECUBES! leq !NOFCUBES! if !PY%%a! lss -1800 if !RANDOM! lss 10922 set /A PY%%a=-1800, ACTIVECUBES+=1)&set /A STARTINDEX-=1&if !STARTINDEX! lss 1 set STARTINDEX=%MAXCUBES%) & if !PY%%b! gtr -15000 if !PZ%%b! lss 4000 if !PZ%%b! gtr 3500 if !PX%%b! gtr -300 if !PX%%b! lss 300 set DEATH=1
 
-	echo "cmdgfx: 3d tetramod.ply %DRAWMODE%,-1 0,180,!TILT! 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% f %GROUNDCOL% %PLYCHAR% 7 %GROUNDCOL% %PLYCHAR% & 3d tetramod.ply %DRAWMODE%,-1 0,180,!TILT! 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 %GROUNDCOL% b2 0 %GROUNDCOL% b2 & text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" W15-n
+	echo "cmdgfx: 3d tetramod.ply %DRAWMODE%,-1 0,180,!TILT! 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% f %GROUNDCOL% %PLYCHAR% 7 %GROUNDCOL% %PLYCHAR% & 3d tetramod.ply %DRAWMODE%,-1 0,180,!TILT! 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 %GROUNDCOL% b2 0 %GROUNDCOL% b2 & text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" W15
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 

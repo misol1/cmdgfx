@@ -13,15 +13,13 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+call centerwindow.bat 0 -16
 
 set /a XMID=%W%/2, YMID=%H%/2
 set /a DIST=2500, DRAWMODE=0, BITOP=3, BKG=0
 set ASPECT=0.75
 
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
-set /A SHR=13
+call sindef.bat
 
 set /a CIRCS=8, OW=15
 set /A CNT=180 / %OW%

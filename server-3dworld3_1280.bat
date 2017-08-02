@@ -20,6 +20,8 @@ for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 
 set /a W=1280, H=680
 
+call centerwindow.bat 0 -20
+
 echo "cmdgfx: text 8 0 0 Generating_world... 142,51" f0:0,0,320,110
 
 set /a XMID=%W%/2, YMID=%H%/2-10
@@ -122,6 +124,9 @@ set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 copy /Y %FN% %FN4%>nul
 set EXTRA=&for /L %%a in (1,1,20) do set EXTRA=!EXTRA!xtra
 for /l %%a in (1,1,10) do set /p INPUT=
+
+set /a SW/=2, SH/=2
+set /a MPY=%SH%-%H%/4 & cmdwiz setmousecursorpos %SW% !MPY!
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
