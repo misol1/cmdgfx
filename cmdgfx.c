@@ -1576,7 +1576,8 @@ int main(int argc, char *argv[]) {
 						fnd = strchr(&argv[2][i+2], ';');
 						if (!fnd) strcpy(fin, &argv[2][i+2]); else { nof = fnd-&argv[2][i+2]; strncpy(fin, &argv[2][i+2], nof); fin[nof]=0; }
 						nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &captX, &captY, &captW, &captH, &captFormat, &captureCount);
-					}
+					} else
+						bCapture=0;
 					if (nof < 3) captW = txres - captX;
 					if (nof < 4) captH = tyres - captY;
 					break;
@@ -2768,7 +2769,8 @@ int main(int argc, char *argv[]) {
 									fnd = strchr(&pch[i+2], ';');
 									if (!fnd) strcpy(fin, &pch[i+2]); else { nof = fnd-&pch[i+2]; strncpy(fin, &pch[i+2], nof); fin[nof]=0; }
 									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &captX, &captY, &captW, &captH, &captFormat, &captureCount);
-								}
+								} else
+									bCapture = 0;
 								if (nof < 3) captW = txres - captX;
 								if (nof < 4) captH = tyres - captY;
 								break;
