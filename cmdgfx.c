@@ -2722,7 +2722,7 @@ int main(int argc, char *argv[]) {
 							case 'E': bWaitAfterErrors = neg? 0 : 1; break;
 							case 'o': bWriteReturnToFile = neg? 0 : 1; break;
 							case 'O': bWriteReturnToFile = neg? 0 : 2; break;
-							case 'C': frameCounter = 0; break;
+							case 'C': frameCounter = 0; startT = milliseconds_now(); break;
 							case 'T': bAllowRepeated3dTextures = neg? 0 : 1; break;
 							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
 							case 'I': g_bFlushAfterELwrite = neg? 0 : 1; break;
