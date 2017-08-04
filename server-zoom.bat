@@ -30,7 +30,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for %%a in (!SC!) do set /a A1=%%a & set /a "DIST=!MMID!+(%SINE(x):x=!A1!*31416/180%*!MUL!>>!SHR!), SC+=1"
 
-	echo "cmdgfx: 3d objects\plane-apa.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: 3d objects\plane-apa.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 	
