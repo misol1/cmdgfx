@@ -26,9 +26,9 @@ cmdwiz setwindowpos %WPX% %WPY%
 
 set /a XMID=%W%/2, YMID=%H%/2
 set /a TX=0, TX2=-2600
-set /a NOF_STARS=60, SDIST=5500
+set /a NOF_STARS=120, SDIST=5500
 set ASPECT=0.667
-set COLS=f 0 db  f 0 db  f 0 db f 0 db  f 0 db f 0 db  7 0 db 7 0 db  7 0 db  7 0 db  7 0 db  7 0 db 7 0 db 7 0 db
+set COLS=f 0 04  f 0 04  f 0 04 f 0 04  f 0 04  f 0 04  f 0 04 f 0 .  f 0 .  f 0 .  f 0 .  f 0 . f 0 . 7 0 .
 set /a FCNT=0
 :SETUPLOOP
 	set WNAME=starfield%FCNT%.ply
@@ -56,6 +56,7 @@ for /L %%a in (1,1,%NOF_ENEMIES%) do set /A ENEMY%%aX=!EX!*%ENEMY_MUL%, EX+=%ENE
 set /a ENEMY_MAXS=450, SPEEDINC=1
 set BG=""
 set BG="fbox 1 9 b2 0,0,%W%,10 & fbox 1 9 b1 0,3,%W%,10 & fbox 1 9 b0 0,9,%W%,%H% & fbox a 0 20 0,85,%W%,50 & fbox a e b2 0,86,%W%,50 & fbox a e b1 0,92,%W%,50"
+set RESTOREBG="block 0 0,0,%W%,85 0,0 -1 0 0 ????=?9?? & block 0 0,86,%W%,85 0,86 -1 0 0 ????=?e??"
 
 set /a NOF_SHOTS=4, SHOT_SPEED=4
 for /L %%a in (1,1,%NOF_SHOTS%) do set /A SHOT%%aA=0,SHOT%%aX=0,SHOT%%aY=0
@@ -72,7 +73,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set SHOTS=""& for /L %%a in (1,1,!NOF_SHOTS!) do if !SHOT%%aA! == 1 set /a SHOT%%aX+=!SHOT_SPEED!&set SHOTS="!SHOTS:~1,-1! fellipse f 0 db !SHOT%%aX!,!SHOT%%aY!,5,3 & "&if !SHOT%%aX! gtr 260 set /a SHOT%%aA=0	
 	
-	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & %BG:~1,-1% & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d starfield1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & !PLY:~1,-1! & !NMY:~1,-1! & !SHOTS:~1,-1! & text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1"
+	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & %BG:~1,-1% & 3d starfield0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d starfield1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & %RESTOREBG:~1,-1% & !PLY:~1,-1! & !NMY:~1,-1! & !SHOTS:~1,-1! & text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1"
 
 	set /A PLXB=!PLXPOS!+18, PLXB2=!PLXPOS!-19
 	set /A PLYB=!PLYPOS!+16, PLYB2=!PLYPOS!-15

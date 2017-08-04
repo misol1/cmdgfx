@@ -2,7 +2,7 @@
 bg font 0 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,200,102W14
+call %0 %* | cmdgfx_gdi "" kOSf0:0,0,200,102W14
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -29,10 +29,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
 
-	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)*2 & !HELP!" f0:0,0,%W%,%H%
-	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)/2 & !HELP!" f0:0,0,%W%,%H%
-	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+1*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50+sin(y+!A1!)/30)*20) & !HELP!" f0:0,0,%W%,%H%
-	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! sin((x-!COLCNT!/4)/80)*(gtr(y,20))*15 & !HELP!" f0:0,0,%W%,%H%
+	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)*2 & !HELP!"
+	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)/2 & !HELP!"
+	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+1*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50+sin(y+!A1!)/30)*20) & !HELP!"
+	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! sin((x-!COLCNT!/4)/80)*(gtr(y,20))*15 & !HELP!"
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
   
