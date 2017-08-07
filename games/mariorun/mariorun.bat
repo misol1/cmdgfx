@@ -1,11 +1,10 @@
 :: Parallax scrolling jumping game : Mikael Sollenborn 2016-17
 
 @echo off
-bg font 0 & cls & cmdwiz showcursor 0
 if defined __ goto :START
-mode 240,110
+cls & cmdwiz showcursor 0
 set __=.
-call %0 %* | cmdgfx_gdi.exe "" SkOW20f0
+call %0 %* | cmdgfx_gdi.exe "" SkOW20f0:0,0,240,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -13,9 +12,10 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & bg font 6
 set /a W=240, H=110
-mode %W%,%H%
+set /a F6W=W/2, F6H=H/2
+mode %F6W%,%F6H%
 mode con rate=31 delay=0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 set HISCORE=0&if exist hiscore.dat for /F "tokens=*" %%i in (hiscore.dat) do set /A HISCORE=%%i

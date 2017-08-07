@@ -1,5 +1,7 @@
 @echo off
-bg font 1 & mode 160,80 & cls
+bg font 8 & cls
+set /a F8W=160/2, F8H=80/2
+mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
@@ -7,6 +9,7 @@ call %0 %* | cmdgfx_gdi "" kOSf1:0,0,160,80W12
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F8W=&set F8H=
 goto :eof
 
 :START
@@ -33,7 +36,7 @@ echo element vertex %CNTV% >>%WNAME%
 echo element face %CNTV% >>%WNAME%
 echo end_header>>%WNAME%
 
-set /A NOF=25, ZROT=0
+set /A NOF=23, ZROT=0
 
 set /A MUL=120
 for /L %%a in (0,%OW%,360) do set /a SV=%%a, CV=%%a+90 & set /a "XPOS=(%SINE(x):x=!SV!*31416/180%*!MUL!>>%SHR%), YPOS=(%SINE(x):x=!CV!*31416/180%*!MUL!>>%SHR%)" & echo !XPOS! !YPOS! 0 >>%WNAME%

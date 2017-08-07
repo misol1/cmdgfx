@@ -1,17 +1,19 @@
 @echo off
-bg font 0 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" kOSf0:0,0,238,102W35
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F6W=&set F6H=
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=238, H=102
-bg font 0 & mode %W%,%H%
+set /a F6W=W/2, F6H=H/2
+mode %F6W%,%F6H%
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
 call centerwindow.bat 0 -12

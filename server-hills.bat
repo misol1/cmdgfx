@@ -1,21 +1,21 @@
 :: Parallax scrolling : Mikael Sollenborn 2016
 
 @echo off
-bg font 0 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
-mode 240,110
+set /a F6W=240/2, F6H=110/2
+mode %F6W%,%F6H%
 set __=.
-call %0 %* | cmdgfx_gdi.exe "" SkOW20f0
+call %0 %* | cmdgfx_gdi.exe "" SkOW20f0:0,0,240,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F6W=&set F6H=
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
 set /a W=240, H=110
-mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra

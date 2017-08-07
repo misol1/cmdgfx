@@ -5,6 +5,7 @@ set /a W=80, H=50
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
+call centerwindow.bat
 set /a RX=0, RY=0, RZ=0
 
 set /a XMID=%W%/2, YMID=%H%/2

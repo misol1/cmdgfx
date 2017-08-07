@@ -1,12 +1,14 @@
 @echo off
-bg font 1 & mode 160,80 & cls
-cmdwiz showcursor 0
+bg font 8 & cls
+set /a F8W=160/2, F8H=80/2
+mode %F8W%,%F8H%
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" kOSf1:0,0,350,80,160,80W10
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F8W=&set F8H=
 goto :eof
 
 :START

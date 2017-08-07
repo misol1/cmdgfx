@@ -1,5 +1,6 @@
 @echo off
-bg font 0 & mode 220,95 & cls
+set /a F6W=220/2, F6H=95/2
+bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
@@ -7,6 +8,7 @@ call %0 %* | cmdgfx_gdi "" kOSf0:0,0,220,95W15
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F6W=&set F6H=
 goto :eof
 
 :START
@@ -40,7 +42,7 @@ set /a P1=9,P2=17,P3=4,P4=6,P5=14,P6=13,P7=10,P8=6,SC1=334,CC1=62,SC2=599,CC2=35
 set STREAM="0???=10??,1???=90??,2???=b0??,3???=f0??,4???=f0??,5???=b0??,6???=90??,7???=10??,8???=10??,9???=90??,a???=b0??,b???=f0??,c???=b0??,d???=90??,e???=10??,f???=10??"
 
 set /a SHOWHELP=1
-set HELPMSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,93
+set HELPMSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,92
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 del /Q EL.dat >nul 2>nul
 

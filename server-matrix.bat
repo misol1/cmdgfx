@@ -1,5 +1,5 @@
 @echo off
-bg font 5 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" ekOSf5:0,0,310,160,155,55W15
@@ -10,7 +10,7 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=155, WW=W*2
-set /a WT=%W%-1 & mode !WT!,55
+mode 136,55
 
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
 set /a CNT=0 & for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set /a HX!CNT!=%%a, CNT+=1

@@ -1,11 +1,13 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0 & cls
+bg font 6 & cls
 set /a W=274, H=109
-mode %W%,%H%
+set /a F6W=W/2, F6H=H/2
+mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 for /L %%a in (0,1,30) do set /a R%%a=!RANDOM! %% 20
 set /a BW=125, WD=-2, BWM=145, BXF=0
+call centerwindow.bat
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP  (
@@ -17,7 +19,7 @@ for /L %%1 in (1,1,300) do if not defined STOP  (
    for /L %%a in (0,1,1) do for %%c in (!MC!) do set /a "Y=%%a*54+1, R!MC!+=1, I=(!R%%c!/7) %% 2 + 1, MC+=1" & set OUT="!OUT:~1,-1! & image img\mario!I!.gxy 0 0 0 0 80,!Y! 1 0 60,56"
 	for %%c in (!MC!) do set /a "R!MC!+=1, I=(!R%%c!/6) %% 2 + 1" & set OUT="!OUT:~1,-1! & image img\mario!I!.gxy 0 0 0 0 !BWM!,4 !BXF! 0 !BW!,108"
 	
-	cmdgfx_gdi "fbox 8 0 . 0,0,%W%,%H% & !OUT:~1,-1!" kf0
+	cmdgfx_gdi "fbox 8 0 . 0,0,%W%,%H% & !OUT:~1,-1!" kf0:0,0,%W%,%H%
 	set KEY=!ERRORLEVEL!
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1

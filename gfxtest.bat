@@ -5,6 +5,7 @@ set /a W=80, H=50
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
+call centerwindow.bat
 call sindef.bat
 
 set /a SC=0, CC=180

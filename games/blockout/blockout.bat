@@ -1,11 +1,10 @@
 :: BlockOut Server version: Mikael Sollenborn 2017
 
 @echo off
-bg font 1 & cls & cmdwiz showcursor 0
+cls & cmdwiz showcursor 0
 if defined __ goto :START
-mode 220,110
 set __=.
-call %0 %* | cmdgfx_gdi.exe "" SkOW12f0e
+call %0 %* | cmdgfx_gdi.exe "" SkOW12f0:0,0,220,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -13,9 +12,10 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & bg font 6
 set /a W=220,H=110
-mode %W%,%H% & cls
+set /a F6W=W/2,F6H=H/2
+mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 del /Q EL.dat >nul 2>nul
@@ -240,16 +240,16 @@ goto :eof
 
 
 :MKBLOCKS
-del /Q %FN%>nul 2>nul
 set NOF_B=0
 set /A MAXX=-69,MINX=69,MAXY=-69,MINY=69,MAXZ=-69,MINZ=69
 set /A NOF=!PNOF!-1
+set OUT=""
 for /L %%i in (0,1,%NOF%) do (
   set /A X=%%i*4,Y=%%i*4+1,Z=%%i*4+2
   for %%a in (!X!) do for %%b in (!Y!) do for %%c in (!Z!) do (
     set ZT=!P:~%%c,1!&set YT=!P:~%%b,1!&set XT=!P:~%%a,1!
-    for /L %%d in (0,1,7) do set /a vx=!SVX!+!Vx%%d!+!XT!*2&set /a vx=!vx!*%MULVAL% & set /a vy=!SVY!+!Vy%%d!+!YT!*2&set /a vy=!vy!*%MULVAL% & set /a vz=!SVZ!+!Vz%%d!+!ZT!*2&set /a vz=!vz!*%ZMULVAL%&echo v !vx! !vy! !vz!>>%FN%)
-    for %%e in (!NOF_B!) do (for /L %%f in (0,1,5) do set /a f0=!F%%f_0!+%%e*8+1&set /a f1=!F%%f_1!+%%e*8+1&set /a f2=!F%%f_2!+%%e*8+1&set /a f3=!F%%f_3!+%%e*8+1&echo f !f0!// !f1!// !f2!// !f3!// >>%FN%
+    for /L %%d in (0,1,7) do set /a vx=!SVX!+!Vx%%d!+!XT!*2&set /a vx=!vx!*%MULVAL% & set /a vy=!SVY!+!Vy%%d!+!YT!*2&set /a vy=!vy!*%MULVAL% & set /a vz=!SVZ!+!Vz%%d!+!ZT!*2&set /a vz=!vz!*%ZMULVAL%&set OUT="!OUT:~1,-1! echo v !vx! !vy! !vz! & "
+    for %%e in (!NOF_B!) do for /L %%f in (0,1,5) do set /a f0=!F%%f_0!+%%e*8+1&set /a f1=!F%%f_1!+%%e*8+1&set /a f2=!F%%f_2!+%%e*8+1&set /a f3=!F%%f_3!+%%e*8+1&set OUT="!OUT:~1,-1! echo f !f0!// !f1!// !f2!// !f3!// &"
   )
   if !XT! gtr !MAXX! set MAXX=!XT!
   if !XT! lss !MINX! set MINX=!XT!
@@ -259,6 +259,10 @@ for /L %%i in (0,1,%NOF%) do (
   if !ZT! lss !MINZ! set MINZ=!ZT!
   set /A NOF_B+=1
 )
+
+set OUT="%OUT:~1,-2%"
+(%OUT:~1,-1%)>%FN%
+set OUT=
 
 for /L %%a in (1,1,3) do set /A B=!MINX!+!XP!&if !B! lss 0 set /A XP+=1
 for /L %%a in (1,1,3) do set /A B=!MAXX!+!XP!&if !B! gtr !PDIMM! set /A XP-=1

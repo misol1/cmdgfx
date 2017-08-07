@@ -1,5 +1,5 @@
 @echo off
-bg font 1 & cls & cmdwiz showcursor 0
+bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" kOSf1:0,0,160,80W10
@@ -11,7 +11,8 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
-mode %W%,%H%
+set /a F8W=W/2, F8H=H/2
+mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 call centerwindow.bat 0 -20
 

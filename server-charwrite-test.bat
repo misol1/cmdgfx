@@ -1,6 +1,8 @@
 :: Texturemap ignore-color scroll : Mikael Sollenborn 2016
 @echo off
-bg font 1 & mode 200,80 & cls
+bg font 8 & cls
+set /a F8W=200/2, F8H=80/2
+mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
@@ -8,6 +10,7 @@ call %0 %* | cmdgfx_gdi "" kOSf1:0,0,200,80W12
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
+set F8W=&set F8H=
 goto :eof
 
 :START

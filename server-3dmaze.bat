@@ -1,16 +1,18 @@
 :: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016
 @echo off
-cls & bg font 0
+cls & bg font 6
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START
-mode 180,80
+set /a F6W=180/2, F6H=80/2
+mode %F6W%,%F6H%
 set __=.
 cmdgfx_input.exe M5unW35x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600
 set __=
 mode 80,50
 mode con rate=31 delay=0
 cls & bg font 6
+set F6W=&set F6H=
 goto :eof
 
 :START

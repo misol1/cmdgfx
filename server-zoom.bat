@@ -1,5 +1,5 @@
 @echo off
-bg font 0 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" TkOSf0:0,0,220,110W12
@@ -11,7 +11,8 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=220, H=110
-mode %W%, %H%
+set /a F6W=W/2, F6H=H/2
+mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 set /a XMID=%W%/2, YMID=%H%/2
 set /a RX=0,RY=0,RZ=0, DIST=1000

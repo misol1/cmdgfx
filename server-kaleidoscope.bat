@@ -1,5 +1,5 @@
 @echo off
-bg font 0 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" kOSf0:0,0,220,110W13
@@ -12,7 +12,8 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 rem start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
 set /a W=220, H=110
-mode %W%,%H%
+set /a F6W=W/2, F6H=H/2
+mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -16
 del /Q EL.dat >nul 2>nul

@@ -1,6 +1,6 @@
 @echo off
 fscreen /hmc
-bg font 0 & cls & cmdwiz showcursor 0
+bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 cmdwiz getdisplaydim w
 set SW=%errorlevel%

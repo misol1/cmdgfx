@@ -1,16 +1,18 @@
 @echo off
 if defined __ goto :START
-cls & bg font 0
+cls & bg font 6
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
-mode 180,90
+set /a F6W=180/2, F6H=90/2
+mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW12x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400
+cmdgfx_input.exe m0unW12x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400
 set __=
 mode 80,50
 mode con rate=31 delay=0
 cmdwiz showcursor 1
 cls & bg font 6
+set F6W=&set F6H=
 goto :eof
 
 :: 3d mouse GUI : Mikael Sollenborn 2017
@@ -50,7 +52,7 @@ set /a MINRY=320, MAXRY=1000, KEY=0, SCALE=45
 if not "%MSCALE%" == "" set /a SCALE=%MSCALE%
 set /a RY=!MINRY!, RYP=0, RYSPAN=%MAXRY%-%MINRY%, FORCEDRYP=0, ENDREACH=0, TP=86
 set /a RYDELTA=%RYSPAN%/%MAXPLANES%
-set /a MD=0, RYPMUL=4, SWING=3, ENDCOUNT=-1
+set /a MD=0, RYPMUL=8, SWING=2, ENDCOUNT=-1
 set /a RYPMAX=15*!RYPMUL!
 set /a SELYMID=!YMID!, SELPLANE=-1, SELRZ=0, SELSCALE=-!SCALE!
 if not "%MSWING%" == "" set /a SWING=%MSWING%
