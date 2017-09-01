@@ -1,3 +1,4 @@
+:: 3d mouse GUI : Mikael Sollenborn 2017
 @echo off
 if defined __ goto :START
 cls & bg font 6
@@ -15,7 +16,6 @@ cls & bg font 6
 set F6W=&set F6H=
 goto :eof
 
-:: 3d mouse GUI : Mikael Sollenborn 2017
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180,H=90
@@ -84,7 +84,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	
 	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) & for %%i in (!INDEX!) do set /a "RY+=!RYDELTA!,SYMID=!YMID!,SRZ=0,SSCALE=-!SCALE!, RYC=(!RY!-!MINRY!)/80" & (if !SELPLANE! lss 0 if !RY! gtr !OBSMIN! if !RY! lss !OBSMAX! set text=!T%%i!&set OBSPLANE=%%i) & (if !RYC! gtr 8 set /a RYC=8) & for %%c in (!RYC!) do (if !SELPLANE! geq 0 if %%i neq !SELPLANE! set /a SYMID=!SELYMID!) & (if !SELPLANE! geq 0 if %%i equ !SELPLANE! set /a SRZ=!SELRZ!,SSCALE=!SELSCALE!) & set /a FGCOL=0&(if !G%%i!==0 set FGCOL=!PCOL%%c:~0,2!)&(if %%i neq !ENDINDEX! set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0 0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !PCOL%%c! & 3d plane-t%%i.obj 5,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0  0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !FGCOL! 0 b1") & if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
-	echo "cmdgfx: %BKSTR:~1,-1% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!"
+	echo "cmdgfx: %BKSTR:~1,-1% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!" F
 
 	set /p INPUT=
 	
@@ -135,6 +135,7 @@ if not defined STOP goto GUILOOP
 
 :ESCAPE
 endlocal & set SELCMD=%SELCMD%
+cmdwiz delay 100
 echo "cmdgfx: quit"
 echo Q>inputflags.dat
 del /Q plane-t*.obj > nul 2>nul
@@ -151,6 +152,7 @@ goto :eof
 	set /a RY+=!RYDELTA!*!INDEX!& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) &set /a RY+=!RYDELTA!&set /a "RYC=(!RY!-!MINRY!)/80" & (if !RYC! gtr 8 set /a RYC=8) & for %%e in (!RYC!) do for %%c in (!INDEX!) do set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,0:0 -3500:0,0:-1150,0:7000 -!SCALE!,-!SCALE!,-!SCALE!,0,0,0 0,0,0,10 %XMID%,%YMIDCLICK%,!DIST!,%ASPECT% 1 0 !CH%%c!"& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
+	set /a MX*=2, MY*=2
 	set /a CHKY=!MY!+%H%
 
 	del /Q capture-1.gxy >nul 2>nul

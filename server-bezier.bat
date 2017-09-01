@@ -4,7 +4,7 @@ bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" ekOSfa:0,0,1156,600W10
+cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" eSfa:0,0,1156,600
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -24,7 +24,7 @@ set "_SIN="
 call centerwindow.bat 0 -15
 
 set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=0, KEY=0
-set /a LINEGAP=15, NOFBEZ=19, LNCNT=1, DCNT=0, REP=80, COL=10, STARTLINE=1, REALCOL=1, CHANGE=1, CHANGESTEPS=200 & set /a NOFLINES=!NOFBEZ!*!LINEGAP!& set /a CHANGECOUNT=!CHANGESTEPS!,STARTCNT=0
+set /a LINEGAP=15, NOFBEZ=11, LNCNT=1, DCNT=0, REP=80, COL=10, STARTLINE=1, REALCOL=1, CHANGE=1, CHANGESTEPS=200 & set /a NOFLINES=!NOFBEZ!*!LINEGAP!& set /a CHANGECOUNT=!CHANGESTEPS!,STARTCNT=0
 set PALETTE1=000000,000000,000000,000000,000000,0020ff,0040ff,0060ff,0080ff,20a0ff,20b0ff,50c0ff,80e0ff,b0f0ff,f0ffff,ffffff
 set PALETTE2=-
 set PALETTE3=000000,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00,00ff00
@@ -34,7 +34,6 @@ set DRAWOP=0&set D0=line&set D1=ipoly&set D2=fellipse&set D3=fbox&set D4=fcircle
 for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
 cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
-del /Q EL.dat >nul 2>nul
 
 set /a P1=-1,P2=1,P3=-1,P4=2,P5=-1,P6=2,P7=-1,P8=2,SC=21211,CC=17675,SC2=-15297,CC2=7463,SC3=60228,CC3=-32628,SC4=-25759,CC4=16335
 
@@ -62,11 +61,12 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do for %%b in (!CNT!) do (if not "!LN%%b!"==" " set STR="!STR:~1,-1!&!DRAW! !COLVAL! 0 !LN%%b!")& set /a CNT+=!LINEGAP!,COLVAL+=1 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 
-	if !STARTCNT! lss 0 if !DIV! == 1 echo "cmdgfx: fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" - !PAL!
- 	if !STARTCNT! lss 0 if !DIV! == 2 echo "cmdgfx: fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" - !PAL!
+	if !STARTCNT! lss 0 if !DIV! == 1 echo "cmdgfx: fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1!" F !PAL!
+ 	if !STARTCNT! lss 0 if !DIV! == 2 echo "cmdgfx: fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" F !PAL!
 	set STR=
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 7 - 3") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV! 
@@ -85,5 +85,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 endlocal
-cmdwiz showcursor 1
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

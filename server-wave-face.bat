@@ -2,7 +2,7 @@
 bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,320,100,147,80W15
+cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,320,100,147,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -25,9 +25,6 @@ set /a XMID=90/2, YMID=80/2, BGCOL=0, IC=4, CC=15
 set /a CNT=0 & for %%a in (myface.txt evild.txt ugly0.pcx mario1.gxy emma.txt glass.txt fract.txt checkers.gxy mm.txt wall.pcx apa.gxy ful.gxy) do set I!CNT!=%%a & set /a CNT+=1
 
 set TEXT="text e 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,78"
-
-set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (!CC!) do (
@@ -54,9 +51,10 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
   
   if !MODE!==9 set OUT="cmdgfx: !BKG:~1,-1! & block 0 0,0,320,100 0,0 -1 0 0 ? ? y+x/20+140+sin(!XC!/300+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/225+x/!BXA!+y/!BYA!)*10 from 0,0,147,80 & !TEXT:~1,-1!"
   
-  echo "!OUT:~1,-1! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" f1:0,0,320,100,147,80
+	echo "!OUT:~1,-1!" f1:0,0,320,100,147,80F
 	
-  if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 	
   if !KEY! == 331 set /a XCP-=1 & if !XCP! lss 0 set /a XCP=0
   if !KEY! == 333 set /a XCP+=1	
@@ -76,3 +74,4 @@ if not defined STOP goto REP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

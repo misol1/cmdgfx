@@ -2,9 +2,10 @@
 bg font 8 & cls
 set /a F8W=160/2, F8H=80/2
 mode %F8W%,%F8H%
+cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,350,80,160,80W10
+cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,350,80,160,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -34,7 +35,6 @@ set COL0=00000f,080820,101030,181840,202050,282860,303070,383880,404090,405090,5
 set COL1=00000f,080820,101030,181834,203050,283858,303070,503880,604090,705090,717995,686870,102040,183840,203050,282860,103070  000820
 set COL2=- -
 set /a XP=190, RW=350, CNT=0
-del /Q EL.dat >nul 2>nul
 
 set /a SHOWHELP=1
 set HELPMSG=text 8 0 0 SPACE\-d/D\-h 1,78
@@ -43,9 +43,10 @@ if !SHOWHELP!==1 set MSG=%HELPMSG%
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
-	echo "cmdgfx: fbox 0 0 db 0,0,%RW%,%H% & 3d objects\cube.ply 4,0 !CRX1!,!CRY1!,!CRZ1! 0,0,0 -790,-790,-790,0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% %COLS5% & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX2!,!CRY2!,!CRZ2! 0,0,0 -480,-480,-480,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS4% & block 0 0,0,%RW%,80 0,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,160,80 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX3!,!CRY3!,!CRZ3! 0,0,0 -270,-270,-270,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS3% & block 0 20,0,310,80 20,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,120,80 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX4!,!CRY4!,!CRZ4! 0,0,0 -160,-160,-160,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS2% & block 0 40,10,270,60 40,10 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,80,60 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX5!,!CRY5!,!CRZ5! 0,0,0 -60,-60,-60,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS1% & block 0 50,30,240,20 50,30 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,60,20 & !MSG!" - !COL%%c!
+	echo "cmdgfx: fbox 0 0 db 0,0,%RW%,%H% & 3d objects\cube.ply 4,0 !CRX1!,!CRY1!,!CRZ1! 0,0,0 -790,-790,-790,0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% %COLS5% & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX2!,!CRY2!,!CRZ2! 0,0,0 -480,-480,-480,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS4% & block 0 0,0,%RW%,80 0,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,160,80 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX3!,!CRY3!,!CRZ3! 0,0,0 -270,-270,-270,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS3% & block 0 20,0,310,80 20,0 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,120,80 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX4!,!CRY4!,!CRZ4! 0,0,0 -160,-160,-160,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS2% & block 0 40,10,270,60 40,10 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,80,60 & fbox 0 0 db 160,0,320,%H% & 3d objects\cube.ply 4,0 !CRX5!,!CRY5!,!CRZ5! 0,0,0 -60,-60,-60,0,0,0 1,0,0,10 %OFFXMID%,%YMID%,!DIST!,%ASPECT% %COLS1% & block 0 50,30,240,20 50,30 -1 0 0 - xor(col(x,y),col(x+%XP%,y)) - - - 0,0,60,20 & !MSG!" F !COL%%c!
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 		
 	for /L %%a in (1,1,%NOFCUBES%) do set /a CRX%%a+=!CRXA%%a!,CRY%%a+=!CRYA%%a!,CRZ%%a+=!CRZA%%a!
 	if !KEY! == 112 cmdwiz getch
@@ -60,4 +61,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

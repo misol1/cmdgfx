@@ -6,7 +6,7 @@ cmdwiz getquickedit
 set QE=%errorlevel%
 cmdwiz setquickedit 0
 set __=.
-call %0 %* | cmdgfx_gdi "" Sf2:0,0,350,75,120,75
+cmdgfx_input.exe m0nW8x | call %0 %* | cmdgfx_gdi "" Sf2:0,0,350,75,120,75
 set __=
 cmdwiz setquickedit %QE%
 set QE=
@@ -40,28 +40,23 @@ rem set /a P1=24,P2=53,P3=-42,P4=-31, SC=285,CC=-30,SC2=-295,CC2=-113
 rem set /a P1=14,P2=13,P3=-12,P4=-11, SC=285,CC=-30,SC2=-295,CC2=-113
 rem set /a P1=77,P2=86,P3=-95,P4=-107, SC=285,CC=-30,SC2=-295,CC2=-113
 
-del /Q EL.dat >nul 2>nul
-
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 
    if !MODE! == 0 (
-		echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!& !HELP!" -k-O-W
+		echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!& !HELP!" F
 		
-		cmdgfx "" W10mn
-		set MR=!errorlevel!
-
+		set /p INPUT=
+		for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+		
 		set DRAW=""
-		if not !MR!==-1 (
-			set /a "KEY=!MR!>>22, KD=(!MR!>>21) & 1"
-			set /a "ME=!MR! & 1"
-			if not !ME! == 0 (
-				set /a "ML=(!MR!&2)>>1, MR=(!MR!&4)>>2, MWD=MT=(!MR!&8)>>3, MWU=(!MR!&16)>>4, MX=(!MR!>>5)&511, MY=(!MR!>>14)&127"
-				if !MWD! == 1 set /a SIZE-=1&if !SIZE! lss 1 set SIZE=1
-				if !MWU! == 1 set /a SIZE+=1&if !SIZE! gtr 4 set SIZE=4
-				for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!MX!+200, MYP=!MY%%a!*!SIZE!+!MY!"&set OUTP=!OUTP!!MXP!,!MYP!,
-				if !ML! == 1 set DRAW="ipoly 1 0 ? 8 !OUTP:~0,-1!"
-				if !MR! == 1 set DRAW="ipoly 1 0 ? 5 !OUTP:~0,-1!"
+		if not "!EV_BASE:~0,1!" == "N" (
+			if !M_EVENT!==1 (
+				if !M_WHEEL! == 1 set /a SIZE-=1&if !SIZE! lss 1 set SIZE=1
+				if !M_WHEEL! == -1 set /a SIZE+=1&if !SIZE! gtr 4 set SIZE=4
+				for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!M_X!+200, MYP=!MY%%a!*!SIZE!+!M_Y!"&set OUTP=!OUTP!!MXP!,!MYP!,
+				if !M_LB! == 1 set DRAW="ipoly 1 0 ? 8 !OUTP:~0,-1!"
+				if !M_RB! == 1 set DRAW="ipoly 1 0 ? 5 !OUTP:~0,-1!"
 				set OUTP=
 			)
 		)
@@ -78,9 +73,10 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 		
    ) else (
 
-		echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!& !HELP!" kOW8
+		echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 200,0 -1 0 0 ?1??=?0?? & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!& !HELP!" F
 
-		if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+		set /p INPUT=
+		for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 		
 		set DRAW=""
 
@@ -116,4 +112,6 @@ rem		for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS!+200, MYP=!MY%%a
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

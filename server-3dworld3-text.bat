@@ -7,7 +7,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M15unW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110
+cmdgfx_input.exe M0unW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
 set __=
 mode 80,50
 mode con rate=31 delay=0
@@ -41,8 +41,8 @@ if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
 
-set FN=3dworld.obj
-set FN2=3dworld-ground.obj
+set FN=objects\3dworld.obj
+set FN2=objects\3dworld-ground.obj
 
 set /A PLX=%SLOTS%/2,PLZ=%YSLOTS%/2
 set /A XC=-%SLOTS%
@@ -53,11 +53,11 @@ set /A CNT=0 & for /L %%i in (0,1,%YSLOTM%) do set SS=!WRLD%%i!& for /L %%j in (
 
 set /A TX=(%XC%+%PLX%)*%MULVAL%&set TY=0&set /A TZ=(%YC%+%PLZ%)*%MULVAL%*-1
 
-if exist %FN% if exist %FN2% set /A TX=(%XC%+%PLX%)*%MULVAL%&set TY=0&set /A TZ=(%YC%+%PLZ%)*%MULVAL%*-1 & goto SKIPGEN
-
 set NOF_OBJECTS=%CNT%
 set /A NOF_V=%NOF_OBJECTS%*8
 set /A NOF_F=%NOF_OBJECTS%*6
+
+if exist %FN% if exist %FN2% set /A TX=(%XC%+%PLX%)*%MULVAL%&set TY=0&set /A TZ=(%YC%+%PLZ%)*%MULVAL%*-1 & goto SKIPGEN
 
 cmdwiz print "usemtl img\\tile_door.pcx\nvt 0 0\nvt 0 1\nvt 1 1\nvt 1 0\n">%FN%
 
@@ -117,17 +117,18 @@ set /A MAP=0,ZMOD=0,XMOD=0
 set MAPTXT=image 3dworld2.dat e 0 0 - 146,2
 
 set HELPT=box c 0 fe 3,106,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ 4,107
-set HELP=&set /a HLP=0
+set /a HLP=1
+set HELP=&if !HLP!==1 set HELP=!HELPT!
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
 set FN4=wrld-temp.obj
-set /a ENEMY=1, WCNT=0
+set /a ENEMY=0, WCNT=0
+set DELOBJ=& if !ENEMY! == 1 set DELOBJ=D
 
 set /A "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 copy /Y %FN% %FN4%>nul
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 for /l %%a in (1,1,10) do set /p INPUT=
 
 set /a SW/=2, SH/=2
@@ -159,7 +160,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>!FN3!		
 	)
 	
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" Df0:0,0,180,110
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" F!DELOBJ!f0:0,0,180,110
 	
 	set /p INPUT=
 rem echo !INPUT!
@@ -180,7 +181,7 @@ rem echo !INPUT!
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4, TY=0, BOUNDSCHECK=1
 				if !KEY! == 27 set STOP=1
-				if !KEY! == 101 set /A ENEMY=1-!ENEMY! & copy /Y %FN% %FN3%>nul 
+				if !KEY! == 101 set /A ENEMY=1-!ENEMY! & set DELOBJ=&if !ENEMY! == 1 set DELOBJ=D
 				set /a KEY=0
 			)
 			if !K_DOWN!==1 set /a KEY=!K_KEY!
@@ -188,8 +189,8 @@ rem echo !INPUT!
 	)
 
 	if not !KEY! == 0 (
-		if !KEY! == 331 set /a RY+=6&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
-		if !KEY! == 333 set /a RY-=6&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 331 set /a RY+=7&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		if !KEY! == 333 set /a RY-=7&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 106 set /a RY+=6&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 107 set /a RY-=6&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 97 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&call :MOVE 1 2&set RY=!ORY!
@@ -211,10 +212,11 @@ rem echo !INPUT!
 if not defined STOP goto LOOP
 ::cmdwiz gettime&set /A TLAPSE=(!errorlevel!-%ORGT%)/100&echo !TLAPSE! cs&pause&pause
 
-del /Q %FN% %FN2% %FN4% wrld-temp?.obj
+cmdwiz delay 100
 endlocal
 echo "cmdgfx: quit"
 echo Q>inputflags.dat
+del /Q %FN4% wrld-temp?.obj
 goto :eof
 
 :MOVE <direction> <div>

@@ -6,7 +6,7 @@ if defined __ goto :START
 set /a F6W=240/2, F6H=110/2
 mode %F6W%,%F6H%
 set __=.
-call %0 %* | cmdgfx_gdi.exe "" SkOW20f0:0,0,240,110
+cmdgfx_input.exe knW20x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -17,9 +17,6 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=240, H=110
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
-
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
 
 call centerwindow.bat 0 -16
 
@@ -58,9 +55,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set PLY=""& if !SHOWPLY!==1 set XFLIP=0&(if !DIR!==-1 set XFLIP=1)&set /A IMG=!CNT! %% 8/4+1&set PLY="image img\!PLNAME!!IMG!.gxy 0 0 0 -1 !PLXPOS!,!PLYPOS! !XFLIP!"
 
-	echo "cmdgfx: fbox 1 9 b2 0,0,%W%,10 & fbox 1 9 b1 0,3,%W%,10 & fbox 1 9 b0 0,9,%W%,%H% & !L2:~1,-1! & !L1:~1,-1! & fbox a 0 20 0,95,%W%,50 & fbox a e b2 0,96,%W%,50 & fbox a e b1 0,102,%W%,50 & !PLY:~1,-1! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 1 9 b2 0,0,%W%,10 & fbox 1 9 b1 0,3,%W%,10 & fbox 1 9 b0 0,9,%W%,%H% & !L2:~1,-1! & !L1:~1,-1! & fbox a 0 20 0,95,%W%,50 & fbox a e b2 0,96,%W%,50 & fbox a e b1 0,102,%W%,50 & !PLY:~1,-1!" F
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 
 	set /A PLYB=!PLYPOS!+16&set /A PLYB2=!PLYPOS!-15+!DWN!*10
 
@@ -77,5 +75,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto SHOWLOOP
 
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
 endlocal

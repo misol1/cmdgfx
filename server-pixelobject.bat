@@ -2,7 +2,7 @@
 bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,160,80W12
+cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -24,8 +24,6 @@ set COLS_1=f 0 04   f 0 04   b 0 .  9	 0 .   9 0 .   9 0 .  1 0 .  1 0 .  1 0 . 
 set /a COLCNT=0, OBJCNT=0
 set HELP=text 9 0 0 S\nP\nA\nC\nE\n\n\80t\no\n\ns\nw\ni\nt\nc\nh\n\no\nb\nj\ne\nc\nt\n 157,56
 set OBJ0=plot-torus&set OBJ1=plot-sphere&set OBJ2=plot-double-sphere&set OBJ3=plot-cube&set OBJ4=linecube
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
 set SCALE0=1.2,1.2,1.2
 set SCALE1=120,120,120
 set SCALE2=520,520,520
@@ -34,9 +32,10 @@ set SCALE=%SCALE0%
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do for %%o in (!OBJCNT!) do (
-	echo "cmdgfx: fbox 7 0 20 0,0,%W%,%H% & 3d objects\!OBJ%%o!.ply %DRAWMODE%,1 !CRX!,!CRY!,!CRZ! 0,0,0 !SCALE!,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLS_%%c! & %HELP% & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 7 0 20 0,0,%W%,%H% & 3d objects\!OBJ%%o!.ply %DRAWMODE%,1 !CRX!,!CRY!,!CRZ! 0,0,0 !SCALE!,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLS_%%c! & %HELP%" F
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 
 	set /A CRZ+=5,CRX+=3,CRY-=4
 	if !KEY! == 112 cmdwiz getch
@@ -50,4 +49,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do for %%o 
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

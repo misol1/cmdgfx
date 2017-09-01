@@ -2,7 +2,7 @@
 bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,160,80W12
+cmdgfx_input.exe knW13x |call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -21,7 +21,6 @@ set /a DRAWMODE=1, NOF=6, DIST=2500, MODE=0
 set ASPECT=0.75
 
 call sindef.bat
-del /Q EL.dat >nul 2>nul
 
 set /A XP1=0,YP1=0,ZP1=-250
 set /A XP2=0,YP2=0,ZP2=250
@@ -57,9 +56,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for %%i in (!MODE!) do for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set /a XR%%c+=!XRA%%c!,YR%%c+=!YRA%%c!&set CRSTR="!CRSTR:~1,-1!&3d objects\!OBJ%%i! !DRAWMODE!,1 !XR%%c!,!YR%%c!,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! !SCALE%%i! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
 	
-	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 7 0 20 SPACE 1,78" f1
+	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 7 0 20 SPACE 1,78" Ff1
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
 	set /a XROT-=3, YROT+=2, ZROT+=1
 
@@ -73,7 +73,9 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
 goto :eof
 
 :SETCOLS

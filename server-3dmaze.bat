@@ -7,7 +7,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M5unW35x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600
+cmdgfx_input.exe M0unW35x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600
 set __=
 mode 80,50
 mode con rate=31 delay=0
@@ -41,8 +41,8 @@ if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /a CNT+=1
 set /a YSLOTS=%CNT%
 
-set FN=3dworld-maze.obj
-set FN2=3dworld-ground-maze.obj
+set FN=objects\3dworld-maze.obj
+set FN2=objects\3dworld-ground-maze.obj
 
 set /a PLX=%SLOTS%/2, PLZ=%YSLOTS%/2
 set /a XC=-%SLOTS%, SLOTM=%SLOTS%-1
@@ -112,14 +112,13 @@ set /a XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 cmdwiz setwindowpos %WPX% %WPY%
 set /a MPY=%SH%-%H%/3 & cmdwiz setmousecursorpos %SW% !MPY!
 cmdwiz gettime & set ORGT=!errorlevel!
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
 for /l %%a in (1,1,10) do set /p INPUT=
 
 :LOOP
 for /l %%1 in (1,1,300) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" F
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
@@ -171,6 +170,7 @@ if not defined STOP goto LOOP
 
 ::del /q %FN% %FN2%
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
 echo Q>inputflags.dat
 mode con rate=31 delay=0

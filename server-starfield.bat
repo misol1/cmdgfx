@@ -2,7 +2,7 @@
 bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,200,80W11
+cmdgfx_input.exe knW11x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -36,9 +36,11 @@ set COLCNT=1
 
 set HELP=text 3 0 0 SPACE\-to\-change\-color,\-ENTER\-to\-change\-stars,\-z\-to\-rotate_stars,\-d/D\-to\-zoom 58,78
 
+if exist objects\starfield400_0.ply goto SKIPGEN
+
 set /a FCNT=0
 :SETUPLOOP
-	set WNAME=starfield%FCNT%.ply
+	set WNAME=objects\starfield400_%FCNT%.ply
 	echo ply>%WNAME%
 	echo format ascii 1.0 >>%WNAME%
 	set /A NOF_V=%NOF_STARS% * 1
@@ -51,15 +53,14 @@ set /a FCNT=0
 	set /A FCNT+=1
 if %FCNT% lss 2 goto SETUPLOOP
 
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
-
+:SKIPGEN
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
-	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & 3d starfield0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d starfield1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,0.75 !COLS2_%%c! & %HELP% & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & 3d objects\starfield400_0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\starfield400_1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,0.75 !COLS2_%%c! & %HELP%" F
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 
 	if !DIR!==0 set /A TX+=10&if !TX! gtr 2600 set TX=-2600
 	if !DIR!==0 set /A TX2+=10&if !TX2! gtr 2600 set TX2=-2600
@@ -83,5 +84,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
-del /Q starfield?.ply >nul
+echo Q>inputflags.dat

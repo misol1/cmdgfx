@@ -23,7 +23,7 @@ set /a KEY=0
 	if "%KEY%" == "27" if "%KEYDOWN%" == "1" goto OUT
 
 	if "%INPUT:~0,1%" == "N" echo ...
-	if "%INPUT:~0,1%" == "E" echo -
+	rem if "%INPUT:~0,1%" == "E" echo -
 
 goto REP
 

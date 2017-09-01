@@ -94,7 +94,7 @@ set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
 
-	set /a A1+=1, A2+=2, A3-=1, A4+=5, TRZ=!CRZ!
+	set /a A1+=1, A2+=2, A3-=1, A4+=7, TRZ=!CRZ!
 	if !MODE!==0 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db"
 	if !MODE!==1 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t6.obj 5,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db 9 0 db 2 0 db a 0 db 3 0 db b 0 db 4 0 db c 0 db 5 0 db d 0 db 6 0 db e 0 db"
 	if !MODE!==2 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\spaceship.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 410,410,410,0,0,0 1,0,0,10 35,35,!DIST!,%ASPECT% 1 0 db"
@@ -399,25 +399,25 @@ for /L %%_ in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
 
   set BKG="fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & image img\!I%%i! %%c 0 0 e 180,0 0 0 198,105"
 
-  if !MODE!==0 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==0 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==1 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+205+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==1 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+205+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==2 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+sin(!YC!/150+x/200+y/!BXA!+y/!BYA!)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==2 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BYA!+y/!BXA!)*10 10+y+sin(!YC!/150+x/200+y/!BXA!+y/!BYA!)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==3 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/300+y/60+x/!BYA!+x/!BXA!)*10 10+y+sin(!YC!/150+x/50+y/!BXA!+y/!BYA!)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==3 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/300+y/60+x/!BYA!+x/!BXA!)*10 10+y+sin(!YC!/150+x/50+y/!BXA!+y/!BYA!)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==4 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 10+y+cos(!YC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==4 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 10+y+cos(!YC!/100+x/!BXA!*0.4+y/!BYA!*0.4)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==5 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!*3+y/!BYA!*2)*6 10+y+cos(!YC!/100+x/!BXA!*2+y/!BYA!*2)*4 from" f%FNT%:0,0,380,105
+  if !MODE!==5 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!*3+y/!BYA!*2)*6 10+y+cos(!YC!/100+x/!BXA!*2+y/!BYA!*2)*4 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==6 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+tan(!YC!/100+x/!BXA!*40+y/!BYA!*40)*1 from" f%FNT%:0,0,380,105
+  if !MODE!==6 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+tan(!YC!/100+x/!BXA!*40+y/!BYA!*40)*1 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==7 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/40+x/!BXA!*5+y/!BYA!*8)*tan(!YC!/700+x/!BXA!*0.3+y/!BYA!*0.3)*2 from" f%FNT%:0,0,380,105
+  if !MODE!==7 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/40+x/!BXA!*5+y/!BYA!*8)*tan(!YC!/700+x/!BXA!*0.3+y/!BYA!*0.3)*2 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==8 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/90+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/20+x/5+y/4)*tan(!YC!/1700+cos(!XC!/600)*x/90+sin(!YC!/700)*y/70)+sin(!XC!/400-!YC!/220)*8 from" f%FNT%:0,0,380,105
+  if !MODE!==8 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? x+215+sin(!XC!/90+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/20+x/5+y/4)*tan(!YC!/1700+cos(!XC!/600)*x/90+sin(!YC!/700)*y/70)+sin(!XC!/400-!YC!/220)*8 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
-  if !MODE!==9 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? y+x/20+170+sin(!XC!/300+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/225+x/!BXA!+y/!BYA!)*10 from" f%FNT%:0,0,380,105
+  if !MODE!==9 start /B /HIGH cmdgfx_gdi "!BKG:~1,-1! & block 0 0,0,380,105 0,0 -1 0 0 ? ? y+x/20+170+sin(!XC!/300+x/!BXA!+y/!BYA!)*10 10+y+cos(!YC!/225+x/!BXA!+y/!BYA!)*10 from 0,0,147,83" f%FNT%:0,0,380,105,147,83
   
   	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq %3 set /a STOP=1
 

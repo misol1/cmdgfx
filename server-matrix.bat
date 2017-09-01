@@ -2,7 +2,7 @@
 bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" ekOSf5:0,0,310,160,155,55W15
+cmdgfx_input.exe knW16x | call %0 %* | cmdgfx_gdi "" eSf5:0,0,310,160,155,55
 set __=
 cls & bg font 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
@@ -19,7 +19,6 @@ call centerwindow.bat 0 -20
 
 echo "cmdgfx: fbox 2 0 00 0,0,%WW%,160"
 set STREAM="??00=??00,??40=2?41,??41=2000,??80=2?81,??81=2000,??d0=2?d1,??d1=2000,????=??++"
-del /Q EL.dat >nul 2>nul
 
 set PAL0=-
 set PAL1=000000,000000,022476,000000,000000,000000,000000,000000,000000,000000,0872ff
@@ -45,9 +44,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 16,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel f 0 !C1!!C2! !X!,80"
   for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
 
-  for %%c in (!PALC!) do for %%i in (!IMGI!) do for %%n in (!IMGCD!) do set IMAGE=!IMG%%i! & set IMAGE=!IMAGE:_=%%n! & echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & fbox ? ? 20 0,0,154,54 & image !IMAGE! ? ? 0 -1 !XP!,!YP! & block 0 %W%,80,%W%,75 0,76 -1 0 0 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 0 0 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0 & !MSG!" - !PAL%%c!
+  for %%c in (!PALC!) do for %%i in (!IMGI!) do for %%n in (!IMGCD!) do set IMAGE=!IMG%%i! & set IMAGE=!IMAGE:_=%%n! & echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 2???=a???& block 0 %W%,2,%W%,75 0,0 00 & fbox ? ? 20 0,0,154,54 & image !IMAGE! ? ? 0 -1 !XP!,!YP! & block 0 %W%,80,%W%,75 0,76 -1 0 0 f???=2??? & block 0 %W%,2,%W%,75 0,76 00 0 0 a???=2???,2???=2???,f???=2???,e???=a??? & block 0 0,0,%W%,75 0,76 20 & block 0 0,76,%W%,75 0,0 & !MSG!" F !PAL%%c!
   
-  if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 
   if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
   if !KEY! == 112 cmdwiz getch
@@ -63,7 +63,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 
-echo "cmdgfx: quit"
 cmdwiz delay 100
+echo "cmdgfx: quit"
+echo Q>inputflags.dat
 del /Q matrix-src-copy.bat>nul 2>nul
 endlocal

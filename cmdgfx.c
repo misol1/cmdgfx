@@ -24,14 +24,15 @@
 // Issues:
 // 1. Code optimization: Re-use images used several times, same way as for objects
 // 2. TinyExpr: optimize recursion
-// (3. Use *10 for rotations instead of *4?)
+//	3. Not working as stand-alone command when cmdgfx is running as output server. Possible to fix?
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
 // 2. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
 // 3. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
-// 4. Code fix: Figure out why RX rotation not working as in Amiga/ASM 3d world (i.e. not working as expected in 3dworld.bat)
-// (5. Not likely: z-buffer)
+// 4. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
+// (5. Use *10 for easier to understand rotation values instead of *4?)
+// (6. Not likely: z-buffer)
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -114,13 +115,25 @@ int MouseEventProc(MOUSE_EVENT_RECORD mer) {
 	return res;
 }
 
+
+int consoleFgCol=-1, consoleBgCol=-1;
+
+void GetConsoleColor(){
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	int col = 0x7;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+	
+	consoleFgCol = info.wAttributes & 0xf;
+	consoleBgCol = (info.wAttributes>>4) & 0xf;
+}
+
 int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor) {
 	char *text, ch, *pbcol, *pbchar;
 	int fr, i, j, 	inlen;
 	int x = 0, y = 0, yp=0;
 	int v, v16, fgCol, bgCol, oldColor;
 	unsigned char *cchars, *ccols;
-	int w = 256, h = 128;
+	int w = 256, h = 256;
 	FILE *ifp;
 
 	*w1 = -1;
@@ -193,11 +206,24 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 				}
 				default: {
 					oldColor = color;
-					if (!bIgnoreFgColor)
-						fgCol = GetCol(ch, fgCol);
+					if (!bIgnoreFgColor) {
+						if (ch == 'u' || ch == 'U') {
+							if (consoleBgCol==-1)
+								GetConsoleColor();
+							fgCol = ch == 'u'? consoleFgCol : consoleBgCol;
+						} else
+							fgCol = GetCol(ch, fgCol);
+					}
 					i++;
-					if (!bIgnoreBgColor)
-						bgCol = GetCol(text[i], bgCol);
+					if (!bIgnoreBgColor) {
+						ch = text[i];
+						if (ch == 'u' || ch == 'U') {
+							if (consoleBgCol==-1)
+								GetConsoleColor();
+							bgCol = ch == 'u'? consoleFgCol : consoleBgCol;
+						} else
+							bgCol = GetCol(ch, bgCol);
+					}
 					color = fgCol | (bgCol<<4);
 				}
 			}
@@ -245,16 +271,36 @@ int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgc
 	int writeCols = 1, writeChars = 1, writeFgBg = 3;
 
 	if (strlen(s_fgcol)==1) {
-		if (s_fgcol[0] == '?')
-			writeCols = 0, writeFgBg -= 1;
 		*fgcol = strtol(s_fgcol, NULL, 16);
+		if (s_fgcol[0] == 'U') {
+			if (consoleBgCol==-1)
+				GetConsoleColor();
+			*fgcol = consoleBgCol;
+		}
+		else if (s_fgcol[0] == 'u') {
+			if (consoleFgCol==-1)
+				GetConsoleColor();
+			*fgcol = consoleFgCol;
+		}
+		else if (s_fgcol[0] == '?')
+			writeCols = 0, writeFgBg -= 1;
 	} else
 		*fgcol = strtol(s_fgcol, NULL, 10);
 
 	if (strlen(s_bgcol)==1) {
-		if (s_bgcol[0] == '?')
-			writeCols = 0, writeFgBg -= 2;
 		*bgcol = strtol(s_bgcol, NULL, 16);
+		if (s_bgcol[0] == 'U') {
+			if (consoleBgCol==-1)
+				GetConsoleColor();
+			*bgcol = consoleBgCol;
+		}
+		else if (s_bgcol[0] == 'u') {
+			if (consoleFgCol==-1)
+				GetConsoleColor();
+			*bgcol = consoleFgCol;
+		}
+		else if (s_bgcol[0] == '?')
+			writeCols = 0, writeFgBg -= 2;
 	} else
 		*bgcol = strtol(s_bgcol, NULL, 10);
 
@@ -444,7 +490,7 @@ CHAR_INFO * readScreenBlock() {
 
 #ifndef GDI_OUTPUT
 
-void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, uchar *fgPalette, uchar *bgPalette) {
+void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y) {
 	CHAR_INFO *str;
 	COORD a, b;
 	SMALL_RECT r;
@@ -470,8 +516,10 @@ void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *v
 	}
 	
 	b.X = b.Y = r.Left = r.Top = 0;
-	r.Right = a.X;
-	r.Bottom = a.Y;
+	r.Right = a.X + x;
+	r.Bottom = a.Y + y;
+	r.Left = x;
+	r.Top = y;
 	WriteConsoleOutput(hCurrHandle, str, a, b, &r);
 
 	free(str);
@@ -597,7 +645,7 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 			DeleteObject(hBmp1);
 		}
 	}
-			
+	
 	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 	if (outdata) free(outdata);
 }
@@ -1349,14 +1397,15 @@ int main(int argc, char *argv[]) {
 	int bAllowRepeated3dTextures = 0;
 	int captX = 0, captY=0, captW, captH, captFormat=1, captureCount = 0, bCapture = 0;
 	char sFlags[130];
+
+	int gx = 0, gy = 0;
+	int outw = 0, outh = 0;
 	
 #ifdef GDI_OUTPUT
 	int fontIndex = 6;
 	unsigned int fgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	unsigned int bgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
-	int gx = 0, gy = 0;
 	int bWriteGdiToFile = 0;
-	int outw = 0, outh = 0;
 	unsigned int orgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 	0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 #else
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
@@ -1398,10 +1447,11 @@ int main(int argc, char *argv[]) {
 		int nof;
 		for (i=0; i < strlen(argv[2]); i++) {
 			switch(argv[2][i]) {
-#ifdef GDI_OUTPUT
 				case 'f': 
+#ifdef GDI_OUTPUT
 				i++; fontIndex = GetHex(argv[2][i]);
 				if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+#endif
 				if (argv[2][i+1] == ':' && argv[2][i+2]) {
 					fnd = strchr(&argv[2][i+2], ';');
 					if (!fnd) strcpy(fin, &argv[2][i+2]); else { nof = fnd-&argv[2][i+2]; strncpy(fin, &argv[2][i+2], nof); fin[nof]=0; }
@@ -1410,7 +1460,6 @@ int main(int argc, char *argv[]) {
 					if (nof >= 4 && nof < 6) outh = tyres;
 				}
 				break;
-#endif
 				case 'o': bWriteReturnToFile = 1; break;
 				case 'O': bWriteReturnToFile = 2; break;
 			}
@@ -2507,10 +2556,12 @@ int main(int argc, char *argv[]) {
 			}
 	#else
 			if (bPaletteSet)
-				convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette);
+				convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette, gx, gy);
 			else
-				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL);
+				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL, gx, gy);
 	#endif
+	
+			frameCounter++;
 		}
 		bDoNothing = 0;
 		
@@ -2661,8 +2712,6 @@ int main(int argc, char *argv[]) {
 					if (argv1[i] == ' ' && ast) argv1[i] = 1;
 					if (argv1[i] == '\"') { ast = 1 - ast; argv1[i] = ' '; }
 				}
-
-				frameCounter++;
 				
 				pch = strtok(argv1, " \n");
 				strcpy(argv1, pch);
@@ -2727,14 +2776,15 @@ int main(int argc, char *argv[]) {
 							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
 							case 'I': g_bFlushAfterELwrite = neg? 0 : 1; break;
 							
-#ifdef GDI_OUTPUT
 							case 'f': 
 							{
 								int oldtx=txres, oldty=tyres;
 								char *fnd, fin[64];
 								int nof;
+#ifdef GDI_OUTPUT
 								i++; fontIndex = GetHex(pch[i]);
 								if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+#endif
 								if (pch[i+1] == ':' && pch[i+2]) {
 									fnd = strchr(&pch[i+2], ';');
 									if (!fnd) strcpy(fin, &pch[i+2]); else { nof = fnd-&pch[i+2]; strncpy(fin, &pch[i+2], nof); fin[nof]=0; }
@@ -2759,7 +2809,6 @@ int main(int argc, char *argv[]) {
 								}
 								break;
 							}
-#endif
 							case 'c': 
 							{
 								char *fnd, fin[64];

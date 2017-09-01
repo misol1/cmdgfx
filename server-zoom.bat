@@ -2,7 +2,7 @@
 bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" TkOSf0:0,0,220,110W12
+cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" TSf0:0,0,220,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -21,19 +21,18 @@ call centerwindow.bat 0 -18
 set STOP=
 
 call sindef.bat
-del /Q EL.dat >nul 2>nul
 
 set /a MUL=2000, MMID=2600, SC=0
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for %%a in (!SC!) do set /a A1=%%a & set /a "DIST=!MMID!+(%SINE(x):x=!A1!*31416/180%*!MUL!>>!SHR!), SC+=1"
 
-	echo "cmdgfx: 3d objects\plane-apa.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: 3d objects\plane-apa.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0" F
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 	
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
@@ -42,4 +41,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

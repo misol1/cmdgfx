@@ -5,7 +5,7 @@ mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,160,80W15
+cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -24,18 +24,20 @@ set ASPECT=0.75
 call centerwindow.bat 0 -20
 call sindef.bat
 
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000
+
 set OW=16
 set /A CNT=360/%OW%
 set /A CNTV=%CNT%+1
-set WNAME=circle.ply
+set WNAME=objects\circle.ply
+if exist %WNAME% goto SKIPGEN
+
 cmdwiz print "ply\nformat ascii 1.0\nelement vertex %CNTV%\nelement face 1\nend_header\n">%WNAME%
-
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000
-
 set /A MUL=120
 for /L %%a in (0,%OW%,360) do set /a S=%%a,COS=S+90 & set /a "XPOS=(%SINE(x):x=!S!*31416/180%*%MUL%>>%SHR%)" & set /A "YPOS=(%SINE(x):x=!COS!*31416/180%*%MUL%>>%SHR%)" & echo !XPOS! !YPOS! 0 >>%WNAME%
 echo 24  0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 0 >>%WNAME%
 
+:SKIPGEN
 set /A XP1=0,YP1=0,ZP1=-250
 set /A XP2=0,YP2=0,ZP2=250
 set /A XP3=250,YP3=0,ZP3=0
@@ -46,8 +48,6 @@ set /A XP6=0,YP6=250,ZP6=0
 call :SETCOLS
 
 set MUL=&set OW=&set CNT=&set CNTV=&set COS=&set W=&set H=&set STOP=
-del /Q EL.dat >nul 2>nul
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
 
 set /a SHOWHELP=1
 set HELPMSG=text 8 0 0 SPACE\-\g11\g10\-b\-h 1,78
@@ -70,9 +70,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do for %%d in (!DRAWMODE!) do set CRSTR="!CRSTR:~1,-1!&3d %WNAME% !DRAWMODE!,!BITOP%%d! 0,0,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 1,1,1,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
 
-	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & !MSG! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & !MSG!" F
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 
 	set /a XROT-=3, YROT+=2, ZROT+=1
 
@@ -87,9 +88,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 
-del /Q %WNAME%
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
 goto :eof
 
 :SETCOLS

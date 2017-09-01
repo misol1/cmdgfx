@@ -2,11 +2,10 @@
 bg font 8 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" SkOZ300f1:0,0,160,80W10
+cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" SZ300f1:0,0,160,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
-set 
 goto :eof
 
 :START
@@ -20,7 +19,10 @@ for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%
 set /a NOF_STARS=60, SDIST=4500, BGCOL=0
 set /A TX=0,TX2=-2600
 set COLS=f %BGCOL% 04   f %BGCOL% .  f %BGCOL% . f %BGCOL% .  f %BGCOL% . f %BGCOL% .  f %BGCOL% . f %BGCOL% .  f %BGCOL% .  7 %BGCOL% .  7 %BGCOL% .  7 %BGCOL% . 7 %BGCOL% . 7 %BGCOL% .  7 %BGCOL% .  7 %BGCOL% .  7 %BGCOL% .  7 %BGCOL% .  8 %BGCOL% . 8 %BGCOL% .  8 %BGCOL% .  8 %BGCOL% . 8 %BGCOL% . 8 %BGCOL% . 8 %BGCOL% .
-set WNAME=starfield.ply
+
+set WNAME=objects\starfield60.ply
+if exist %WNAME% goto SKIPGEN
+
 echo ply>%WNAME%
 echo format ascii 1.0 >>%WNAME%
 set /A NOF_V=%NOF_STARS% * 1
@@ -30,7 +32,7 @@ echo end_header>>%WNAME%
 for /L %%a in (1,1,%NOF_STARS%) do set /A vx=!RANDOM! %% 240 -120 & set /A vy=!RANDOM! %% 200 -100 & set /A vz=!RANDOM! %% 400-160 & echo !vx! !vy! !vz!>>%WNAME%
 set CNT=0&for /L %%a in (1,1,%NOF_STARS%) do set /A CNT1=!CNT!&set /A CNT+=1& echo 1 !CNT1! >>%WNAME%
 
-
+:SKIPGEN
 set /a XMID=%W%/2, YMID=%H%/2, DIST=34000, DRAWMODE=5, COLADD=0, ROTMODE=0, EXIT=0, EXITCNT=200, EXITDIV=200
 set /a CRX=0,CRY=0,CRZ=0,AW=1800,AH=502
 set ASPECT=0.6665
@@ -50,7 +52,6 @@ set /a ORGXP=%XP%
 set /a SENTLEN-=1
 set /a BGCOL=0
 ::set /a BGCOL=!COLADD!+1
-del /Q EL.dat >nul 2>nul
 
 set STOP=
 :LOOP
@@ -63,10 +64,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set OUTP=""
 	for /L %%a in (0,1,%SENTLEN%) do set /a "RX%%a+=!RXP%%a!,RY%%a+=!RYP%%a!,RZ%%a+=!RZP%%a!, COLADD=(%%a %% 7), CYP=!YM%%a!/!EXITDIV!, CZP=!ZM%%a!/!EXITDIV!" & set OUTP="!OUTP:~1,-1!&3d objects\letters\alph!CH%%a!.obj %DRAWMODE%,!COLADD! !RX%%a!:!CRX!,!RY%%a!:!CRY!,!RZ%%a!:!CRZ! !XP!,!CYP!,!CZP! 8,10,8,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLADD! 0 db"& set /a XP+=%AW%
 
-	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d starfield.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% & 3d starfield.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% &!OUTP:~1,-1!"
+	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %WNAME% 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% & 3d %WNAME% 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% &!OUTP:~1,-1!" F
 	set OUTP=
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
 	if !EXIT! == 0 if !ROTMODE! == 0 set /a "CRX=(!CRX!+2) %% 1440,CRY=(!CRY!+5) %% 1440,CRZ=(!CRZ!+7) %% 1440"
 
@@ -102,7 +104,7 @@ if not defined STOP goto LOOP
 	
 :SLUT	
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
-del /Q starfield.ply >nul
+cmdwiz delay 100
 echo "cmdgfx: quit"
-goto :eof
+echo Q>inputflags.dat
+bg font 6 & cmdwiz showcursor 1 & mode 80,50

@@ -6,7 +6,7 @@ mode %F6W%,%F6H%
 if defined __ goto :START
 set __=.
 del /Q inputflags.dat >nul 2>nul
-cmdgfx_input.exe Am5unxW20 | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,100
+cmdgfx_input.exe Am0unxW20 | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,100
 set __=
 bg font 6 & cls & cmdwiz showcursor 1 & mode 80,50
 mode con rate=31 delay=0
@@ -29,23 +29,9 @@ cmdwiz setwindowpos %WPX% %WPY%
 
 set /a XMID=%W%/2, YMID=%H%/2
 set /a TX=0, TX2=-2600
-set /a NOF_STARS=120, SDIST=5500
+set /a SDIST=5500
 set ASPECT=0.667
 set COLS=f 0 04  f 0 04  f 0 04 f 0 04  f 0 04  f 0 04  f 0 04 f 0 .  f 0 .  f 0 .  f 0 .  f 0 . f 0 . 7 0 .
-set /a FCNT=0
-:SETUPLOOP
-	set WNAME=starfield%FCNT%.ply
-	echo ply>%WNAME%
-	echo format ascii 1.0 >>%WNAME%
-	set /A NOF_V=%NOF_STARS%
-	echo element vertex %NOF_V% >>%WNAME%
-	echo element face %NOF_STARS% >>%WNAME%
-	echo end_header>>%WNAME%
-
-	for /L %%a in (1,1,%NOF_STARS%) do set /A vx=!RANDOM! %% 240 -120 & set /A vy=!RANDOM! %% 200 -100 & set /A vz=!RANDOM! %% 400-160 & echo !vx! !vy! !vz!>>%WNAME%
-	set CNT=0&for /L %%a in (1,1,%NOF_STARS%) do set /A CNT1=!CNT!&set /A CNT+=1& echo 1 !CNT1! >>%WNAME%
-	set /A FCNT+=1
-if %FCNT% lss 2 goto SETUPLOOP
 
 :OUTERLOOP
 set /a PLXPOS=15, PLYPOS=40
@@ -118,7 +104,6 @@ echo "cmdgfx: quit"
 echo Q>inputflags.dat
 echo %HISCORE% >hiscore.dat
 endlocal
-del /Q starfield?.ply
 goto :eof
 
 :GAMEOVER

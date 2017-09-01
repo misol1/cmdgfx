@@ -17,13 +17,13 @@ start "" /B dlc.exe -p "tv-static-04.mp3">nul
 set /a W=220, H=110
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==path set "%%v="
 
-set /a W*=4, H*=6, RX=2*53, RY=6*53, RZ=-4*53
+set /a RX=2*53, RY=6*53, RZ=-4*53
 
 set /a XMID=%W%/2, YMID=%H%/2
-set /a DRAWMODE=0, DIST=500,RANDVAL=5
+set /a DRAWMODE=0, DIST=500,RANDVAL=3
 set ASPECT=1.19948
 
-set PAL=0 0 db 0 0 b1 
+set PAL=0 0 fe 0 0 b1 0 0 fe 0 0 b0
 
 set /a OBJINDEX=1, NOFOBJECTS=2
 set FNAME=eye.obj& set MOD=4.0,4.0,4.0, 0,-132,0 1
@@ -32,7 +32,7 @@ set t1=!time: =0!
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	echo "cmdgfx: fbox 0 0 A 0,0,%W%,%H% & 3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & 3d objects\!FNAME! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & block 0 0,0,%W%,%H% 0,0 -1 0 0 ? random()*!RANDVAL!+fgcol(y,y)" fa:0,0,%W%,%H%W30
+	echo "cmdgfx: fbox 0 0 A 0,0,%W%,%H% & 3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & 3d objects\!FNAME! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & block 0 0,0,%W%,%H% 0,0 -1 0 0 ? random()*!RANDVAL!+fgcol(y,y)" f0:0,0,%W%,%H%W30 000000,555555
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 
@@ -92,7 +92,7 @@ set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
 
-	set /a A1+=1, A2+=2, A3-=1, A4+=5, TRZ=!CRZ!
+	set /a A1+=1, A2+=2, A3-=1, A4+=7, TRZ=!CRZ!
 	if !MODE!==0 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db"
 	if !MODE!==1 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t6.obj 5,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db 9 0 db 2 0 db a 0 db 3 0 db b 0 db 4 0 db c 0 db 5 0 db d 0 db 6 0 db e 0 db"
 	if !MODE!==2 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\spaceship.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 410,410,410,0,0,0 1,0,0,10 35,35,!DIST!,%ASPECT% 1 0 db"
@@ -135,31 +135,31 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !LIGHT! == 1 for /F "tokens=1-8 delims=:.," %%a in ("!t2!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq %LTIME% set /a KEY=109 & set t2=!time: =0!
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
-rem	if !STEP! == 0 if !a! geq 1000 call :SIDECUBE 3 1000 & set /a STEP+=1 & set /a STEP-=1
+rem	if !STEP! == 0 if !a! geq 1000 call :CHECKERBOX 0 & set /a STEP+=1 & rem set /a STEP-=1
+	 
  	if !STEP! == 0 if !a! geq 15000 set /a CS=1,TV=20,STEP+=1,CDIV=5 & set /a CEND=2*!CDIV! & set /a CCNT=0
 	if !STEP! == 1 if !a! geq 30600 if !a! lss 31100 set MONS=block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=c4??
 	if !STEP! == 1 if !a! geq 31100 set /a LIGHT=1,STEP+=1,KEY=109 & set t2=!time: =0!
-	if !STEP! == 2 if !a! geq 46000 echo "" F>%SF% & call :PLASMA 2 & set /a STEP+=1,LIGHT=0&set MONS=
-	if !STEP! == 3 if !a! geq 53800 echo "" F>%SF% & call :PLASMA 5 & set /a STEP+=1,LIGHT=0&set MONS=
+	if !STEP! == 2 if !a! geq 46000 echo "" F>%SF% & call :CHECKERBOX 0 & set /a STEP+=1,LIGHT=0&set MONS=
+	if !STEP! == 3 if !a! geq 53800 echo "" F>%SF% & call :BEZCOL & set /a STEP+=1,LIGHT=0&set MONS=
 	if !STEP! == 4 if !a! geq 61000 set /a LIGHT=1,STEP+=1,KEY=109 & set t2=!time: =0!&set MONOCOL=01&set LA=1
 	if !STEP! == 5 if !a! geq 70000 set /a LIGHT=0,STEP+=1,KEY=0&set MONS=
-	if !STEP! == 6 if !a! geq 76800 echo "" F>%SF% & call :PLASMA 3 & set /a STEP+=1
+	if !STEP! == 6 if !a! geq 76800 echo "" F>%SF% & call :GXYCUBE 3 -800 & set /a STEP+=1
 	if !STEP! == 7 if !a! geq 84500 echo "" F>%SF% & call :MATRIX 1 0 & set /a STEP+=1
 	if !STEP! == 8 if !a! geq 92000 echo "" F>%SF% & call :PLAYSEQ seq 2542 2597 & set /a STEP+=1
-	if !STEP! == 9 if !a! geq 92000 echo "" F>%SF% & call :WAVE 3 10 4000 & set /a STEP+=1
+	if !STEP! == 9 if !a! geq 92000 echo "" F>%SF% & call :ZOOMER & set /a STEP+=1
 	if !STEP! == 10 if !a! geq 92000 set /a MODE=2,T_ON=1,A1=155,A2=0,A3=0,CRZ=0,TV=-1 & set /a STEP+=1
 	if !STEP! == 11 if !a! geq 138200 echo "" F>%SF% & call :SIDECUBE 3 1000 & set /a MODE=3,STEP+=1,TV=-1, TDIST=1000, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=120, TARZ=8&set TNAME=alphCari.obj
-	if !STEP! == 12 if !a! geq 146000 echo "" F>%SF% & call :OBJSORTED 1 & set /a STEP+=1
+	if !STEP! == 12 if !a! geq 146000 echo "" F>%SF% & call :GLENZ 1600 350 1 & set /a STEP+=1
 	if !STEP! == 13 if !a! geq 146000 set /a MODE=1,TV=-1, TDIST=1000, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=90, TARZ=0 & set /a STEP+=1&set TNAME=alphLove.obj 
 	if !STEP! == 14 if !a! geq 153000 echo "" F>%SF% & call :PIXELOBJ 0 800 & set /a STEP+=1,LIGHT=0&set MONS=&set /a T_ON=0,TV=20,TORUS_ON=1
-	if !STEP! == 15 if !a! geq 169000 echo "" F>%SF% & call :PLASMA 6 & set /a STEP+=1,TORUS_ON=0
-	if !STEP! == 16 if !a! geq 176600 echo "" F>%SF% & call :PLASMA 7 & set /a STEP+=1
+	if !STEP! == 15 if !a! geq 169000 echo "" F>%SF% & call :GXYCUBE 3 800 & set /a STEP+=1,TORUS_ON=0
+	if !STEP! == 16 if !a! geq 176600 echo "" F>%SF% & call :CHECKERBOX 4 & set /a STEP+=1
 	if !STEP! == 17 if !a! geq 183800 echo "" F>%SF% & call :PIXELOBJ 2 800 & set /a STEP+=1
 	
 	if !STEP! == 18 if !a! geq 190000 set /a T_ON=1, TDIST=1000, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=160, TARZ=3&set TNAME=alphBail.obj & set /a STEP+=1
 	if !STEP! == 19 if !a! geq 200000 set /a T_ON=0 & set /a STEP+=1
 	
-	rem if !KEY! == 32 echo !a! >> apanson 
 	if !KEY! == 112 cmdwiz getch
 	
 	if !CNT! gtr 1307 set /a A3+=1
@@ -228,7 +228,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	if !OBJ! == 1 echo "cmdgfx: fbox 3 0 b0 0,0,%W%,%H% & fbox 0 0 20 3,3,62,40 & fbox 1 0 b0 80,0,90,%H% & fbox 0 0 20 94,4,60,50 & fbox 1 3 b0 0,48,79,41 & fbox 0 0 20 4,50,66,35 & 3d objects\cube.ply 2,0 !RY2!,!RX2!,!RZ2! 0,0,0 -200,-200,-200,0,0,0 1,0,0,10 35,25,4000,0.665 %PAL% & 3d objects\icosahedron.ply 1,0 !RY2!,!RZ2!,!RY2! 0,0,0 -230,-230,-230,0,0,0 0,0,0,10 125,30,2600,0.8 %PAL% & 3d objects\tetrahedron.ply 2,0 !RZ2!,!RX2!,0 0,0,0 -220,-220,-220,0,0,0 0,0,0,10 38,69,3600,0.6  %PAL% &  3d objects\!FNAME2! 0,-1 0,0,0 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,99999,1.3 0 0 db &  !CLS! fbox 1 0 20 0,0,%W%,%H% &  3d objects\!FNAME2! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLP! 0 db" Z300f0:0,0,%W%,%H%W12
 	
-	if !OBJ! == 2 echo "cmdgfx: fbox 3 0 b0 0,0,%W%,%H% & fbox 0 0 20 3,3,62,40 & fbox 3 0 b1 80,0,90,%H% & fbox 0 0 20 94,4,60,50 & fbox 1 3 b0 0,48,79,41 & fbox 0 0 20 4,50,66,35 & 3d objects\cube.ply 2,0 !RY2!,!RX2!,!RZ2! 0,0,0 -200,-200,-200,0,0,0 1,0,0,10 35,25,4000,0.665 %PAL% & 3d objects\icosahedron.ply 1,0 !RY2!,!RZ2!,!RY2! 0,0,0 -230,-230,-230,0,0,0 0,0,0,10 125,30,2600,0.8 %PAL% & 3d objects\tetrahedron.ply 2,0 !RZ2!,!RX2!,0 0,0,0 -220,-220,-220,0,0,0 0,0,0,10 38,69,3600,0.6  %PAL% &  3d objects\!FNAME! 0,-1 0,0,0 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,99999,1.3 0 0 db &  !CLS! fbox 1 0 20 0,0,%W%,%H% &  3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLP! 0 db" Z300f0:0,0,%W%,%H%W12
+	if !OBJ! == 2 echo "cmdgfx: fbox 3 0 b0 0,0,%W%,%H% & fbox 0 0 20 3,3,62,40 & fbox 3 0 b1 80,0,90,%H% & fbox 0 0 20 94,4,60,50 & fbox 1 3 b0 0,48,79,41 & fbox 0 0 20 4,50,66,35 & 3d objects\cube.ply 2,0 !RY2!,!RX2!,!RZ2! 0,0,0 -200,-200,-200,0,0,0 1,0,0,10 35,25,4000,0.665 %PAL% & 3d objects\icosahedron.ply 1,0 !RY2!,!RZ2!,!RY2! 0,0,0 -230,-230,-230,0,0,0 0,0,0,10 125,30,2600,0.8 %PAL% & 3d objects\tetrahedron.ply 2,0 !RZ2!,!RX2!,0 0,0,0 -220,-220,-220,0,0,0 0,0,0,10 38,69,3600,0.6  %PAL% &  3d objects\!FNAME! 0,-1 0,0,0 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,99999,1.3 0 0 db & !CLS! fbox 1 0 20 0,0,%W%,%H% & 3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLP! 0 db" Z300f0:0,0,%W%,%H%W12
 	
 	if !OBJ! == 3 echo "cmdgfx: fbox 3 0 b0 0,0,%W%,%H% & fbox 0 0 20 3,3,62,40 & fbox 1 1 b0 80,0,90,%H% & fbox 0 0 20 94,4,60,50 & fbox 1 3 b0 0,48,79,41 & fbox 0 0 20 4,50,66,35 & 3d objects\cube.ply 2,0 !RY2!,!RX2!,!RZ2! 0,0,0 -200,-200,-200,0,0,0 1,0,0,10 35,25,4000,0.665 %PAL% & 3d objects\icosahedron.ply 1,0 !RY2!,!RZ2!,!RY2! 0,0,0 -230,-230,-230,0,0,0 0,0,0,10 125,30,2600,0.8 %PAL% & 3d objects\tetrahedron.ply 2,0 !RZ2!,!RX2!,0 0,0,0 -220,-220,-220,0,0,0 0,0,0,10 38,69,3600,0.6  %PAL% &  3d objects\!FNAME2! 0,-1 0,0,0 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,99999,1.3 0 0 db &  !CLS! fbox 1 0 20 0,0,%W%,%H% &  3d objects\!FNAME2! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 380,380,380, 0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT%  4 0 db 4 0 db   1 0 db 1 0 db   2 0 db 2 0 db   3 0 db 3 0 db   5 0 db  5 0 db   0 0 db   0 0 db" Z300f0:0,0,%W%,%H%W12
 
@@ -238,7 +238,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul	
 	
-	if !ROTMODE! == 0 set /a RX+=4, RY+=7, RZ-=5
+	set /a RX+=4, RY+=7, RZ-=5
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
 	set /a KEY=0
@@ -250,59 +250,6 @@ endlocal
 goto :eof
 
 
-:PLASMA
-setlocal ENABLEDELAYEDEXPANSION
-set t3=!time: =0!
-set /a W=220,H=110
-
-set STREAM="01??=00db,11??=6004,21??=60db,31??=e604,41??=e6db,51??=e6db,61??=ef04,71??=fe04,81??=fedb,91??=fe04,a1??=ef04,b1??=e6db,c1??=e604,d1??=60db,e1??=6004,f1??=00db,03??=00db,13??=2004,23??=20db,33??=a204,43??=a2db,53??=a2db,63??=af04,73??=af04,83??=fadb,98??=fadb,a8??=af04,b8??=a2db,c8??=a204,d8??=20db,e8??=2004,f8??=00db,0e??=00db,1e??=4004,2e??=40db,3e??=c404,4e??=c4db,5e??=c4db,6e??=cfb2,7e??=cf04,8e??=cf20,9e??=fdb2,ae??=df04,be??=d4db,ce??=d504,de??=50db,ee??=5004,fe??=00db,0???=00db,1???=1004,2???=10db,3???=9104,4???=91db,5???=9bb2,6???=9b04,7???=b9db,8???=bf04,9???=9bb0,a???=9bb2,b???=91db,c???=9104,d???=10db,e???=1004,f???=00db"
-
-set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
-set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
-set "_SIN="
-
-set /a MODE=%1, XMUL=300, YMUL=280, SHR=13, A1=155, A2=0, RANDPIX=20, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2
-set ASPECT=0.58846
-set HELP=
-if !MODE! == 2 set /a RANDPIX=30
-
-:PLLOOP
-for /L %%1 in (1,1,300) do if not defined STOP (
-
-	if !RANDPIX! gtr 3 set /a RANDPIX-=1
-
-	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
-
-	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5)/35)*(x/3)" f0:0,0,%W%,%H%W12
-
-	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/160)*(tan(x/(y+30))*3)*(y+!COLCNT2!/5)/16 & !HELP! & skip 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 110,55,1600,%ASPECT% 0 0 0  0 0 0  0 0 1 0 0 0" f0:0,0,%W%,%H%W18
-
-	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+60+y+!COLCNT!)/200)*sin((40+x/2-y+!COLCNT2!/9)/50)*(x/3)" f0:0,0,%W%,%H%W16
-	
-	if !MODE! == 3 set /a A1+=1, A2-=1 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/3+y)/60)*(x/5+y/3)+cos((y+!COLCNT2!/4)/35)*(x/3)" f0:0,0,%W%,%H%W16
-	
-   if !MODE! == 4 set /a A1+=4, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!& 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ?" f0:0,0,%W%,%H%
-
-   if !MODE! == 5 set /a A1+=2, A2+=1 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!& 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 9 0  0 9 0  0 9 1 0 9 0" f0:0,0,%W%,%H%W14
-
-	if !MODE! == 6 set /a A1+=1, A2-=1 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/90)*8+sin((y+x+!COLCNT2!/50)/18)*16" f0:0,0,%W%,%H%W12
-
-	if !MODE! == 7 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+(cos((x+!COLCNT2!)/(y+30))*15)+(tan((y+x+!COLCNT!)/100*x/120))" f0:0,0,%W%,%H%W16
-
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-
-	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
-		
-	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 27 set STOP=1
-	set /a KEY=0
-)
-if not defined STOP goto PLLOOP
-echo "" F>%SF%
-
-endlocal
-goto :eof
-
 
 :MATRIX
 setlocal ENABLEDELAYEDEXPANSION
@@ -313,6 +260,9 @@ set CNT=0&for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set HX!CNT!=%%a&set /a
 set COL=%2&set P0=0123456789a&set P1=0133456789b&set P2=0143456789c&set P3=0153456789d&set P4=0163456789e
 echo "cmdgfx: fbox a 0 00 0,0,%WW%,160" f7
 set STREAM="??00=??00,??40=2?41,??41=a000,??80=2?81,??81=a000,??c0=2?c1,??c1=a?00,????=??++"
+set BC1=2&set BC2=a
+if "%2"=="2" set STREAM="??00=??00,??40=4?41,??41=c000,??80=4?81,??81=c000,??d0=4?d1,??d1=c?00,????=??++"&set BC1=4&set BC2=c
+
 set STREAM2="??00=??00,"
 for /L %%a in (0,1,192) do set /a "RAND=!RANDOM! %% 200"&set /a "CH1=!RAND! / 16,CH2=!RAND! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set STREAM2="!STREAM2:~1,-1!??!HX%%e!!HX%%f!=??31,"
 set STREAM2="%STREAM2:~1,-1%????=??30"
@@ -320,11 +270,11 @@ set STREAM2="%STREAM2:~1,-1%????=??30"
 :MLOOP
 for /L %%_ in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	set OUT=""
-	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 8,CH2=!RANDOM! %% 14 + 2"&set /a "CH3=!CH2!-1, CH4=!CH2!-2"&for %%e in (!CH1!) do for %%f in (!CH2!) do for %%g in (!CH3!) do for %%h in (!CH4!) do set C1=!HX%%e!&set C2=!HX%%f!&set C3=!HX%%g!&set C4=!HX%%h!&set OUT="!OUT:~1,-1!pixel a 0 !C1!!C2! !X!,0&pixel a 0 !C1!!C3! !X!,1&pixel f 0 !C1!!C2! !X!,2&"
-	for /L %%a in (0,1,10) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel a 0 00 !X!,0&pixel a 0 00 !X!,1&"
+	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 8,CH2=!RANDOM! %% 14 + 2"&set /a "CH3=!CH2!-1, CH4=!CH2!-2"&for %%e in (!CH1!) do for %%f in (!CH2!) do for %%g in (!CH3!) do for %%h in (!CH4!) do set C1=!HX%%e!&set C2=!HX%%f!&set C3=!HX%%g!&set C4=!HX%%h!&set OUT="!OUT:~1,-1!pixel %BC2% 0 !C1!!C2! !X!,0&pixel %BC2% 0 !C1!!C3! !X!,1&pixel f 0 !C1!!C2! !X!,2&"
+	for /L %%a in (0,1,10) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel %BC2% 0 00 !X!,0&pixel %BC2% 0 00 !X!,1&"
 
-	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 8,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel 2 0 !C1!!C2! !X!,80"
-	for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
+	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 8,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel %BC1% 0 !C1!!C2! !X!,80"
+	for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel %BC1% 0 00 !X!,80&"
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
 	
@@ -380,111 +330,271 @@ goto :eof
 
 
 
-:WAVE
+:GLENZ
 setlocal ENABLEDELAYEDEXPANSION
+set /a W=220, H=110, CNT=0
+set /a XMID=%W%/2, YMID=%H%/2
+set /a DIST=%1, DRAWMODE=0, RX=0,RY=0,RZ=0
+set ASPECT=0.66
 set t3=!time: =0!
 
-set /a W=147, H=83
+set PAL0=0 0 db  0 0 db  0 0 db 0 0 db 0 0 db  0 0 db   7 0 db  7 0 db  7 0 db  7 0 db  7 0 db 7 0 db
+set PAL1_0=2 0 db  2 0 db  2 0 db 2 0 db 2 0 db  2 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
+set PAL1_1=1 0 db  1 0 db  1 0 db 1 0 db 1 0 db  1 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
+set PAL1_2=4 0 db  4 0 db  4 0 db 4 0 db 4 0 db  4 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
+set PAL1_3=3 0 db  3 0 db  3 0 db 3 0 db 3 0 db  3 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
+set PAL1_4=5 0 db  5 0 db  5 0 db 5 0 db 5 0 db  5 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
+set PAL1_5=6 0 db  6 0 db  6 0 db 6 0 db 6 0 db  6 0 db   8 0 db  8 0 db  8 0 db  8 0 db  8 0 db 8 0 db
 
-set /a XC=0, YC=0, XCP=9, YCP=11, MODE=%1
-set /a BXA=37, BYA=22
-set /a BGCOL=0, IC=%2, CC=15
+set /a COLCNT=%3, BITOP=1, SCALE=%2
 
-set /a CNT=0 & for %%a in (myface.txt evild.txt ugly0.pcx mario1.gxy emma.txt glass.txt fract.txt checkers.gxy mm.txt wall.pcx apa.gxy ful.gxy) do set I!CNT!=%%a & set /a CNT+=1
+set FNAME=cube-g.ply
+set MOD=250,250,250, 0,0,0 1
+set MOD2=-250,-250,-250, 0,0,0 1
 
-:WAVEREP
-for /L %%_ in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (!CC!) do (
+set STOP=
+:GLREP
+for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
+	echo "cmdgfx: fbox 0 8 08 0,0,%W%,%H% & 3d objects\%FNAME% 0,1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL1_%%c! & 3d objects\%FNAME% 0,!BITOP! !RX!,!RY!,!RZ! 0,0,0 -!SCALE!,-!SCALE!,-!SCALE!, 0,0,0 1,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL0!" f0:0,0,220,110W10
 
-  set BKG="fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & image img\!I%%i! %%c 0 0 e 126,0 0 0 198,105"
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 
-  if !MODE!==0 echo "cmdgfx: !BKG:~1,-1! & block 0 0,0,320,101 0,0 -1 0 0 ? ? x+160+sin(!XC!/100+x/!BXA!+y/!BYA!)*10 9+y+cos(!YC!/100+x/!BXA!+y/!BYA!)*10 from" f1:0,0,320,101,147,84W12
-    
-  if !MODE!==3 echo "cmdgfx: !BKG:~1,-1! & block 0 0,0,320,100 0,0 -1 0 0 ? ? x+160+sin(!XC!/300+y/60+x/!BYA!+x/!BXA!)*10 9+y+sin(!YC!/150+x/50+y/!BXA!+y/!BYA!)*10 from" f1:0,0,320,100,147,83W12
-  
-  	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq %3 set /a STOP=1
-
-  if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
 	
-  if !KEY! == 27 set STOP=1  
-  if !KEY! == 112 cmdwiz getch
-  set /a XC+=!XCP!, YC+=!YCP!
-  set /a KEY=0
+	set /a RX+=5, RY+=6, RZ-=4, CNT+=1, CNTMOD=CNT %% 15
+	rem if !CNTMOD! == 0 set /A COLCNT+=1&if !COLCNT! gtr 5 set COLCNT=0
+	if !KEY! == 112 cmdwiz getch
+	if !KEY! == 27 set STOP=1
+	set /a KEY=0
 )
-if not defined STOP goto WAVEREP
-echo "" F>%SF%
+if not defined STOP goto GLREP
 
 endlocal
+echo "" F>%SF%
 goto :eof
 
 
-:OBJSORTED
+:BEZCOL
 setlocal ENABLEDELAYEDEXPANSION
+set /a W=220, H=110
 set t3=!time: =0!
-
-set /a W=147, H=83
-set /a XMID=%W%/2, YMID=%H%/2
-set /a DRAWMODE=1, NOF=6, DIST=2500, MODE=%1
-set ASPECT=0.75
 
 set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
 set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
 set "_SIN="
 
-set /A XP1=0,YP1=0,ZP1=-250
-set /A XP2=0,YP2=0,ZP2=250
-set /A XP3=250,YP3=0,ZP3=0
-set /A XP4=-250,YP4=0,ZP4=0
-set /A XP5=0,YP5=-250,ZP5=0
-set /A XP6=0,YP6=250,ZP6=0
+set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13
+set /a NOFLINES=100, LINEGAP=10, LNCNT=1, DCNT=0, REP=80, COL=10, CCYCLE=1, CCYCLELEN=20, STARTLINE=1
+set /a ENDCYCLE=!CCYCLELEN!*16-1, CCNT=10*!CCYCLELEN!
+for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
+set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
+cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
 
-set /a XRA1=5, YRA1=8, XRA2=1,YRA2=-7, XRA3=-5,YRA3=5, XRA4=-10,YRA4=-4, XRA5=3,YRA5=-12, XRA6=5,YRA6=9
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, SHR=13
+set /a P1=-2,P2=2,P3=-1,P4=1,P5=-3,P6=-1,P7=3,P8=2,SC=-863,CC=-1570,SC2=-1120,CC2=-2522,SC3=-1496,CC3=2092,SC4=3099,CC4=3240
 
-set COL1=f b b2  b 0 db  b 7 b2  b 7 b1  7 0 db  9 7 b1  9 7 b2  9 0 db  9 1 b1 9 1 b0 1 0 db  1 0 b2  1 0 b1  1 0 b0  1 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-set COL2=f a db  f a b1  f a b0  a 7 b0  a 7 b1  a 7 b2  a 0 db  a 0 db  a 2 b1 a 2 b0 2 0 db  2 0 b2  2 0 b1  2 0 b0  2 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-set COL3=f c db  f c b1  f c b0  c 7 b0  c 7 b1  c 7 b2  c 0 db  c 0 db  c 4 b1 c 4 b0 4 0 db  4 0 b2  4 0 b1  4 0 b0  4 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-set COL4=f d db  f d b1  f d b0  d 7 b0  d 7 b1  d 7 b2  d 0 db  d 0 db  d 5 b1 d 5 b0 5 0 db  5 0 b2  5 0 b1  5 0 b0  5 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-set COL5=f e db  f e b1  f e b0  e 7 b0  e 7 b1  e 7 b2  e 0 db  e 0 db  e 6 b1 e 6 b0 6 0 db  6 0 b2  6 0 b1  6 0 b0  6 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-set COL6=f b db  f 7 b1  f 7 b1  f 8 b1  7 0 db  7 8 b1  7 8 b2  7 0 db  7 8 b2 7 8 b0 8 0 db  8 0 b2  8 0 b1  8 0 b0  8 0 b0  0 0 db  0 0 db  0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db  0 0 db
-
-set STOP=
-:OSLOOP
+:BEZLOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	set CRSTR=""
 
-	set /a "srx=(%SINE(x):x=!XROT!*31416/180%*!XMUL!>>!SHR!),XRC=!XROT!+90"
-	set /a "crx=(%SINE(x):x=!XRC!*31416/180%*!XMUL!>>!SHR!)
+	set /a "LCNT+=1, DCNT=(!DCNT!+1) %% %DICLEN%"
+   if !LCNT! gtr %NOFLINES% set LCNT=1
 	
-	set /a "sry=(%SINE(x):x=!YROT!*31416/180%*!XMUL!>>!SHR!),XRC=!YROT!+90"
-	set /a "cry=(%SINE(x):x=!XRC!*31416/180%*!XMUL!>>!SHR!)
+	for /L %%a in (1,1,!REP!) do set /a "SC+=!P1!, CC+=!P2!, SC2+=!P3!, CC2+=!P4!, SC3+=!P5!, CC3+=!P6!, SC4+=!P7!, CC4+=!P8!"
 
-	set /a "srz=(%SINE(x):x=!ZROT!*31416/180%*!XMUL!>>!SHR!),XRC=!ZROT!+90"
-	set /a "crz=(%SINE(x):x=!XRC!*31416/180%*!XMUL!>>!SHR!)
+	for %%a in (!SC!) do for %%b in (!CC!) do set /a A1=%%a,A2=%%b & set /a "XPOS=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
+	for %%a in (!SC2!) do for %%b in (!CC2!) do set /a A1=%%a,A2=%%b & set /a "XPOS2=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS2=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
+	for %%a in (!SC3!) do for %%b in (!CC3!) do set /a A1=%%a,A2=%%b & set /a "XPOS3=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS3=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
+	for %%a in (!SC4!) do for %%b in (!CC4!) do set /a A1=%%a,A2=%%b & set /a "XPOS4=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS4=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
+
+	for %%a in (!DCNT!) do set LN!LCNT!=line !COL! 0 !DIC:~%%a,1! !XPOS!,!YPOS!,!XPOS2!,!YPOS2! !XPOS3!,!YPOS3!,!XPOS4!,!YPOS4!
+	set STR=""&set REP=1
+	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"
+	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 	
-	for /L %%a in (1,1,!NOF!) do set /A "YPP=((!crx!*!YP%%a!)>>14)+((!srx!*!ZP%%a!)>>14),ZPP=((!crx!*!ZP%%a!)>>14)-((!srx!*!YP%%a!)>>14)" & set /A "XPP=((!cry!*!XP%%a!)>>14)+((!sry!*!ZPP!)>>14),ZPP2%%a=((!cry!*!ZPP!)>>14)-((!sry!*!XP%%a!)>>14)" & set /A "XPP2%%a=((!crz!*!XPP!)>>14)+((!srz!*!YPP!)>>14),YPP2%%a=((!crz!*!YPP!)>>14)-((!srz!*!XPP!)>>14), ZPP2%%a*=4"
-
-	if !MODE! == 0 for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set /a XR%%c+=!XRA%%c!,YR%%c+=!YRA%%c!&set CRSTR="!CRSTR:~1,-1!&3d objects\icosahedron.ply !DRAWMODE!,1 !XR%%c!,!YR%%c!,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! -131,-131,-131,0,0,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
-
-	if !MODE! == 1 for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set /a XR%%c+=!XRA%%c!,YR%%c+=!YRA%%c!&set CRSTR="!CRSTR:~1,-1!&3d objects\elephav.obj !DRAWMODE!,1 !XR%%c!,!YR%%c!,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 0.3,0.3,0.3,0,-360,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
-
-	 for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
-
-	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1!" f1:0,0,%W%,%H%W15
+	echo "cmdgfx: fbox !COL! 0 00 0,0,%W%,%H% & !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1" f0:0,0,220,110W12
 	
+	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
+		 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-
-	set /a XROT-=3, YROT+=2, ZROT+=1
-
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
+	if !CCYCLE!==1 set /a CCNT+=1&(if !CCNT! gtr !ENDCYCLE! set /a CCNT=10*!CCYCLELEN!)&set /a COL=!CCNT!/!CCYCLELEN!
 	set /a KEY=0
 )
-if not defined STOP goto OSLOOP
+if not defined STOP goto BEZLOOP
 
 echo "" F>%SF%
 endlocal
 goto :eof
 
+
+
+:CHECKERBOX
+setlocal ENABLEDELAYEDEXPANSION
+set t3=!time: =0!
+set /a W=220, H=110
+
+set /a ZP=200, DIST=700, FONT=0, ROTMODE=0, NOFOBJECTS=5, RX=0, RY=0, RZ=0, RZ2=160
+set ASPECT=0.605
+
+set /a XMID=%W%/2, YMID=%H%/2, OBJINDEX=%1
+set OBJTEMP=box-temp%1.obj
+set PLANETEMP=plane-temp%1.obj
+call :SETOBJECT
+
+:CBREP
+for /L %%1 in (1,1,300) do if not defined STOP (
+	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & 3d objects\%PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db & 3d objects\%OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COL!" Z%ZP%f%FONT%:0,0,%W%,%H%W10
+
+	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
+	
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+
+	set /a RZ2-=4
+	if !ROTMODE! == 0 set /a RX+=2, RY+=5, RZ-=3
+	if !KEY! == 112 cmdwiz getch
+	if !KEY! == 27 set STOP=1
+	set /a KEY=0
+)
+if not defined STOP goto CBREP
+
+endlocal
+echo "" F>%SF%
+goto :eof
+
+:SETOBJECT
+set /a CULL=1, DRAWMODE=5, PLANEMOD=-8
+if %OBJINDEX% == 0 set /a DRAWMODE=6 & set COL=0 -8 db 0 -8 db  0 0 db 0 0 db  0 -6 db 0 -6 db 0 -6 db 0 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1
+if %OBJINDEX% == 1 set COL=1 -8 db 1 -8 db  1 0 db 1 0 db  3 -6 db 3 -6 db 3 -6 db 3 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1
+if %OBJINDEX% == 2 set /a DRAWMODE=6 & set COL=0 0 db&set TRANSP=-1
+if %OBJINDEX% == 3 set /a CULL=0 & set COL=6 4 db 6 4 db 2 2 db 2 2 db  0 2 db 0 2 db 6 5 db 6 5 db  6 6 db 6 6 db  3 6 db 3 6 db&set TRANSP=58
+if %OBJINDEX% == 4 set /a CULL=0, PLANEMOD=-1 & set COL=0 2 db 0 2 db 0 2 db 0 2 db  0 0 db 0 0 db 0 0 db 0 0 db  0 0 db 0 0 db  0 0 db 0 0 db&set TRANSP=58
+goto :eof
+
+
+
+:GXYCUBE
+setlocal ENABLEDELAYEDEXPANSION
+set /a W=220, H=110
+set t3=!time: =0!
+
+set /a "XMID=%W%/2, YMID=%H%/2"
+set /a DIST=%2, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
+set ASPECT=0.675
+set /A RX=0,RY=0,RZ=0
+
+set /a OBJINDEX=%1, NOFOBJECTS=5
+call :SETGXYOBJECT
+
+set STOP=
+:GXYREP
+for /L %%1 in (1,1,300) do if not defined STOP (
+   echo "cmdgfx: fbox 8 0 fa 0,0,%W%,%H% & !MSG! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL!" f0:0,0,%W%,%H%W10
+	
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	
+	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
+	
+	set /a RX+=2,RY+=6,RZ-=4
+	
+   if !KEY! == 112 cmdwiz getch
+   if !KEY! == 27 set STOP=1
+	set /a KEY=0
+)
+if not defined STOP goto GXYREP
+
+endlocal
+echo "" F>%SF%
+goto :eof
+
+:SETGXYOBJECT
+if %OBJINDEX% == 0 set FNAME=cube-t5.obj& set MOD=400,400,400, 0,0,0 0&set O=20
+if %OBJINDEX% == 1 set FNAME=cube-t4.obj&set MOD=400,400,400, 0,0,0 0&set O=78
+if %OBJINDEX% == 2 set FNAME=cube-t3.obj& set MOD=400,400,400, 0,0,0 1&set O=-1
+if %OBJINDEX% == 3 set FNAME=cube-t6.obj& set MOD=400,400,400, 0,0,0 0&set O=20
+if %OBJINDEX% == 4 set FNAME=hulk.obj& set MOD=240,240,240, 0,-2,0 1&set O=-1
+call :SETCOL %DRAWMODE%
+goto :eof
+
+:SETCOL
+if %OBJINDEX% == 0 set PAL=f 0 db f 0 db a 0 db a 0 db 0 0 db 0 0 db 0 0 db 0 0 db  f 1 db f 1 db  e 0 db e 0 db
+if %OBJINDEX% == 1 set PAL=0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  7 0 db 7 0 db  d 0 db d 0 db
+if %OBJINDEX% == 2 set PAL=0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db 0 0 db  f 1 db f 1 db  e 0 db e 0 db
+if %OBJINDEX% == 3 set PAL=f 2 db f 2 db b 3 db b 3 db d 5 db d 5 db 7 4 db 7 4 db  f 1 db f 1 db  f 6 db f 6 db
+if %OBJINDEX% == 4 set PAL=0 0 db 0 0 b1 
+goto :eof
+
+
+:FIRE
+setlocal ENABLEDELAYEDEXPANSION
+set t3=!time: =0!
+set /a W=110
+set /a WW=%W%*2
+echo "cmdgfx: fbox f 0 30 0,0,%WW%,130 & fbox f 0 20 0,0,%WW%,120 & fbox e 0 20 %W%,0,%W%,95"
+set OUT=""&(for /L %%a in (1,1,75) do set /a "X=!RANDOM! %% %W%+%W%,FG=!RANDOM! %% 6+10" & set OUT="!OUT:~1,-1! & pixel !FG! 0 30 !X!,126")&echo "cmdgfx: !OUT:~1,-1!"
+set STREAM="1060=40++,1061=40++,1062=40++,1063=40++,1064=d0++,1065=d0++,1066=c0++,1067=a0++,1050=c0++,1051=90++,1052=a0++,1053=a0++,1054=a0++,1055=80++,1056=80++,1057=70++,1030=f0++,1031=f0++,1032=f0++,1033=f0++,1034=f0++,1035=f0++,1036=f0++,1037=f0++,1038=f0++,1039=f0++,?0??=-0??"
+
+set TRANSF0="??50=fedb,??51=feb1,??52=ecdb,??53=ecb1,??54=c4db,??55=c4b1,??56=c4b0,??57=40b1,??58=4020,??60=feb2,??61=feb0,??62=ecb2,??63=ecb0,??64=c4db,??65=c4b2,??66=c4b0,??67=40b2,??68=40b0,00b0=4025,??30=ffdb,??31=ffb1,??32=feb2,??33=ecb0,??34=c4b0,??35=c0b1,??36=c0b0,??37=40b2,??38=40b1,??39=4025,??40=4020"
+set TRANSF1="??50=fbdb,??51=fbb1,??52=b9db,??53=b9b1,??54=91db,??55=91b1,??56=10db,??57=10b0,??58=1020,??60=fbdb,??61=fbb1,??62=fbb0,??63=b9b2,??64=b9b0,??65=91b2,??66=91b0,??67=10b2,??68=10b0,00b0=10b0,??30=ffdb,??31=ffb1,??32=fbb2,??33=b9b2,??34=90b2,??35=90b1,??36=90b0,??37=10b2,??38=10b1,??39=10b0,??10=4020"
+
+set /A PW=1,PH=0,COL=0, MODE=0
+
+set STOP=
+:FIRELOOP
+for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
+
+	set OUT=""
+	set /A "nf=20-!PW!*5,PWP=(!PW!+1)*2"&for /L %%a in (0,1,!nf!) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set /a "J2=!J!+!RANDOM! %% !PWP!-!PW!,X2=!X!+!RANDOM! %% !PWP!-!PW!"&set OUT="!OUT:~1,-1!line e 0 50 !X!,!J!,!X2!,!J2!&"
+	set /A "nf=55-!PW!*10,PWP=(!PW!+1)*2"&for /L %%a in (0,1,!nf!) do set /a "X=!RANDOM! %% %W%+%W%,J=!RANDOM! %% 50+74"&set /a "J2=!J!+!RANDOM! %% !PWP!-!PW!,X2=!X!+!RANDOM! %% !PWP!-!PW!"&set OUT="!OUT:~1,-1!line e 0 60 !X!,!J!,!X2!,!J2!&"
+
+	echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,1,%W%,125 %W%,0 -1 0 0 !STREAM:~1,-1! & block 0 %W%,0,%W%,130 0,-2 -1 0 0 !TRANSF%%c:~1,-1!" f2:0,0,220,120,110,85W1
+
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	
+	if !KEY! == 32 set /A COL+=1&if !COL! gtr 1 set COL=0
+	if !KEY! == 112 cmdwiz getch
+	if !KEY! == 27 set STOP=1
+	
+	set /a KEY=0
+)
+if not defined STOP goto FIRELOOP
+echo "" F>%SF%
+endlocal
+
+
+:ZOOMER
+setlocal ENABLEDELAYEDEXPANSION
+set t3=!time: =0!
+set /a W=220, H=110
+set /a XMID=%W%/2, YMID=%H%/2, RX=0,RY=0, RZ=0, DIST=1000
+set ASPECT=0.66
+set STOP=
+
+set "_SIN=a-a*a/1920*a/312500+a*a/1920*a/15625*a/15625*a/2560000-a*a/1875*a/15360*a/15625*a/15625*a/16000*a/44800000"
+set "SINE(x)=(a=(x)%%62832, c=(a>>31|1)*a, t=((c-47125)>>31)+1, a-=t*((a>>31|1)*62832)  +  ^^^!t*( (((c-15709)>>31)+1)*(-(a>>31|1)*31416+2*a)  ), %_SIN%)"
+set "_SIN="
+
+set /a MUL=2000, MMID=2600, SHR=13, SC=0
+echo "cmdgfx: "
+
+:ZOOMLOOP
+for /L %%1 in (1,1,300) do if not defined STOP (
+
+	for %%a in (!SC!) do set /a A1=%%a & set /a "DIST=!MMID!+(%SINE(x):x=!A1!*31416/180%*!MUL!>>!SHR!), SC+=1, RZ+=10"
+
+	echo "cmdgfx: 3d objects\plane-apa.obj 0,0 !RX!,!RY!,!RZ! 0,0,0 150,150,150,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 0" Tf0:0,0,220,110W12
+
+	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 4000 set /a STOP=1
+
+	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	
+	if !KEY! == 112 cmdwiz getch
+	if !KEY! == 27 set STOP=1
+	set /a KEY=0
+)
+if not defined STOP goto ZOOMLOOP
+echo "" F>%SF%
+endlocal
+goto :eof
 
 
 :CENTERWINDOW
@@ -504,8 +614,8 @@ goto :eof
 
 :STARTDEMO
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=55, H=55
 set SF=servercmd.dat
+set /a W=55, H=55
 cls & bg font 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
@@ -517,12 +627,11 @@ cmdwiz cache cachelist.dat
 del /Q EL.dat >nul 2>nul
 
 if "%~1" == "" call :STATIC
-echo "" F>%SF%
-echo "cmdgfx: fbox 0 0 20 0,0,300,300" Ff0
+echo "fbox 0 0 20 0,0,300,300" Ff0 000000,000080>%SF%
 
 start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
 cmdgfx_gdi "" f7w150
-echo "cmdgfx: fbox 0 0 20 0,0,300,300" Ff0
+echo "cmdgfx: fbox 0 0 20 0,0,300,300" Ff0 000000,000080
 echo "" F>%SF%
 cmdgfx_gdi "" f7w500
 

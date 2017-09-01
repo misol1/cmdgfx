@@ -4,7 +4,7 @@ bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf0:0,0,200,110W10
+cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -18,7 +18,6 @@ if not "%~1" == "" set /a W=120, H=70
 
 call centerwindow.bat 0 -20
 
-mode con rate=31 delay=0
 for /f "tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 set TEXT=text 7 ? 0 SPACE,_ENTER(cursor),_D/d 1,108
@@ -51,7 +50,9 @@ set /a EXT1=EXPE+1,EXT2=EXPE+2
 set OUTFADE=""
 
 set /a SWM=%W%-1, SHM=%H%-1
-set FNTMP=objects\tempPlane.obj
+set FNTMP=objects\tempFadePlane.obj
+if exist %FNTMP% goto SKIPGEN
+
 echo usemtl cmdblock 0 0 %SWM% %SHM% >%FNTMP%
 echo v  -150 -150 0 >>%FNTMP%
 echo v   150 -150 0 >>%FNTMP%
@@ -62,10 +63,10 @@ echo vt 1 0 >>%FNTMP%
 echo vt 1 1 >>%FNTMP%
 echo vt 0 1 >>%FNTMP%
 echo f 1/1/ 2/2/ 3/3/ 4/4/ >>%FNTMP%
+:SKIPGEN
 set /A BLDIST=1550,BLMODE=0
 set /a BLRX=0,BLRY=0,BLRZ=0
 set /a BLTX=0,BLTY=0,BLTZ=0
-del /Q EL.dat >nul 2>nul
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -157,15 +158,19 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		)		
 	)
 
-	echo "cmdgfx: fbox 0 0 00 0,0,%W%,%H% & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COL! & skip %TEXT% !OUTFADE:~1,-1! " e!DELOBJCACHE!Z%ZP%f%FONT%:0,0,%W%,%H%
+	echo "cmdgfx: fbox 0 0 00 0,0,%W%,%H% & 3d objects\checkerbox\plane!OBJINDEX!.obj 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db & 3d objects\checkerbox\box!OBJINDEX!.obj !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COL! & skip %TEXT% !OUTFADE:~1,-1! " Fe!DELOBJCACHE!Z%ZP%f%FONT%:0,0,%W%,%H%
+
+	rem echo "cmdgfx: fbox 0 0 00 0,0,%W%,%H% & 3d %PLANETEMP% 0,58 0,0,!RZ2! 0,0,0 45,45,45,0,0,0 0,0,0,10 %XMID%,%YMID%,700,%ASPECT% 0 !PLANEMOD! db & 3d %OBJTEMP% !DRAWMODE!,!TRANSP! !RX!,!RY!,!RZ! 0,0,0 400,400,400,0,0,0 !CULL!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COL! & skip %TEXT% !OUTFADE:~1,-1! " Fe!DELOBJCACHE!Z%ZP%f%FONT%:0,0,%W%,%H%
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-	
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+  	
 	set DELOBJCACHE=
 	set /a RZ2-=4
 	set /a RX+=2, RY+=5, RZ-=3
 	
-	if !KEY! == 32 set /a "OBJINDEX=(!OBJINDEX! + 1) %% %NOFOBJECTS%"&call :SETOBJECT&set DELOBJCACHE=D
+	if !KEY! == 32 set /a "OBJINDEX=(!OBJINDEX! + 1) %% %NOFOBJECTS%"&&call :SETOBJECT
+	rem if !KEY! == 32 set /a "OBJINDEX=(!OBJINDEX! + 1) %% %NOFOBJECTS%"&call :SETOBJECT&set DELOBJCACHE=D
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 100 set /a DIST+=60
 	if !KEY! == 68 set /a DIST-=60
@@ -175,19 +180,21 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto REP
 
 endlocal
-del /Q plane-temp.obj box-temp.obj > nul 2>nul
+cmdwiz delay 200
+echo Q>inputflags.dat
 echo "cmdgfx: quit"
+rem del /Q plane-temp.obj box-temp.obj > nul 2>nul
 goto :eof
 
 
 
 :SETOBJECT
 set /a CULL=1, DRAWMODE=5, PLANEMOD=-8
-if %OBJINDEX% == 0 set /a DRAWMODE=6 & set COL=0 -8 db 0 -8 db  0 0 db 0 0 db  0 -6 db 0 -6 db 0 -6 db 0 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1& call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
-if %OBJINDEX% == 1 set COL=1 -8 db 1 -8 db  1 0 db 1 0 db  3 -6 db 3 -6 db 3 -6 db 3 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1& call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
-if %OBJINDEX% == 2 set /a DRAWMODE=6 & set COL=0 0 db&set TRANSP=-1& call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
-if %OBJINDEX% == 3 set /a CULL=0 & set COL=6 4 db 6 4 db 2 2 db 2 2 db  0 2 db 0 2 db 6 5 db 6 5 db  6 6 db 6 6 db  3 6 db 3 6 db&set TRANSP=58& call :CHANGETEXTURE %PLANETEMP% plane.obj checkers2 checkers& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj checkers checkers3
-if %OBJINDEX% == 4 set /a CULL=0, PLANEMOD=-1 & set COL=0 2 db 0 2 db 0 2 db 0 2 db  0 0 db 0 0 db 0 0 db 0 0 db  0 0 db 0 0 db  0 0 db 0 0 db&set TRANSP=58& call :CHANGETEXTURE %PLANETEMP% plane.obj checkers2 checkers& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj checkers checkers2 #usemtl usemtl
+if %OBJINDEX% == 0 set /a DRAWMODE=6 & set COL=0 -8 db 0 -8 db  0 0 db 0 0 db  0 -6 db 0 -6 db 0 -6 db 0 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1& rem call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
+if %OBJINDEX% == 1 set COL=1 -8 db 1 -8 db  1 0 db 1 0 db  3 -6 db 3 -6 db 3 -6 db 3 -6 db  0 -3 db 0 -3 db  0 -4 db 0 -4 db &set TRANSP=-1& rem call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
+if %OBJINDEX% == 2 set /a DRAWMODE=6 & set COL=0 0 db&set TRANSP=-1& rem call :CHANGETEXTURE %PLANETEMP% plane.obj& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj
+if %OBJINDEX% == 3 set /a CULL=0 & set COL=6 4 db 6 4 db 2 2 db 2 2 db  0 2 db 0 2 db 6 5 db 6 5 db  6 6 db 6 6 db  3 6 db 3 6 db&set TRANSP=58& rem call :CHANGETEXTURE %PLANETEMP% plane.obj checkers2 checkers& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj checkers checkers3
+if %OBJINDEX% == 4 set /a CULL=0, PLANEMOD=-1 & set COL=0 2 db 0 2 db 0 2 db 0 2 db  0 0 db 0 0 db 0 0 db 0 0 db  0 0 db 0 0 db  0 0 db 0 0 db&set TRANSP=58& rem call :CHANGETEXTURE %PLANETEMP% plane.obj checkers2 checkers& call :CHANGETEXTURE %OBJTEMP% cube-t-checkers.obj checkers checkers2 #usemtl usemtl
 goto :eof
 
 :CHANGETEXTURE <OUTFILE> <INFILE> <INSTR> <OUTSTR> <INSTR2> <OUTSTR2>  <INSTR3> <OUTSTR3>

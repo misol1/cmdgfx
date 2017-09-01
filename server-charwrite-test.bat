@@ -6,7 +6,7 @@ mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf1:0,0,200,80W12
+cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -24,16 +24,18 @@ call centerwindow.bat 0 -20
 set /a XMID=%W%/2, YMID=%H%/2
 set /a DIST=700, c=0
 set /A RX=0,RY=0,RZ=0
-set FN=genplane.obj
+set FN=objects\scroll-planes2.obj
 set ASPECT=0.6
 
-set /A XW=40,YW=10, YROT=0
+set /A XW=40,YW=10, YROT=0, DRAWMODE=0
 set HELPT=text 1 0 0 'p'_to_pause,_'y'_for_y_rotation,_'space'_to_reset_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'l'_for_lens,_'m'_for_mario,_'h'_to_hide_text 13,78
 set HELP=&set /a HLP=0
 set /a DIR=1, LENS=1, MARIO=0
 
 set BKG="fbox 1 0 20 0,0,%W%,%H% & fellipse 1 0 20 %XMID%,%YMID%,108,37 & fellipse 9 0 20 %XMID%,%YMID%,100,35 & fellipse b 0 20 %XMID%,%YMID%,94,33 & fellipse f 0 20 %XMID%,%YMID%,90,31"
 echo "cmdgfx: !BKG:~1,-1!"
+
+if exist %FN% goto SKIPGEN
 
 set NOFSECT=100
 set /a STEPT=10000/%NOFSECT%
@@ -42,7 +44,6 @@ set /a SL=0,SR=%STEPT%
 set /a FCNT=1, XPP=12
 set /a XW=0, XW2=%XPP%
 set /a NOFPREP=%NOFSECT%-10-1
-set /a DRAWMODE=0
 
 for /l %%a in (0,1,%NOFPREP%) do (
 	if !SR! geq 10000 set /a SL=0, SR=1500
@@ -61,6 +62,7 @@ for /l %%a in (0,1,%NOFPREP%) do (
 )
 cmdwiz print "%OUTP%">>%FN% & set OUTP=
 
+:SKIPGEN
 set CHAR=.
 set CHARI=0
 set XP=30
@@ -73,8 +75,6 @@ set /A XMP=%XMID%, YMP=300
 call sindef.bat
 
 set /a CNT=0
-del /Q EL.dat >nul 2>nul
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 
 set STOP=
 :LOOP
@@ -84,10 +84,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !LENS!==1 set BKG2=" & fellipse 7 0 fa !XMP!,!YMP!,30,25 & fellipse 4 0 20 !XMP!,!YMP!,27,24 & fellipse c 0 20 !XMP!,!YMP!,23,24 & fellipse e 0 20 !XMP!,!YMP!,18,24 & fellipse f 0 20 !XMP!,!YMP!,6,5 "
 	if !MARIO!==1 set /A "MN=(!CNT! %% 10)/5 + 1"&set BKG2="!BKG2:~1,-1! & image img\mario!MN!.gxy 0 0 0 0 9,28"
 
-	echo "cmdgfx: %BKG:~1,-1% !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0  !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% ? 0 !CHAR! & !HELP! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: %BKG:~1,-1% !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0  !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% ? 0 !CHAR! & !HELP!" F
 	set BKG2=
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 	
 	set /A CNT+=1
 	if !CNT! lss 350 set /A YMP-=1 & if !YMP! lss %YMID% set YMP=%YMID%
@@ -100,7 +101,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		set /A SX2+=!SXA2!&if !SX2! gtr 359 set SX2=0
 		set /A SY+=!SYA!&if !SY! gtr 359 set SY=0
 	)
-	if !CNT! == 1000 if !HLP!==0 set KEY=104
+	if !CNT! == 500 if !HLP!==0 set KEY=104
 
 	if !YROT! == 1 set /A RX+=10
 
@@ -126,5 +127,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-del /Q genplane.obj>nul 2>nul
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

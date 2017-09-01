@@ -2,7 +2,7 @@
 bg font 7 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf7:0,0,164,140,82,54W18
+cmdgfx_input.exe knW18x | call %0 %* | cmdgfx_gdi "" Sf7:0,0,164,140,82,54
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -27,7 +27,6 @@ set PAL0=-
 set PAL1=000000,000000,022476,000000,000000,000000,000000,000000,000000,000000,0872ff
 set PAL2=000000,000000,793400,000000,000000,000000,000000,000000,000000,000000,f89200
 set /a PALC=0
-del /Q EL.dat >nul 2>nul
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -38,9 +37,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (0,1,1) do set /a "X=!RANDOM! %% %W%+%W%,CH1=!RANDOM! %% 8,CH2=!RANDOM! %% 16"&for %%e in (!CH1!) do for %%f in (!CH2!) do set C1=!HX%%e!&set C2=!HX%%f!&set OUT="!OUT:~1,-1!pixel 2 0 !C1!!C2! !X!,80"
 	for /L %%a in (0,1,6) do set /a "X=!RANDOM! %% %W%+%W%"&set OUT="!OUT:~1,-1!pixel 2 0 00 !X!,80&"
 
-	for %%c in (!PALC!) do echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 %STREAM2:~1,-1%& block 0 %W%,2,%W%,75 0,0 00 0 0 %STREAM2:~1,-1%" - !PAL%%c!
+	for %%c in (!PALC!) do echo "cmdgfx: !OUT:~1,-1! & block 0 %W%,0,%W%,75 %W%,2 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 %W%,81 -1 0 0 %STREAM:~1,-1% & block 0 %W%,80,%W%,75 0,0 -1 0 0 %STREAM2:~1,-1%& block 0 %W%,2,%W%,75 0,0 00 0 0 %STREAM2:~1,-1%" F !PAL%%c!
 	
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
@@ -50,4 +50,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

@@ -30,11 +30,9 @@ set PAL4=
 set /a "MX0=0, MY0=7, MX1=3, MY1=7, MX2=6, MY2=5, MX3=7, MY3=2, MX4=7, MY4=-2, MX5=6, MY5=-5, MX6=4, MY6=-7, MX7=0, MY7=-8"
 set /a "MX8=-3, MY8=-8, MX9=-6, MY9=-6, MX10=-8, MY10=-3, MX11=-8, MY11=0, MX12=-7, MY12=3, MX13=-5, MY13=6, MX14=-2, MY14=7"
 
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
-
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
-	echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" F
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
@@ -60,5 +58,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 if not defined STOP goto LOOP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
 echo Q>inputflags.dat

@@ -4,7 +4,7 @@
 if defined __ goto :START
 cls & cmdwiz showcursor 0
 set __=.
-call %0 %* | cmdgfx_gdi.exe "" SkOW20f0:0,0,240,110
+cmdgfx_input.exe knW20x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -26,9 +26,6 @@ cmdwiz getwindowbounds w & set WINW=!errorlevel!
 cmdwiz getwindowbounds h & set WINH=!errorlevel!
 set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
-
-set EXTRA=&for /L %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
 
 :OUTERLOOP
 set MIN_ADV_L1=60
@@ -78,10 +75,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set NMY=""& for /L %%a in (1,1,!NOF_ENEMIES!) do set /A ENEMY%%aX-=!ENEMY_S! + !ENEMY_SD!*!DIR!&set /A EX%%a=!ENEMY%%aX!/%ENEMY_MUL%&set NMY="!NMY:~1,-1! image e!ENEMY%%aI!_!IMG!.gxy 0 0 0 -1 !EX%%a!,!ENEMY%%aY! 1 & "&if !EX%%a! lss -30 set /A EY=!RANDOM! %% 3&set /A "ENEMY%%aY=88-(!EY! * 14)"&set ENEMY%%aI=1&(if !EY! geq 1 set ENEMY%%aI=2)&(if !DIR!==1 set /A SCORE+=1)&(if !SCORE! gtr !HISCORE! set HISCORE=!SCORE!)&set /A ENEMY_S+=2&(if !ENEMY_S! geq !ENEMY_MAXS! set ENEMY_S=!ENEMY_MAXS!)&set /A TMP=%%a+!NOF_ENEMIES!-1&(if !TMP! gtr !NOF_ENEMIES! set /A TMP=!TMP!-!NOF_ENEMIES!)&for %%b in (!TMP!) do set /A EXTEMP=!ENEMY%%bX!/%ENEMY_MUL%&set PL=0&set /A DIFF=%W%+30-!EXTEMP!&(if !DIFF! lss !ENEMY_MINDIST! set /A PL=!ENEMY_MINDIST!-!DIFF!)&set /A "ENEMY%%aX=((%W%+30)+!PL!+!RANDOM! %% !ENEMY_DISTRANGE!) * %ENEMY_MUL%"
 
-	echo "cmdgfx: fbox 1 9 b2 0,0,%W%,10 & fbox 1 9 b1 0,3,%W%,10 & fbox 1 9 b0 0,9,%W%,%H% & !L2:~1,-1! & !L1:~1,-1! & fbox a 0 20 0,95,%W%,50 & fbox a e b2 0,96,%W%,50 & fbox a e b1 0,102,%W%,50 & !PLY:~1,-1! & !NMY:~1,-1! &  text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1 & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 1 9 b2 0,0,%W%,10 & fbox 1 9 b1 0,3,%W%,10 & fbox 1 9 b0 0,9,%W%,%H% & !L2:~1,-1! & !L1:~1,-1! & fbox a 0 20 0,95,%W%,50 & fbox a e b2 0,96,%W%,50 & fbox a e b1 0,102,%W%,50 & !PLY:~1,-1! & !NMY:~1,-1! &  text 7 1 0 SCORE:_!SCORE!_(!HISCORE!) 2,1"
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	
 	set /A PLYB=!PLYPOS!+16&set /A PLYB2=!PLYPOS!-15+!DWN!*10
 	for /L %%a in (1,1,!NOF_ENEMIES!) do if !EX%%a! lss !PLXB! if !EX%%a! gtr !PLXB2! if !ENEMY%%aY! lss !PLYB! if !ENEMY%%aY! gtr !PLYB2! call :GAMEOVER & set /a STOP=1&if !GAMECHOICE! == 0 set /a RESTARTGAME=1
 
@@ -105,6 +103,7 @@ if not defined STOP goto SHOWLOOP
 if defined RESTARTGAME goto OUTERLOOP
 
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
 echo %HISCORE% >hiscore.dat
 endlocal
 mode 80,50

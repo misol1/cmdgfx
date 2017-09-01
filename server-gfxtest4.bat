@@ -5,7 +5,7 @@ bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m5nuW10x | call %0 %* | cmdgfx_gdi "" eSf0:0,0,%W%,%H%
+cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" eSf0:0,0,%W%,%H%
 set __=
 set W=&set H=&set F6W=&set F6H=
 cls
@@ -37,33 +37,33 @@ set NOFOBJECTS=21
 call :SETOBJECT
 set /a ACTIVE_KEY=0
 
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
-
 set STOP=
 :REP
 for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
-	echo "cmdgfx: fbox 8 0 . 0,0,%W%,%H% & !MSG! & 3d objects\!FNAME! !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+	echo "cmdgfx: fbox 8 0 . 0,0,%W%,%H% & !MSG! & 3d objects\!FNAME! !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL!" F
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
 	if !ROTMODE! == 0 set /a RX+=2, RY+=6, RZ-=4, XMID=%W%/2, YMID=%H%/2
 	
-	if !K_DOWN! == 1 (
-		for %%a in (331 333 328 336 122 90 100 68 329 337 327 335) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
-		if !KEY! == 32 set /A DRAWMODE+=1&(if !DRAWMODE! gtr 3 set DRAWMODE=0)&for %%a in (!DRAWMODE!) do set PAL=!PAL%%a!
-		if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set RX=0&set RY=0&set RZ=0
-		if !KEY! == 111 set /A O1T=1-!O1T!,O2=1-!O2!&set O1=!O0!!O1T!
-		if !KEY! == 98 set /A O0+=1&(if !O0! gtr 6 set O0=0)&set O1=!O0!!O1T!
-		if !KEY! == 110 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
-		if !KEY! == 78 set /A OBJINDEX-=1&(if !OBJINDEX! lss 0 set /A OBJINDEX=%NOFOBJECTS%-1)&call :SETOBJECT
-		if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
-		if !KEY! == 112 cmdwiz getch
-		if !KEY! == 27 set STOP=1
+	if !K_EVENT! == 1 (
+		if !K_DOWN! == 1 (
+			for %%a in (331 333 328 336 122 90 100 68 329 337 327 335) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
+			if !KEY! == 32 set /A DRAWMODE+=1&(if !DRAWMODE! gtr 3 set DRAWMODE=0)&for %%a in (!DRAWMODE!) do set PAL=!PAL%%a!
+			if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set RX=0&set RY=0&set RZ=0
+			if !KEY! == 111 set /A O1T=1-!O1T!,O2=1-!O2!&set O1=!O0!!O1T!
+			if !KEY! == 98 set /A O0+=1&(if !O0! gtr 6 set O0=0)&set O1=!O0!!O1T!
+			if !KEY! == 110 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
+			if !KEY! == 78 set /A OBJINDEX-=1&(if !OBJINDEX! lss 0 set /A OBJINDEX=%NOFOBJECTS%-1)&call :SETOBJECT
+			if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
+			if !KEY! == 112 cmdwiz getch
+			if !KEY! == 27 set STOP=1
+		)
+		if !K_DOWN! == 0 (
+			set /a ACTIVE_KEY=0
+		)	
 	)
-	if !K_DOWN! == 0 (
-		for %%a in (331 333 328 336 122 90 100 68 329 337 327 335) do if !KEY! == %%a set /a ACTIVE_KEY=0
-	)	
 	if !ACTIVE_KEY! gtr 0 (
 		if !ROTMODE!==1 (
 			if !ACTIVE_KEY! == 327 set /a XMID-=1
@@ -85,6 +85,7 @@ for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
 if not defined STOP goto REP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
 echo Q>inputflags.dat
 

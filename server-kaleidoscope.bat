@@ -2,7 +2,7 @@
 bg font 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf0:0,0,220,110W13
+cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,110
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -16,18 +16,20 @@ set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -16
-del /Q EL.dat >nul 2>nul
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=7000, DRAWMODE=0, MODE=0
 set /a CRX=0,CRY=0,CRZ=0
 set ASPECT=0.6665
 
-set /a S1=66, S2=12, S3=30
-if "%~1" == "1" set /a S1=33, S2=24, S3=15
-if "%~1" == "2" set /a S1=100, S2=8, S3=45
-if "%~1" == "3" set /a S1=25, S2=30, S3=12
+set /a S1=66, S2=12, S3=30, TRINUM=0
+if "%~1" == "1" set /a S1=33, S2=24, S3=15, TRINUM=1
+if "%~1" == "2" set /a S1=100, S2=8, S3=45, TRINUM=2
+if "%~1" == "3" set /a S1=25, S2=30, S3=12, TRINUM=3
 
-set FN=tri.obj
+set FN=objects\tri%TRINUM%.obj
+
+if exist %FN% goto SKIPGEN
+
 echo usemtl cmdblock 0 0 70 70 >%FN%
 echo v  0 0 0 >>%FN%
 echo v  0 100 0 >>%FN%
@@ -37,6 +39,7 @@ echo vt 0 1 >>%FN%
 echo vt 1 1 >>%FN%
 echo f 1/1/ 2/2/ 3/3/ >>%FN%
 
+:SKIPGEN
 set /a A1=155, A2=0, A3=0, CNT=0
 set /a TRANSP=0, TV=-1
 set /a MONO=0 & set MONS=
@@ -46,8 +49,6 @@ set /a LIGHT=0, LTIME=990
 set /a MODE=1, TV=20, TRANSP=1
 
 set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
-
-del /Q EL.dat >nul 2>nul
 
 set /a SHOWHELP=1
 set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,108
@@ -69,10 +70,11 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!"
+	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" F
 	set OUTP=
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 
 	set /a CRZ+=3, CNT+=1
 
@@ -103,6 +105,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-del /Q tri.obj
+cmdwiz delay 100
 taskkill.exe /F /IM dlc.exe>nul
 echo "cmdgfx: quit"
+echo Q>inputflags.dat

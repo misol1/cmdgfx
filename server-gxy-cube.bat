@@ -4,7 +4,7 @@ bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" Sm0uOf0:0,0,200,90W10
+cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,90
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -29,22 +29,18 @@ set MSG=%HELPMSG%
 set /a OBJINDEX=0, NOFOBJECTS=5
 call :SETOBJECT
 set /a ACTIVE_KEY=0
-set EXTRA=&for /L %%a in (1,1,50) do set EXTRA=!EXTRA!xtra
-del /Q EL.dat >nul 2>nul
 
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-   echo "cmdgfx: fbox 8 0 fa 0,0,%W%,%H% & !MSG! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%"
+   echo "cmdgfx: fbox 8 0 fa 0,0,%W%,%H% & !MSG! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL!" F
 	
    if !ROTMODE! == 0 set /a RX+=2,RY+=6,RZ-=4
 
-	set /a RET=-1
-	if exist EL.dat set /p RET=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
-	if not !RET! == -1 (
-		set /a "KEY=!RET!>>22, K_DOWN=(!RET!>>21) & 1"
-
+	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
 			for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
 			if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a RX=0,RY=0,RZ=0
@@ -56,7 +52,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			if !KEY! == 27 set STOP=1
 		)
 		if !K_DOWN! == 0 (
-			for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=0
+			set /a ACTIVE_KEY=0
 		)
 	)
 	
@@ -77,7 +73,9 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto REP
 
 endlocal
+cmdwiz delay 100
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
 goto :eof
 
 :SETOBJECT

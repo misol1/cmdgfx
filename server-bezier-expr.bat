@@ -4,7 +4,7 @@ bg font 6 & mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf0:0,0,220,95W15
+cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,95
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
@@ -44,7 +44,6 @@ set STREAM="0???=10??,1???=90??,2???=b0??,3???=f0??,4???=f0??,5???=b0??,6???=90?
 set /a SHOWHELP=1
 set HELPMSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,92
 if !SHOWHELP!==1 set MSG=%HELPMSG%
-del /Q EL.dat >nul 2>nul
 
 set CLS=&set /a SKIPCLS=0
 
@@ -68,7 +67,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !DIV! == 2 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM:~1,-1% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8 & !MSG!"
 	if !DIV! == 2 if !CCYCLE!==0 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & !MSG!"
 
-	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
+	set /p INPUT=
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
 	
 	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 16 + 2") & 	for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
 	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV! 
@@ -83,3 +83,4 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 endlocal
 echo "cmdgfx: quit"
+echo Q>inputflags.dat
