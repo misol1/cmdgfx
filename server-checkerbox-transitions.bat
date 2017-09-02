@@ -181,7 +181,7 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 200
-echo Q>inputflags.dat
+title input:Q
 echo "cmdgfx: quit"
 rem del /Q plane-temp.obj box-temp.obj > nul 2>nul
 goto :eof

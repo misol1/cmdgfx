@@ -83,4 +83,4 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 endlocal
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q

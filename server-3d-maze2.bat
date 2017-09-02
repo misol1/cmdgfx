@@ -178,7 +178,7 @@ cmdwiz delay 100
 cmdwiz showcursor 1
 mode con rate=31 delay=0
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 goto :eof
 
 :MOVE <direction> <div>

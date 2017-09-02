@@ -137,7 +137,7 @@ if not defined STOP goto GUILOOP
 endlocal & set SELCMD=%SELCMD%
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 del /Q plane-t*.obj > nul 2>nul
 del /Q capture-1.gxy >nul 2>nul
 %SELCMD%

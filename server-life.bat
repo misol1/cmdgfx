@@ -53,7 +53,7 @@ if not defined STOP goto LOOP
 
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 goto :eof
 
 :DRAW

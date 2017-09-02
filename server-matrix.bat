@@ -65,6 +65,5 @@ if not defined STOP goto LOOP
 
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
-del /Q matrix-src-copy.bat>nul 2>nul
+title input:Q
 endlocal

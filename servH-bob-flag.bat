@@ -77,5 +77,5 @@ if not defined STOP goto REP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 del /Q capture-0.gxy >nul 2>nul

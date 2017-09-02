@@ -27,5 +27,5 @@ rem	echo %INPUT%
 goto REP
 
 :OUT
-echo Q>inputflags.dat
+title input:Q
 endlocal

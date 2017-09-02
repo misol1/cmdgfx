@@ -92,7 +92,7 @@ if defined CONT set CONT=&set STOP=&goto LOOP
 
 endlocal
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 goto :eof
 
 :SETCOLORS

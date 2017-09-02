@@ -211,7 +211,7 @@ rem del /Q %FN% %FN2% %FN4% wrld-temp?.obj
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 del /Q %FN4% wrld-temp?.obj
 goto :eof
 

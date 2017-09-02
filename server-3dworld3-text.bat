@@ -215,7 +215,7 @@ if not defined STOP goto LOOP
 cmdwiz delay 100
 endlocal
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 del /Q %FN4% wrld-temp?.obj
 goto :eof
 

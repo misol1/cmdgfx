@@ -2,7 +2,7 @@
 bg font 0 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" zkOSf0:0,0,220,110W13
+call %0 %* | cmdgfx_gdi "" kOSf0:0,0,220,110W10
 set __=
 cls
 bg font 6 & cmdwiz showcursor 1 & mode 80,50

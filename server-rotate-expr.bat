@@ -59,4 +59,4 @@ cmdwiz delay 100
 bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q

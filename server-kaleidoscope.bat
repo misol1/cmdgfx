@@ -108,4 +108,4 @@ endlocal
 cmdwiz delay 100
 taskkill.exe /F /IM dlc.exe>nul
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q

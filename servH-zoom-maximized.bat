@@ -45,4 +45,4 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q

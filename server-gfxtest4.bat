@@ -87,7 +87,7 @@ if not defined STOP goto REP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 
 goto :eof
 

@@ -33,5 +33,5 @@ rem	echo %INPUT%
 if not defined STOP goto LOOP
 
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 endlocal

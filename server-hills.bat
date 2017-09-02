@@ -77,5 +77,5 @@ if not defined STOP goto SHOWLOOP
 
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 endlocal

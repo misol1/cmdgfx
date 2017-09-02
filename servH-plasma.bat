@@ -74,6 +74,6 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 bg font 6 & mode 80,50 & cls
 cmdwiz showcursor 1

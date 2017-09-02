@@ -28,6 +28,6 @@ set /a KEY=0
 goto REP
 
 :OUT
-echo Q>inputflags.dat
+title input:Q
 rem taskkill /F /IM "cmdgfx_input.exe" >nul 2>nul
 endlocal
