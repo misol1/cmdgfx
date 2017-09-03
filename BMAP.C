@@ -79,6 +79,7 @@ void freeBitmap(Bitmap *bild, int bFreeBasePointer) {
 		free(bild);
 }
 
+/*
 void putBitmap (int x, int y, Bitmap *bild) {
 	register unsigned char *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
 	register int i, xsize = bild->xSize;
@@ -96,25 +97,6 @@ void putBitmap (int x, int y, Bitmap *bild) {
 	}
 }
 
-void put_transparent_Bitmap (int x, int y, Bitmap *bild) {
-	register unsigned char *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
-	register int i,j, xsize = bild->xSize;
-
-	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
-		return;
-	if (x<0) { vid-=x; bmp-=x; xsize+=x; x=0;}
-	if (x+xsize>=XRES) { xsize-=(x+xsize)-XRES; }
-
-	for (i=0; i<bild->ySize; i++) {
-		if (vid>=video && vid<v1) {
-			for (j=0; j<xsize; j++) {
-				if (bmp[j])
-				vid[j]=bmp[j];
-			}
-		}
-		vid+=XRES; bmp+=bild->xSize;
-	}
-}
 
 void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild) {
 	register unsigned char *vid=video+x+y*XRES,*bmp=bild->data;
@@ -174,6 +156,27 @@ void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild)
 		y0+=dy;
 	}
 }
+*/
+
+void put_transparent_Bitmap (int x, int y, Bitmap *bild) {
+	register unsigned char *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
+	register int i,j, xsize = bild->xSize;
+
+	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
+		return;
+	if (x<0) { vid-=x; bmp-=x; xsize+=x; x=0;}
+	if (x+xsize>=XRES) { xsize-=(x+xsize)-XRES; }
+
+	for (i=0; i<bild->ySize; i++) {
+		if (vid>=video && vid<v1) {
+			for (j=0; j<xsize; j++) {
+				if (bmp[j])
+				vid[j]=bmp[j];
+			}
+		}
+		vid+=XRES; bmp+=bild->xSize;
+	}
+}
 
 void shadeBitmap (int x, int y, Bitmap *bild, int addon) {
 	register int i,j, xsize = bild->xSize;
@@ -205,5 +208,5 @@ void shadeBitmap (int x, int y, Bitmap *bild, int addon) {
 			}
 			bmap+=bild->xSize;
 		}
-	}
+	}	
 }

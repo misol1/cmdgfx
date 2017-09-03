@@ -31,7 +31,7 @@ set /a SHOWHELP=1
 if !SHOWHELP!==1 set HELP=%HELPMSG%
 
 set /a CNT=0
-for %%a in (12 8 16 15 16 14 12 16) do set /a WVAL!CNT!=%%a, CNT+=1
+for %%a in (12 18 16 15 16 14 12 16) do set /a WVAL!CNT!=%%a, CNT+=1
 echo W!WVAL%MODE%!>inputflags.dat
 
 :LOOP
@@ -46,6 +46,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+60+y+!COLCNT!)/200)*sin((40+x/2-y+!COLCNT2!/9)/50)*(x/3) & !HELP! & skip 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 0 db" Ff0:0,0,%W%,%H%
 
 	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+y)/60)*(x/5+y/3)+cos((y+!COLCNT2!/5)/35)*(x/3) & !HELP!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,%W%,%H%
+
+rem	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,120,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+atan((y-51)/(x-120))*8*cos(!COLCNT!/190+y/145)*24+sin(x/9+!COLCNT2!/36)*4 & !HELP!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & block 0 0,0,119,%H% 120,0 -1 1 & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,%W%,%H%
 
    if !MODE! == 4 set /a A1+=4, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!&  3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ?" Ff0:0,0,%W%,%H%
 	

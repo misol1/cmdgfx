@@ -1,11 +1,8 @@
 # Makefile for small gfx lib
 
 OBJECTS = gfx.o r3d.o rgbcol.o bmap.o testlib.o outputText.o algebra.o tinyexpr.o
-#OBJECTS = gfx.obj r3d.obj rgbcol.obj bmap.obj testlib.obj outputText.obj algebra.obj
 TARGET  = testlib.exe
 OBJECTSLIB = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx.o
-#OBJECTSLIB = gfx.o r3d.o bmap.o cmdgfx.o cmdgfx_mingw_res.o
-#OBJECTSLIB = gfx.obj r3d.obj bmap.obj cmdgfx.obj cmdgfx.res
 TARGETLIB  = cmdgfx.exe
 OBJECTSLIBGDI = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx_gdi.o
 TARGETLIBGDI  = cmdgfx_gdi.exe

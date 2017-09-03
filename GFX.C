@@ -1140,6 +1140,8 @@ void bezier(long n, int *xPoints, int *yPoints, uchar col) {
 
 // Currently not used, since supports 256x256 texture only
 
+/*
+
 static float dizdx, duizdx, dvizdx, dizdy, duizdy, dvizdy;
 static float dizdxn, duizdxn, dvizdxn;
 static float xa, xb, iza, uiza, viza;
@@ -1489,7 +1491,7 @@ static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int
 		y1++;
 	}
 }
-
+*/
 
 // Texturemapper with full perspective correction, subpixels and subtexels, uses floats all the way through
 

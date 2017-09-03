@@ -459,7 +459,7 @@ CHAR_INFO * readScreenBlock() {
 	
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenBufferInfo);
 
-	x = 0; y = 0;
+	x = y = 0;
 	w = screenBufferInfo.dwSize.X;
 	h = screenBufferInfo.dwSize.Y;
 
@@ -656,16 +656,6 @@ int getConsoleDim(int bH) {
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenBufferInfo);
 	return bH? screenBufferInfo.dwSize.Y : screenBufferInfo.dwSize.X;
-}
-
-
-void wait_vblank(int maxWaitTime) {
-	static long oldTime = 0;
-	
-	long deltaWait = oldTime+maxWaitTime - GetTickCount();
-	if (deltaWait > 0)
-		Sleep(deltaWait);
-	oldTime = GetTickCount();
 }
 
 void setResolution(int resX, int resY) {

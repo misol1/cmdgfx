@@ -159,7 +159,6 @@ int saveScreenBlock(char *filename, int x, int y, int w, int h, int bEncode, int
 }
 
 
-
 void convertToText(int mode, int scale, int palette[], int startx, int starty, CHAR_INFO *old, int mapIndex, int XRES, int YRES, unsigned char *video) {
 	CHAR_INFO *str;
 	COORD a, b;

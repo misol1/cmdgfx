@@ -114,6 +114,7 @@ int readIntSequence(char *fr, int *out, char *delims, int maxRead) {
 	return read;
 }
 
+/*
 void Make_torus_object(point3d obj[],float shaper) {
 	float c,d,e,f,g;
 	int i,j;
@@ -168,7 +169,7 @@ void Make_cube_object(point3d obj[]) {
 		}
 		i2+=70;
 	}
-}
+} */
 
 void rot3dPoints(point3d obj[], int points, int xg, int yg, int distance, float rx, float ry, float rz, float aspect, int movex, int movey, int movez, int bAllowOnlyPositiveZ, int projectionDepth) {
 	float srx, crx, sry, cry, srz ,crz;
