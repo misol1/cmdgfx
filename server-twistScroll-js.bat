@@ -19,10 +19,10 @@ mode 80,50 & cmdgfx_gdi ""
 exit /b 0 */
 
 
-var w=160, h=90, xmid=w/2, ymid=h/2, yp=ymid + 3, mode=0, dist=12000, drawmode=5, mirror=1, mx=0, my=0
+var w=160, h=90, xmid=w/2, ymid=h/2, yp=ymid + 3, mode=0, dist=12000, drawmode=0, mirror=1, mx=0, my=0
 
 var orgsx=0.0, orgsr=0.0, cc=2.0, sx2=3.0
-var imgc=0, imgcd=0, tyOffset=-3700, tyOffsetDelta = 25, tyScale=3500, tmpFlag=""
+var imgc=0, imgcd=0, tyOffset=96000, tyOffsetDelta = 25, tyScale=3500, tmpFlag=""
 
 var showHelp=1, helpMsg="text e 0 0 SPACE\\-\\g1e\\g1f\\g11\\g10\\-m\\-ph 1,88", msg=helpMsg
 
