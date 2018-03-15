@@ -59,19 +59,7 @@ set ASPECT=0.6665
 set /a FNT=0, SCALE=20
 
 set /a S1=66, S2=12, S3=30
-if "%~1" == "1" set /a S1=33, S2=24, S3=15
-if "%~1" == "2" set /a S1=100, S2=8, S3=45
-if "%~1" == "3" set /a S1=25, S2=30, S3=12
-
-set FN=tri.obj
-echo usemtl cmdblock 0 0 70 70 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
+set FN=objects\tri.obj
 
 set /a A1=155, A2=0, A3=0, A4=0, CNT=0
 set /a TRANSP=0, TV=-1
@@ -172,7 +160,6 @@ rem	if !STEP! == 0 if !a! geq 1000 call :SIDECUBE 3 1000 & set /a STEP+=1 & set 
 if not defined STOP goto LOOP
 
 endlocal
-del /Q tri.obj
 goto :eof
 
 

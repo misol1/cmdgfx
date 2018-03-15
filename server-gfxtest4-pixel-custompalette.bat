@@ -6,7 +6,7 @@ set /a W*=4, H*=6
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" eSfa:0,0,%W%,%H%
+cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" eSfa:0,0,%W%,%H% 000000,ffffff,f7f7ff,eeeeff,e7e7ff,ddddff,d7d7ff,ccccff,c7c7ff,bbbbff,aaaaff,9999ff,8888ff,7777ff,5555ff,3333dd 000000,2222cc,1111bb,1111aa,111199,000088,000077,000066,000055,000044,000033,000022,000011,000011,000011,000011,000011,000011
 set __=
 set W=&set H=&set F6W=&set F6H=
 cls
@@ -40,8 +40,7 @@ set /a ACTIVE_KEY=0
 set /a WIREMODE=0
 if !WIREMODE!==0 set WIRE=skip
 
-echo "" - 000000,ffffff,f7f7ff,eeeeff,e7e7ff,ddddff,d7d7ff,ccccff,c7c7ff,bbbbff,aaaaff,9999ff,8888ff,7777ff,5555ff,3333dd  000000,2222cc,1111bb,1111aa,111199,000088,000077,000066,000055,000044,000033,000022,000011,000011,000011,000011,000011,000011>servercmd.dat
-rem echo "" - 000000,ffffff,f7f7ff,eeeeff,e7e7ff,ddddff,d7d7ff,ccccff,c7c7ff,bbbbff,aaaaff,9999ff,8888ff,7777ff,5555ff,3333dd  000000,2222cc,2811bb,3011aa,401199,480088,400077,320066,280055,200044,180033,080022,000011,000011,000011,000011,000011,000011>servercmd.dat
+::echo "cmdgfx: " - 000000,ffffff,f7f7ff,eeeeff,e7e7ff,ddddff,d7d7ff,ccccff,c7c7ff,bbbbff,aaaaff,9999ff,8888ff,7777ff,5555ff,3333dd  000000,2222cc,2811bb,3011aa,401199,480088,400077,320066,280055,200044,180033,080022,000011,000011,000011,000011,000011,000011
 
 set STOP=
 :REP

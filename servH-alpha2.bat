@@ -59,7 +59,7 @@ set ALTSET=0
 ::if "%~1"=="" call :MAKECOMBINEDALPHA "HEY}BABE" 0 220 
 
 if "%~1"=="" call :MAKECOMBINEDALPHA "SEX" 0 220 
-::if "%~1"=="" call :MAKECOMBINEDALPHA "DAWG|" 1 380 
+rem if "%~1"=="" call :MAKECOMBINEDALPHA "Twist and turn until you burn| Another misol101 scroller for DosTips.com..." 1 410 1 ATS.obj
 if not "%~1"=="" call :MAKECOMBINEDALPHA "%~1" %2 %3
 
 call sindef.bat
@@ -129,6 +129,7 @@ goto :eof
 set ERR=
 if "%~1" == "" set /a ERR=1 & goto :eof
 set INDEX=
+set /a YSIZE=0
 if not "%~2" == "" set /a INDEX=%~2
 if not "%ALTSET%"=="1" if "%INDEX%" == "" cmdwiz stringfind "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789z #?|.,:;<>()[]{}'=_-+/*\&z@$~" "%~1" & set INDEX=!ERRORLEVEL!
 if "%ALTSET%"=="1" if "%INDEX%" == "" cmdwiz stringfind "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{ #?|.,:;<>()[]zz'=_-+/*\&}@$~" "%~1" & set INDEX=!ERRORLEVEL!
@@ -142,6 +143,17 @@ call :SETCOORD TY1 %YDELT% %YI%
 set /a XI+=1, YI+=1
 call :SETCOORD TX2 %XDELT% %XI%
 call :SETCOORD TY2 %YDELT% %YI%
+if "%MODY%"=="1" set /a CNT=-1 & for %%a in (0 0 0 0 0 0 25 0 0 25 0 0 0 0 0 25 25 0 0 0 0 0 0 0 25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25) do set /a CNT+=1 & if !INDEX!==!CNT! set /a YSIZE=%%a
+goto :eof
+
+:GETYSIZE <inAlpha>
+set /a YSIZE=100
+set /a INDEX=-1
+if not "%ALTSET%"=="1" cmdwiz stringfind "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789z #?|.,:;<>()[]{}'=_-+/*\&z@$~" "%~1" & set INDEX=!ERRORLEVEL!
+if "%ALTSET%"=="1" cmdwiz stringfind "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{ #?|.,:;<>()[]zz'=_-+/*\&}@$~" "%~1" & set INDEX=!ERRORLEVEL!
+if %INDEX% lss 0 set /a ERR=1 & goto :eof
+if %INDEX% geq 92 set /a ERR=1 & goto :eof
+if "%MODY%"=="1" set /a CNT=-1 & for %%a in (75 100 75 100 75 100 75 100 100 100 100 100 75 75 75 75 75 75 75 85 75 75 75 75 75 75 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 85 100 100 100 100 100 100 100 100 100 100 100 45 ) do set /a CNT+=1 & if !INDEX!==!CNT! set /a YSIZE=%%a
 goto :eof
 
 :SETCOORD <out> <delta> <index>
@@ -215,8 +227,14 @@ set /a ORGXP1=%XP1%
 set /a XP2=%XP1%+300
 set /a YP2=%YP1%+502
 
+if not "%~4" == "" set MODY=%~4
+
 set FN=objects\alphComb.obj
+if not "%~5" == "" set FN=objects\%~5
 echo usemtl %TEXTURE%>%FN%
 
-for /L %%a in (1,1,%LEN%) do set CH="!STR:~%%a,1!"& (if !CH!=="}" set /a YP1+=%AH%, XP1=%ORGXP1%-%XPP%) & call :MAKECOMBINEDSINGLEALPHA !CH! & set /a F1+=4,F2+=4,F3+=4,F4+=4,XP1+=%XPP%,YP1+=%YPP% & set /a XP2=!XP1!+300,YP2=!YP1!+502
+set /a YSIZE=100
+if !YPP!==0 for /L %%a in (1,1,%LEN%) do set CH="!STR:~%%a,1!"& (if !CH!=="}" set /a YP1+=%AH%, XP1=%ORGXP1%-%XPP%) & call :MAKECOMBINEDSINGLEALPHA !CH! & set /a F1+=4,F2+=4,F3+=4,F4+=4,XP1+=%XPP%,YP1+=YPPP & set /a XP2=!XP1!+300,YP2=!YP1!+502
+if !XPP!==0 for /L %%a in (1,1,%LEN%) do set CH="!STR:~%%a,1!"& (if !CH!=="}" set /a YP1+=%AH%, XP1=%ORGXP1%-%XPP%) & (if not %%a==1 call :GETYSIZE !CH! & set /a YPAP=YPP*!YSIZE!/100,YP1+=YPAP,YP2=YP1+502) & call :MAKECOMBINEDSINGLEALPHA !CH! & set /a F1+=4,F2+=4,F3+=4,F4+=4,XP1+=%XPP% & set /a YPAP=YPP*!YSIZE!/100,YP1+=YPAP & set /a XP2=!XP1!+300
+set MODY=
 goto :eof

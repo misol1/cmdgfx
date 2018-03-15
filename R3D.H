@@ -45,9 +45,10 @@ typedef struct obj3d {
 
 typedef int (*readTexture)(Bitmap *bmap, char *fname);
 
-obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures);
+obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures, float txMod, float tyMod, float txAdd, float tyAdd);
 obj3d *readPly(char *fname, float scale, float modx, float mody, float modz);
 obj3d *readPlg(char *fname, float scale, float modx, float mody, float modz);
 void freeObj3d(obj3d *obj);
+void centerObj3d(obj3d *obj3, float scale); // centers ox,oy,oz
 
 #endif

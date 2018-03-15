@@ -10,21 +10,15 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=220, H=110
-set /a F6W=W/2, F6H=H/2
+set /a W=220, H=110, F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 set /a XMID=%W%/2, YMID=%H%/2
-set /a RX=0,RY=0,RZ=0, DIST=1000
-set ASPECT=0.66
+set /a RX=0,RY=0,RZ=0, DIST=1000, MUL=2000, MMID=2600, SC=0
+set ASPECT=0.66 & set STOP=
 call centerwindow.bat 0 -18
-set STOP=
-
 call sindef.bat
-
 set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
-
-set /a MUL=2000, MMID=2600, SC=0
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (

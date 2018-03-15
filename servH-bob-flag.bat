@@ -58,7 +58,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   set /a TX+=7&if !TX! gtr 2600 set TX=-2600
   set /a TX2+=7&if !TX2! gtr 2600 set TX2=-2600
 
-  echo "cmdgfx: fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & & 3d objects\starfield200_0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d objects\starfield200_1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image capture-0.gxy 0 0 0 -1 180,0 & block 0 0,0,330,80 0,0 -1 0 0 ?2??=?6??,?a??=?e??,c4??=91??,?4??=?1??,?c??=?9??,c???=9??? ? x-163+sin(!XC!/100+floor(x/!BXA!)*0.4+floor(y/!BYA!)*0.4)*10+eq(fgcol(x,y),1)*1000  9+y+cos(!YC!/100+floor(x/!BXA!)*0.4+floor(y/!BYA!)*0.4)*12 to 180,0,150,70" F
+  echo "cmdgfx: fbox 0 0 04 180,0,180,80 & fbox 1 %BGCOL% 20 0,0,180,80 & 3d objects\starfield200_0.ply 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & 3d objects\starfield200_1.ply 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.3 %COLS% & image capture-0.gxy 0 0 0 -1 180,0 & block 0 0,0,330,80 0,0 -1 0 0 ?2??=?6??,?a??=?e??,c4??=91??,?4??=?1??,?c??=?9??,c???=9??? ? x-163+sin(!XC!/100+floor(x/!BXA!)*0.4+floor(y/!BYA!)*0.4)*10+eq(fgcol(x,y),1)*1000  9+y+cos(!YC!/100+floor(x/!BXA!)*0.4+floor(y/!BYA!)*0.4)*12 to 180,0,150,70" F
   	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )

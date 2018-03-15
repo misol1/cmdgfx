@@ -72,8 +72,5 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 	
-:SLUT	
 endlocal
 bg font 6 & cmdwiz showcursor 1 & mode 80,50
-goto :eof
-

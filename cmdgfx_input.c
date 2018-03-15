@@ -4,7 +4,9 @@
 #include <windows.h>
 
 // Compilation: gcc -o cmdgfx_input.exe -O2 cmdgfx_input.c
-// TODO: Check for CLICKS/RCLICKS ,make sure sent event includes doubleclicks,sums of wheel, horizontal wheel?
+// TODO: 1. Check for CLICKS/RCLICKS?
+//			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel?
+// 		3. Mouse wheel reporting not working on Win10. Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
@@ -157,13 +159,16 @@ int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadd
 	return 0;
 }
 	
+HANDLE GetInputHandle() {
+	return CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+}
 	
 int main(int argc, char *argv[]) {
-	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1;
+	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1, bIgnoreInputFlagsFile = 0;
 	int bWait = 0, waitTime = 0;
 	int bSleepingWait = 0;
 	int bSendNoEvent = 0, bSendKeyUp = 0;
-	int bSendAll = 0, bPadding = 0, bTitleComm = 1;
+	int bSendAll = 0, bPadding = 0, bIgnoreTitleComm = 0;
 	char sFlags[256];
 	char sEventOutput[256] = "";
 	char sMouseOutput[256] = "";
@@ -175,17 +180,19 @@ int main(int argc, char *argv[]) {
 	int eventCount;
 	char *pch;
 	DWORD fdwMode, oldfdwMode;
-	HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-
-	GetConsoleMode(h_stdin, &oldfdwMode);
-	fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
-	fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
+	HANDLE h_stdin;
 
 	if (argc < 2 || (argc > 1 && strcmp(argv[1], "/?") == 0)) {
-		printf("\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead of busy wait, 'u' enable forwarding key-up events for M flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
+		printf("\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead of busy wait, 'u' enable forwarding key-up events for M flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
 		return 0;
 	}
 
+	h_stdin = GetInputHandle();
+	
+	GetConsoleMode(h_stdin, &oldfdwMode);
+	fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
+	fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
+	
 	remove("inputflags.dat");
 
 	if (argc > 1) {
@@ -195,8 +202,9 @@ int main(int argc, char *argv[]) {
 				case 'K': bWaitKey = 1; break;
 				case 'n': bSendNoEvent = 1; break;
 				case 'u': bSendKeyUp = 1; break;
+				case 'i': bIgnoreInputFlagsFile = 1; break;
 				case 'x': bPadding = 1; break;
-				//case 't': bTitleComm = 1; break;
+				case 'I': bIgnoreTitleComm = 1; break;
 				case 'A': bSendAll = 1; break;
 				case 'M': case 'm' : {
 					char wTime[64];
@@ -332,7 +340,7 @@ int main(int argc, char *argv[]) {
 		if (bServer) {
 
 			pch = NULL;
-			if (bTitleComm) {
+			if (!bIgnoreTitleComm) {
 				HWND consoleWindow = GetConsoleWindow();
 				if (consoleWindow!= NULL) {
 					GetWindowText(consoleWindow, sTempTitleBuffer, 1023);
@@ -345,7 +353,9 @@ int main(int argc, char *argv[]) {
 			}
 			
 			if (pch == NULL) {
-				FILE	*flushFile = fopen("inputflags.dat", "r");
+				FILE	*flushFile = NULL;
+				if (!bIgnoreInputFlagsFile)
+					flushFile = fopen("inputflags.dat", "r");
 				if (flushFile) {
 					char *ffres = fgets(sFlags, 128, flushFile);
 					if (ffres)
@@ -371,8 +381,9 @@ int main(int argc, char *argv[]) {
 						case 'n': bSendNoEvent = neg? 0 : 1; break;
 						case 'u': bSendKeyUp = neg? 0 : 1; break;
 						case 'A': bSendAll = neg? 0 : 1; break;
-						//case 't': bTitleComm = neg? 0 : 1; break;
+						case 'I': bIgnoreTitleComm = neg? 0 : 1; break;
 						case 'x': bPadding = neg? 0 : 1; break;
+						case 'i': bIgnoreInputFlagsFile = neg? 0 : 1; break;
 						case 'M': case 'm':{
 							SetConsoleMode(h_stdin, oldfdwMode);
 							if (neg)
@@ -419,5 +430,6 @@ int main(int argc, char *argv[]) {
 
 	SetConsoleMode(h_stdin, oldfdwMode);
 
+	CloseHandle(h_stdin);
 	return retVal;
 }

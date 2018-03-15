@@ -27,9 +27,9 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
-3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2]
-         scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect
-         fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
+3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale,tex_x_a,tex_y_a]
+         rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
+         face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 insert   file
 
 Fgcol and bgcol can be specified either as decimal or hex.
@@ -43,7 +43,7 @@ If a pcx file is used, transpcol should be specified, otherwise transpchar. Alwa
 to -1 if transparency is not needed!
 
 Gpoly palette follows '1233,' repeated, 1=fgcol, 2=bgcol, 3=char (all in hex).
-Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move
+Transform follows '1233=1233,' repeated, ?/x/- supported. Mode 0=copy, 1=move, 2-3=same as 0-1 but transparent color instead of char.
 
 String for text op has all _ replaced with ' '. Supports a subset of gxy codes.
 
@@ -59,7 +59,9 @@ Use fgpalette/bgpalette to re-arrange colors in the final output, e.g. use fgpal
 [flags]: 'p' preserve buffer content, 'k' return code of last keypress, 'K' wait and return key,
          'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key and mouse bit
          pattern(see mouse examples), 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save
-         (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server.
+         (/non-0) errorlevel to 'EL.dat', 'n' no output, 'z' sleep, 'S' start as server,
+         'i' ignore servercmd.dat, 'Rn' rotation granularity, 'N/Nn' autocenter/scale 3d objects,
+         'Gw,h' maximum gxy file width/height.
 ```
 
 cmdgfx_gdi.exe
@@ -84,9 +86,9 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
-3d       objectfile drawmode,drawoption rx[:rx2],ry[:ry2],rz[:rz2] tx,ty,tz scalex,scaley,scalez,xmod,ymod,zmod
-         face_culling,z_culling_near,z_culling_far,z_sort_levels xpos,ypos,distance,aspect
-         fgcol1 bgcol1 char1 [...fgcol32 bgcol32 char32]
+3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale,tex_x_a,tex_y_a]
+         rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
+         face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 insert   file
 
 Fgcol and bgcol can be specified either as decimal or hex.
@@ -116,7 +118,9 @@ Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (all hex)
          'e/E' suppress/pause errors, 'wn/Wn' wait/await n ms, 'M/m[wait]' return key
          and mouse bit pattern, 'u' key up for M/m, 'Zn' set projection depth, 'o/O' save (/non-0)
          errorlevel to 'EL.dat', 'fn[:x,y,w,h]' use font n(0-9,default 6), 'P' read/write buffer
-         to 'GDIbuf.dat', 'n' no output, 'z' sleep, 'S' start as server.
+         to 'GDIbuf.dat', 'n' no output, 'z' sleep, 'S' start as server,
+         'i' ignore servercmd.dat, 'Rn' rotation granularity, 'N/Nn' autocenter/scale 3d objects,
+         'Gw,h' maximum gxy file width/height, 'a' set 'f' flag position at pixel level.
 ```
 
 cmdwiz.exe
@@ -128,7 +132,9 @@ Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate
                setcursorpos printf saveblock copyblock moveblock inspectblock
                playsound delay stringfind stringlen gettime await getexetype 
                cache setwindowtransparency getwindowpos setwindowpos getdisplaydim
-               getmousecursorpos setmousecursorpos insertbmp savefont setfont gettitle] [params]
+               getmousecursorpos setmousecursorpos showmousecursor insertbmp
+               savefont setfont gettitle gxyinfo getpalette setpalette fullscreen
+               gettitle getwindowstyle setwindowstyle] [params]
 					
 Use "cmdwiz operation /?" for info on arguments and return values
 ```

@@ -1,5 +1,5 @@
 /************************************************
- * Cmdgfx v 0.999 (c) Mikael Sollenborn 2016-17 *
+ * Cmdgfx v 0.999 (c) Mikael Sollenborn 2016-18 *
  ************************************************/
 
 //#define GDI_OUTPUT
@@ -21,25 +21,47 @@
 #include "cmdfonts.h"
 #endif
 
-// Issues:
-// 1. Code optimization: Re-use images used several times, same way as for objects
+// Issues/ideas:
+// 1. Code optimization: Re-use images used several times, same way as for 3d objects
 // 2. TinyExpr: optimize recursion
-//	3. Not working as stand-alone command when cmdgfx is running as output server. Possible to fix?
+// 3. 32(24?16?)-bit gdi support (huge effort and need to write MUCH more data)
+// 4. Port to Linux
+// 5. Documentation update/expansion, needs several pages and split-up
 
 // For 3d:
 // 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
 // 2. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
 // 3. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
 // 4. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
-// (5. Use *10 for easier to understand rotation values instead of *4?)
-// (6. Not likely: z-buffer)
+// 5. Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
+
+
+// Done: 
+// 0. New/updated scripts: cmdrunner, pong3d, shootem, starwarsscroll, splitscreen, pixetunnel-js, moveabs, twistscroll1/2, sphere1/2, terrain1/2, trails, life, custompalette-zoomer(s), pixelobj-e69style, gfxtest4-autocenter-scale
+// 1. Flag (i) to ignore servercmd.dat
+// 2. Repeated texture for perspmapper too (if T flag set)
+// 3. Texture offsetting and texture scaling for 3d command. Also adding for tx,ty but works a bit strange.... skip in documentation?
+//	4. Now working as stand-alone command when cmdgfx is running as output server (creating conin/conout)
+// 5. R flag sets the granularity of rotations, keeping default at 4
+// 6. If naiveToF fails (larger number of digits or decimals than 9), fallback to atof
+// 7. GDI only: New flag ('a') to place f:?? at pixel level placement
+// 8. Allow block to use color for transparency (mode 2 and 3)
+// 9. Bug fix when mixing block xflip with transparent char (or color)
+// 10. Flag (G) to set gxy max width/height
+// 11. Flag (N) auto-center (and optionally auto-normalize size of) 3d objects
+// 12. Bug fix: Image op with pcx: bgcolor no longer ignored
+// 13. Bug fix: Force color (-) for image now works with pcx (only makes sense if image is transparent)
+// (NONISSUE: Force color for tpoly: works the same as 3d op, ie fgcol/bgcol are added or subtracted, not ignored, ie force with - does not work)
+
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
+int bAllowRepeated3dTextures = 0;
+float texture_offset_x = 0, texture_offset_y = 0;
 
 #define MAX_ERRS 64
 typedef enum {ERR_NOF_ARGS, ERR_IMAGE_LOAD, ERR_OBJECT_LOAD, ERR_PARSE, ERR_MEMORY, ERR_OPTYPE, ERR_EXPRESSION } ErrorType;
-typedef enum {OP_POLY=0, OP_IPOLY=1, OP_GPOLY=2, OP_TPOLY=3, OP_IMAGE=4, OP_BOX=5, OP_FBOX=6, OP_LINE=7, OP_PIXEL=8, OP_CIRCLE=9, OP_FCIRCLE=10, OP_ELLIPSE=11, OP_FELLIPSE=12, OP_TEXT=13, OP_3D=14, OP_BLOCK=15, OP_INSERT=16, OP_UNKNOWN=17 } OperationType;
+typedef enum {OP_POLY=0, OP_IPOLY=1, OP_GPOLY=2, OP_TPOLY=3, OP_IMAGE=4, OP_BOX=5, OP_FBOX=6, OP_LINE=7, OP_PIXEL=8, OP_CIRCLE=9, OP_FCIRCLE=10, OP_ELLIPSE=11, OP_FELLIPSE=12, OP_TEXT=13, OP_3D=14, OP_BLOCK=15, OP_INSERT=16, OP_PLAY=17, OP_UNKNOWN=18 } OperationType;
 typedef struct {
 	ErrorType errType[MAX_ERRS];
 	OperationType opType[MAX_ERRS];
@@ -57,6 +79,15 @@ uchar colLookup[256];
 #define MAX_STR_SIZE 300000
 #define MAX_OP_SIZE 128000
 
+HANDLE g_conin, g_conout;
+
+HANDLE GetInputHandle() {
+	return CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+}
+
+HANDLE GetOutputHandle() {
+	return CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+}
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
@@ -121,11 +152,13 @@ int consoleFgCol=-1, consoleBgCol=-1;
 void GetConsoleColor(){
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	int col = 0x7;
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+	GetConsoleScreenBufferInfo(g_conout, &info);
 	
 	consoleFgCol = info.wAttributes & 0xf;
 	consoleBgCol = (info.wAttributes>>4) & 0xf;
 }
+
+int GXY_MAX_X = 256, GXY_MAX_Y = 256;
 
 int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor) {
 	char *text, ch, *pbcol, *pbchar;
@@ -133,7 +166,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 	int x = 0, y = 0, yp=0;
 	int v, v16, fgCol, bgCol, oldColor;
 	unsigned char *cchars, *ccols;
-	int w = 256, h = 256;
+	int w = GXY_MAX_X, h = GXY_MAX_Y;
 	FILE *ifp;
 
 	*w1 = -1;
@@ -144,7 +177,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 	
 	b_cols->data = (unsigned char *)malloc(w*h*sizeof(unsigned char));
 	b_chars->data = (unsigned char *)malloc(w*h*sizeof(unsigned char));
-	text = (char *)malloc(MAX_STR_SIZE);
+	text = (char *)malloc(GXY_MAX_X * GXY_MAX_Y * 6);
 	if (!text || !b_cols->data || !b_chars->data) { if (text) free(text); if (b_cols->data) free(b_cols->data); if(b_chars->data) free(b_chars->data); b_cols->data = b_chars->data = NULL; return 0; }
 	memset(b_cols->data, 0, w*h*sizeof(unsigned char));
 	memset(b_chars->data, 255, w*h*sizeof(unsigned char));
@@ -158,7 +191,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 			free(text); free(b_cols->data); free(b_chars->data); b_cols->data = b_chars->data = NULL;
 			return 0;
 		} else {
-			fr = fread(text, 1, MAX_STR_SIZE, ifp);
+			fr = fread(text, 1, GXY_MAX_X * GXY_MAX_Y * 6, ifp);
 			fclose(ifp);
 		}
 		text[fr] = 0;
@@ -456,8 +489,9 @@ CHAR_INFO * readScreenBlock() {
 	CHAR_INFO *str;
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 	int x,y, w, h;
+	HANDLE conout = GetOutputHandle();
 	
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenBufferInfo);
+	GetConsoleScreenBufferInfo(conout, &screenBufferInfo);
 
 	x = y = 0;
 	w = screenBufferInfo.dwSize.X;
@@ -465,6 +499,7 @@ CHAR_INFO * readScreenBlock() {
 
 	str = (CHAR_INFO *) malloc (sizeof(CHAR_INFO) * w*h);
 	if (!str) {
+		CloseHandle(conout);
 		return NULL;
 	}
 
@@ -481,10 +516,11 @@ CHAR_INFO * readScreenBlock() {
 			r.Bottom = j*l+k;
 			a.X = r.Right;
 			a.Y = k;
-			ReadConsoleOutput(GetStdHandle(STD_OUTPUT_HANDLE), str+j*l*w, a, b, &r);
+			ReadConsoleOutput(conout, str+j*l*w, a, b, &r);
 		}
 	}
 
+	CloseHandle(conout);
 	return str;
 }
 
@@ -499,7 +535,7 @@ void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *v
 
 	a.X = XRES; a.Y = YRES;
 
-	hCurrHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	hCurrHandle = g_conout;
 	str = (CHAR_INFO *) calloc (sizeof(CHAR_INFO) * (a.X * a.Y), 1);
 	if (!str) return;
 
@@ -534,7 +570,7 @@ HDC g_hDc = NULL, g_hDcBmp = NULL;
 
 
 // Writing ints instead of chars
-void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh) {
+void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos) {
 	HBITMAP hBmp1 = NULL;
 	HGDIOBJ hGdiObj = NULL;
 	BITMAP bmp = {0};
@@ -559,7 +595,9 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	fh = fontHeight[fontIndex];
 	data = fontData[fontIndex];
 
-	x *= fw; y *= fh;
+	if (!bAbsBitmapPos) {
+		x *= fw; y *= fh;
+	}
 
 	if (g_hDc == NULL) {
 		if ((g_hWnd = GetConsoleWindow())) {
@@ -654,7 +692,9 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 
 int getConsoleDim(int bH) {
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenBufferInfo);
+	HANDLE conout = GetOutputHandle();
+	GetConsoleScreenBufferInfo(conout, &screenBufferInfo);
+	CloseHandle(conout);
 	return bH? screenBufferInfo.dwSize.Y : screenBufferInfo.dwSize.X;
 }
 
@@ -760,7 +800,7 @@ void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *video
 }
 
 void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
-	char opNames[20][16] = { "poly", "ipoly", "gpoly", "tpoly", "image", "box", "fbox", "line", "pixel", "circle", "fcircle", "ellipse", "fellipse", "text", "3d", "block", "insert" };
+	char opNames[20][16] = { "poly", "ipoly", "gpoly", "tpoly", "image", "box", "fbox", "line", "pixel", "circle", "fcircle", "ellipse", "fellipse", "text", "3d", "block", "insert", "play" };
 	char tstring[1028];
 	int i, y = 1;
 
@@ -885,7 +925,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0, moveCol=7;
-	int inFg, inBg, inChar;
+	int inFg, inBg, inChar, compVal;
 	int outFg, outBg, outChar;
 	int *m_inFg = NULL, *m_inBg = NULL, *m_inChar = NULL;
 	int *m_outFg = NULL, *m_outBg = NULL, *m_outChar = NULL;
@@ -894,8 +934,9 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	
 	if (s_mode) {
 		i = 0;
-		if (s_mode[i]=='1') {
-			mode = 1; i+=2;
+		if (s_mode[i]=='1' || s_mode[i]=='3') {
+			mode = s_mode[i]=='1'? 1 : 3; i+=2;
+
 			if (s_mode[i-1] != 0 && s_mode[i] != 0) {
 				moveFg = GetHex(s_mode[i]); i++;
 				if (s_mode[i] != 0) {
@@ -906,9 +947,9 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 					moveCol = (moveBg << 4) | moveFg;
 				}
 			}
-		}
+		} else if (s_mode[i]=='2')
+			mode = 2;
 	}
-		
 	sw = w, sh = h;
 		
 	if (x >= XRES || nx >= XRES) return 0;
@@ -960,7 +1001,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		}
 	}
 
-	if (mode == 1) {
+	if (mode == 1 || mode == 3) {
 		video = videoCol;
 		fbox(x, y, w-1, h-1, moveCol);
 		video = videoChar;
@@ -1087,11 +1128,21 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			i2 = i; if (bFlipY) i2 = h-1-i;
 			k = i2*w; k2=ny*XRES+i*XRES+nx;
 			if (ny+i >= 0 && ny+i < YRES) {
-				for (j = 0; j < w; j++) {
-					j2 = j; if (bFlipX) j2 = w-1-j;
-					if (nx+j >= 0 && nx+j < XRES && blockChar[k+j] != transpchar) {
-						videoCol[k2+j] = blockCol[k+j2];
-						videoChar[k2+j] = blockChar[k+j2];
+				if (mode < 2) {
+					for (j = 0; j < w; j++) {
+						j2 = j; if (bFlipX) j2 = w-1-j;
+						if (nx+j >= 0 && nx+j < XRES && blockChar[k+j2] != transpchar) {
+							videoCol[k2+j] = blockCol[k+j2];
+							videoChar[k2+j] = blockChar[k+j2];
+						}
+					}
+				} else {
+					for (j = 0; j < w; j++) {
+						j2 = j; if (bFlipX) j2 = w-1-j;
+						if (nx+j >= 0 && nx+j < XRES && (blockCol[k+j2] & 0xf) != transpchar) {
+							videoCol[k2+j] = blockCol[k+j2];
+							videoChar[k2+j] = blockChar[k+j2];
+						}
 					}
 				}
 			}
@@ -1117,7 +1168,8 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 							}
 						}
 
-						if (inChar != transpchar) {
+						compVal = inChar; if (mode > 1) compVal = inFg;
+						if (compVal != transpchar) {
 							videoCol[k2+j] = (outBg << 4) | outFg;
 							videoChar[k2+j] = outChar;
 						}
@@ -1384,10 +1436,10 @@ int main(int argc, char *argv[]) {
 	int bWriteChars, bWriteCols, projectionDepth = 500;
 	int orgW, orgH, rem = 0;
 	int bPaletteSet = 0;
-	int bAllowRepeated3dTextures = 0;
 	int captX = 0, captY=0, captW, captH, captFormat=1, captureCount = 0, bCapture = 0;
 	char sFlags[130];
-
+	int bIgnoreServerCmdFile = 0;
+	
 	int gx = 0, gy = 0;
 	int outw = 0, outh = 0;
 	
@@ -1397,6 +1449,7 @@ int main(int argc, char *argv[]) {
 	unsigned int bgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	int bWriteGdiToFile = 0;
 	unsigned int orgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 	0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	int bAbsBitmapPos = 0;
 #else
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
@@ -1404,11 +1457,13 @@ int main(int argc, char *argv[]) {
 #endif
 	int i, j, k, retVal = 0, ii, bSendKeyUp = 0;
 	int bServer = 0, bDoNothing = 0, bInserted = 0, frameCounter = 0;
-	HANDLE h_stdin;
 	DWORD oldfdwMode;
 	uchar *cp;
 	long long startT = milliseconds_now();
 
+	int rotationGranularity = 4;
+	int bAutoCenter3d = 0;
+	float autoScale3dScale = -1;
 	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
@@ -1573,9 +1628,28 @@ int main(int argc, char *argv[]) {
 				}
 				break;
 				case 'n': bDoNothing = 1; break;
+#ifdef GDI_OUTPUT
+				case 'a': bAbsBitmapPos = 1; break;
+#endif
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
 				case 'u': bSendKeyUp = 1; break;
+
+				case 'N': 
+				{
+					bAutoCenter3d = 1; autoScale3dScale = -1;
+					if (argv[2][i+1] >= '0' && argv[2][i+1] <= '9')
+						nof = sscanf(&argv[2][i+1], "%f", &autoScale3dScale);
+					break;
+				}
+				
+				case 'G': 
+				{
+					int GXM=256, GYM=256;
+					i++;
+					nof = sscanf(&argv[2][i], "%d,%d", &GXM, &GYM);
+					if (nof == 2 && GXM >= 32 && GYM >= 32) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+				}
 				case 'Z': {
 					char pDepth[64];
 					j = 0; i++;
@@ -1600,12 +1674,22 @@ int main(int argc, char *argv[]) {
 					if (j) waitTime = atoi(wTime);
 					break;
 				}
+				case 'R': {
+					char rotGran[64];
+					j = 0; i++;
+					while (argv[2][i] >= '0' && argv[2][i] <= '9') rotGran[j++] = argv[2][i++];
+					i--; rotGran[j] = 0;
+					if (j) rotationGranularity = atoi(rotGran);
+					if (rotationGranularity < 1)rotationGranularity = 4;
+					break;
+				}
 				case 'e': bSuppressErrors = 1; break;
 				case 'E': bWaitAfterErrors = 1; break;
 				case 'S': bServer = 1; 	remove("EL.dat"); remove("servercmd.dat"); break;
 				case 'T': bAllowRepeated3dTextures = 1; break;
 				case 'z': g_bSleepingWait = 1; break;
 				case 'I': g_bFlushAfterELwrite = 1; break;
+				case 'i': bIgnoreServerCmdFile = 1; break;
 				case 'c': 
 				{
 					char *fnd, fin[64];
@@ -1634,12 +1718,10 @@ int main(int argc, char *argv[]) {
 	if (bServer)
 		setvbuf ( stdin , NULL , _IOLBF , 128000 );
 	
-	if (bServer)
-		h_stdin = CreateFile("CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
-	else
-		h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+	g_conin = GetInputHandle();
+	g_conout = GetOutputHandle();
 			
-	GetConsoleMode(h_stdin, &oldfdwMode);
+	GetConsoleMode(g_conin, &oldfdwMode);
 
 	/* START MAIN LOOP */ 
 	strcpy(argv1, insertedArgs);
@@ -1658,6 +1740,24 @@ int main(int argc, char *argv[]) {
 			if (strstr(pch,"rem ") == pch || rem) {
 				rem = 1;
 				// do nothing, skip rest
+/*			} else if (strstr(pch,"play ") == pch) { // can't play sounds simultaneously. Use start "" /b cmdwiz playsound
+				char loops[16], *pfn;
+				pch = pch + 5;
+				nof = sscanf(pch, "%128s %8s", fname);
+
+				if (nof >= 1 && nof <=2) {
+					pfn = fname;
+					if (strcmp(pfn, "off") == 0)
+						pfn = NULL;
+					int sndflags = SND_FILENAME | SND_NODEFAULT;
+					if (bServer) {
+						sndflags |= SND_ASYNC;
+						if (nof == 2)
+							sndflags |= SND_LOOP;
+					}
+					PlaySound(pfn, NULL, sndflags);
+				} else
+					reportArgError(&errH, OP_PLAY, opCount); */
 			} else if (strstr(pch,"poly ") == pch) {
 				pch = pch + 5;
 				nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", 																			s_fgcol, s_bgcol, s_dchar, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
@@ -1998,6 +2098,17 @@ int main(int argc, char *argv[]) {
 							for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
 								b_chars.data[i] = b_cols.data[i] == transpval? 255 : dchar;
 							}
+							if (bIgnoreFgCol) {
+								for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
+									b_cols.data[i] = fgcol;
+								}
+							}
+							if (bgcol > 0) {
+								int bgc = bgcol << 4;
+								for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
+									b_cols.data[i] |= bgc;
+								}
+							}
 							w1 = b_cols.xSize; h1 = b_cols.ySize;
 							dchar = 255;
 						}
@@ -2104,7 +2215,10 @@ int main(int argc, char *argv[]) {
 			transpval = -1;
 			if (nof >= 7) {
 				g_errH = &errH; g_opCount = opCount;
-				parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+				if (mode[0] == '2' || mode[0] == '3')
+					parseInput(s_transpval, "0", "0", &transpval, &fgcol, &bgcol, NULL, NULL);
+				else
+					parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
 			} else
 				reportArgError(&errH, OP_BLOCK, opCount);
@@ -2114,7 +2228,7 @@ int main(int argc, char *argv[]) {
 			int culling = 1, z_culling_near = 0, z_culling_far = 0;
 			float scalex, scaley, scalez, modx, mody, modz, postmodx, postmody, postmodz, postmodx2 = 0, postmody2 = 0, postmodz2 = 0;
 			int drawmode, drawoption;
-			char s_fgcols[34][64], s_bgcols[34][4], s_dchars[34][4];
+			char s_fgcols[34][64], s_bgcols[34][4], s_dchars[34][4], drawOpS[128];
 			int nofcols, nof_ext;
 			int l,colIndex=0, nofFacePoints, bDrawPerspective;
 			int divZ, plusZ, z_levels;;
@@ -2127,10 +2241,12 @@ int main(int argc, char *argv[]) {
 			float rrx2=0,rry2=0,rrz2=0;
 			int xg, yg, dist = 5500;
 			float aspect;
+			int tex_offset_x = 0, tex_offset_y = 0;
+			int tex_mod_x = 100000, tex_mod_y = 100000, tex_add_x = 0, tex_add_y = 0;
 
 			pch = pch + 3;
 
-			nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f:%f,%f:%f,%f:%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmodx2,&postmody,&postmody2,&postmodz,&postmodz2,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+			nof = sscanf(pch, "%128s %d,%120s %d:%d,%d:%d,%d:%d %f:%f,%f:%f,%f:%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,drawOpS,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmodx2,&postmody,&postmody2,&postmodz,&postmodz2,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
 																				s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
 																				s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
 																				s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
@@ -2149,7 +2265,7 @@ int main(int argc, char *argv[]) {
 				postmodx2 = postmody2 = postmodz2 = 0;
 				
 				// name drawmode,option rx:rx2,ry:ry2,rz:rz2 postmodx,pmody,pmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
-				nof = sscanf(pch, "%128s %d,%x %d:%d,%d:%d,%d:%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+				nof = sscanf(pch, "%128s %d,%60s %d:%d,%d:%d,%d:%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,drawOpS,&rx,&rx2,&ry,&ry2,&rz,&rz2,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
 																					s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
 																					s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
 																					s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
@@ -2165,7 +2281,7 @@ int main(int argc, char *argv[]) {
 					nof -= 3;
 				} else {
 					// name drawmode,option rx,ry,rz postmodx,postmody,postmodz scalex,scaley,scalez,modx,mody,modz,backface_cull,z_cull_near_z_cull_far,z_levels xg,yg,dist,aspect colors...
-					nof = sscanf(pch, "%128s %d,%x %d,%d,%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,&drawoption,&rx,&ry,&rz,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
+					nof = sscanf(pch, "%128s %d,%60s %d,%d,%d %f,%f,%f %f,%f,%f,%f,%f,%f %d,%d,%d,%d %d,%d,%d,%f %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s %62s %2s %2s", fname, &drawmode,drawOpS,&rx,&ry,&rz,&postmodx,&postmody,&postmodz,&scalex,&scaley,&scalez,&modx,&mody,&modz,&culling,&z_culling_near,&z_culling_far,&z_levels,&xg,&yg,&dist,&aspect,
 																				s_fgcols[0], s_bgcols[0], s_dchars[0],	s_fgcols[1], s_bgcols[1], s_dchars[1], s_fgcols[2], s_bgcols[2], s_dchars[2],
 																				s_fgcols[3], s_bgcols[3], s_dchars[3], s_fgcols[4], s_bgcols[4], s_dchars[4], s_fgcols[5], s_bgcols[5], s_dchars[5],
 																				s_fgcols[6], s_bgcols[6], s_dchars[6], s_fgcols[7], s_bgcols[7], s_dchars[7],	s_fgcols[8], s_bgcols[8], s_dchars[8],
@@ -2179,8 +2295,11 @@ int main(int argc, char *argv[]) {
 																				s_fgcols[30], s_bgcols[30], s_dchars[30], s_fgcols[31], s_bgcols[31], s_dchars[31] );
 				}
 			}
-			
+					
 			if (nof >= 26) {
+
+				sscanf(drawOpS, "%x,%d,%d,%d,%d,%d,%d", &drawoption, &tex_offset_x, &tex_offset_y, &tex_mod_x, &tex_mod_y, &tex_add_x, &tex_add_y);
+
 				nofcols = 1+(nof-26)/3;
 				for (i = 0; i < MAX_OBJECTS_IN_MEM; i++) {
 					if (objNames[i] && strstr(fname, objNames[i])) {
@@ -2192,7 +2311,7 @@ int main(int argc, char *argv[]) {
 
 				if (!obj3) {
 					if (strstr(fname,".obj"))
-						obj3 = readObj(fname, 1, 0,0,0, 0, readCmdGfxTexture, bAllowRepeated3dTextures);
+						obj3 = readObj(fname, 1, 0,0,0, 0, readCmdGfxTexture, bAllowRepeated3dTextures, (float)(tex_mod_x) / 100000.0, (float)(tex_mod_y) / 100000.0, (float)(tex_add_x) / 100000.0, (float)(tex_add_y) / 100000.0);
 					else if (strstr(fname,".plg"))
 						obj3 = readPlg(fname, 1, 0,0,0);
 					else
@@ -2204,6 +2323,9 @@ int main(int argc, char *argv[]) {
 						objs[objCnt] = obj3;
 						objNames[objCnt] = (char *) malloc(132);
 						strcpy(objNames[objCnt], fname);
+						
+						if (bAutoCenter3d)
+							centerObj3d(obj3, autoScale3dScale);
 						
 						objCnt++;
 						if (objCnt >= MAX_OBJECTS_IN_MEM) objCnt = 0;				
@@ -2225,16 +2347,16 @@ int main(int argc, char *argv[]) {
 						obj3->objData[j].z = (obj3->objData[j].oz + modz) * scalez;
 					}
 
-					rrx = (float)(rx/4) * 3.14159265359 / 180.0;
-					rry = (float)(ry/4) * 3.14159265359 / 180.0;
-					rrz = (float)(rz/4) * 3.14159265359 / 180.0;
+					rrx = (float)(rx/rotationGranularity) * 3.14159265359 / 180.0;
+					rry = (float)(ry/rotationGranularity) * 3.14159265359 / 180.0;
+					rrz = (float)(rz/rotationGranularity) * 3.14159265359 / 180.0;
 
 					if (rx2 == 0 && ry2 == 0 && rz2 == 0 && postmodx2 == 0 && postmody2 == 0 && postmodz2 == 0) {
 						rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
 					} else {
-						rrx2 = (float)(rx2/4) * 3.14159265359 / 180.0;
-						rry2 = (float)(ry2/4) * 3.14159265359 / 180.0;
-						rrz2 = (float)(rz2/4) * 3.14159265359 / 180.0;
+						rrx2 = (float)(rx2/rotationGranularity) * 3.14159265359 / 180.0;
+						rry2 = (float)(ry2/rotationGranularity) * 3.14159265359 / 180.0;
+						rrz2 = (float)(rz2/rotationGranularity) * 3.14159265359 / 180.0;
 
 						rot3dPoints_doubleRotation(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth, rrx2, rry2, rrz2, postmodx2, postmody2, postmodz2);
 					}
@@ -2362,6 +2484,9 @@ int main(int argc, char *argv[]) {
 												nofFacePoints = 4; bDrawPerspective = 0;
 											}
 											
+											texture_offset_x = (float)(tex_offset_x) / 100000.0;
+											texture_offset_y = (float)(tex_offset_y) / 100000.0;
+											
 											if (transpval >= 0) {
 												int ok;											
 												video = videoTransp;
@@ -2386,6 +2511,9 @@ int main(int argc, char *argv[]) {
 														scanConvex(v, nofFacePoints, NULL, dchar);
 												}
 											}
+											
+											texture_offset_x = texture_offset_y = 0;
+
 										} else {
 											if (nofFacePoints > 2) {
 												if (drawoption > 0 && drawoption <= BIT_NORMAL_IPOLY) {
@@ -2530,7 +2658,7 @@ int main(int argc, char *argv[]) {
 		
 		if (!bDoNothing) {
 	#ifdef GDI_OUTPUT
-			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh);
+			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos);
 		//	convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0][0], &bgPalette[0][0], gx, gy);
 			
 			if (bWriteGdiToFile) {
@@ -2569,27 +2697,30 @@ int main(int argc, char *argv[]) {
 			DWORD fdwMode, cNumRead = 0, iOut; 
 			INPUT_RECORD irInBuf[128];
 			int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0, bTimeout = 0, bOk;
-			if (bServer)
-				h_stdin = CreateFile("CONIN$",GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
-			else
-				h_stdin = GetStdHandle(STD_INPUT_HANDLE);
 			
-			//GetConsoleMode(h_stdin, &oldfdwMode);
-
+			//GetConsoleMode(g_conin, &oldfdwMode);
 			fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
 			fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
-			SetConsoleMode(h_stdin, fdwMode);
+			SetConsoleMode(g_conin, fdwMode);
 			
 			bOk = 1;
 			if (mouseWait > -1) {
-				res = WaitForSingleObject(h_stdin, mouseWait);
+				res = WaitForSingleObject(g_conin, mouseWait);
 				// bug is reason it works. Don't reset old fdwMode in non-server mode
-				if (res & WAIT_TIMEOUT) { if (!bServer) { process_waiting(bWait, waitTime, bServer); writeErrorLevelToFile(bWriteReturnToFile, -1, bMouse); /* SetConsoleMode(h_stdin, oldfdwMode); */ return -1; } else bOk = 0; }
+				if (res & WAIT_TIMEOUT) { 
+					if (!bServer) {
+						process_waiting(bWait, waitTime, bServer); 
+						writeErrorLevelToFile(bWriteReturnToFile, -1, bMouse); /* SetConsoleMode(g_conin, oldfdwMode); */
+						CloseHandle(g_conin);
+						CloseHandle(g_conout);
+						return -1; 
+					} else bOk = 0; 
+				}
 			}
 
 			res = -1;
 			if (bOk)
-				ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);
+				ReadConsoleInput(g_conin, irInBuf, 128, &cNumRead);
 			for (i = 0; i < cNumRead; i++) {
 				switch(irInBuf[i].EventType) { 
 				case MOUSE_EVENT:
@@ -2604,8 +2735,8 @@ int main(int argc, char *argv[]) {
 						key = irInBuf[i].Event.KeyEvent.uChar.AsciiChar;
 					else
 						key = 256 + irInBuf[i].Event.KeyEvent.wVirtualScanCode;
-					irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
-					irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
+					irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(g_conin, &irInBuf[i], 1, &iOut);
+					irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(g_conin, &irInBuf[i], 1, &iOut);
 					bWroteKey = 1;
 
 	//				printf("DWN:%d REP:%d %d %d %d %d key:%d CK:%ld\n", irInBuf[i].Event.KeyEvent.bKeyDown, irInBuf[i].Event.KeyEvent.wRepeatCount, irInBuf[i].Event.KeyEvent.wVirtualKeyCode, irInBuf[i].Event.KeyEvent.wVirtualScanCode, irInBuf[i].Event.KeyEvent.uChar.UnicodeChar, irInBuf[i].Event.KeyEvent.uChar.AsciiChar, key, irInBuf[i].Event.KeyEvent.dwControlKeyState);
@@ -2623,9 +2754,9 @@ int main(int argc, char *argv[]) {
 					if (key == 224 || key == 0) key = 256 + getch();
 					while(kbhit()) getch();
 				}
-				res2 = WaitForSingleObject(h_stdin, 1);
+				res2 = WaitForSingleObject(g_conin, 1);
 				if (!(res2 & WAIT_TIMEOUT))
-					ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);			
+					ReadConsoleInput(g_conin, irInBuf, 128, &cNumRead);			
 
 				if (bKeyDown || bSendKeyUp) {
 					res = (res > 0? res : 0) | (key<<22);
@@ -2649,9 +2780,10 @@ int main(int argc, char *argv[]) {
 		
 		if (bServer) {
 			char *input = NULL, *fndMe = NULL, *fndMeEcho;
-			FILE	*flushFile;
+			FILE	*flushFile = NULL;
 
-			flushFile = fopen("servercmd.dat", "r");
+			if (!bIgnoreServerCmdFile)
+				flushFile = fopen("servercmd.dat", "r");
 			if (flushFile) {
 				char *inputTemp;
 				inputTemp = fgets(argv1, MAX_OP_SIZE-1, flushFile);
@@ -2765,6 +2897,32 @@ int main(int argc, char *argv[]) {
 							case 'T': bAllowRepeated3dTextures = neg? 0 : 1; break;
 							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
 							case 'I': g_bFlushAfterELwrite = neg? 0 : 1; break;
+							case 'i': bIgnoreServerCmdFile = neg? 0 : 1; break;
+#ifdef GDI_OUTPUT
+							case 'a': bAbsBitmapPos =  neg? 0 : 1; break;
+#endif							
+							case 'G': {
+								int GXM=256, GYM=256;
+								i++;
+								nof = sscanf(&pch[i], "%d,%d", &GXM, &GYM);
+								if (nof == 2 && GXM >= 32 && GYM >= 32) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+							}
+							case 'R': {
+								char rotGran[64];
+								j = 0; i++;
+								while (pch[i] >= '0' && pch[i] <= '9') rotGran[j++] = pch[i++];
+								i--; rotGran[j] = 0;
+								if (j) rotationGranularity = atoi(rotGran);
+								if (rotationGranularity < 1) rotationGranularity = 4;
+								break;
+							}
+							
+							case 'N': {
+								bAutoCenter3d = neg? 0 : 1; autoScale3dScale = -1;
+								if (bAutoCenter3d && pch[i+1] >= '0' && pch[i+1] <= '9')
+									sscanf(&pch[i+1], "%f", &autoScale3dScale);
+								break;
+							}
 							
 							case 'f': 
 							{
@@ -2897,7 +3055,10 @@ int main(int argc, char *argv[]) {
 	free(averageZ);
 	free(argv1);
 	
-	SetConsoleMode(h_stdin, oldfdwMode);
+	SetConsoleMode(g_conin, oldfdwMode);
 
+	CloseHandle(g_conin);
+	CloseHandle(g_conout);
+	
 	return retVal;
 }

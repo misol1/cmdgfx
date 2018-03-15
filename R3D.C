@@ -2,7 +2,7 @@
 
 #define PI 3.1415926535897932
 
-// Note: Does NOT properly parse e.g. -3.399e-15, IFF e is larger than 9 (sets result to 0 in that case)
+// Note: Resorts to atof in case of failure
 float naiveToF(const char *p) {
 	static float pow10[10] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
 	
@@ -25,7 +25,7 @@ float naiveToF(const char *p) {
 			++p;
 			++n;
 		}
-		r += f / pow10[n];
+		if (n > 9) return atof(p); else r += f / pow10[n];
 	}
 	
 	if(*p == 'e' && *(p+1) == '-') {
@@ -35,7 +35,7 @@ float naiveToF(const char *p) {
 			n = (n*10.0) + (*p - '0');
 			++p;
 		}
-		if (n > 9) r = 0; else r /= pow10[n];
+		if (n > 9) return atof(p); else r /= pow10[n];
 	}
 	
 	if (neg) {
@@ -411,7 +411,7 @@ for (j = 0; j < obj->nofFaces; j++) {
 }
 
 
-obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures) {
+obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int dec1, readTexture fpReadTexture, int bAllowRepeated3dTextures, float txMod, float tyMod, float txAdd, float tyAdd) {
 	char keywords[8][64] = { "v ", "vn ", "vt ", "f ", "usemtl " };
 	int nofV = 0, nofN = 0, nofT = 0, nofF = 0, nofB = 0;
 	int i,j, bmapIndex = 0, nofread;
@@ -525,8 +525,8 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 				pch = strtok (NULL, " \t");
 				nofread = x=y=0;
 				while (pch != NULL && nofread < 2) {
-					if (nofread == 0) x = naiveToF(pch);
-					else if (nofread == 1) y = naiveToF(pch);
+					if (nofread == 0) { x = naiveToF(pch) * txMod; if (txAdd >=0 || x < 0) x+=txAdd; else { x+=txAdd; if (x < 0) x = 0; } }
+					else if (nofread == 1) { y = naiveToF(pch) * tyMod; if (tyAdd >=0 || y < 0) y+=tyAdd; else { y+=tyAdd; if (y < 0) y = 0; } }
 					nofread++;
 					pch = strtok (NULL, " \t");
 				}
@@ -637,6 +637,50 @@ for (j = 0; j < nofT; j++) {
 
 	free(filedata);
 	return obj;
+}
+
+
+void centerObj3d(obj3d *obj3, float scale) {
+	float minx, maxx, midx;
+	float miny, maxy, midy;
+	float minz, maxz, midz, maxv, mulv;
+	int i;
+	
+	minx = maxx = obj3->objData[0].ox;
+	miny = maxy = obj3->objData[0].oy;
+	minz = maxz = obj3->objData[0].oz;
+	
+	for (i = 0; i < obj3->nofPoints; i++) {
+		if (obj3->objData[i].ox < minx) minx = obj3->objData[i].ox;
+		if (obj3->objData[i].ox > maxx) maxx = obj3->objData[i].ox;
+		if (obj3->objData[i].oy < miny) miny = obj3->objData[i].oy;
+		if (obj3->objData[i].oy > maxy) maxy = obj3->objData[i].oy;
+		if (obj3->objData[i].oz < minz) minz = obj3->objData[i].oz;
+		if (obj3->objData[i].oz > maxz) maxz = obj3->objData[i].oz;
+	}
+	midx = (maxx-minx)/2+minx;
+	midy = (maxy-miny)/2+miny;
+	midz = (maxz-minz)/2+minz;
+
+	for (i = 0; i < obj3->nofPoints; i++) {
+		obj3->objData[i].ox -= midx;
+		obj3->objData[i].oy -= midy;
+		obj3->objData[i].oz -= midz;
+	}
+	
+	if (scale > 0) {
+		maxx -= midx;
+		maxy -= midy;
+		maxz -= midz;
+		maxv = maxx; if (maxy > maxv) maxv=maxy; if (maxz > maxv) maxv=maxz; 
+		mulv = scale / maxv;
+		
+		for (i = 0; i < obj3->nofPoints; i++) {
+			obj3->objData[i].ox *= mulv;
+			obj3->objData[i].oy *= mulv;
+			obj3->objData[i].oz *= mulv;
+		}
+	}
 }
 
 

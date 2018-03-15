@@ -26,7 +26,7 @@ cmdwiz getdisplaydim h & set SH=!errorlevel!
 set /a SW=%SW%/2, SH=%SH%/2
 set /a WPX=%SW%-%W%/2, WPY=%SH%-%H%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
-cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
+cmdgfx_gdi.exe "text 8 0 0 Generating_world... 82,36" f0:0,0,180,80
 
 set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"

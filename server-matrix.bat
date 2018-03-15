@@ -26,9 +26,8 @@ set PAL2=000000,000000,793400,000000,000000,000000,000000,000000,000000,000000,f
 set /a PALC=0
 set /a IMGI=0
 set IMG0=img\spiral\_.txt
-set IMG1=img\spiral.txt
-set IMG2=img\myface.txt
-set IMG3=img\-.txt
+set IMG1=img\myface.txt
+set IMG2=img\-.txt
 set /a XP=36,YP=4,IMGC=0
 
 set /a SHOWHELP=1
@@ -56,7 +55,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   if !KEY! == 333 set /a XP+=2
   if !KEY! == 328 set /a YP-=1
   if !KEY! == 336 set /a YP+=1
-  if !KEY! == 13 set /a "IMGI=(!IMGI! + 1) %% 4" & (if !IMGI! == 2 set /a YP-=3) & (if !IMGI! == 3 set /a YP+=3)
+  if !KEY! == 13 set /a "IMGI=(!IMGI! + 1) %% 3" & (if !IMGI! == 1 set /a YP-=3) & (if !IMGI! == 2 set /a YP+=3)
   if !KEY! == 32 set /a PALC+=1 & if !PALC! gtr 2 set /a PALC=0
   set /a KEY=0
   set /a "IMGC=(!IMGC!+1) %% (10 * 5), IMGCD=IMGC/5"

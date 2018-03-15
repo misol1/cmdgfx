@@ -7,7 +7,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
+cmdgfx_input.exe M0unW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
 set __=
 mode 80,50
 mode con rate=31 delay=0
@@ -160,7 +160,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>!FN3!		
 	)
 	
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP!" F!DELOBJ!f0:0,0,180,110
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP! & skip text 9 0 0 [FRAMECOUNT] 1,1" F!DELOBJ!f0:0,0,180,110
 	
 	set /p INPUT=
 rem echo !INPUT!

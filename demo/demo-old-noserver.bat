@@ -48,29 +48,7 @@ set ASPECT=0.6665
 set /a FNT=0, SCALE=20
 
 set /a S1=66, S2=12, S3=30
-if "%~1" == "1" set /a S1=33, S2=24, S3=15
-if "%~1" == "2" set /a S1=100, S2=8, S3=45
-if "%~1" == "3" set /a S1=25, S2=30, S3=12
-
-set FN=tri2.obj
-echo usemtl cmdblock 0 0 300 300 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
-
-set FN=tri.obj
-echo usemtl cmdblock 0 0 70 70 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
+set FN=objects\tri.obj
 
 set /a A1=155, A2=0, A3=0, A4=0, CNT=0
 set /a TRANSP=0, TV=-1
@@ -160,7 +138,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !STEP! == 18 if !a! geq 190000 set /a T_ON=1, TDIST=1000, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=160, TARZ=3&set TNAME=alphBail.obj & set /a STEP+=1
 	if !STEP! == 19 if !a! geq 200000 set /a T_ON=0 & set /a STEP+=1
 
-	rem	if !STEP! == 13 if !a! geq 146000 set /a ASPECT=1,MODE=8,W=880,H=660,XMID=W/2,YMID=H/2,TV=-1,DIST=600,SCALE=90 & set /a STEP+=1 &set FNT=a&set FN=tri2.obj
+	rem	if !STEP! == 13 if !a! geq 146000 set /a ASPECT=1,MODE=8,W=880,H=660,XMID=W/2,YMID=H/2,TV=-1,DIST=600,SCALE=90 & set /a STEP+=1 &set FNT=a&set FN=objects\tri2.obj
 	
 	rem if !KEY! == 32 echo !a! >> apanson 
 	
@@ -172,7 +150,6 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-del /Q tri.obj tri2.obj
 goto :eof
 
 

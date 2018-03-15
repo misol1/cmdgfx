@@ -31,9 +31,19 @@ int scanConvex_tmap_perspective(intVector vv[], int points, int clipedges[], Bit
 	intVector v[3];
 	register int i,j;
 	int ok = 0;
+	int bTexRepOrg = bAllowRepeated3dTextures;
 	
 	if (points < 3) return 0;
 	
+	if (texture_offset_x != 0 || texture_offset_y != 0) {
+		bAllowRepeated3dTextures = 1;
+	
+		for (i=0; i<points; i++) {
+			vv[i].tex_coord.x += texture_offset_x;
+			vv[i].tex_coord.y += texture_offset_y;
+		}
+	}
+
 	memcpy(v,vv,sizeof(intVector));
 	v[0].tex_coord.x *= (float)bild->xSize - 1;
 	v[0].tex_coord.y *= (float)bild->ySize - 1;
@@ -58,6 +68,8 @@ int scanConvex_tmap_perspective(intVector vv[], int points, int clipedges[], Bit
 		ok += drawtpolyperspsubtri(v, bild, plusVal);
 	}
 	
+	bAllowRepeated3dTextures = bTexRepOrg;
+	
 	return (ok > 0);
 }
 
@@ -66,14 +78,25 @@ int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, i
 	intVector v[3];
 	register int i,j;
 	int ok = 0;
-
-	if (points<3) return 0;
+	int bTexRepOrg = bAllowRepeated3dTextures;
+	
+	if (points < 3) return 0;
 
 	if (bPerspectiveCorrected) {
 		return scanConvex_tmap_perspective(vv, points, clipedges, bild, plusVal);
 	}
+
+	if (texture_offset_x != 0 || texture_offset_y != 0) {
+		bAllowRepeated3dTextures = 1;
 	
+		for (i=0; i<points; i++) {
+			vv[i].tex_coord.x += texture_offset_x;
+			vv[i].tex_coord.y += texture_offset_y;
+		}
+	}
+
 	memcpy(v,vv,sizeof(intVector));
+	
 	v[0].tex_coord.x *= (float)bild->xSize - 1;
 	v[0].tex_coord.y *= (float)bild->ySize - 1;
 	v[0].tex_coord.z = 1;
@@ -86,6 +109,9 @@ int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, i
 		}
 		ok += scan3_tmap(v, clipedges, bild,plusVal);
 	}
+	
+	bAllowRepeated3dTextures = bTexRepOrg;
+	
 	return (ok > 0);
 }
 
@@ -1514,7 +1540,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 	int side;
 
 	// Shift XY coordinate system (+0.5, +0.5) to match the subpixeling technique
-
+	
 	x1 = (float)tri[0].x + 0.5;
 	y1 = (float)tri[0].y + 0.5;
 	x2 = (float)tri[1].x + 0.5;
@@ -1533,13 +1559,14 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 	iz1 = 1 / tri[0].z;
 	iz2 = 1 / tri[1].z;
 	iz3 = 1 / tri[2].z;
+	
 	uiz1 = tri[0].tex_coord.x * iz1;
 	viz1 = tri[0].tex_coord.y * iz1;
 	uiz2 = tri[1].tex_coord.x * iz2;
 	viz2 = tri[1].tex_coord.y * iz2;
 	uiz3 = tri[2].tex_coord.x * iz3;
 	viz3 = tri[2].tex_coord.y * iz3;
-
+	
 	texture = bild->data;
 
 	// Sort the vertices in ascending Y order
@@ -1733,6 +1760,11 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 				z = 1 / iz;
 				u = uiz * z;
 				v = viz * z;
+
+				if (bAllowRepeated3dTextures) {
+					u = ((int)u) % xSize;
+					v = ((int)v) % ySize;
+				}
 
 				// Copy pixel from texture to screen
 

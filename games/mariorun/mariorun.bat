@@ -103,7 +103,7 @@ if not defined STOP goto SHOWLOOP
 if defined RESTARTGAME goto OUTERLOOP
 
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 echo %HISCORE% >hiscore.dat
 endlocal
 mode 80,50

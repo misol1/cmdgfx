@@ -11,7 +11,8 @@
 int XRES, YRES, FRAMESIZE;
 uchar *video;
 int SCR_XRES, SCR_YRES;
-
+int bAllowRepeated3dTextures = 0;
+float texture_offset_x = 0, texture_offset_y = 0;
 
 long long milliseconds_now() {
 	static LARGE_INTEGER s_frequency;
@@ -151,7 +152,7 @@ obj3d *switchObj3d(int index, obj3d *old) {
 	case 21: obj = readPly("testlib\\ply\\urn2.ply", 300,  0,0,0); break;
 	case 22: obj = readPly("testlib\\ply\\weathervane.ply", 1,  0,0,0); break;
 
-	case 23: obj = readObj("testlib\\obj\\elephav.obj", 1,  0,-360,0, 0, NULL, 0); break;
+	case 23: obj = readObj("testlib\\obj\\elephav.obj", 1,  0,-360,0, 0, NULL, 0, 1, 1, 0, 0); break;
 
 	case 24: obj = readPlg("testlib\\plg\\torus.plg", 1.3, 0,0,0); break;
 	case 25: obj = readPlg("testlib\\plg\\sphere.plg", 1.8, 0,0,0); break;
@@ -169,9 +170,9 @@ obj3d *switchObj3d(int index, obj3d *old) {
 	case 37: obj = readPlg("testlib\\plg\\nya\\spider.plg", 0.8, 0,0,0); break;
 	case 38: obj = readPlg("testlib\\plg\\nya\\tree.plg", 6, 0,-80,0); break;
 
-	case 39: obj = readObj("testlib\\obj\\FinalBaseMesh.obj", 50,  0,-10,0, 1, NULL, 0); break;
-	case 40: obj = readObj("testlib\\obj\\Elexis_nude.obj", 330,  0,-2,0, 0, NULL, 0); break;
-	case 41: obj = readObj("testlib\\obj\\Hulk.obj", 230,  0,-2,0, 0, NULL, 0); break;
+	case 39: obj = readObj("testlib\\obj\\FinalBaseMesh.obj", 50,  0,-10,0, 1, NULL, 0, 1, 1, 0, 0); break;
+	case 40: obj = readObj("testlib\\obj\\Elexis_nude.obj", 330,  0,-2,0, 0, NULL, 0, 1, 1, 0, 0); break;
+	case 41: obj = readObj("testlib\\obj\\Hulk.obj", 230,  0,-2,0, 0, NULL, 0, 1, 1, 0, 0); break;
 	}
 	if (obj) {
 		if (old) freeObj3d(old);

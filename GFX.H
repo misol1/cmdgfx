@@ -21,6 +21,9 @@ typedef struct intVector {
 extern int XRES, YRES;
 extern int FRAMESIZE;
 extern unsigned char *video;
+extern int bAllowRepeated3dTextures;
+extern float texture_offset_x, texture_offset_y;
+
 
 #define GORAUD_TYPE_STATIC	0
 #define GORAUD_TYPE_Z		1

@@ -81,7 +81,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 331 set /A NOF-=1&if !NOF! lss 2 set NOF=2
 	if !KEY! == 333 set /A NOF+=1&if !NOF! gtr 6 set NOF=6
 	if !KEY! == 32 set /a DRAWMODE=1-!DRAWMODE!&call :SETCOLS
-	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
 	set /a KEY=0

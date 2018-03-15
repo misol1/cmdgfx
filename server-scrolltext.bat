@@ -57,7 +57,6 @@ cmdwiz print "%OUTP%">>%FN% & set OUTP=
 :SKIPGEN
 set CHAR=db
 set /a CHARI=0, CNT=0, XP=30
-copy /Y %FN% 2%FN%>nul
 
 set STOP=
 :LOOP

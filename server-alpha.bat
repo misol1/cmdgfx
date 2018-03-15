@@ -64,11 +64,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set OUTP=""
 	for /L %%a in (0,1,%SENTLEN%) do set /a "RX%%a+=!RXP%%a!,RY%%a+=!RYP%%a!,RZ%%a+=!RZP%%a!, COLADD=(%%a %% 7), CYP=!YM%%a!/!EXITDIV!, CZP=!ZM%%a!/!EXITDIV!" & set OUTP="!OUTP:~1,-1!&3d objects\letters\alph!CH%%a!.obj %DRAWMODE%,!COLADD! !RX%%a!:!CRX!,!RY%%a!:!CRY!,!RZ%%a!:!CRZ! !XP!,!CYP!,!CZP! 8,10,8,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLADD! 0 db"& set /a XP+=%AW%
 
-	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %WNAME% 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% & 3d %WNAME% 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% &!OUTP:~1,-1!" F
+	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %WNAME% 1,1 0,0,0 !TX!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% & 3d %WNAME% 1,1 0,0,0 !TX2!,0,0 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,0.6 %COLS% &!OUTP:~1,-1! & text a 0 0 PRESS_SPACE 74,1" F
 	set OUTP=
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
 	if !EXIT! == 0 if !ROTMODE! == 0 set /a "CRX=(!CRX!+2) %% 1440,CRY=(!CRY!+5) %% 1440,CRZ=(!CRZ!+7) %% 1440"
 
@@ -102,7 +102,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 )
 if not defined STOP goto LOOP
 	
-:SLUT	
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"

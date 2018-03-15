@@ -60,7 +60,7 @@ rem	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,120,%H% 0,0 -
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 	
-	if !KEY! == 32 set /A MODE+=1&(if !MODE! gtr 7 set MODE=0) & for %%a in (!MODE!) do echo W!WVAL%%a!>inputflags.dat & rem echo W!WVAL%%a! & cmdwiz getch
+	if !KEY! == 32 set /A MODE+=1&(if !MODE! gtr 7 set MODE=0) & for %%a in (!MODE!) do echo W!WVAL%%a!>inputflags.dat
 
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set HELP=)&if !SHOWHELP!==1 set HELP=!HELPMSG!

@@ -233,7 +233,7 @@ goto OUTERLOOP
 
 :OUTOF
 echo "cmdgfx: quit"
-echo Q>inputflags.dat
+title input:Q
 echo %HISCORE%>hiscore.dat
 del /Q %FN%>nul 2>nul
 del /Q %FBG%>nul 2>nul

@@ -1,0 +1,15 @@
+# plane.obj
+
+v -10 -10 0
+v  10 -10 0
+v  10  10 0
+v -10  10 0
+
+vt 0 0
+vt 7 0
+vt 7 7
+vt 0 7
+
+usemtl img\pepper2.gxy
+
+f 1/1/ 2/2/ 3/3/ 4/4/
