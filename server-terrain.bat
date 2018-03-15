@@ -38,7 +38,7 @@ set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-   echo "cmdgfx: fbox 0 0 fa 0,0,%W%,90 & 3d objects/!OBJ! 3,-1,0,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 0,-10000,0,20 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 o & fbox 0 0 fa %BUFFX%,90,%W%,90 & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,20 !XMID2!,!YMID2!,!DIST!,%ASPECT% 0 0 db & block 0 %BUFFX%,90,%W%,90 %BUFFX%,90 -1 0 0 0???=6?50 & image games/cmdrunner/CR2.gxy 0 0 0 20 636,92 & block 0 %BUFFX%,90,%W%,90 0,0 50 & !MSG!" !XTRAFLAG!
+   echo "cmdgfx: fbox 0 0 fa 0,0,%W%,90 & 3d objects/!OBJ! 3,-1,0,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 0,-10000,0,20 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 o & fbox 0 0 fa %BUFFX%,90,%W%,90 & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,20 !XMID2!,!YMID2!,!DIST!,%ASPECT% 0 0 db & block 0 %BUFFX%,90,%W%,90 %BUFFX%,90 -1 0 0 0???=6?50 & image games/cmdrunner/CR2.gxy 0 0 0 20 636,92 & block 0 %BUFFX%,90,%W%,90 0,0 50 & !MSG!" F!XTRAFLAG!
 	set XTRAFLAG=
 	
 	if !ROTMODE! == 0 set /a "RX+=0,RY+=0,RZ+=2"
