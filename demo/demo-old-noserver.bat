@@ -498,7 +498,7 @@ goto :eof
 :STARTDEMO
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=55, H=55
-cls & bg font 7 & cmdwiz showcursor 0
+cls & cmdwiz setfont 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
 cmdgfx_gdi "" f7
@@ -518,6 +518,6 @@ set t1=!time: =0!
 
 call :KALEIDO
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 taskkill.exe /F /IM dlc.exe>nul
 del /Q EL.dat cachelist.dat CGXMS.dat >nul 2>nul

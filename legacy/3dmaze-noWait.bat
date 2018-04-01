@@ -2,7 +2,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set /a W=180, H=80
 mode %W%,%H%
 mode con rate=0 delay=10000
@@ -151,13 +151,13 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	)
 )
 if not defined STOP goto LOOP
-:: bg font 6 & cmdwiz gettime&set /a TLAPSE=(!errorlevel!-%ORGT%)/100&echo !TLAPSE! cs&pause&pause
+:: cmdwiz setfont 6 & cmdwiz gettime&set /a TLAPSE=(!errorlevel!-%ORGT%)/100&echo !TLAPSE! cs&pause&pause
 
 ::del /q %FN% %FN2%
 endlocal
 mode 80,50
 mode con rate=31 delay=0
-cls & bg font 6
+cls & cmdwiz setfont 6
 goto :eof
 
 :MOVE <direction> <div>

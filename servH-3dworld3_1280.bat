@@ -1,6 +1,6 @@
 :: 3dworld with perspective correct texture mapping : Mikael Sollenborn 2016-17
 @echo off
-cls & bg font 6
+cls & cmdwiz setfont 6
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START
@@ -11,7 +11,7 @@ cmdgfx_input.exe M0unW25x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1280,680Z800
 set __=
 mode 80,50
 mode con rate=31 delay=0
-cls & bg font 6
+cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
 

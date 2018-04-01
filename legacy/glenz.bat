@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1
+cmdwiz setfont 1
 set /a W=160, H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
@@ -60,4 +60,4 @@ if !KEY! == 27 set STOP=1
 if not defined STOP goto REP
 
 endlocal
-bg font 6 & mode 80,50 & cls
+cmdwiz setfont 6 & mode 80,50 & cls

@@ -3,7 +3,7 @@ cd ..
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=155
 set /a WW=!W!*2
-bg font 5
+cmdwiz setfont 5
 set /a WT=%W%-1 & mode !WT!,55
 cmdwiz setbuffersize %WW% 160
 cmdwiz showcursor 0 & cls
@@ -50,6 +50,6 @@ if not defined STOP goto LOOP
 
 del /Q matrix-src-copy.bat>nul 2>nul
 endlocal
-bg font 6 & mode 80,50
+cmdwiz setfont 6 & mode 80,50
 cmdwiz showcursor 1
 cls

@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 6 & cls
+cmdwiz setfont 6 & cls
 set /a W=274, H=109
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
@@ -31,5 +31,5 @@ for /L %%1 in (1,1,300) do if not defined STOP  (
 if not defined STOP goto REP
 
 endlocal
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls

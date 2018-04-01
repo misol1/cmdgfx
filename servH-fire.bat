@@ -1,6 +1,6 @@
 @echo off
 set /a W=80, WW=W*2
-bg font 2 & mode %W%,75
+cmdwiz setfont 2 & mode %W%,75
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
@@ -8,7 +8,7 @@ cmdgfx_input.exe knW14x | call %0 %* | cmdgfx_gdi "" Sf2:0,0,%WW%,130,%W%,75
 set __=
 set W=&set WW=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

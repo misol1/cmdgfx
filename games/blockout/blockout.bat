@@ -7,12 +7,12 @@ set __=.
 cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,220,110
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 6
+cls & cmdwiz setfont 6
 set /a W=220,H=110
 set /a F6W=W/2,F6H=H/2
 mode %F6W%,%F6H% & cls
@@ -241,7 +241,7 @@ del /Q capture-1.gxy>nul 2>nul
 del /Q lay?.obj>nul 2>nul
 endlocal
 cmdwiz showcursor 1
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls
 goto :eof
 

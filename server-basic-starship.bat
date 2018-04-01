@@ -1,6 +1,6 @@
 @echo off
 if defined __ goto :START
-bg font 6 & cls & mode 80,50
+cmdwiz setfont 6 & cls & mode 80,50
 set __=.
 cmdgfx_input.exe knW4x | call %0 %* | cmdgfx_gdi "" Sf6:0,0,80,50
 set __=

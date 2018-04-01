@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1 & cls & mode 180,80 & cmdwiz showcursor 0
+cmdwiz setfont 1 & cls & mode 180,80 & cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XC=0, YC=0, XCP=8, YCP=5, MXC=600, MYC=0
@@ -47,5 +47,5 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 100 & mode 80,50 & cls
-bg font 6 & cmdwiz showcursor 1
+cmdwiz setfont 6 & cmdwiz showcursor 1
 del /Q btemp.gxy >nul 2>nul

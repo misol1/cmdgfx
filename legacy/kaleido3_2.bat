@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0 & cls & cmdwiz showcursor 0
+cmdwiz setfont 0 & cls & cmdwiz showcursor 0
 set /a W=220, H=110
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
@@ -66,5 +66,5 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 del /Q tri.obj

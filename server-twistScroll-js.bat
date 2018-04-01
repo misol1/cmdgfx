@@ -8,7 +8,7 @@ set __=
 goto :eof
 
 :START
-bg font 6 & cls & mode 80,45 & cmdwiz showcursor 0 & call centerwindow.bat 0 -20
+cmdwiz setfont 6 & cls & mode 80,45 & cmdwiz showcursor 0 & call centerwindow.bat 0 -20
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 rem cmdwiz getch & rem Enable this line to see jscript parse errors

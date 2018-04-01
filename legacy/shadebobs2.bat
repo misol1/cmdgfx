@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 2 & mode 120,75 & cls
+cmdwiz setfont 2 & mode 120,75 & cls
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 cmdwiz setbuffersize 350 k
 cmdwiz getquickedit & set QE=!errorlevel!&cmdwiz setquickedit 0
@@ -94,5 +94,5 @@ if not defined STOP goto LOOP
 
 cmdwiz setquickedit %QE%
 endlocal
-bg font 6 & mode 80,50 & cls
+cmdwiz setfont 6 & mode 80,50 & cls
 cmdwiz showcursor 1

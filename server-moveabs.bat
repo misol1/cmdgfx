@@ -10,7 +10,7 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=80, H=40
-bg font 6 & cls & mode %W%,%H%
+cmdwiz setfont 6 & cls & mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set')  do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -20
 

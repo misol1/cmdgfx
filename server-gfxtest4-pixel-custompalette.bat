@@ -1,7 +1,7 @@
 @echo off
 set /a W=220, H=100
 set /a F6W=W/2, F6H=H/2
-bg font 6 & mode %F6W%,%F6H% & cls
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls
 set /a W*=4, H*=6
 cmdwiz showcursor 0
 if defined __ goto :START
@@ -10,7 +10,7 @@ cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" eSfa:0,0,%W%,%H% 000000,f
 set __=
 set W=&set H=&set F6W=&set F6H=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

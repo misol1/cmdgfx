@@ -3,7 +3,7 @@
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
 
-cls & bg font 1
+cls & cmdwiz setfont 1
 set /a W=200, H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
@@ -94,6 +94,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-mode 80,50 & cls & bg font 6
+mode 80,50 & cls & cmdwiz setfont 6
 del /Q genplane.obj>nul 2>nul
 del /Q 2genplane.obj>nul 2>nul

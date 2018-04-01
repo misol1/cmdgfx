@@ -1,7 +1,7 @@
 :: 3d mouse GUI : Mikael Sollenborn 2017
 @echo off
 if defined __ goto :START
-cls & bg font 6
+cls & cmdwiz setfont 6
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 set /a F6W=180/2, F6H=90/2
@@ -12,7 +12,7 @@ set __=
 mode 80,50
 mode con rate=31 delay=0
 cmdwiz showcursor 1
-cls & bg font 6
+cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
 

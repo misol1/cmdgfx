@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0 & cls
+cmdwiz setfont 0 & cls
 set /a W=200, H=110
 if not "%~1" == "" set /a W=120, H=70
 mode %W%,%H%
@@ -45,7 +45,7 @@ if not defined STOP goto REP
 
 endlocal
 del /Q plane-temp.obj box-temp.obj > nul 2>nul
-bg font 6 & cls
+cmdwiz setfont 6 & cls
 mode 80,50
 goto :eof
 

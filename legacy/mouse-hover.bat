@@ -2,7 +2,7 @@
 cd ..
 setlocal EnableDelayedExpansion
 set OLMB=0
-bg font 2
+cmdwiz setfont 2
 set /a SCRW=120 & set /a SCRWW=!SCRW!*2
 mode %SCRW%,70
 cmdwiz setbuffersize %SCRWW% k

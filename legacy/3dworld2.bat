@@ -2,7 +2,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set /a W=180, H=110
 mode %W%,%H%
 mode con rate=31 delay=0
@@ -141,7 +141,7 @@ if not defined STOP goto LOOP
 endlocal
 mode 80,50
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 :MOVE <direction>

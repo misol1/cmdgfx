@@ -2,7 +2,7 @@
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=140 & set /a WW=!W!*2
-bg font 5 & mode %W%,52
+cmdwiz setfont 5 & mode %W%,52
 cmdwiz setbuffersize %WW% 120
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="WW" set "%%v="
@@ -30,5 +30,5 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 
 endlocal
-bg font 6 & mode 80,50 & cls
+cmdwiz setfont 6 & mode 80,50 & cls
 cmdwiz showcursor 1

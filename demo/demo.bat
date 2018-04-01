@@ -2,12 +2,12 @@
 if defined __ goto :STARTDEMO %1
 set __=.
 set /a W=55, H=55
-cls & bg font 7 & cmdwiz showcursor 0
+cls & cmdwiz setfont 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,220,110W12
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 
@@ -566,7 +566,7 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set SF=servercmd.dat
 set /a W=55, H=55
-cls & bg font 7 & cmdwiz showcursor 0
+cls & cmdwiz setfont 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
 cmdgfx_gdi "" f7
@@ -594,6 +594,6 @@ cmdwiz delay 100
 echo "cmdgfx: quit"
 
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 taskkill.exe /F /IM dlc.exe>nul
 del /Q EL.dat cachelist.dat CGXMS.dat >nul 2>nul

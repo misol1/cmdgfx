@@ -1,19 +1,19 @@
 :: BlockOut Server version: Mikael Sollenborn 2017
 
 @echo off
-bg font 1 & cls & cmdwiz showcursor 0
+cmdwiz setfont 1 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 mode 220,110
 set __=.
 call %0 %* | cmdgfx_gdi.exe "" SkOW12f0e
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set /a W=220,H=110
 mode %W%,%H% & cls
 cmdwiz showcursor 0
@@ -239,7 +239,7 @@ del /Q capture-*.gxy>nul 2>nul
 del /Q lay?.obj>nul 2>nul
 endlocal
 cmdwiz showcursor 1
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls
 goto :eof
 

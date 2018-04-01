@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1
+cmdwiz setfont 1
 set /a W=160,H=80
 mode %W%,%H% & cls & cmdwiz showcursor 0
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
@@ -47,5 +47,5 @@ if not defined STOP goto LOOP
 
 endlocal
 rd /Q /S dots
-bg font 6
+cmdwiz setfont 6
 mode 80,50 & cls & cmdwiz showcursor 1

@@ -1,11 +1,11 @@
 @echo off
-bg font 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,110
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

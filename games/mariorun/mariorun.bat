@@ -7,12 +7,12 @@ set __=.
 cmdgfx_input.exe knW20x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,110
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 6
+cls & cmdwiz setfont 6
 set /a W=240, H=110
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
@@ -107,7 +107,7 @@ title input:Q
 echo %HISCORE% >hiscore.dat
 endlocal
 mode 80,50
-cls & bg font 6
+cls & cmdwiz setfont 6
 goto :eof
 
 :GAMEOVER

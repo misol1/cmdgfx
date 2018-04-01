@@ -9,7 +9,7 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-bg font 6 & cls & mode 120,70 & rem 120,73 to include scroller below
+cmdwiz setfont 6 & cls & mode 120,70 & rem 120,73 to include scroller below
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XMID=120/2, YMID=70/2-3, XMID2=80/2, YMID2=52/2-1, XMID3=120/2+2, YMID3=35/2-1

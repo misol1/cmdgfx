@@ -1,6 +1,6 @@
 :: 3dworld with perspective correct texture mapping : Mikael Sollenborn 2016-17
 @echo off
-cls & bg font 6
+cls & cmdwiz setfont 6
 cmdwiz showcursor 0 & cmdwiz showmousecursor 0
 if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
@@ -10,7 +10,7 @@ cmdgfx_input.exe M0unW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
 set __=
 mode 80,50
 cmdwiz showcursor 1 & cmdwiz showmousecursor 1
-cls & bg font 6
+cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
 

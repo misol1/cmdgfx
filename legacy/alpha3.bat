@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1 & cls & cmdwiz showcursor 0
+cmdwiz setfont 1 & cls & cmdwiz showcursor 0
 set /a W=160, H=80
 mode %W%,%H%
 call centerwindow.bat
@@ -208,7 +208,7 @@ rem if !FADECNT! gtr %FADESTART% set OUTFADE="&block 0 0,0,%W%,%H% 0,0 -1 0 0 00
 if not defined STOP goto LOOP
 	
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :SETSTREAM

@@ -1,6 +1,6 @@
 :: CmdRunner : Mikael Sollenborn 2016-17
 @echo off
-bg font 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
@@ -8,7 +8,7 @@ set __=.
 call %0 %* | cmdgfx_gdi.exe "" SkOf0:0,0,180,110
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
@@ -128,5 +128,5 @@ goto OUTERLOOP
 echo %HISCORE%>hiscore.dat
 endlocal
 mode 80,50 & cmdwiz showcursor 1 & cls
-bg font 6
+cmdwiz setfont 6
 echo "cmdgfx: quit"

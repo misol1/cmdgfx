@@ -2,7 +2,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-cls & bg font 0
+cls & cmdwiz setfont 0
 set /a W=180,H=80
 mode %W%,%H%
 mode con rate=0 delay=10000
@@ -194,7 +194,7 @@ endlocal
 mode 80,50
 mode con rate=31 delay=0
 cls
-bg font 6
+cmdwiz setfont 6
 goto :eof
 
 :MOVE <direction> <div>

@@ -1,13 +1,13 @@
 :: Shootemup game based on MarioRun : Mikael Sollenborn 2017
 @echo off
-bg font 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
 set /a F6W=240/2, F6H=100/2
 mode %F6W%,%F6H%
 if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,100W20
 set __=
-bg font 6 & cls & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cls & cmdwiz showcursor 1 & mode 80,50
 mode con rate=31 delay=0
 set F6W=&set F6H=
 goto :eof

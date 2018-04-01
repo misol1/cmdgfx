@@ -1,11 +1,11 @@
 @echo off
-bg font 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 set F6W=&set F6H=
 goto :eof
 
@@ -77,5 +77,5 @@ endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
 title input:Q
-bg font 6 & mode 80,50 & cls
+cmdwiz setfont 6 & mode 80,50 & cls
 cmdwiz showcursor 1

@@ -38,6 +38,7 @@
 // 3. bug fix: starting cmdgfx with fc font no longer captures a screenshot
 // 4. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
 // 5. DISCARDED: Code optimization 3d: Texture mapping: re-using textures, both for single objects and between objects
+// (6. Removed all bg dependencies from scripts)
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;

@@ -1,6 +1,6 @@
 @echo off
 cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
-bg font 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
 if defined __ goto :START
 cmdwiz getconsoledim sw
 set /a W=%errorlevel% * 2 + 4
@@ -11,7 +11,7 @@ set __=.
 cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" TSf0:0,0,%W%,%H%
 set __=
 cls
-cmdwiz fullscreen 0 & bg font 6 & cmdwiz showcursor 1 & mode 80,50 & cmdwiz showmousecursor 1
+cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50 & cmdwiz showmousecursor 1
 set W=&set H=&set SCALE=
 goto :eof
 

@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1 & cls & mode 180,80 & cmdwiz showcursor 0
+cmdwiz setfont 1 & cls & mode 180,80 & cmdwiz showcursor 0
 set FNT=1& rem 1 or a
 if "%FNT%"=="a" mode 30,10
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==FNT set "%%v="
@@ -64,6 +64,6 @@ if not defined STOP goto REP
 
 endlocal
 cmdwiz delay 100 & mode 80,50 & cls
-bg font 6 & cmdwiz showcursor 1
+cmdwiz setfont 6 & cmdwiz showcursor 1
 del /Q img\btemp.gxy >nul 2>nul
 del /Q starfield?.ply >nul

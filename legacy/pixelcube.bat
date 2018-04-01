@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1 & cls & cmdwiz showcursor 0
+cmdwiz setfont 1 & cls & cmdwiz showcursor 0
 set /a W=160, H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
@@ -49,5 +49,5 @@ rem	if !KEY! == 68 set /A DIST-=100
 if not defined STOP goto LOOP
 
 endlocal
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 rem del /Q %WNAME%

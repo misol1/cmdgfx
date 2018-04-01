@@ -4,7 +4,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=335, H=110
 set /a W=289, H=100
 ::set /a W=180, H=80
-bg font 0 & mode %W%,%H%
+cmdwiz setfont 0 & mode %W%,%H%
 cmdgfx "fbox 0 0 00 0,0,%W%,%H%"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if /I not "%%v"=="PATH" set "%%v="
@@ -74,6 +74,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 30
-bg font 6 & mode 80,50 & cls
+cmdwiz setfont 6 & mode 80,50 & cls
 cmdwiz showcursor 1
 del /Q EL.dat >nul 2>nul

@@ -2,7 +2,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 0 & cls
+cmdwiz setfont 0 & cls
 set /a W=180,H=90
 mode %W%,%H%
 cmdwiz showcursor 0
@@ -131,7 +131,7 @@ if not defined STOP goto GUILOOP
 endlocal & set SELCMD=%SELCMD%
 cls & mode 80,50
 cmdwiz showcursor 1
-bg font 6
+cmdwiz setfont 6
 del /Q plane-t*.obj > nul 2>nul
 %SELCMD%
 goto :eof

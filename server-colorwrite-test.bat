@@ -1,13 +1,13 @@
 :: Colorwrite test : Mikael Sollenborn 2016
 @echo off
-bg font 6 & mode 80,54 & cls
+cmdwiz setfont 6 & mode 80,54 & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW6x | call %0 %* | cmdgfx_gdi "" Sf6:0,0,80,54
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
@@ -36,8 +36,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /f "tokens=1,2,4,6" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
 		
 	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 100 set /a DIST+=100
-	if !KEY! == 68 set /a DIST-=100
 	if !KEY! == 27 set STOP=1
 	set /a CNT+=1, KEY=0
 )

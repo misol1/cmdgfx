@@ -1,7 +1,7 @@
 @echo off
 if defined __ goto :START
 set __=.
-cls & bg font 6 & cmdwiz showcursor 0
+cls & cmdwiz setfont 6 & cmdwiz showcursor 0
 set /a W=110, H=55
 mode %W%,%H%
 set /a W*=2, H*=2
@@ -9,7 +9,7 @@ cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,%W%,%H%Z500
 set __=
 set W=&set H=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

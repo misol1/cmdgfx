@@ -1,5 +1,5 @@
 @echo off
-bg font 6 & cls
+cmdwiz setfont 6 & cls
 set /a F6W=200/2, F6H=90/2
 mode %F6W%,%F6H%
 cmdwiz showcursor 0
@@ -8,7 +8,7 @@ set __=.
 cmdgfx_input.exe knW30x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,90
 set __=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 set F6W=&set F6H=
 goto :eof
 

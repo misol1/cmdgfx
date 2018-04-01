@@ -1,5 +1,5 @@
 @echo off
-bg font 2 & mode 120,75 & cls
+cmdwiz setfont 2 & mode 120,75 & cls
 cmdwiz showcursor 0
 if defined __ goto :START
 cmdwiz getquickedit
@@ -11,7 +11,7 @@ set __=
 cmdwiz setquickedit %QE%
 set QE=
 cls
-bg font 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

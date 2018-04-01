@@ -1,7 +1,7 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-bg font 1 & cls & mode 120,80
+cmdwiz setfont 1 & cls & mode 120,80
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
 
 set /a XMID=120/2, YMID=80/2-1, XMID2=120/2+120
@@ -32,4 +32,4 @@ if not defined STOP goto REP
 
 endlocal
 mode 80,50 & cls
-bg font 6
+cmdwiz setfont 6
