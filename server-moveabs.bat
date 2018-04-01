@@ -2,7 +2,7 @@
 if defined __ goto :START
 cls & cmdwiz showcursor 0
 set __=.
-cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" SR10
+cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" SR10G256,16
 set __=
 cls & mode 80,50 & cmdwiz showcursor 1
 goto :eof

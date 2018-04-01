@@ -23,36 +23,21 @@
 
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
-// 2. TinyExpr: optimize recursion
-// 3. 32(24?16?)-bit gdi support (huge effort and need to write MUCH more data)
+// 2. Documentation update/expansion, needs several pages and split-up
+// 3. 32(24?16?)-bit gdi support
 // 4. Port to Linux
-// 5. Documentation update/expansion, needs several pages and split-up
 
 // For 3d:
-// 1. Code optimization: Texture mapping: re-using textures, both for single objects and between objects
-// 2. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
-// 3. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
-// 4. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
-// 5. Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
+// 1. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
+// 2. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
+// 3. Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
 
-
-// Done: 
-// 0. New/updated scripts: cmdrunner, pong3d, shootem, starwarsscroll, splitscreen, pixetunnel-js, moveabs, twistscroll1/2, sphere1/2, terrain1/2, trails, life, custompalette-zoomer(s), pixelobj-e69style, gfxtest4-autocenter-scale
-// 1. Flag (i) to ignore servercmd.dat
-// 2. Repeated texture for perspmapper too (if T flag set)
-// 3. Texture offsetting and texture scaling for 3d command. Also adding for tx,ty but works a bit strange.... skip in documentation?
-//	4. Now working as stand-alone command when cmdgfx is running as output server (creating conin/conout)
-// 5. R flag sets the granularity of rotations, keeping default at 4
-// 6. If naiveToF fails (larger number of digits or decimals than 9), fallback to atof
-// 7. GDI only: New flag ('a') to place f:?? at pixel level placement
-// 8. Allow block to use color for transparency (mode 2 and 3)
-// 9. Bug fix when mixing block xflip with transparent char (or color)
-// 10. Flag (G) to set gxy max width/height
-// 11. Flag (N) auto-center (and optionally auto-normalize size of) 3d objects
-// 12. Bug fix: Image op with pcx: bgcolor no longer ignored
-// 13. Bug fix: Force color (-) for image now works with pcx (only makes sense if image is transparent)
-// (NONISSUE: Force color for tpoly: works the same as 3d op, ie fgcol/bgcol are added or subtracted, not ignored, ie force with - does not work)
-
+// Done:
+// 1. G flag minimum now 16,16
+// 2. fbox accepts three params only to clear entire buffer
+// 3. bug fix: starting cmdgfx with fc font no longer captures a screenshot
+// 4. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
+// 5. DISCARDED: Code optimization 3d: Texture mapping: re-using textures, both for single objects and between objects
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -756,36 +741,98 @@ char *insertCgx(char *inp) {
 }
 
 
-void processTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols) {
-	int i,j,k;
+void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h) {
+	int i,j,k,l;
 
-	transpcol &= 0xf;
-	for (i = 0; i < YRES; i++) {
-		k = i*XRES;
-		for (j = 0; j < XRES; j++) {
+	if (x+w < XRES) w++;
+	if (y+h < YRES) h++;
+	
+	l = y*XRES + x;
+	
+	for (i = 0; i < h; i++) {
+		k = l;
+		for (j = 0; j < w; j++) {
 			if ((videoTransp[k] & 0xf) != transpcol) {
 				if (bWriteCols) videoCol[k] = videoTransp[k];
 				if (bWriteChars) videoChar[k] = dchar;
 			}
 			k++;
 		}
+		l += XRES;
 	}
 }
 
-void processDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols) {
-	int i,j,k;
+void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, int *_maxy) {
+	int i, minx=vv[0].x, maxx=vv[0].x, miny=vv[0].y, maxy=vv[0].y;
+	
+	for (i = 1; i < points; i++) {
+		if (vv[i].x < minx) minx=vv[i].x;
+		if (vv[i].x > maxx) maxx=vv[i].x;
+		if (vv[i].y < miny) miny=vv[i].y;
+		if (vv[i].y > maxy) maxy=vv[i].y;
+	}
+	if (minx < 0) minx=0;
+	if (maxx < 0) maxx=0;
+	if (miny < 0) miny=0;
+	if (maxy < 0) maxy=0;
+	if (minx >= XRES) minx=XRES-1;
+	if (maxx >= XRES) maxx=XRES-1;
+	if (miny >= YRES) miny=YRES-1;
+	if (maxy >= YRES) maxy=YRES-1;
+	
+	*_minx = minx; *_maxx = maxx; *_miny = miny; *_maxy = maxy;
+}
 
-	for (i = 0; i < YRES; i++) {
-		k = i*XRES;
-		for (j = 0; j < XRES; j++) {
+void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpval, int dchar, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, int plusVal, int bPerspectiveCorrected) {
+	int minx, maxx, miny, maxy, i, ok;
+	video = videoTransp;
+	
+	getBounds(vv, points, &minx, &maxx, &miny, &maxy);
+	transpval &= 0xf;
+	
+	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
+	ok = scanConvex_tmap(vv, points, NULL, bild, plusVal, bPerspectiveCorrected);
+	if (ok) processFromTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny);
+}
+
+
+void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h) {
+	int i,j,k,l;
+
+	if (x+w < XRES) w++;
+	if (y+h < YRES) h++;
+	l = y*XRES + x;
+	
+	for (i = 0; i < h; i++) {
+		k = l;
+		for (j = 0; j < w; j++) {
 			if (videoCharTransp[k] != transpchar && videoCharTransp[k] != 255) {
 				if (bWriteCols) videoCol[k] = videoColTransp[k];
 				if (bWriteChars) videoChar[k] = videoCharTransp[k];
 			}
 			k++;
 		}
+		l += XRES;
 	}
 }
+
+void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *videoCol, uchar *videoChar, int transpval, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, int plusVal, int bPerspectiveCorrected, Bitmap *bild2) {
+	int minx, maxx, miny, maxy, i, ok;
+	
+	video = videoTransp;
+	ok = scanConvex_tmap(vv, points, NULL, bild, plusVal, bPerspectiveCorrected);
+	if (!ok)
+		return;
+	
+	getBounds(vv, points, &minx, &maxx, &miny, &maxy);
+	
+	video = videoTranspChar;
+	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
+	ok = scanConvex_tmap(vv, points, NULL, bild2, 0, bPerspectiveCorrected);
+	if (ok)
+		processFromDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny);
+}
+
 
 void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *videoCol, uchar *videoChar) {
 	int i;
@@ -1631,6 +1678,7 @@ int main(int argc, char *argv[]) {
 #ifdef GDI_OUTPUT
 				case 'a': bAbsBitmapPos = 1; break;
 #endif
+				case 'f': i++; break;
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
 				case 'u': bSendKeyUp = 1; break;
@@ -1648,7 +1696,7 @@ int main(int argc, char *argv[]) {
 					int GXM=256, GYM=256;
 					i++;
 					nof = sscanf(&argv[2][i], "%d,%d", &GXM, &GYM);
-					if (nof == 2 && GXM >= 32 && GYM >= 32) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+					if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
 				}
 				case 'Z': {
 					char pDepth[64];
@@ -1880,11 +1928,7 @@ int main(int argc, char *argv[]) {
 							video = videoChar;
 							if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
 						} else {
-							int ok;
-							video = videoTransp;
-							memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-							ok = scanConvex_tmap(vv, nofp, NULL, &b_pcx, (bgcol<<4) | fgcol, 0);
-							if (ok) processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
+							drawTranspTPoly(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, vv, nofp, &b_pcx, (bgcol<<4) | fgcol, 0);
 						}
 					} else
 						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
@@ -1897,16 +1941,8 @@ int main(int argc, char *argv[]) {
 							video = videoChar;
 							if (bWriteChars) scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
 						} else {
-							int ok;
-							video = videoTransp;
-							memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-							ok = scanConvex_tmap(vv, nofp, NULL, &b_cols, bgcol<<4, 0);
-							if (ok) {
-								video = videoTranspChar;
-								memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-								scanConvex_tmap(vv, nofp, NULL, &b_chars, 0, 0);
-								processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
-							}
+							drawTranspTDoublePoly(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, vv, nofp, &b_cols, (bgcol<<4) | fgcol, 0, &b_chars);
+							
 						}
 						free(b_chars.data);
 						free(b_cols.data);
@@ -2195,9 +2231,12 @@ int main(int argc, char *argv[]) {
 			pch = pch + 5;
 			nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
 
-			if (nof == 7) {
+			if (nof == 7 || nof == 3) {
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				video = videoCol;
+				
+				if (nof == 3) { x1=y1=0; w=txres; h=tyres; }
+				
 				if (bWriteCols) fbox(x1, y1, w, h, (bgcol << 4) | fgcol);
 				video = videoChar;
 				if (bWriteChars) fbox(x1, y1, w, h, dchar);
@@ -2488,19 +2527,23 @@ int main(int argc, char *argv[]) {
 											texture_offset_y = (float)(tex_offset_y) / 100000.0;
 											
 											if (transpval >= 0) {
-												int ok;											
-												video = videoTransp;
-												memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-												ok = scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
-												if (ok) {
-													if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
+												
+												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
+													drawTranspTDoublePoly(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, v, nofFacePoints, bmap, fgbg, bDrawPerspective, (Bitmap *)bmap->extras);
+/*													
+													int ok;											
+													video = videoTransp;
+													memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
+													ok = scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
+													if (ok) {
 														video = videoTranspChar;
 														memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
 														scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
 														processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
-													} else
-														processTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols);
-												}
+													}	*/
+												} else
+													drawTranspTPoly(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, v, nofFacePoints, bmap, fgbg, bDrawPerspective);
+													
 											} else {
 												if (bWriteCols) scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
 												video = videoChar;
@@ -2509,6 +2552,7 @@ int main(int argc, char *argv[]) {
 														scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
 													else
 														scanConvex(v, nofFacePoints, NULL, dchar);
+//														__scanConvex(v, nofFacePoints, dchar);
 												}
 											}
 											
@@ -2905,7 +2949,7 @@ int main(int argc, char *argv[]) {
 								int GXM=256, GYM=256;
 								i++;
 								nof = sscanf(&pch[i], "%d,%d", &GXM, &GYM);
-								if (nof == 2 && GXM >= 32 && GYM >= 32) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+								if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
 							}
 							case 'R': {
 								char rotGran[64];

@@ -19,16 +19,16 @@ testlib.exe : $(OBJECTS)
 
 cmdgfx.exe : $(OBJECTSLIB)
 	$(CC) $(CCFLAG) -o $(TARGETLIB) $(OBJECTSLIB)
-		
+
 cmdgfx_gdi.exe : $(OBJECTSLIBGDI)
 	$(CC) $(CCFLAG) -o $(TARGETLIBGDI) $(OBJECTSLIBGDI) -lgdi32
-	
+
 cmdgfx_input.exe : $(INPUTLIB)
 	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB)
-	
+
 cmdgfx_input.o : cmdgfx_input.c
 	$(CC) $(CCFLAG) -c cmdgfx_input.c
-	
+
 testlib.o : testlib.c gfx.h bmap.h rgbcol.h r3d.h
 	$(CC) $(CCFLAG) -c testlib.c
 
@@ -58,7 +58,7 @@ algebra.o : algebra.c algebra.h
 	
 tinyexpr.o : tinyexpr.c tinyexpr.h
 	$(CC) $(CCFLAG) -c tinyexpr.c
-	
+
 clean :
 	rm *.o
 #	@for %a in ($(OBJECTS) $(TARGET)) do del %a>nul

@@ -29,8 +29,8 @@ set MSG=%HELPMSG%
 
 set /a ACTIVE_KEY=0, OS=23
 set /a TEX_OFFSET=-3000, A1=0, A2=0, YDELT=2, XP=%XMID%, YP=%YMID%, XDELT=2, YSCALE=!OS!, SCALE=0, AUTOROT=1
-set /a TRANSP=0, BS=0, CSS=0
-set BACKSKIP=skip& set CHECKSKIP=
+set /a TRANSP=1, BS=0, CSS=0
+set BACKSKIP=& set CHECKSKIP=
 set /a TYSCALE=100000&set XTRAFLAG=
 
 call sindef.bat

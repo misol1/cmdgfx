@@ -61,4 +61,6 @@ int line_clip(int *x1, int *y1, int *x2, int *y2);
 void setpixel(int x, int y, unsigned char col);
 void bezier(long n, int *xPoints, int *yPoints, uchar col);
 
+int __scan3(intVector vv[], uchar col);
+int __scanConvex(intVector vv[], int points, uchar col);
 #endif

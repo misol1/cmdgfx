@@ -1,8 +1,7 @@
 :: 3dworld with perspective correct texture mapping : Mikael Sollenborn 2016-17
 @echo off
 cls & bg font 6
-mode con rate=0 delay=10000
-cmdwiz showcursor 0
+cmdwiz showcursor 0 & cmdwiz showmousecursor 0
 if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
@@ -10,7 +9,7 @@ set __=.
 cmdgfx_input.exe M0unW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
 set __=
 mode 80,50
-mode con rate=31 delay=0
+cmdwiz showcursor 1 & cmdwiz showmousecursor 1
 cls & bg font 6
 set F6W=&set F6H=
 goto :eof
@@ -112,6 +111,7 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 
 :SKIPGEN
 set BKSTR="fbox 0 1 b1 0,0,%W%,30 & fbox 0 1 20 0,30,%W%,10 & fbox 9 1 b1 0,40,%W%,6 & fbox 9 1 db 0,46,%W%,4  &  fbox 0 0 20 0,51,%W%,5 & fbox 0 %GROUNDCOL% b2 0,53,%W%,5 & fbox 0 %GROUNDCOL% b1 0,57,%W%,10 & fbox 0 %GROUNDCOL% b0 0,64,%W%,22 & fbox 8 %GROUNDCOL% 20 0,80,%W%,100 "
+set BKSTR="fbox e 0 c5 0,0,%W%,300 "
 
 set /A MAP=0,ZMOD=0,XMOD=0
 set MAPTXT=image 3dworld2.dat e 0 0 - 146,2
@@ -168,7 +168,14 @@ rem echo !INPUT!
 
 	if not "!EV_BASE:~0,1!" == "N" (
 	
-		if not "!OLDMX!"=="" if !M_EVENT!==1 if !M_LB!==0 if !M_WHEEL!==0 set /a "RY+=(!OLDMX!-!M_X!)*2,TY-=(!OLDMY!-!M_Y!)*2,YMID+=(!OLDMY!-!M_Y!)*2"&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
+		set /a MDX=!OLDMX!-!M_X! & (if !MDX! lss 0 set /a MDX=-MDX) & if !MDX! geq 20 set /a M_EVENT=0, OLDMX=!M_X!,OLDMY=!M_Y!
+		set /a MDY=!OLDMY!-!M_Y! & (if !MDY! lss 0 set /a MDY=-MDY) & if !MDY! geq 15 set /a M_EVENT=0, OLDMX=!M_X!,OLDMY=!M_Y!
+		if !M_Y! lss 8 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_Y! gtr 48 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_X! lss 15 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_X! gtr 75 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		
+		if not "!OLDMX!"=="" if !M_EVENT!==1 if !M_LB!==0 if !M_WHEEL!==0 set /a "OLDYMID=YMID,OLDTY=TY, RY+=(!OLDMX!-!M_X!)*2,TY-=(!OLDMY!-!M_Y!)*2,YMID+=(!OLDMY!-!M_Y!)*2"&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&(if !YMID! leq -100 set /a YMID=OLDYMID,TY=OLDTY)&(if !YMID! geq 200 set /a YMID=OLDYMID,TY=OLDTY)
 		if !M_WHEEL!==1 set /a RY+=720&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !M_WHEEL!==-1 set /a RY+=720&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !M_EVENT!==1  if !M_WHEEL!==0 set /a OLDMX=!M_X!,OLDMY=!M_Y!
@@ -203,8 +210,8 @@ rem echo !INPUT!
 
 		if !KEY! == 337 set /a TY-=30&set BOUNDSCHECK=0
 		if !KEY! == 329 set /a TY+=30&set BOUNDSCHECK=0
-		if !KEY! == 335 set /a TY+=10&set /a YMID-=6
-		if !KEY! == 327 set /a TY-=10&set /a YMID+=6
+		if !KEY! == 335 if !YMID! gtr -100 set /a TY+=10, YMID-=6
+		if !KEY! == 327 if !YMID! lss 200 set /a TY-=10, YMID+=6
 
 		if !KEY! == 27 set STOP=1
 	)
