@@ -1,0 +1,8 @@
+set W[]_NAME="Note 1 (RMB/keys,^X=clear)"
+set /a W[]_W=60, W[]_H=35
+set /a W[]_X=30, W[]_Y=21
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=4, W[]_KB=2
+set W[]_INIT="set /a XP[]=0, YP[]=0, BL[]=0&(if not exist note1.txt echo. >note1.txt )"
+set W[]_UPDATE="set /a XW=OFF_W-3,YW=OFF_H-3,XWP=XW+1,YWP=YW+1&set SCHR="  '#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\] _ abcdefghijklmnopqrstuvwxyz{|}~"&set REPL3=skip&set LKEY=""&(if ^!FOCUSWIN^!==[] ((if ^!KEY^!==8 set /a XP[]-=1)&(if ^!KEY^!==333 set /a XP[]+=1)&(if ^!M_RB^!==1 set /a XP[]=^!M_X^!-W[]_X-1,YP[]=^!M_Y^!-W[]_Y-1) & (if ^!KEY^!==24 set /a XP[]=0,YP[]=0&echo. >note1.txt)&(if ^!KEY^!==331 set /a XP[]-=1)&(if ^!KEY^!==336 set /a YP[]+=1)&(if ^!KEY^!==328 set /a YP[]-=1) & (if ^!KEY^! geq 32 if ^!KEY^! leq 126 set /A MKEY=^!KEY^!-32+1& for %i in (^!MKEY^!) do set LKEY="^!SCHR:~%i,1^!")&(if ^!KEY^!==13 set /a XP[]=0,YP[]+=1) & (if ^!XP[]^! gtr ^!XW^! set /a XP[]=^!XW^!)&(if ^!YP[]^! gtr ^!YW^! set /a YP[]=^!YW^!)&(if ^!YP[]^! lss 0 set /a YP[]=0)&(if ^!XP[]^! lss 0 set /a XP[]=0) & (if not ^!LKEY^!=="" start "" /MIN /WAIT cmd /C "cmdwiz setbuffersize 1000 1000&type note1.txt&cmdwiz setcursorpos ^!XP[]^! ^!YP[]^!&cmdwiz print ^!LKEY^!&cmdwiz saveblock note1 0 0 ^!XWP^! ^!YWP^! txt" & if ^!XP[]^! lss ^!XW^! set /a XP[]+=1)&if ^!BL[]^! lss 15 set REPL3= ))&set /a REPL1=OFF_X+XP[],REPL2=OFF_Y+YP[],BL[]=(BL[]+1)%30&set SCHR=)"
+set W[]_CONTENT="image note1.txt 3 0 0 -1 OFF_X,OFF_Y & REPL3 pixel a 0 db REPL1,REPL2"

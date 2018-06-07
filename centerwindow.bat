@@ -10,3 +10,4 @@
 @if not "%1"=="" set /a WPX+=%1
 @if not "%2"=="" set /a WPY+=%2
 @cmdwiz setwindowpos %WPX% %WPY%
+@set SW=&set SH=&set WINW=&set WINH=&set WPX=&set WPY=

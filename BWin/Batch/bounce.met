@@ -1,0 +1,8 @@
+set W[]_NAME="Bounce"
+set /a W[]_W=60, W[]_H=5
+set /a W[]_X=28, W[]_Y=31
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=4
+set W[]_INIT="set /a DELT[]=1, XP[]=0"
+set W[]_UPDATE="set /a XP[]+=DELT[], REPL1=OFF_X+XP[], BUK+=1 & (if ^!XP[]^! gtr 55 set /a DELT[]=-1) & (if ^!XP[]^! lss 2 set /a DELT[]=1)"
+set W[]_CONTENT="text a 0 0 \n\gdb REPL1,OFF_Y"

@@ -7,6 +7,7 @@
 // TODO: 1. Check for CLICKS/RCLICKS?
 //			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel?
 // 		3. Mouse wheel reporting not working on Win10. Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
+//			4. Somehow report on the dimensions of the current window (if a flag set), since in Win10 a cmd window can be mouse-resized
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;

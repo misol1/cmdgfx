@@ -1,0 +1,8 @@
+w.name="Met Animation"
+w.x=7, w.y=28
+w.width=50, w.height=40
+w.xa=0, w.ya=0
+w.closeable=true, w.resizeable=true, w.srollable=false, w.maximized=false
+w.init="w.index=0"
+w.update="w.index=(w.index+1)% 20, REPL1=Math.floor(w.index/2)"
+w.content="image img/spiral/REPL1.txt 8 0 # -1 OFF_X,OFF_Y 0 0 OFF_W,OFF_H"

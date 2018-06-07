@@ -1,0 +1,20 @@
+w.name="Game \\80(SPACE to restart)"
+w.x=28, w.y=31
+w.width=60, w.height=30
+w.xa=1, w.ya=1
+w.closeable=true, w.resizeable=true, w.scrollable=false
+w.init="w.bx=12, w.by=2, w.bdx=1, w.bdy=1, w.oldMx=-100, w.score=0"
+
+w.update="xWall = w.width-3, yWall = w.height-5;" + 
+			"w.bx += w.bdx, w.by += w.bdy;" +
+			"if (w == focusWin) {" +
+				"if (KEY==32) w.score=0, w.bx = GetRandom(0,xWall), w.by=2, w.bdx = 1-GetRandom(0,1)*2, w.bdy=1;" +
+				"if (M_X > 0) { w.oldMx = OFF_X + M_X - w.x - 4 }" +
+			"}" +
+			"if (w.bx < 1) w.bdx = 1;" +
+			"if (w.bx > xWall) w.bdx = -1;" +
+			"if (w.by < 1) w.bdy = 1;" +
+			"if (w.by == yWall) { cmpx = Math.abs(w.oldMx - (OFF_X+w.bx-4)); if (cmpx <= 4) w.bdy=-1, w.score+=1; }" +
+			"REPL1 = w.oldMx, REPL2 = OFF_Y + yWall + 1, REPL3 = OFF_X+w.bx, REPL4 = OFF_Y+w.by, REPL5 = w.score"
+			
+w.content="fbox a 0 db REPL1,REPL2,8,0 & pixel c 0 @ REPL3,REPL4 & text e 0 0 \\n_Score:REPL5 OFF_X,OFF_Y"

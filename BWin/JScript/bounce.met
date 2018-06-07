@@ -1,0 +1,8 @@
+w.name="Bounce"
+w.x=28, w.y=31
+w.width=60, w.height=5
+w.xa=1, w.ya=2
+w.closeable=true, w.resizeable=false, w.scrollable=false
+w.init="w.delt=1, w.xp=0"
+w.update="w.xp+=w.delt, REPL1=OFF_X+w.xp; if (w.xp > 55) w.delt=-1; if (w.xp < 2) w.delt=1"
+w.content="text a 0 0 \\gdb REPL1,OFF_Y"

@@ -1,0 +1,26 @@
+w.name="Note 1 (RMB/keys,^W=save,^X=clear)"
+w.x=30, w.y=21
+w.width=60, w.height=35
+w.xa=1, w.ya=1
+w.closeable=true, w.resizeable=false, w.scrollable=false, w.keyboardHog=2
+
+w.init="w.note=[]; for (var j = 0; j < w.width*w.height; j++) { w.note.push(' '); } w.xp=0, w.yp=0, w.bl=0, w.saveCnt=0; if (File.FileExists('note1.txt')) { var iStream = File.OpenTextFile('note1.txt', 1, false); w.note=[]; while(!iStream.AtEndOfStream) { str=iStream.ReadLine(); for (j=0; j < str.length; j++) w.note.push(str.substring(j,j+1)); } iStream.Close(); } else { out=''; for (j=0; j < w.height; j++) { for (k=0; k < w.width; k++) { out+=' '; }  out+='\\\\n'; } Execute('cmdwiz print \"' + out + '\" > note1.txt') }"
+
+w.update="XW=OFF_W-3, YW=OFF_H-3, XWP=XW+1, YWP=YW+1, LKEY='', REPL3='skip';" +
+			"SCHR=' !\\047#$%&\\047()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[/] _ abcdefghijklmnopqrstuvwxyz{|}~'; " +
+			"if (w == focusWin) {" +
+				"if (KEY==331) w.xp-=1; if (KEY==333) w.xp+=1; if (KEY==13) w.xp=0, w.yp+=1; if (KEY==328) w.yp-=1; if (KEY==336) w.yp+=1;" +
+				"if (KEY==8 && w.xp > 0) { w.xp-=1; w.note.splice(w.xp+w.yp*w.width,1); w.note.splice((w.yp+1)*w.width-3,0,' '); }" +
+				"if (KEY==339) { w.note.splice(w.xp+w.yp*w.width,1); w.note.splice((w.yp+1)*w.width-3,0,' '); }" +
+				"if (KEY==24) { w.xp=w.yp=0; w.note=[], out=''; for (j=0; j < w.height; j++) { for (k=0; k < w.width; k++) { out+=' '; w.note.push(' '); }  out+='\\\\n'; } Execute('cmdwiz print \"' + out + '\" > note1.txt') }" +
+				"if (KEY==23) { out=''; for (j=0; j < w.height; j++) { for (k=0; k < w.width; k++) { out+=w.note[k + j*w.width]; }  out+='\\\\n'; } Execute('cmdwiz print \"' + out + '\" > note1.txt'); w.saveCnt=6; }" +
+				"if (M_RB ==1) w.xp=M_X-w.x-1, w.yp=M_Y-w.y-1;" +
+				"if (w.xp < 0) w.xp=0; if (w.yp < 0) w.yp=0; if (w.xp > XW) w.xp=XW; if (w.yp > YW) w.yp=YW;" +
+				"if (KEY>=32 && KEY <=126) { MKEY=KEY-32; LKEY=SCHR.substring(MKEY, MKEY+1); }" +
+				"if (LKEY != '') { w.note[w.xp + w.yp*w.width]=LKEY; w.xp+=1; if (w.xp > XW) w.xp=XW; } " +
+				"if (w.bl < 15) REPL3='';" +
+			"}" +
+			"out=''; for (j=0; j < w.height; j++) { for (k=0; k < w.width; k++) { out+=w.note[k + j*w.width]; }  out+='\\\\n'; } out = out.replace(/ /g, '_'); " +
+			"REPL5=3; w.saveCnt--; if (w.saveCnt > 0) REPL5='a';" +
+			"REPL1=OFF_X+w.xp, REPL2=OFF_Y+w.yp, w.bl=(w.bl+1)%30, REPL4=out"
+w.content="text REPL5 0 0 REPL4 OFF_X,OFF_Y & REPL3 pixel a 0 db REPL1,REPL2"

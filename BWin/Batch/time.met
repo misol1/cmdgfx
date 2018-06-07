@@ -1,0 +1,7 @@
+set W[]_NAME="Time"
+set /a W[]_W=25, W[]_H=5
+set /a W[]_X=1, W[]_Y=1
+set /a W[]_XA=3, W[]_YA=2
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=2
+set W[]_UPDATE="set /a REPL1=OFF_X+12"
+set W[]_CONTENT="text b 0 0 ^!DATE^! OFF_X,OFF_Y & text f 0 0 ^!TIME:~0,8^! REPL1,OFF_Y"

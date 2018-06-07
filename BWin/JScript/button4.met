@@ -1,0 +1,19 @@
+w.name="Button 4"
+w.x=58, w.y=41
+w.width=20, w.height=19
+w.xa=3, w.ya=3
+w.closeable=true, w.resizeable=false, w.scrollable=false
+w.init="w.bpr=0, w.rmbp=0, w.bcol=2"
+
+w.update="REPL1=2; if(M_EVENT==1 && M_RB==0) w.rmbp=0, w.bcol=2;" + 
+			"if (w == focusWin) {" + 
+				"MMX=OFF_X+M_X-w.x-2, MMX2=OFF_X+w.width-5, MMY=OFF_Y+M_Y-w.y-2, MMY2=OFF_Y+w.height-5;" +
+				"if (MMX > OFF_X && MMX < MMX2 && MMY > OFF_Y && MMY < MMY2) {" +
+					"if (w.rmbp==0) w.bcol='a';" +
+					"if (M_RB==1 && w.rmbp==0) { w.bpr=4, w.rmbp=1; ExecuteAsync('cmdwiz playsound waka_waka.wav') } " +
+				"}" + 
+			"}" +
+			"w.bpr--; if (w.bpr > 0) w.bcol='e';" +
+			"REPL1=w.bcol"
+			
+w.content="fbox REPL1 0 db OFF_X,OFF_Y,13,12 & text f REPL1 0 \\n\\n\\n\\n_____RMB\\n_____over\\n____Hover\\n____Button OFF_X,OFF_Y"

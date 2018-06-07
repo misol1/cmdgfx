@@ -1,0 +1,8 @@
+set W[]_NAME="Game \80(SPACE to restart)"
+set /a W[]_W=60, W[]_H=30
+set /a W[]_X=28, W[]_Y=31
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=1, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=6
+set W[]_INIT="set /a DELT[]=1, REPL1_[]=0, BX[]=12, BY[]=2, BDX[]=1, BDY[]=1, SCO[]=0"
+set W[]_UPDATE="set /a XWALL=W[]_W-3, YWALL=W[]_H-5, REPL1=REPL1_[],REPL2=OFF_Y+YWALL+1, BX[]+=BDX[], BY[]+=BDY[] & (if ^!FOCUSWIN^!==[] (if ^!KEY^!==32 set /a SCO[]=0, BX[]=2+^!RANDOM^!%XWALL, BY[]=2, BDX[]=1-^!RANDOM^!%2*2, BDY[]=1) & (if ^!M_X^! gtr 0 set /a LMX[]=M_X) & set /a REPL1_[]=OFF_X+LMX[]-W[]_X-4, REPL1=REPL1_[]) & (if ^!BX[]^! lss 1 set /a BDX[]=1) & (if ^!BX[]^! gtr ^!XWALL^! set /a BDX[]=-1) & (if ^!BY[]^! lss 1 set /a BDY[]=1) & (if ^!BY[]^! == ^!YWALL^! set /a TMPX=OFF_X+BX[]-4, CMPX=REPL1-TMPX & (if ^!CMPX^! lss 0 set /a CMPX=-CMPX) & (if ^!CMPX^! leq 4 set /a BDY[]=-1, SCO[]+=1)) & set /a REPL3=OFF_X+BX[], REPL4=OFF_Y+BY[], SCORE=SCO[]"
+set W[]_CONTENT="fbox a 0 db REPL1,REPL2,8,0 & pixel c 0 @ REPL3,REPL4 & text e 0 0 \n_Score:^!SCORE^! OFF_X,OFF_Y"

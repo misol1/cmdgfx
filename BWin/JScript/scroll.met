@@ -1,0 +1,8 @@
+w.name="Scroll"
+w.x=41, w.y=33
+w.width=35, w.height=3
+w.xa=1, w.ya=1
+w.closeable=true, w.resizeable=false, w.scrollable=false, w.maximized=false
+w.init="w.index=0"
+w.update="w.index=(w.index+1)% 230, REPL1=OFF_X - Math.floor(w.index/3)"
+w.content="text a 0 0 ______________________________________Scrolling_without_\\e0block\\r_operation...____________________________________ REPL1,OFF_Y"

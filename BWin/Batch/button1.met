@@ -1,0 +1,8 @@
+set W[]_NAME="Button 1"
+set /a W[]_W=21, W[]_H=20
+set /a W[]_X=28, W[]_Y=31
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=4
+set W[]_INIT="set /a BPR[]=0"
+set W[]_UPDATE="set /a REPL3=2,REPL1=OFF_X+2, REPL2=OFF_Y+2 & (if ^!FOCUSWIN^!==[] (if ^!KEY^!==32 set /a BPR[]=4& start /B cmdwiz playsound waka_waka.wav)) & set /a BPR[]-=1 & if ^!BPR[]^! gtr 0 set REPL3=a"
+set W[]_CONTENT="fbox REPL3 0 db REPL1,REPL2,14,13 & text f REPL3 0 \n\n\n\n\n\n_____SPACE REPL1,REPL2"

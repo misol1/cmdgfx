@@ -1,0 +1,8 @@
+w.name="Button 1"
+w.x=28, w.y=11
+w.width=21, w.height=20
+w.xa=3, w.ya=3
+w.closeable=true, w.resizeable=false, w.scrollable=false
+w.init="w.bpr=0"
+w.update="REPL1=2; if (w == focusWin) { if (KEY==32) { w.bpr=4; ExecuteAsync('cmdwiz playsound waka_waka.wav') } } w.bpr--; if (w.bpr > 0) REPL1='a'"
+w.content="fbox REPL1 0 db OFF_X,OFF_Y,14,13 & text f REPL1 0 \\n\\n\\n\\n\\n\\n_____SPACE OFF_X,OFF_Y"

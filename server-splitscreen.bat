@@ -1,4 +1,5 @@
 @echo off
+color 07
 if defined __ goto :START
 cls & cmdwiz showcursor 0
 set __=.

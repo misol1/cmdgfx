@@ -1,0 +1,8 @@
+set W[]_NAME="Button 4"
+set /a W[]_W=20, W[]_H=19
+set /a W[]_X=28, W[]_Y=31
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0, W[]_EXP=6
+set W[]_INIT="set /a BPR[]=0, MBR[]=0, BCOL[]=2"
+set W[]_UPDATE="(if ^!M_EVENT^!==1 if ^!M_RB^!==0 set /a MBR[]=0,BCOL[]=2) & set /a REPL1=OFF_X+2, REPL2=OFF_Y+2 & (if ^!FOCUSWIN^!==[] set /a MMX=OFF_X+M_X-W[]_X-2,MMX2=OFF_X+W[]_W-5,MMY=OFF_Y+M_Y-W[]_Y-2,MMY2=OFF_Y+W[]_H-5 & (if ^!MMX^! gtr ^!OFF_X^! if ^!MMX^! lss ^!MMX2^! if ^!MMY^! gtr ^!OFF_Y^! if ^!MMY^! lss ^!MMY2^! if ^!MBR[]^!==0 set BCOL[]=a & if ^!M_RB^!==1 set /a BPR[]=4, MBR[]=1& start /B cmdwiz playsound waka_waka.wav)) & set /a BPR[]-=1 & (if ^!BPR[]^! gtr 0 set BCOL[]=e) & set BUTCOL=^!BCOL[]^!"
+set W[]_CONTENT="fbox ^!BUTCOL^! 0 db REPL1,REPL2,13,12 & text f ^!BUTCOL^! 0 \n\n\n\n_____RMB\n_____over\n____Hover\n____Button REPL1,REPL2"

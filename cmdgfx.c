@@ -23,22 +23,16 @@
 
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
-// 2. Documentation update/expansion, needs several pages and split-up
-// 3. 32(24?16?)-bit gdi support
-// 4. Port to Linux
+// 2. Documentation update/expansion, needs several pages and split-up. Add version number too
+// 3. Error messages: write out the actual offending operation (if flag set?). Needs wordwrap?
+// 4. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
+// 5. 32(24?16?)-bit gdi support
+// 6. Port to Linux
 
 // For 3d:
 // 1. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
 // 2. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
 // 3. Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
-
-// Done:
-// 1. G flag minimum now 16,16
-// 2. fbox accepts three params only to clear entire buffer
-// 3. bug fix: starting cmdgfx with fc font no longer captures a screenshot
-// 4. Code optimization: Optimize texture transparency for 3d/tpoly (currently fills/copies whole buffer for every polygon!)
-// 5. DISCARDED: Code optimization 3d: Texture mapping: re-using textures, both for single objects and between objects
-// (6. Removed all bg dependencies from scripts)
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -146,7 +140,7 @@ void GetConsoleColor(){
 
 int GXY_MAX_X = 256, GXY_MAX_Y = 256;
 
-int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor) {
+int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor, int bIgnoreAllCodes) {
 	char *text, ch, *pbcol, *pbchar;
 	int fr, i, j, 	inlen;
 	int x = 0, y = 0, yp=0;
@@ -187,7 +181,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 
 	for(i = 0; i < inlen; i++) {
 		ch = text[i];
-		if (ch == '\\') {
+		if (ch == '\\' && !bIgnoreAllCodes) {
 			i++;
 			ch = text[i];
 
@@ -253,6 +247,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 				if (x > *w1) *w1 = x;
 				x = 0; y++; yp+=w;
 			} else {
+				if (ch == 9) ch=32;
 				if (x < w) { pbchar[yp+x] = ch; pbcol[yp+x] = color; }
 				x++;
 			}
@@ -458,7 +453,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap->extras = (Bitmap *) calloc(sizeof(Bitmap), 1);
 		if (!bmap->extras) return res;
 		bmap->extrasType = EXTRAS_BITMAP;
-		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1, 0, 0);
+		res = readGxy(inpname, bmap, (Bitmap *)bmap->extras, &w, &h, 0, -1, 1, 0, 0, 0);
 		bmap->transpVal = transpVal;
 		bmap->bCmdBlock = 0;
 	}
@@ -554,7 +549,7 @@ void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *v
 HWND g_hWnd = NULL;
 HDC g_hDc = NULL, g_hDcBmp = NULL;
 
-
+/*
 // Writing ints instead of chars
 void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos) {
 	HBITMAP hBmp1 = NULL;
@@ -675,6 +670,141 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 }
 
 #endif
+*/
+
+
+unsigned char* g_lpBitmapBits;
+HBITMAP g_bitmap;
+
+void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos) {
+	HBITMAP hBmp1 = NULL;
+	HGDIOBJ hGdiObj = NULL;
+	BITMAP bmp = {0};
+	LONG w = 0, h = 0;
+	int iRet = EXIT_FAILURE;
+	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol;
+	int i,j,ccol,cchar,l,m, index;
+	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
+	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
+	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
+	int fw, fh, *data, val, bpp = 4;
+	unsigned int *palFg, *palBg;
+	static int oldw=-1, oldh=-1;
+	
+	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
+	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
+
+	if (fontIndex < 0 || fontIndex > 12)
+		return;
+
+	fw = fontWidth[fontIndex];
+	fh = fontHeight[fontIndex];
+	data = fontData[fontIndex];
+
+	if (!bAbsBitmapPos) {
+		x *= fw; y *= fh;
+	}
+
+	w = outw * fw;
+	h = outh * fh;
+
+	if (g_hDc == NULL || w != oldw || h != oldh) {
+		if (g_hDc != NULL) {
+			if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
+			if (g_hDcBmp) DeleteDC(g_hDcBmp);
+			if (g_bitmap) DeleteObject(g_bitmap);
+		}
+		
+		oldw = w; oldh = h;
+		
+		if ((g_hWnd = GetConsoleWindow())) {
+			if ((g_hDc = GetDC(g_hWnd))) {
+				BITMAPINFO bi; 
+
+				g_hDcBmp = CreateCompatibleDC(g_hDc);
+				
+				ZeroMemory(&bi, sizeof(BITMAPINFO));
+				bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+				bi.bmiHeader.biWidth = w;
+				bi.bmiHeader.biHeight = -h;  //negative so (0,0) is at top left
+				bi.bmiHeader.biPlanes = 1;
+				bi.bmiHeader.biBitCount = 32;
+				
+				g_bitmap = CreateDIBSection(g_hDcBmp, &bi, DIB_RGB_COLORS,  (VOID**)&g_lpBitmapBits, NULL, 0);
+				SelectObject(g_hDcBmp, g_bitmap); 
+			}
+		}
+	}
+
+	if (g_hDcBmp)
+	{
+		outdata = (unsigned int *)g_lpBitmapBits;
+		
+		if (fontIndex < 10) {
+			for (i = 0; i < outh; i++) {
+				for (j = 0; j < outw; j++) {
+					cchar = videoChar[j+i*XRES];
+					ccol = videoCol[j+i*XRES];
+					fgcol = &palFg[(ccol&0xf)];
+					bgcol = &palBg[(ccol>>4)];
+					for (l = 0; l < fh; l++) {
+						index = (j*fw + (i*fh+l)*outw*fw);
+						val = data[cchar*fh+l];
+						outt = &outdata[index];
+						for (m = 0; m < fw; m++) {
+							*outt++ = (val & 1) ? *fgcol : *bgcol;
+							val >>= 1;
+						}
+					}
+				}
+			}
+		} else { // pixelfont
+			if (fw == 1) {
+				for (i = 0; i < outh; i++) {
+					for (j = 0; j < outw; j++) {
+						cchar = videoChar[j+i*XRES];
+						ccol = videoCol[j+i*XRES];
+						fgcol = &palFg[(ccol&0xf)];
+						bgcol = &palBg[(ccol>>4)];
+						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+						outdata[j + i*outw] = *pcol;
+					}
+				}
+			} else {
+				for (i = 0; i < outh; i++) {
+					for (j = 0; j < outw; j++) {
+						cchar = videoChar[j+i*XRES];
+						ccol = videoCol[j+i*XRES];
+						fgcol = &palFg[(ccol&0xf)];
+						bgcol = &palBg[(ccol>>4)];
+						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+
+						for (l = 0; l < fh; l++) {
+							index = (j*fw + (i*fh+l)*outw*fw);
+							outt = &outdata[index];
+							for (m = 0; m < fw; m++) {
+								*outt++ = *pcol;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (BitBlt(g_hDc, (int)x, (int)y, (int)w, (int)h, g_hDcBmp, 0, 0, SRCCOPY)) {
+			iRet = EXIT_SUCCESS;
+		}
+	}
+
+	GdiFlush();
+	
+	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
+}
+
+#endif
+
+
 
 int getConsoleDim(int bH) {
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
@@ -1459,6 +1589,13 @@ void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, i
 }
 #endif	
 
+void transformFilenameSpaces(char *inout) {
+	while (*inout) {
+		if (*inout == '~') *inout=' ';
+		inout++;
+	}
+}
+
 	
 #define MAX_OBJECTS_IN_MEM 64
 
@@ -1698,6 +1835,7 @@ int main(int argc, char *argv[]) {
 					i++;
 					nof = sscanf(&argv[2][i], "%d,%d", &GXM, &GYM);
 					if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+					break;
 				}
 				case 'Z': {
 					char pDepth[64];
@@ -1789,24 +1927,6 @@ int main(int argc, char *argv[]) {
 			if (strstr(pch,"rem ") == pch || rem) {
 				rem = 1;
 				// do nothing, skip rest
-/*			} else if (strstr(pch,"play ") == pch) { // can't play sounds simultaneously. Use start "" /b cmdwiz playsound
-				char loops[16], *pfn;
-				pch = pch + 5;
-				nof = sscanf(pch, "%128s %8s", fname);
-
-				if (nof >= 1 && nof <=2) {
-					pfn = fname;
-					if (strcmp(pfn, "off") == 0)
-						pfn = NULL;
-					int sndflags = SND_FILENAME | SND_NODEFAULT;
-					if (bServer) {
-						sndflags |= SND_ASYNC;
-						if (nof == 2)
-							sndflags |= SND_LOOP;
-					}
-					PlaySound(pfn, NULL, sndflags);
-				} else
-					reportArgError(&errH, OP_PLAY, opCount); */
 			} else if (strstr(pch,"poly ") == pch) {
 				pch = pch + 5;
 				nof = sscanf(pch, "%2s %2s %2s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", 																			s_fgcol, s_bgcol, s_dchar, &vv[0].x, &vv[0].y, &vv[1].x, &vv[1].y, &vv[2].x, &vv[2].y,
@@ -1893,7 +2013,7 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_GPOLY, opCount);
 		 }
 		 else if (strstr(pch,"tpoly ") == pch) {
-			int bIgnoreFgCol=0, bIgnoreBgCol=0;
+			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
 			int nofp, w,h;
 			Bitmap b_cols, b_chars;
 			
@@ -1914,10 +2034,13 @@ int main(int argc, char *argv[]) {
 			if (nof >= 17) {
 				nofp = 3 + (nof-17) / 4;
 				
-				if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
 				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
 				
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+
+				transformFilenameSpaces(fname);
 				
 				if (strstr(fname,".pcx")) {
 					if (b_pcx.data) { free(b_pcx.data); b_pcx.data = NULL; }
@@ -1934,7 +2057,7 @@ int main(int argc, char *argv[]) {
 					} else
 						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
 				} else {
-					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1, bIgnoreFgCol, bIgnoreBgCol)) {
+					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes)) {
 						parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 						if (transpval < 0) {
 							video = videoCol;
@@ -2055,10 +2178,15 @@ int main(int argc, char *argv[]) {
 			char tstring[12096];
 			int x1,y1,w1,h1,xb,xdb,res;
 			int writeCols;
+			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
 			pch = pch + 5;
 			nof = sscanf(pch, "%2s %2s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
 
 			if (nof == 6) {
+				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
+				
 				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 
 				b_cols.data = b_chars.data = NULL;
@@ -2085,7 +2213,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
-				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0, 0, 0);
+				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), -1, 0, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
 
 				if (res) {
 					for (j=0; j < h1; j++) {
@@ -2111,7 +2239,7 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_TEXT, opCount);
 		 }
 		 else if (strstr(pch,"image ") == pch) {
-			int bIgnoreFgCol=0, bIgnoreBgCol=0;
+			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
 			int x1,y1,w1,h1, res, xflip=0, yflip=0, xb, xdb, xdir=1, w2=-1, h2=-1, writeCols;
 			Bitmap b_cols, b_chars;
 			b_cols.data = b_chars.data = NULL;
@@ -2120,7 +2248,9 @@ int main(int argc, char *argv[]) {
 			nof = sscanf(pch, "%127s %3s %3s %2s %2s %d,%d %d %d %d,%d", fname, s_fgcol, s_bgcol, s_dchar, s_transpval, &x1, &y1, &xflip, &yflip, &w2, &h2);
 			if (xflip) xdir = -1;
 			if (nof >= 7) {
-				if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				transformFilenameSpaces(fname);
+				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
+				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
 				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
 				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				if (strstr(fname, ".pcx")){
@@ -2153,7 +2283,7 @@ int main(int argc, char *argv[]) {
 						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
 				} else {
 					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1, bIgnoreFgCol, bIgnoreBgCol);
+					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
 					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
 				}
 
@@ -2349,6 +2479,8 @@ int main(int argc, char *argv[]) {
 
 				g_errH = &errH; g_opCount = opCount;
 
+				transformFilenameSpaces(fname);
+
 				if (!obj3) {
 					if (strstr(fname,".obj"))
 						obj3 = readObj(fname, 1, 0,0,0, 0, readCmdGfxTexture, bAllowRepeated3dTextures, (float)(tex_mod_x) / 100000.0, (float)(tex_mod_y) / 100000.0, (float)(tex_add_x) / 100000.0, (float)(tex_add_y) / 100000.0);
@@ -2531,17 +2663,6 @@ int main(int argc, char *argv[]) {
 												
 												if (bmap->extras && bmap->extrasType == EXTRAS_BITMAP) {
 													drawTranspTDoublePoly(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, v, nofFacePoints, bmap, fgbg, bDrawPerspective, (Bitmap *)bmap->extras);
-/*													
-													int ok;											
-													video = videoTransp;
-													memset(videoTransp, transpval, XRES*YRES*sizeof(unsigned char));
-													ok = scanConvex_tmap(v, nofFacePoints, NULL, bmap, fgbg, bDrawPerspective);
-													if (ok) {
-														video = videoTranspChar;
-														memset(videoTranspChar, transpval, XRES*YRES*sizeof(unsigned char));
-														scanConvex_tmap(v, nofFacePoints, NULL, (Bitmap *)bmap->extras, 0, bDrawPerspective);
-														processDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols);
-													}	*/
 												} else
 													drawTranspTPoly(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, v, nofFacePoints, bmap, fgbg, bDrawPerspective);
 													
@@ -2704,7 +2825,6 @@ int main(int argc, char *argv[]) {
 		if (!bDoNothing) {
 	#ifdef GDI_OUTPUT
 			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos);
-		//	convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0][0], &bgPalette[0][0], gx, gy);
 			
 			if (bWriteGdiToFile) {
 					FILE *fp = fopen("GDIbuf.dat", "wb");
@@ -2951,6 +3071,7 @@ int main(int argc, char *argv[]) {
 								i++;
 								nof = sscanf(&pch[i], "%d,%d", &GXM, &GYM);
 								if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+								break;
 							}
 							case 'R': {
 								char rotGran[64];
@@ -3093,7 +3214,8 @@ int main(int argc, char *argv[]) {
 
 #ifdef GDI_OUTPUT
 	if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
-	if (g_hDcBmp) ReleaseDC(g_hWnd, g_hDcBmp);
+	if (g_hDcBmp) DeleteDC(g_hDcBmp);
+	if (g_bitmap) DeleteObject(g_bitmap);
 #endif
 	
 	if (b_pcx.data) free(b_pcx.data);

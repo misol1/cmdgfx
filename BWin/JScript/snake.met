@@ -1,0 +1,25 @@
+w.name="Snake \\80(SPACE=restart, \\g11\\g10\\g1e\\g1f=play)"
+w.x=28, w.y=15
+w.width=60, w.height=45
+w.xa=1, w.ya=1
+w.closeable=true, w.resizeable=false, w.scrollable=false, w.keyboardHog=1
+w.init="w.world=[]; for (var j = 0; j < w.width*w.height; j++) w.world.push(0); w.bx=4, w.by=12, w.bdx=1, w.bdy=0, w.oldMx=-100, w.score=0, w.playing=true, w.appleX=2+GetRandom(0,w.width-6), w.appleY=2+GetRandom(0,w.height-6), w.len=3, w.memX=[], w.memY=[]"
+
+w.update="xWall = w.width-3, yWall = w.height-3;" + 
+			"if (w.playing) w.bx += w.bdx, w.by += w.bdy;" +
+			"if (w == focusWin) {" +
+				"if (KEY==32) { w.score=0, w.bx=4, w.by=23, w.bdx=1, w.bdy=0, w.playing=true, w.appleX=2+GetRandom(0,w.width-6), w.appleY=2+GetRandom(0,w.height-6); w.world=[], w.len=3, w.memX=[], w.memY=[]; for (var j = 0; j < w.width*w.height; j++) w.world.push(0); } " +
+				"if (KEY==328 && w.bdy != 1) w.bdx=0, w.bdy=-1;" +
+				"if (KEY==336 && w.bdy != -1) w.bdx=0, w.bdy=1;" +
+				"if (KEY==331 && w.bdx != 1) w.bdx=-1, w.bdy=0;" +
+				"if (KEY==333 && w.bdx != -1) w.bdx=1, w.bdy=0;" +
+			"}" +
+			"if (w.world[w.bx+w.by*w.width] != 0) w.playing=false;" +
+			"if (w.playing) { w.memX.push(w.bx); w.memY.push(w.by); if (w.memX.length > w.len) { oldX=w.memX.splice(0,1), oldY=w.memY.splice(0,1); w.world[oldX[0] + oldY[0]*w.width] = 0; } }" +
+			"w.world[w.bx + w.by*w.width] = 1;" +
+			"if (w.bx == w.appleX && w.by == w.appleY) { do { w.appleX=2+GetRandom(0,w.width-6), w.appleY=2+GetRandom(0,w.height-6); } while(w.world[w.appleX+w.appleY*w.width] != 0); w.score+=1, w.len+=3; }" +
+			"if (w.bx < 1 || w.bx >= xWall || w.by < 1 || w.by >= yWall) w.playing = false;" +
+			"out=''; for (j=0; j < w.height; j++) { for (k=0; k < w.width; k++) { if (w.world[k + j*w.width]==0) out+='_'; else out+='O'; }  out+='\\\\n'; } " +
+			"REPL1=out, REPL2=w.score, REPL3=OFF_X+w.appleX, REPL4=OFF_Y+w.appleY"
+			
+w.content="text a 0 0 REPL1 OFF_X,OFF_Y & text e 0 0 \\n_Score:REPL2 OFF_X,OFF_Y & pixel c 0 @ REPL3,REPL4"

@@ -1,0 +1,10 @@
+rem set BORDER_COL=f c
+
+set W[]_NAME="Met Animation"
+set /a W[]_W=50, W[]_H=40
+set /a W[]_X=7, W[]_Y=28
+set /a W[]_XA=0, W[]_YA=0
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=1, W[]_CLEAR=1, W[]_SCROLL=0, W[]_MAXED=0
+set W[]_INIT="set /a IMG[]=0"
+set W[]_UPDATE="set /a IMG[]=(IMG[]+1) % 20, REPL1=IMG[]/2"
+set W[]_CONTENT="image img\spiral\REPL1.txt 9 0 # -1 OFF_X,OFF_Y 0 0 OFF_W,OFF_H"

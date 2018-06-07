@@ -1,0 +1,8 @@
+w.name="Time"
+w.x=1, w.y=1
+w.width=25, w.height=5
+w.xa=3, w.ya=2
+w.closeable=true, w.resizeable=false, w.scrollable=false, w.maximized=false
+w.init=""
+w.update="var d = new Date(); REPL1=OFF_X+11, REPL2=d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2), REPL3=('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2)"
+w.content="text b 0 0 REPL2 OFF_X,OFF_Y & text f 0 0 REPL3 REPL1,OFF_Y"

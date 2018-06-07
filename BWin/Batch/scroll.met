@@ -1,0 +1,8 @@
+set W[]_NAME="Scroll"
+set /a W[]_W=35, W[]_H=3
+set /a W[]_X=41, W[]_Y=33
+set /a W[]_XA=1, W[]_YA=1
+set /a W[]_ACTIVE=1, W[]_CLOSE=1, W[]_SIZE=0, W[]_CLEAR=1, W[]_SCROLL=0
+set W[]_INIT="set /a SC[]=0"
+set W[]_UPDATE="set /a SC[]=(SC[]+1)%230, REPL1=OFF_X-SC[]/3"
+set W[]_CONTENT="text a 0 0 ______________________________________Scrolling_without_\e0block\r_operation...____________________________________ REPL1,OFF_Y"

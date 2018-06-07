@@ -7,6 +7,7 @@ xcopy /Y /S /I img export\img
 xcopy /Y /S /I objects export\objects
 xcopy /Y /S /I games export\games
 xcopy /Y /S /I legacy export\legacy
+xcopy /Y /S /I BWin export\BWin
 cd export
 zip -r cmdgfx .
 cd ..
