@@ -24,20 +24,23 @@
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
 // 2. Documentation update/expansion, needs several pages and split-up. Add version number too
-// 3. Error messages: write out the actual offending operation (if flag set?). Needs wordwrap?
-// 4. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
-// 5. 32(24?16?)-bit gdi support
-// 6. Port to Linux
+// 3. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
+// 4. Major: 32(24?16?)-bit gdi support
+// 5. Major: Port to Linux
 
 // For 3d:
-// 1. Code fix: Persp correct tmapping edge bug (cause: for pcx, chars are drawn with std poly routine, and cols with perspmapper)
+// 1. Code fix: Persp correct tmapping edge bug for pcx (cause: chars are drawn with std poly routine, and cols with perspmapper)
 // 2. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
-// 3. Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
+// 3. Major: Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
+
+// DONE:
+// 1. Arg error messages: write out the actual offending operation (if flag 'd' set). Also write out arg number where it might have gone wrong
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
 int bAllowRepeated3dTextures = 0;
 float texture_offset_x = 0, texture_offset_y = 0;
+int bPrintFullErrorString = 0;
 
 #define MAX_ERRS 64
 typedef enum {ERR_NOF_ARGS, ERR_IMAGE_LOAD, ERR_OBJECT_LOAD, ERR_PARSE, ERR_MEMORY, ERR_OPTYPE, ERR_EXPRESSION } ErrorType;
@@ -47,6 +50,8 @@ typedef struct {
 	OperationType opType[MAX_ERRS];
 	int index[MAX_ERRS];
 	char *extras[MAX_ERRS];
+	char *op[MAX_ERRS];
+	int argNof[MAX_ERRS];
 	int errCnt;
 } ErrorHandler;
 
@@ -334,7 +339,7 @@ int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgc
 
 ErrorHandler *g_errH;
 int g_opCount;
-void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras);
+void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op);
 unsigned char *g_videoCol, *g_videoChar;
 int g_bSleepingWait = 0;
 int g_bFlushAfterELwrite = 0;
@@ -458,7 +463,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap->bCmdBlock = 0;
 	}
 	
-	if (!res) reportFileError(g_errH, OP_3D, ERR_IMAGE_LOAD, g_opCount, fname);
+	if (!res) reportFileError(g_errH, OP_3D, ERR_IMAGE_LOAD, g_opCount, fname, NULL);
 	return res;
 }
 
@@ -690,7 +695,7 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
 	int fw, fh, *data, val, bpp = 4;
 	unsigned int *palFg, *palBg;
-	static int oldw=-1, oldh=-1;
+	static int oldw=-1, oldh=-1, oldFontIndex = -1;
 	
 	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
 	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
@@ -709,14 +714,14 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	w = outw * fw;
 	h = outh * fh;
 
-	if (g_hDc == NULL || w != oldw || h != oldh) {
+	if (g_hDc == NULL || w != oldw || h != oldh || fontIndex != oldFontIndex) {
 		if (g_hDc != NULL) {
 			if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
 			if (g_hDcBmp) DeleteDC(g_hDcBmp);
 			if (g_bitmap) DeleteObject(g_bitmap);
 		}
 		
-		oldw = w; oldh = h;
+		oldw = w; oldh = h; oldFontIndex = fontIndex;
 		
 		if ((g_hWnd = GetConsoleWindow())) {
 			if ((g_hDc = GetDC(g_hWnd))) {
@@ -979,12 +984,12 @@ void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *video
 
 void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 	char opNames[20][16] = { "poly", "ipoly", "gpoly", "tpoly", "image", "box", "fbox", "line", "pixel", "circle", "fcircle", "ellipse", "fellipse", "text", "3d", "block", "insert", "play" };
-	char tstring[1028];
+	char tstring[1028], *partstring;
 	int i, y = 1;
 
 	for (i = 0; i < errH->errCnt; i++) {
 		switch(errH->errType[i]) {
-			case ERR_NOF_ARGS: sprintf(tstring, "#ERR %d: (op %d) '%s' missing and/or malformed parameters", i+1, errH->index[i]+1, opNames[errH->opType[i]]); break;
+			case ERR_NOF_ARGS: sprintf(tstring, "#ERR %d: (op %d) '%s' missing and/or malformed parameters (param %d?)", i+1, errH->index[i]+1, opNames[errH->opType[i]], errH->argNof[i] + 1); break;
 			case ERR_OBJECT_LOAD: case ERR_IMAGE_LOAD: sprintf(tstring, "#ERR %d: (op %d) '%s' failed to load '%s'", i+1, errH->index[i]+1, opNames[errH->opType[i]], errH->extras[i]); break;
 			case ERR_PARSE: sprintf(tstring, "#ERR %d: (op %d) '%s' failed to parse/process '%s'", i+1, errH->index[i]+1, opNames[errH->opType[i]], errH->extras[i]); break;
 			case ERR_MEMORY: sprintf(tstring, "#ERR %d: (op %d) '%s' memory allocation error", i+1, errH->index[i]+1, opNames[errH->opType[i]]); break;
@@ -994,31 +999,47 @@ void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 		}
 		displayMessage(tstring, 0, y, 0xa, 0x2, videoCol, videoChar);
 		y++;
+		if (bPrintFullErrorString && errH->op[i]) {
+			sprintf(tstring, "%s %*.*s", opNames[errH->opType[i]], 0, 1000, errH->op[i]);
+			partstring = tstring;
+
+			do {
+				displayMessage(partstring, 0, y, 0x0, 0xa, videoCol, videoChar);
+				y++;
+				if (strlen(partstring) < XRES) break;
+				partstring += XRES;
+			} while (1);
+		}
 	}
 }
 
-void reportError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras) {
+int gTempArgNof = 0;
+void reportError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
 	int i = errHandler->errCnt;
 	errHandler->errType[i] = errType;
 	errHandler->opType[i] = opType;
 	errHandler->index[i] = index;
 	errHandler->extras[i] = NULL;
+	errHandler->op[i] = NULL;
+	errHandler->argNof[i] = gTempArgNof;
 	if (extras) { errHandler->extras[i]=(char *)malloc((strlen(extras)+1) * sizeof(char)); if (errHandler->extras[i]) strcpy(errHandler->extras[i], extras); }
+	if (op) { errHandler->op[i]=(char *)malloc((strlen(op)+1) * sizeof(char)); if (errHandler->op[i]) strcpy(errHandler->op[i], op); }
 	errHandler->errCnt++;
 	if (errHandler->errCnt >= MAX_ERRS) errHandler->errCnt = MAX_ERRS-1;
 }
 
-void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras) {
+void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
 	FILE *ifp;
 	if (extras) {
 		ifp = fopen(extras, "r");
 		if (ifp) { errType = ERR_PARSE; fclose(ifp); }
 	}
-	reportError(errHandler, opType, errType, index, extras);
+	reportError(errHandler, opType, errType, index, extras, op);
 }
 	
-void reportArgError(ErrorHandler *errHandler, OperationType opType, int index) {
-	reportError(errHandler, opType, ERR_NOF_ARGS, index, NULL);
+void reportArgError(ErrorHandler *errHandler, OperationType opType, int index, char *op, int argNof) {
+	gTempArgNof = argNof;
+	reportError(errHandler, opType, ERR_NOF_ARGS, index, NULL, op);
 }
 
 double my_random(void) {
@@ -1234,7 +1255,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		} else {
 			char errS[64];
 			sprintf(errS, "colorExpr near character %d", err);
-			reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+			reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
 		}
 	}
 
@@ -1289,11 +1310,11 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 			char errS[64];
 			if (!n) {
 				sprintf(errS, "xExpr near character %d", errX);
-				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
 			}
 			if (!n2) {
 				sprintf(errS, "yExpr near character %d", err);
-				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS);
+				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
 			}
 		}
 
@@ -1820,6 +1841,7 @@ int main(int argc, char *argv[]) {
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
 				case 'u': bSendKeyUp = 1; break;
+				case 'd': bPrintFullErrorString = 1; break;
 
 				case 'N': 
 				{
@@ -1945,7 +1967,7 @@ int main(int argc, char *argv[]) {
 					video = videoChar;
 					if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
 				} else
-					reportArgError(&errH, OP_POLY, opCount);
+					reportArgError(&errH, OP_POLY, opCount, pch, nof);
 			}
 			else if (strstr(pch,"ipoly ") == pch) {
 				int bitOp;
@@ -1966,7 +1988,7 @@ int main(int argc, char *argv[]) {
 					video = videoChar;
 					if (bWriteChars) scanPoly(vv, nofp, dchar, BIT_OP_NORMAL);
 				} else
-					reportArgError(&errH, OP_IPOLY, opCount);
+					reportArgError(&errH, OP_IPOLY, opCount, pch, nof);
 			 }
 		 else if (strstr(pch,"gpoly ") == pch) {
 			char goraudPalette[512], gfgbg[256];
@@ -2010,7 +2032,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			} else
-				reportArgError(&errH, OP_GPOLY, opCount);
+				reportArgError(&errH, OP_GPOLY, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"tpoly ") == pch) {
 			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
@@ -2055,7 +2077,7 @@ int main(int argc, char *argv[]) {
 							drawTranspTPoly(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, vv, nofp, &b_pcx, (bgcol<<4) | fgcol, 0);
 						}
 					} else
-						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
+						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname, NULL);
 				} else {
 					if (readGxy(fname, &b_cols, &b_chars, &w, &h, 0, dchar, 1, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes)) {
 						parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
@@ -2071,10 +2093,10 @@ int main(int argc, char *argv[]) {
 						free(b_chars.data);
 						free(b_cols.data);
 					} else
-						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname);
+						reportFileError(&errH, OP_TPOLY, ERR_IMAGE_LOAD, opCount, fname, NULL);
 				}
 			} else
-				reportArgError(&errH, OP_TPOLY, opCount);
+				reportArgError(&errH, OP_TPOLY, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"fcircle ") == pch) {
 			int rc,xc,yc;
@@ -2088,7 +2110,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) filled_circle(xc, yc, rc, dchar);
 			} else
-				reportArgError(&errH, OP_FCIRCLE, opCount);
+				reportArgError(&errH, OP_FCIRCLE, opCount, pch, nof);
 		}
 		else if (strstr(pch,"circle ") == pch) {
 			int rc,xc,yc;
@@ -2102,7 +2124,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) circle(xc, yc, rc, dchar);
 			} else
-				reportArgError(&errH, OP_CIRCLE, opCount);
+				reportArgError(&errH, OP_CIRCLE, opCount, pch, nof);
 		}
 		else if (strstr(pch,"fellipse ") == pch) {
 			int rcx,rcy,xc,yc;
@@ -2116,7 +2138,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) filled_ellipse(xc, yc, rcx, rcy, dchar);
 			} else
-				reportArgError(&errH, OP_FELLIPSE, opCount);
+				reportArgError(&errH, OP_FELLIPSE, opCount, pch, nof);
 		}
 		else if (strstr(pch,"ellipse ") == pch) {
 			int rcx,rcy,xc,yc;
@@ -2130,7 +2152,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) ellipse(xc, yc, rcx, rcy, dchar);
 			} else
-				reportArgError(&errH, OP_ELLIPSE, opCount);
+				reportArgError(&errH, OP_ELLIPSE, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"line ") == pch) {
 			int x1,y1,x2,y2;
@@ -2157,7 +2179,7 @@ int main(int argc, char *argv[]) {
 					video = videoChar;
 					if (bWriteChars) bezier(nofP-1, xPoints, yPoints, dchar);
 				} else 
-					reportArgError(&errH, OP_LINE, opCount);
+					reportArgError(&errH, OP_LINE, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"pixel ") == pch) {
 			int x1,y1;
@@ -2171,7 +2193,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) setpixel(x1, y1, dchar);
 			} else
-				reportArgError(&errH, OP_PIXEL, opCount);
+				reportArgError(&errH, OP_PIXEL, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"text ") == pch) {
 			Bitmap b_cols, b_chars;
@@ -2236,7 +2258,7 @@ int main(int argc, char *argv[]) {
 					if (b_chars.data) free(b_chars.data); 
 				}
 			} else
-				reportArgError(&errH, OP_TEXT, opCount);
+				reportArgError(&errH, OP_TEXT, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"image ") == pch) {
 			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
@@ -2280,11 +2302,11 @@ int main(int argc, char *argv[]) {
 							dchar = 255;
 						}
 					} else
-						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
+						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname, NULL);
 				} else {
 					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, ((bgcol << 4) | fgcol), dchar, 1, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
-					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname);
+					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname, NULL);
 				}
 
 				if (res) {
@@ -2307,7 +2329,7 @@ int main(int argc, char *argv[]) {
 						}
 					} else { // stretched
 						if (w2 <= 0 || h2 <= 0)
-							reportArgError(&errH, OP_IMAGE, opCount);
+							reportArgError(&errH, OP_IMAGE, opCount, pch, w2<=0? 9 : 10);
 						else {
 							float xdbf, xdirf, ydbf = 0, ydirf;
 							xdirf = (float)w1 / (float)w2;
@@ -2341,7 +2363,7 @@ int main(int argc, char *argv[]) {
 				if (b_chars.data) free(b_chars.data);
 
 			} else
-				reportArgError(&errH, OP_IMAGE, opCount);
+				reportArgError(&errH, OP_IMAGE, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"box ") == pch) {
 			int x1,y1,w,h;
@@ -2355,7 +2377,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) box(x1, y1, w, h, dchar);
 			} else
-				reportArgError(&errH, OP_BOX, opCount);
+				reportArgError(&errH, OP_BOX, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"fbox ") == pch) {
 			int x1,y1,w,h;
@@ -2372,7 +2394,7 @@ int main(int argc, char *argv[]) {
 				video = videoChar;
 				if (bWriteChars) fbox(x1, y1, w, h, dchar);
 			} else
-				reportArgError(&errH, OP_FBOX, opCount);
+				reportArgError(&errH, OP_FBOX, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"block ") == pch) {
 			int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
@@ -2391,7 +2413,7 @@ int main(int argc, char *argv[]) {
 					parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
 			} else
-				reportArgError(&errH, OP_BLOCK, opCount);
+				reportArgError(&errH, OP_BLOCK, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"3d ") == pch) {
 			obj3d *obj3 = NULL;
@@ -2790,7 +2812,7 @@ int main(int argc, char *argv[]) {
 						}
 					}
 				} else
-					reportFileError(&errH, OP_3D, ERR_OBJECT_LOAD, opCount, fname);
+					reportFileError(&errH, OP_3D, ERR_OBJECT_LOAD, opCount, fname, NULL);
 
 				// stupid strtok, I use it in the load functions for plg and obj files, thus screwing up the existing strtok. Rereading, ugly fix...
 				strcpy(argv1, insertedArgs);
@@ -2799,7 +2821,7 @@ int main(int argc, char *argv[]) {
 
 			}
 			else
-				reportArgError(&errH, OP_3D, opCount);
+				reportArgError(&errH, OP_3D, opCount, pch, nof);
 		}	else if (strstr(pch,"skip ") == pch) {
 			// do nothing
 		} else {
@@ -2809,7 +2831,7 @@ int main(int argc, char *argv[]) {
 			fnd = strchr(faultyOp, ' ');
 			if (fnd) *fnd = 0;
 			if (faultyOp[0])
-				reportError(&errH, OP_UNKNOWN, ERR_OPTYPE, opCount, faultyOp);
+				reportError(&errH, OP_UNKNOWN, ERR_OPTYPE, opCount, faultyOp, NULL);
 		}
 
 		pch = strtok (NULL, "&");
@@ -3053,6 +3075,7 @@ int main(int argc, char *argv[]) {
 								}
 								break;
 							}
+							case 'd': bPrintFullErrorString = neg? 0 : 1; break;
 							case 'u': bSendKeyUp = neg? 0 : 1; break;
 							case 'e': bSuppressErrors = neg? 0 : 1; break;
 							case 'E': bWaitAfterErrors = neg? 0 : 1; break;
@@ -3209,7 +3232,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	for (i = 0; i < errH.errCnt; i++) if (errH.extras[i]) free(errH.extras[i]);
+	for (i = 0; i < errH.errCnt; i++) { if (errH.extras[i]) free(errH.extras[i]); if (errH.op[i]) free(errH.op[i]); }
 	errH.errCnt = 0;
 
 #ifdef GDI_OUTPUT
