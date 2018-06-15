@@ -3,7 +3,7 @@ if defined __ goto :STARTDEMO %1
 set __=.
 
 cls & cmdwiz setfont 6
-cmdwiz fullscreen 1
+cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
 cmdwiz getconsoledim sw
 set /a W6=%errorlevel% + 1
 cmdwiz getconsoledim sh
@@ -14,7 +14,7 @@ cls & cmdwiz showcursor 0
 call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,%W%,%H%W12
 set __=
 cls
-cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz fullscreen 0 & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 

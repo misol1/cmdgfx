@@ -1,6 +1,6 @@
 @echo off
-cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
 if defined __ goto :START
 cmdwiz getconsoledim sw
 set /a W=%errorlevel% * 2 + 4
