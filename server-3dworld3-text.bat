@@ -130,6 +130,10 @@ set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 copy /Y %FN% %FN4%>nul
 for /l %%a in (1,1,10) do set /p INPUT=
 
+cmdwiz getdisplaydim w
+set SW=%errorlevel%
+cmdwiz getdisplaydim h
+set SH=%errorlevel%
 set /a SW/=2, SH/=2
 set /a MPY=%SH%-%H%/4 & cmdwiz setmousecursorpos %SW% !MPY!
 
