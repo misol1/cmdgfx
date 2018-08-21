@@ -1,7 +1,7 @@
 @if (true == false) @end /*
 @echo off
 if defined __ goto :START
-cmdwiz showcursor 0 
+cmdwiz showcursor 0 & title Twist scroller
 set __=.
 cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" SZ300f0:0,0,3160,95,160,90
 set __=

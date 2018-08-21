@@ -1,6 +1,6 @@
 @if (true == false) @end /*
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900N2500L150,8

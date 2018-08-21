@@ -1,5 +1,5 @@
 @echo off
-cls & cmdwiz setfont 6
+cls & cmdwiz setfont 6 & title 3d maze test 2
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START

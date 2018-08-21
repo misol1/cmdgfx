@@ -1,7 +1,7 @@
 @echo off
 if defined __ goto :START
 set __=.
-cls & cmdwiz setfont 6 & cmdwiz showcursor 0
+cls & cmdwiz setfont 6 & cmdwiz showcursor 0 & title Trails
 set /a W=110, H=55
 mode %W%,%H%
 set /a W*=2, H*=2

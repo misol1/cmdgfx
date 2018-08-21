@@ -1,6 +1,6 @@
 :: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016
 @echo off
-cls & cmdwiz setfont 6
+cls & cmdwiz setfont 6 & title 3d maze
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START

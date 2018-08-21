@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 7 & cls & cmdwiz showcursor 0
+cmdwiz setfont 7 & cls & cmdwiz showcursor 0 & title Matrix 01
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW18x | call %0 %* | cmdgfx_gdi "" Sf7:0,0,164,140,82,54

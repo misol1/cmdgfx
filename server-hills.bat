@@ -1,7 +1,7 @@
 :: Parallax scrolling : Mikael Sollenborn 2016
 
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Parallax hills
 if defined __ goto :START
 set /a F6W=240/2, F6H=110/2
 mode %F6W%,%F6H%

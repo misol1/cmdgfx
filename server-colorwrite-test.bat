@@ -1,6 +1,6 @@
 :: Colorwrite test : Mikael Sollenborn 2016
 @echo off
-cmdwiz setfont 6 & mode 80,54 & cls
+cmdwiz setfont 6 & mode 80,54 & cls & title Color write test
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

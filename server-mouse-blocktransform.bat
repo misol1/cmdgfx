@@ -1,5 +1,5 @@
 @echo off
-cls & cmdwiz setfont 2
+cls & cmdwiz setfont 2 & title Mouse block transform
 cmdwiz showcursor 0
 if defined __ goto :START
 mode 150,75

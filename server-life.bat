@@ -1,6 +1,6 @@
 @echo off
 set /a W=160, H=80
-cmdwiz setfont 1 & mode %W%,%H% & cls
+cmdwiz setfont 1 & mode %W%,%H% & cls & title Game of Life
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

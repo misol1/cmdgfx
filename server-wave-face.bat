@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 8 & cls & cmdwiz showcursor 0
+cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Wave expression
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,320,100,147,80

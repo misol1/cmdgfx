@@ -1,7 +1,7 @@
 @echo off
 color 07
 if defined __ goto :START
-cls & cmdwiz showcursor 0
+cls & cmdwiz showcursor 0 & title Split screen
 set __=.
 cmdgfx_input.exe knW14x | call %0 %* | cmdgfx_gdi "" S
 set __=

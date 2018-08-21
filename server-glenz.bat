@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 8 & cls & cmdwiz showcursor 0
+cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Glenz vector
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80

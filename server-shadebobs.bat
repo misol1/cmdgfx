@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 2 & mode 120,75 & cls
+cmdwiz setfont 2 & mode 120,75 & cls & title Shadebobs
 cmdwiz showcursor 0
 if defined __ goto :START
 cmdwiz getquickedit

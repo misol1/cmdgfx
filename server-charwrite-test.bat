@@ -1,6 +1,6 @@
 :: Texturemap ignore-color scroll : Mikael Sollenborn 2016
 @echo off
-cmdwiz setfont 8 & cls
+cmdwiz setfont 8 & cls & title Char write test
 set /a F8W=200/2, F8H=80/2
 mode %F8W%,%F8H%
 cmdwiz showcursor 0

@@ -1,6 +1,6 @@
 @echo off
 set /a W=80, WW=W*2
-cmdwiz setfont 2 & mode %W%,75
+cmdwiz setfont 2 & mode %W%,75 & title Fire
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

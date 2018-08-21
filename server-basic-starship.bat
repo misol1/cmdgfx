@@ -1,10 +1,10 @@
 @echo off
 if defined __ goto :START
-cmdwiz setfont 6 & cls & mode 80,50 & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & mode 80,50 & cmdwiz showcursor 0 & title Starship
 set __=.
 cmdgfx_input.exe knW4x | call %0 %* | cmdgfx_gdi "" Sf6:0,0,80,50
 set __=
-cls &  & cmdwiz showcursor 1
+cls & cmdwiz showcursor 1
 goto :eof
 
 :START
@@ -38,5 +38,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 if not defined STOP goto REP
 
 cmdwiz delay 100
-echo "cmdgfx: quit" & title input:Q
+echo "cmdgfx: quit"
+title input:Q
 endlocal

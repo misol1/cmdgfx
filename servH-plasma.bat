@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Plasma
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102

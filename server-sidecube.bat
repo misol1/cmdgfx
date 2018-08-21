@@ -1,7 +1,7 @@
 @echo off
 cmdwiz setfont 6
 set /a F6W=180/2, F6H=90/2
-mode %F6W%,%F6H% & cls
+mode %F6W%,%F6H% & cls & title Sidecube
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

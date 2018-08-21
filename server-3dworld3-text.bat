@@ -1,7 +1,7 @@
 :: 3dworld with perspective correct texture mapping : Mikael Sollenborn 2016-17
 @echo off
 cls & cmdwiz setfont 6
-cmdwiz showcursor 0 & cmdwiz showmousecursor 0
+cmdwiz showcursor 0 & cmdwiz showmousecursor 0 & title 3d world text
 if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%

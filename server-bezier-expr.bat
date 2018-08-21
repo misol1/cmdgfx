@@ -1,6 +1,6 @@
 @echo off
 set /a F6W=220/2, F6H=95/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Bezier expression background
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

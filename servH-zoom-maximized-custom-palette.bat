@@ -1,6 +1,6 @@
 @echo off
 if defined __ goto :START
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz getconsoledim sw

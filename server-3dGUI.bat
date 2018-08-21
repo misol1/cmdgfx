@@ -1,7 +1,7 @@
 :: 3d mouse GUI : Mikael Sollenborn 2017
 @echo off
 if defined __ goto :START
-cls & cmdwiz setfont 6
+cls & cmdwiz setfont 6 & title 3d GUI
 mode con rate=0 delay=10000
 cmdwiz showcursor 0
 set /a F6W=180/2, F6H=90/2

@@ -3,7 +3,7 @@
 cmdwiz setfont 8 & cls
 set /a F8W=160/2, F8H=80/2
 mode %F8W%,%F8H%
-cmdwiz showcursor 0
+cmdwiz showcursor 0 & title Pixel tunnel
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80

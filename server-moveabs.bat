@@ -1,7 +1,7 @@
 @echo off
 color 07
 if defined __ goto :START
-cls & cmdwiz showcursor 0
+cls & cmdwiz showcursor 0 & title Absolute move
 set __=.
 cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" SR10G256,16
 set __=

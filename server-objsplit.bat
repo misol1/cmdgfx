@@ -1,7 +1,7 @@
 @echo off
 set /a W=180, H=100
 set /a F6W=W/2, F6H=H/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Object split
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

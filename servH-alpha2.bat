@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 8 & cls & cmdwiz showcursor 0
+cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Alpha generation
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" SZ300f1:0,0,160,80

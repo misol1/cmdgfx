@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 8 & cls
+cmdwiz setfont 8 & cls & title Bob flag
 set /a F8W=180/2, F8H=80/2
 mode %F8W%,%F8H%
 cmdwiz showcursor 0
