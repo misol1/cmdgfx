@@ -2,7 +2,7 @@
 
 @echo off
 if defined __ goto :START
-cls & cmdwiz showcursor 0
+cls & cmdwiz showcursor 0 & title Mario run
 set __=.
 cmdgfx_input.exe knW20x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,240,110
 set __=

@@ -1,6 +1,6 @@
 @if (true == false) @end /*
 @echo off
-cmdwiz setfont 6 & cls
+cmdwiz setfont 6 & cls & title Cmd runner
 cmdwiz showcursor 0
 
 if defined __ goto :START

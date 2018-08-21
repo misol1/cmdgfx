@@ -1,7 +1,7 @@
 :: Pong3d: Mikael Sollenborn 2017
 
 @echo off
-cls & cmdwiz setfont 6 & cmdwiz showcursor 0
+cls & cmdwiz setfont 6 & cmdwiz showcursor 0 & title Pong 3d
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe m0nuW12x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,220,110

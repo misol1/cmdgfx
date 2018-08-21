@@ -2,7 +2,7 @@
 if defined __ goto :STARTDEMO %1
 set __=.
 set /a W=55, H=55
-cls & cmdwiz setfont 7 & cmdwiz showcursor 0
+cls & cmdwiz setfont 7 & cmdwiz showcursor 0 & title 
 mode %W%,%H%
 call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,220,110W12
 set __=

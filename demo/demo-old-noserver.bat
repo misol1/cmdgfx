@@ -498,7 +498,7 @@ goto :eof
 :STARTDEMO
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=55, H=55
-cls & cmdwiz setfont 7 & cmdwiz showcursor 0
+cls & cmdwiz setfont 7 & cmdwiz showcursor 0 & title 
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
 cmdgfx_gdi "" f7
