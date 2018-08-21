@@ -7,7 +7,7 @@ set __=
 cmdwiz showcursor 1 & goto :eof
 
 :START
-cmdwiz setfont 6 & cls & mode 120,50 & cmdwiz showcursor 0
+cmdwiz setfont 6 & cls & mode 120,50 & cmdwiz showcursor 0 & title Bounce
 call centerwindow.bat 0 -15
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors

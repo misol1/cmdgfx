@@ -1,18 +1,19 @@
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0
-cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
 if defined __ goto :START
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0
+mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz getconsoledim sw
 set /a W=%errorlevel% * 2 + 4
 cmdwiz getconsoledim sh
-set /a H=%errorlevel% * 2 + 8
+set /a H=%errorlevel% * 2 + 10
 set /a "SCALE=150+((%W%-220)*2)/4"
 set __=.
-cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" TSf0:0,0,%W%,%H% 331111,661122,664444,991122,DD1133,AA5522,CC6633,CC2244,AA6655,DD6655,CC8855,DD9966,DD7788,EEBB99,FFEEDD,
+cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" %TOP%TSf0:0,0,%W%,%H% 331111,661122,664444,991122,DD1133,AA5522,CC6633,CC2244,AA6655,DD6655,CC8855,DD9966,DD7788,EEBB99,FFEEDD,
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50 & cmdwiz showmousecursor 1
-set W=&set H=&set SCALE=
+set W=&set H=&set SCALE=&set TOP=
 goto :eof
 
 :START

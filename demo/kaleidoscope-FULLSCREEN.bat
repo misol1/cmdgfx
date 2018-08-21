@@ -1,17 +1,19 @@
 @echo off
 
+if defined __ goto :START
+
 cls & cmdwiz setfont 6
-cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
+mode 80,50 & cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
 cmdwiz getconsoledim sw
 set /a W6=%errorlevel% + 1
 cmdwiz getconsoledim sh
 set /a H6=%errorlevel% + 3
+if "%~2"=="U" set /a H6 += 4
 set /a W=W6*2, H=H6*2
 cls & cmdwiz showcursor 0
 
-if defined __ goto :START
 set __=.
-call %0 %* | cmdgfx_gdi "" kOSf0:0,0,%W%,%H%W13
+call %0 %* | cmdgfx_gdi "" kOSf0:0,0,%W%,%H%W13%2
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

@@ -1,10 +1,11 @@
 @echo off
-cmdwiz setfont 8 & cls & cmdwiz showcursor 0
+cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Starfield
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW11x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
 set __=
 cls
+cmdwiz setwindowstyle set standard 0x00040000L
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
@@ -15,6 +16,7 @@ set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -20
+cmdwiz setwindowstyle clear standard 0x00040000L
 
 set /a NOF_STARS=400&if not "%~1"=="" set /a NOF_STARS=%~1
 

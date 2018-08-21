@@ -4,10 +4,9 @@
 #include <windows.h>
 
 // Compilation: gcc -o cmdgfx_input.exe -O2 cmdgfx_input.c
-// TODO: 1. Check for CLICKS/RCLICKS?
+// TODO:	1. Check for CLICKS/RCLICKS?
 //			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel?
-// 		3. Mouse wheel reporting not working on Win10. Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
-//			4. Somehow report on the dimensions of the current window (if a flag set), since in Win10 a cmd window can be mouse-resized
+//			3. Mouse wheel reporting not working on Win10. Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
@@ -133,9 +132,10 @@ void process_waiting(int bWait, int waitTime, int bSleepingWait) {
 	}
 }
 
-char g_padding[1060];
+char g_padding[1060], g_sizeString[64];
+int g_bReportSize = 0, g_bSizeChanged = 0, g_consoleWidth, g_consoleHeight;
 
-int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadding) {
+int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadding, int bIncludeSize) {
 	int bOkToForward = 1;
 	
 	if (!bSendNoEvent && !bMouse && retVal == 0)
@@ -143,16 +143,22 @@ int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadd
 	if (!bSendNoEvent && bMouse && retVal < 0)
 		bOkToForward = 0;
 	
-	if (bOkToForward) {
+	g_sizeString[0] = 0;
 		
-		if (bPadding) g_padding[1020 - strlen(out)] = 0; 
+	if (bOkToForward) {
+
+		if (g_bReportSize && bIncludeSize) {
+			sprintf(g_sizeString, "%sRESIZE_EVENT %d W %d H %d", out == NULL || out[0] == 0? "" : "  ", g_bSizeChanged, g_consoleWidth, g_consoleHeight);
+		}
+	
+		if (bPadding) g_padding[1020 - strlen(out) - strlen(g_sizeString)] = 0; 
 		
 		if (out)
-			printf("%s %s\n", out, bPadding == 0? "" : g_padding);
+			printf("%s%s %s\n", out, g_sizeString, bPadding == 0? "" : g_padding);
 		else
 			printf("%d\n", retVal);
 		
-		if (bPadding) g_padding[1020 - strlen(out)] = '-';
+		if (bPadding) g_padding[1020 - strlen(out) - strlen(g_sizeString)] = '-';
 		
 		return 1;
 	}
@@ -163,6 +169,17 @@ int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadd
 HANDLE GetInputHandle() {
 	return CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 }
+
+HANDLE GetOutputHandle() {
+	return CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+}
+
+void GetDim(HANDLE conout) {
+	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
+	GetConsoleScreenBufferInfo(conout, &screenBufferInfo);
+	g_consoleWidth = screenBufferInfo.srWindow.Right - screenBufferInfo.srWindow.Left + 1;
+	g_consoleHeight = screenBufferInfo.srWindow.Bottom - screenBufferInfo.srWindow.Top + 1;
+}	
 	
 int main(int argc, char *argv[]) {
 	int bReadKey = 0, bWaitKey = 0, bMouse = 0, mouseWait = -1, bIgnoreInputFlagsFile = 0;
@@ -181,19 +198,16 @@ int main(int argc, char *argv[]) {
 	int eventCount;
 	char *pch;
 	DWORD fdwMode, oldfdwMode;
-	HANDLE h_stdin;
+	HANDLE h_stdin, h_stdout;
 
 	if (argc < 2 || (argc > 1 && strcmp(argv[1], "/?") == 0)) {
-		printf("\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead of busy wait, 'u' enable forwarding key-up events for M flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
+		printf("\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead of busy wait, 'u' enable forwarding key-up events for M flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes (m or M flag must be enabled too).\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
 		return 0;
 	}
 
 	h_stdin = GetInputHandle();
-	
-	GetConsoleMode(h_stdin, &oldfdwMode);
-	fdwMode = oldfdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
-	fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
-	
+	h_stdout = GetOutputHandle();
+		
 	remove("inputflags.dat");
 
 	if (argc > 1) {
@@ -205,6 +219,7 @@ int main(int argc, char *argv[]) {
 				case 'u': bSendKeyUp = 1; break;
 				case 'i': bIgnoreInputFlagsFile = 1; break;
 				case 'x': bPadding = 1; break;
+				case 'R': g_bReportSize = 1; GetDim(h_stdout); break;
 				case 'I': bIgnoreTitleComm = 1; break;
 				case 'A': bSendAll = 1; break;
 				case 'M': case 'm' : {
@@ -228,9 +243,15 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	GetConsoleMode(h_stdin, &oldfdwMode);
+	fdwMode = oldfdwMode;
 	if (bMouse) {
-		SetConsoleMode(h_stdin, fdwMode);
+		fdwMode = fdwMode | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
+		fdwMode = fdwMode & ~ENABLE_QUICK_EDIT_MODE;
 	}
+	fdwMode = fdwMode | ENABLE_WINDOW_INPUT;
+	
+	SetConsoleMode(h_stdin, fdwMode);
 	
 	memset(g_padding, '-', 1028);
 	
@@ -239,103 +260,124 @@ int main(int argc, char *argv[]) {
 
 		eventCount = 0;
 		
-		if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
-			int k = getch();
-			if (k == 224 || k == 0) k = 256 + getch();
-			retVal = k;
-			if (bSendAll)
-				sprintf(sEventOutput, "KEY_EVENT 1 DOWN 1 VALUE %d", k);
-			else
-				sprintf(sEventOutput, "KEY_EVENT 1 DOWN 1 VALUE %d  MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0", k);
-			eventCount += forward_event(bSendNoEvent, bMouse, k, sEventOutput, bPadding);
-			bWaitKey = 0;
+		if (g_bReportSize) {
+			int oldW = g_consoleWidth, oldH = g_consoleHeight;
+			GetDim(h_stdout);
+			//printf("%d %d\n", g_consoleWidth, g_consoleHeight);
+			if (g_consoleWidth != oldW || g_consoleHeight != oldH) {
+				g_bSizeChanged = 1;
+				if (!bSendAll) {
+					eventCount += forward_event(bSendNoEvent, bMouse, 99999, "KEY_EVENT 0 DOWN 0 VALUE 0  MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0", bPadding, 1);
+				} else
+					eventCount += forward_event(bSendNoEvent, bMouse, 99999, "", bPadding, 1);
+			}
 		}
 
-		if (bMouse) {
-			DWORD cNumRead, iOut; 
-			INPUT_RECORD irInBuf[128];
-			int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0;
-			int bTimeOut = 0;
+		if (g_bSizeChanged == 0) {
+			if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
+				int k = getch();
+				if (k == 224 || k == 0) k = 256 + getch();
+				retVal = k;
+				if (bSendAll)
+					sprintf(sEventOutput, "KEY_EVENT 1 DOWN 1 VALUE %d", k);
+				else
+					sprintf(sEventOutput, "KEY_EVENT 1 DOWN 1 VALUE %d  MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0", k);
+				eventCount += forward_event(bSendNoEvent, bMouse, k, sEventOutput, bPadding, !bSendAll);
+				bWaitKey = 0;
+			}
+
+			if (bMouse) {
+				DWORD cNumRead, iOut; 
+				INPUT_RECORD irInBuf[128];
+				int res, res2, key = -1, bKeyDown = 0, bWroteKey = 0;
+				int bTimeOut = 0;
+							
+				if (mouseWait > -1) {
+					res = WaitForSingleObject(h_stdin, mouseWait);
+					if (res & WAIT_TIMEOUT) bTimeOut = 1;
+				}
+
+				if (!bSendAll) {
+					strcpy(sMouseOutput, "MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0");
+					sprintf(sKeyOutput, "KEY_EVENT 0 DOWN 0 VALUE 0");
+				}
+
+				res = -1;
+				if (!bTimeOut) {
+					ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);
+					for (i = 0; i < cNumRead; i++) {
+						int bOk;
+
+						switch(irInBuf[i].EventType) { 
 						
-			if (mouseWait > -1) {
-				res = WaitForSingleObject(h_stdin, mouseWait);
-				if (res & WAIT_TIMEOUT) bTimeOut = 1;
-			}
+						case WINDOW_BUFFER_SIZE_EVENT: // resize events are ONLY sent if the window is ENLARGED! From its original size.
+							eventCount++;
+							break;
 
-			if (!bSendAll) {
-				strcpy(sMouseOutput, "MOUSE_EVENT 0 X 0 Y 0 LEFT 0 RIGHT 0 LEFT_DOUBLE 0 RIGHT_DOUBLE 0 WHEEL 0");
-				sprintf(sKeyOutput, "KEY_EVENT 0 DOWN 0 VALUE 0");
-			}
+						case MOUSE_EVENT:
+							bOk = 1;
+							if (bMouse == 1) bOk = MouseClicked(irInBuf[i].Event.MouseEvent);
+							if (bOk) {
+								res = MouseEventProc(irInBuf[i].Event.MouseEvent, sMouseOutput);
+								if (bSendAll)
+									eventCount += forward_event(bSendNoEvent, bMouse, res, sMouseOutput, bPadding, 0);
+							}
+							break;
+						case KEY_EVENT:
+							bKeyDown = irInBuf[i].Event.KeyEvent.bKeyDown;
+							if (irInBuf[i].Event.KeyEvent.uChar.AsciiChar > 0)
+								key = irInBuf[i].Event.KeyEvent.uChar.AsciiChar;
+							else
+								key = 256 + irInBuf[i].Event.KeyEvent.wVirtualScanCode; // works ok, as long as not pressing combos such as Shift-F1 etc. To get these combo values too, re-send the event and pick it up with getch below
 
-			res = -1;
-			if (!bTimeOut) {
-				ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);
-				for (i = 0; i < cNumRead; i++) {
-					int bOk;
+							if (bSendAll) {
+								sprintf(sEventOutput, "KEY_EVENT 1 DOWN %d VALUE %d", bKeyDown, key);
+								eventCount += forward_event(bSendNoEvent, bMouse, 1, sEventOutput, bPadding, 0);
+							} else {
+								irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
+								irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
+								bWroteKey = 1;
+							}
 
-					switch(irInBuf[i].EventType) { 
-					case MOUSE_EVENT:
-						bOk = 1;
-						if (bMouse == 1) bOk = MouseClicked(irInBuf[i].Event.MouseEvent);
-						if (bOk) {
-							res = MouseEventProc(irInBuf[i].Event.MouseEvent, sMouseOutput);
-							if (bSendAll)
-								eventCount += forward_event(bSendNoEvent, bMouse, res, sMouseOutput, bPadding);
+			//				printf("DWN:%d REP:%d %d %d %d %d key:%d CK:%ld\n", irInBuf[i].Event.KeyEvent.bKeyDown, irInBuf[i].Event.KeyEvent.wRepeatCount, irInBuf[i].Event.KeyEvent.wVirtualKeyCode, irInBuf[i].Event.KeyEvent.wVirtualScanCode, irInBuf[i].Event.KeyEvent.uChar.UnicodeChar, irInBuf[i].Event.KeyEvent.uChar.AsciiChar, key, irInBuf[i].Event.KeyEvent.dwControlKeyState);
+							break;
+						case FOCUS_EVENT:
+						case MENU_EVENT:
+							break;
 						}
-						break;
-					case KEY_EVENT:
-						bKeyDown = irInBuf[i].Event.KeyEvent.bKeyDown;
-						if (irInBuf[i].Event.KeyEvent.uChar.AsciiChar > 0)
-							key = irInBuf[i].Event.KeyEvent.uChar.AsciiChar;
-						else
-							key = 256 + irInBuf[i].Event.KeyEvent.wVirtualScanCode; // this works ok, as long as not pressing combos such as Shift-F1 etc. To get these combo values too, I re-send the event and pick it up with getch below
-
-						if (bSendAll) {
-							sprintf(sEventOutput, "KEY_EVENT 1 DOWN %d VALUE %d", bKeyDown, key);
-							eventCount += forward_event(bSendNoEvent, bMouse, 1, sEventOutput, bPadding);
-						} else {
-							irInBuf[i].Event.KeyEvent.bKeyDown = 1; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
-							irInBuf[i].Event.KeyEvent.bKeyDown = 0; WriteConsoleInput(h_stdin, &irInBuf[i], 1, &iOut);
-							bWroteKey = 1;
+					}
+					
+					if (bWroteKey) {
+						if (kbhit()) {
+							key=getch();
+							if (key == 224 || key == 0) key = 256 + getch();
+							while(kbhit()) getch();
 						}
+						res2 = WaitForSingleObject(h_stdin, 1);
+						if (!(res2 & WAIT_TIMEOUT))
+							ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);			
 
-		//				printf("DWN:%d REP:%d %d %d %d %d key:%d CK:%ld\n", irInBuf[i].Event.KeyEvent.bKeyDown, irInBuf[i].Event.KeyEvent.wRepeatCount, irInBuf[i].Event.KeyEvent.wVirtualKeyCode, irInBuf[i].Event.KeyEvent.wVirtualScanCode, irInBuf[i].Event.KeyEvent.uChar.UnicodeChar, irInBuf[i].Event.KeyEvent.uChar.AsciiChar, key, irInBuf[i].Event.KeyEvent.dwControlKeyState);
-						break;
-					case WINDOW_BUFFER_SIZE_EVENT:
-					case FOCUS_EVENT:
-					case MENU_EVENT:
-						break;
+						if (bKeyDown || bSendKeyUp) {
+							res = (res > 0? res : 0) | (key<<22);
+							res = res | (bKeyDown<<21);
+
+							sprintf(sKeyOutput, "KEY_EVENT 1 DOWN %d VALUE %d", bKeyDown, key);
+						}
 					}
 				}
-
-				if (bWroteKey) {
-					if (kbhit()) {
-						key=getch();
-						if (key == 224 || key == 0) key = 256 + getch();
-						while(kbhit()) getch();
-					}
-					res2 = WaitForSingleObject(h_stdin, 1);
-					if (!(res2 & WAIT_TIMEOUT))
-						ReadConsoleInput(h_stdin, irInBuf, 128, &cNumRead);			
-
-					if (bKeyDown || bSendKeyUp) {
-						res = (res > 0? res : 0) | (key<<22);
-						res = res | (bKeyDown<<21);
-
-						sprintf(sKeyOutput, "KEY_EVENT 1 DOWN %d VALUE %d", bKeyDown, key);
-					}
-				}
-			}
-			
-			if (res > -1 && !bSendAll) {
-				sprintf(sEventOutput, "%s  %s", sKeyOutput, sMouseOutput);
 				
-				eventCount += forward_event(bSendNoEvent, bMouse, res, sEventOutput, bPadding);
-			}
+				if (res > -1 && !bSendAll) {
+					sprintf(sEventOutput, "%s  %s", sKeyOutput, sMouseOutput);
+					
+					eventCount += forward_event(bSendNoEvent, bMouse, res, sEventOutput, bPadding, 1);
+				}
 
-			retVal = res;
+				retVal = res;
+			}
 		}
 
+		g_bSizeChanged = 0;
+		
 		process_waiting(bWait, waitTime, bSleepingWait);
 		
 		if (bServer) {
@@ -384,6 +426,7 @@ int main(int argc, char *argv[]) {
 						case 'A': bSendAll = neg? 0 : 1; break;
 						case 'I': bIgnoreTitleComm = neg? 0 : 1; break;
 						case 'x': bPadding = neg? 0 : 1; break;
+						case 'R': g_bReportSize = neg? 0 : 1; if (g_bReportSize) GetDim(h_stdout); break;
 						case 'i': bIgnoreInputFlagsFile = neg? 0 : 1; break;
 						case 'M': case 'm':{
 							SetConsoleMode(h_stdin, oldfdwMode);
@@ -418,10 +461,10 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (eventCount == 0) {
-			eventCount += forward_event(bSendNoEvent, bMouse, retVal, "NO_EVENT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding);
+			eventCount += forward_event(bSendNoEvent, bMouse, retVal, "NO_EVENT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding, 0);
 		}
 		if (bSendAll) {
-			eventCount += forward_event(1, 1, 1, "END_EVENTS 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding);
+			eventCount += forward_event(1, 1, 1, "END_EVENTS 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0", bPadding, 0);
 		}
 
 		if (eventCount > 0)
@@ -432,5 +475,6 @@ int main(int argc, char *argv[]) {
 	SetConsoleMode(h_stdin, oldfdwMode);
 
 	CloseHandle(h_stdin);
+	CloseHandle(h_stdout);
 	return retVal;
 }

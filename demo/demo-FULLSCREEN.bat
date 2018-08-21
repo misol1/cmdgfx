@@ -3,15 +3,16 @@ if defined __ goto :STARTDEMO %1
 set __=.
 
 cls & cmdwiz setfont 6
-cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
+mode 80,50 & cmdwiz fullscreen 1 & cmdwiz setmousecursorpos 10000 100 & cmdwiz showmousecursor 0
 cmdwiz getconsoledim sw
 set /a W6=%errorlevel% + 1
 cmdwiz getconsoledim sh
 set /a H6=%errorlevel% + 3
+if "%~2"=="U" set /a H6 += 3 & set REALFS=1
 set /a W=W6*2, H=H6*2
 cls & cmdwiz showcursor 0
 
-call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,%W%,%H%W12
+call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,%W%,%H%W12%2
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -41,7 +42,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	echo "cmdgfx: fbox 0 0 A 0,0,%W%,%H% & 3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & 3d objects\!FNAME! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & block 0 0,0,%W%,%H% 0,0 -1 0 0 ? random()*!RANDVAL!+fgcol(y,y)" f0:0,0,%W%,%H%W30 000000,555555
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-
+	if !KEY! == 27 set STOP=1
+	
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 5000 set STOP=1
 	
 	set /a RX+=2, RY+=6, RZ-=4
@@ -141,7 +143,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !LIGHT! == 1 for /F "tokens=1-8 delims=:.," %%a in ("!t2!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq %LTIME% set /a KEY=109 & set t2=!time: =0!
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
-	
+
  	if !STEP! == 0 if !a! geq 15000 set /a CS=1,TV=20,STEP+=1,CDIV=5 & set /a CEND=2*!CDIV! & set /a CCNT=0
 	if !STEP! == 1 if !a! geq 30600 if !a! lss 31100 set MONS=block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=c4??
 	if !STEP! == 1 if !a! geq 31100 set /a LIGHT=1,STEP+=1,KEY=109 & set t2=!time: =0!
@@ -191,16 +193,16 @@ set /a CNT=%2
 
 set /a "XBP=%W%/2-189/2, YBP=%H%/2-80/2"
 set /a "FXBP=%XBP%-15, FYBP=%YBP%-10"
-::set EXTRA=&for /l %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
+if "%REALFS%"=="1" set EXTRA=&for /l %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
 
 :PLREP
 for /L %%_ in (1,1,300) do if not defined STOP (
 
-	cmdgfx_gdi "image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80" W60kf0:0,0,%W%,%H%
-	set KEY=!ERRORLEVEL!
+	if "%REALFS%"=="" cmdgfx_gdi "image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80" W60kf0:0,0,%W%,%H%
+	if "%REALFS%"=="" set KEY=!ERRORLEVEL!
 
-	rem echo "cmdgfx: image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80 & skip %EXTRA% %EXTRA% %EXTRA% %EXTRA% %EXTRA%" zW60f0:0,0,%W%,%H%
-	rem if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul	
+	if "%REALFS%"=="1" echo "cmdgfx: image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80 & skip %EXTRA% %EXTRA% %EXTRA% %EXTRA% %EXTRA%" zW60f0:0,0,%W%,%H%
+	if "%REALFS%"=="1" if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul	
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 27000 set /a STOP=1
 	
@@ -210,8 +212,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !KEY! == 27 set STOP=1
 )
 if not defined STOP goto PLREP
-::echo "" F>%SF%
-::set EXTRA=
+if "%REALFS%"=="1" echo "" F>%SF%
 endlocal
 goto :eof
 
@@ -646,9 +647,9 @@ taskkill.exe /F /IM dlc.exe>nul 2>nul
 start "" /B dlc.exe -p "silence-1sec.mp3">nul
 cmdwiz print "Cari Lekebusch_ - Obscurus Sanctus.mp3\ntv-static-04.mp3\nobjects\\Hulk.obj\nobjects\\elephav.obj\nimg\\ful.gxy\nimg\\apa.gxy\ncmdgfx.exe\ndlc.exe">cachelist.dat
 cmdwiz cache cachelist.dat
-del /Q EL.dat >nul 2>nul
 
 if "%~1" == "" call :STATIC
+if "%~1" == "S" call :STATIC
 echo "fbox 0 0 20 0,0,%W%,%H%" Ff0 000000,000080>%SF%
 
 start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
@@ -657,7 +658,7 @@ echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H%" Ff0 000000,000080
 echo "" F>%SF%
 cmdgfx_gdi "" f7w500
 
-for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if not %%v==SF if /I not %%v==path set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if not %%v==SF if not %%v==REALFS if /I not %%v==path set "%%v="
 set t1=!time: =0!
 
 call :KALEIDO
@@ -669,19 +670,3 @@ endlocal
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 taskkill.exe /F /IM dlc.exe>nul
 del /Q EL.dat cachelist.dat CGXMS.dat >nul 2>nul
-
-	rem if !STEP! == 0 if !a! geq 600 call :CHECKERBOX 0 & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 call :BEZCOL & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 call :GXYCUBE 3 -800  & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 call :ZOOMER & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 call :GLENZ 1600 350 1 & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 call :PIXELOBJ 0 800  & set /a STEP+=1,LIGHT=0&set MONS=
-	rem if !STEP! == 0 if !a! geq 600 echo "" F>%SF% & call :OBJSORTED 1 & set /a STEP+=1
-	rem if !STEP! == 0 if !a! geq 600 echo "" F>%SF% & call :SIDECUBE 3 %SIDEDI% & set /a STEP+=1
-	rem if !STEP! == 0 if !a! geq 600 echo "" F>%SF% & set /a TORUS_ON=1 & set /a STEP+=1
-	rem if !STEP! == 0 if !a! geq 600 set /a MODE=2,T_ON=1,A1=155,A2=0,A3=0,CRZ=0,TV=-1 & set /a STEP+=1
-	rem if !STEP! == 0 if !a! geq 600  set /a MODE=0,T_ON=1,STEP+=1,TV=-1, TDIST=%TDIST2%, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=%TDA2%, TARZ=11&set TNAME=alphCari.obj
-	rem if !STEP! == 0 if !a! geq 600 set /a MODE=1,T_ON=1, TV=-1, TDIST=%TDIST3%, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=%TDA3%, TARZ=0 & set /a STEP+=1&set TNAME=alphLove.obj 
-	rem if !STEP! == 0 if !a! geq 600 set /a T_ON=1, TDIST=%TDIST4%, TXRX=0, TXRY=0, TXRZ=0, TCOLADD=6, TDISTADD=%TDA4%, TARZ=5&set TNAME=alphBail.obj & set /a STEP+=1
-	
-	rem if !STEP! == 1 if !a! geq 3600 call :BEZCOL & set /a STEP+=1

@@ -425,13 +425,13 @@ obj3d *readObj(char *fname, float scale, float modx, float mody, float modz, int
 	if (!fp)
 		return NULL;
 
-	filedata = (char *)malloc(3000000 * sizeof(char));
+	filedata = (char *)malloc(5000000 * sizeof(char));
 	if (!filedata) {
 		fclose(fp);
 		return NULL;
 	}
 
-	nofread = fread(filedata, 1, 3000000, fp);
+	nofread = fread(filedata, 1, 5000000 - 2, fp);
 	filedata[nofread] = 0;
 	fr = filedata;
 	fclose(fp);

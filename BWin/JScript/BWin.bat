@@ -16,7 +16,7 @@ if not defined __ (
 	cmdwiz getquickedit & set /a QE=!errorlevel!
 	cmdwiz setquickedit 0
 	set __=.
-	cmdgfx_input M30nxW30 | call %0 %* | cmdgfx_gdi "" Sf%FONT%:0,0,%WWW%,%HH%,%W%,%H%G%MAXTW%,%MAXTH%N250
+	cmdgfx_input M30nxW30R | call %0 %* | cmdgfx_gdi "" Sf%FONT%:0,0,%WWW%,%HH%,%W%,%H%G%MAXTW%,%MAXTH%N250
 	cmdwiz setquickedit !QE!
 	cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 	endlocal
@@ -25,6 +25,7 @@ if not defined __ (
 
 title BWin misol GUI 101
 if exist centerwindow.bat call centerwindow.bat 0 -20
+set DIRCMD=
 ::cmdwiz setwindowpos k k topmost
 
 cscript //nologo //e:javascript "%~dpnx0" %*
@@ -39,22 +40,22 @@ exit /b 0 */
 
 
 function Window(name, init, update, content, x, y, width, height, xa, ya, closeable, resizeable, scrollable, maximized, keyboardHog) {
-    this.name = name;
-	 this.init = init;
-    this.update = update;
-    this.content = content;
-	 this.x = x;
-	 this.y = y;
-	 this.width = width;
-	 this.height = height;
-	 this.xa = xa;
-	 this.ya = ya;
-	 this.closeable = closeable;
-	 this.resizeable = resizeable;
-	 this.scrollable = scrollable;
-	 this.maximized = maximized;
-	 this.keyboardHog = keyboardHog;
-	 this.xo = this.yo = this.wo = this.ho = 0;
+	this.name = name;
+	this.init = init;
+	this.update = update;
+	this.content = content;
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+	this.xa = xa;
+	this.ya = ya;
+	this.closeable = closeable;
+	this.resizeable = resizeable;
+	this.scrollable = scrollable;
+	this.maximized = maximized;
+	this.keyboardHog = keyboardHog;
+	this.xo = this.yo = this.wo = this.ho = 0;
 }
 
 function WindowStart(w) {
@@ -94,7 +95,23 @@ var windows = [
 	 
     new Window("Scroll", "w.index=0", "w.index=(w.index+1)% 230, REPL1=OFF_X - Math.floor(w.index/3)", "text a 0 0 ______________________________________Scrolling_without_\\e0block\\r_operation...____________________________________ REPL1,OFF_Y", 11,69, 35,3, 1,1, true, false, false, false, 0),
 
-	new Window("Time", "", "var d = new Date(); REPL1=OFF_X+11, REPL2=d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2), REPL3=('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2)", "text b 0 0 REPL2 OFF_X,OFF_Y & text f 0 0 REPL3 REPL1,OFF_Y", 1,1, 25,5, 3,2, true, false, false, false, 0)
+	new Window("Time", "", "var d = new Date(); REPL1=OFF_X+11, REPL2=d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2), REPL3=('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2)", "text b 0 0 REPL2 OFF_X,OFF_Y & text f 0 0 REPL3 REPL1,OFF_Y", 1,1, 25,5, 3,2, true, false, false, false, 0),
+	
+	new Window("Explorer \\80(SPACE=open, \\g1e\\g1f\\g11\\g10=move)", "w.path=File.GetAbsolutePathName('.').substring(2); w.offset=0, w.current=0, w.readFiles=false;", "if (w.readFiles == false) { w.readFiles=true; w.offset=0, w.current=0; Execute('if not exist _processed mkdir _processed >nul 2>nul'); Execute('dir /B /AD /OGN \"' + w.path + '\" > _processed\\\\folderlist.txt'); Execute('dir /B /A-D /OGN \"' + w.path + '\" > _processed\\\\filelist.txt'); w.files=[]; w.folders=[]; w.folders.push('..'); var iStream = File.OpenTextFile('_processed\\\\folderlist.txt', 1, false); while(!iStream.AtEndOfStream) { w.folders.push(iStream.ReadLine()); } iStream.Close(); iStream = File.OpenTextFile('_processed\\\\filelist.txt', 1, false); while(!iStream.AtEndOfStream) { w.files.push(iStream.ReadLine()); } iStream.Close(); }" +
+	"if (w == focusWin) {" +
+		"if (KEY==32 || M_LB_DBL==1) { if (w.current >= w.folders.length) { Execute('if not exist NewDrop mkdir NewDrop >nul 2>nul'); tempPath=w.path; if (tempPath.length > 1) tempPath += '\\\\'; Execute('copy /Y \"' + tempPath + w.files[w.current - w.folders.length] + '\" NewDrop >nul 2>nul'); Execute('echo Done>NewDrop\\\\Done.txt 2>nul'); } else { if (w.current > 0) { if (w.path.length > 1) w.path += '\\\\'; w.path += w.folders[w.current]; w.readFiles=false; } else { li = w.path.lastIndexOf('\\\\'); if (li > 0) { w.path=w.path.substring(0,li); } else { w.path = '\\\\'; } w.readFiles=false; } } } " +
+		"if (KEY==328) w.current--; if (w.current < 0) w.current=0;" +
+		"if (KEY==336) w.current++; if (w.current >= w.folders.length + w.files.length - 1) w.current=w.folders.length + w.files.length - 1;" +
+		"if (KEY==331) w.current=0;" +
+		"if (KEY==333) w.current=w.folders.length + w.files.length - 1;" +
+		"if (M_LB ==1) w.current=M_Y - w.y - 2; if (w.current < 0) w.current=0; if (w.current >= w.folders.length + w.files.length - 1) w.current=w.folders.length + w.files.length - 1;" +
+	"}" +
+	"w.offset=0; if (w.current > (w.height-4)) w.offset=-(w.current-(w.height-4));" +
+	"out='\\\\0f\\\\b0'; tempI=0; for (j=0; j < w.folders.length; j++) { if (tempI == w.current) out += '\\\\r' + w.folders[j] + '/\\\\r'; else out+=w.folders[j] + '/'; out+='\\\\n'; tempI++; }" +
+	"out+='\\\\0f\\\\70'; for (j=0; j < w.files.length; j++) { if (tempI == w.current) out += '\\\\r' + w.files[j] + '\\\\r'; else out+=w.files[j]; out+='\\\\n'; tempI++; }" +
+	"REPL1=out.replace(/ /g,'_'), REPL2=w.path.replace(/\\\\/g,'/'), REPL3=OFF_Y + w.offset; if (w.path.length > 1) REPL2 += '/';", "text b 0 0 \\nREPL1 OFF_X,REPL3 & text e 0 0 REPL2__________________________________________________________________________________________________________________________________________________________ OFF_X,OFF_Y", 54,37,64,35,1,1,true,true,false,false,1)
+	
+	
 ];
 
 // for (i = 0; i < 90; i++) windows.push(new Window("centerwindow.bat", "", "", "image centerwindow.bat \\b 0 0 -1 OFF_X,OFF_Y", 63,55, 52,16, 1,1, true, false, true, false, 0))
@@ -125,6 +142,7 @@ var CLEAR_COL="0 0 20"
 var TEXT_COL="b 0"
 var SS = []; SS[0]="skip"; SS[1]=""
 var PAL3D="f b b2 f b b2 f b b1 f b b0 b 0 db b 7 b2 b 7 b1 7 0 db 9 7 b1 9 7 b2 9 0 db 9 1 b1 9 1 b0 1 0 db 1 0 b2 1 0 b1 0 0 db"
+var IGNORE_SIZE=false
 
 var NOF_WIN=1000
 
@@ -220,7 +238,12 @@ while(true) {
 	var M_Y = Number(tokens[11])
 	var M_LB = Number(tokens[13])
 	var M_RB = Number(tokens[15])
+	var M_LB_DBL = Number(tokens[17])
+	var M_RB_DBL = Number(tokens[19])
 	var M_WHEEL = Number(tokens[21])
+	var SIZE_EVENT = Number(tokens[23])
+	var SIZE_W = Number(tokens[25])
+	var SIZE_H = Number(tokens[27])
 
 	if (M_EVENT==1 && windows.length > 0) {
 		if (M_LB==1) {
@@ -314,12 +337,25 @@ while(true) {
 			if (KEY == 401) { H+=3; HH=H*2, MID_OFF_Y=H }
 			if (KEY == 371 || KEY == 372 || KEY == 397 || KEY == 401) {
 				Execute('mode ' + W + "," + H); WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
+				IGNORE_SIZE=true
 			}
 		}
 
 		if (KEY == 10 || (KEY == 13 && KBHOG < 2)) {
 			SetFullScreen(!FULLSCREEN)
+			IGNORE_SIZE=true
 		}
+	}
+	
+	if (SIZE_EVENT==1) {
+		if (IGNORE_SIZE==false) {
+			W=SIZE_W; H=SIZE_H;
+			WWW=W*WPAGES, MID_OFF_X=W+(WWW-W)/2;
+			HH=H*2, MID_OFF_Y=H
+			WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
+			Execute('cmdwiz showcursor 0')
+		}
+		IGNORE_SIZE=false
 	}
 	
 	if (File.FileExists("NewDrop/Done.txt")) {
@@ -390,9 +426,14 @@ function NewDrop() {
 	} 
 
 	if (W != OW || H != OH) {
-		WWW=W*WPAGES, MID_OFF_X=W+(WWW-W)/2
-		HH=H*2, MID_OFF_Y=H
-		Execute('mode ' + W + "," + H); WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
+		if (OLDFS == true) {
+			OLDW=W, OLDH=H
+			W=OW, H=OH
+		} else {
+			WWW=W*WPAGES, MID_OFF_X=W+(WWW-W)/2
+			HH=H*2, MID_OFF_Y=H
+			Execute('mode ' + W + "," + H); WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
+		}
 	}
 	
 	if (FULLSCREEN != OLDFS) SetFullScreen(FULLSCREEN)

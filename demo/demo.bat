@@ -35,7 +35,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	echo "cmdgfx: fbox 0 0 A 0,0,%W%,%H% & 3d objects\!FNAME! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & 3d objects\!FNAME! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !MOD!,-4000,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL! & block 0 0,0,%W%,%H% 0,0 -1 0 0 ? random()*!RANDVAL!+fgcol(y,y)" f0:0,0,%W%,%H%W30 000000,555555
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
-
+	if !KEY! == 27 set STOP=1
+	
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 5000 set STOP=1
 	
 	set /a RX+=2, RY+=6, RZ-=4

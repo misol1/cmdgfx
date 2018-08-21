@@ -119,7 +119,7 @@ set MAPTXT=image 3dworld2.dat e 0 0 - 1220,15
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
 set FN4=wrld-temp.obj
-set /a ENEMY=1, WCNT=0
+set /a ENEMY=0, WCNT=0
 set DELOBJ=& if !ENEMY! == 1 set DELOBJ=D
 
 set /A "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"

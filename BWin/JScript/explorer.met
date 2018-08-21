@@ -1,0 +1,24 @@
+w.name="Explorer \\80(SPACE=open, \\g1e\\g1f\\g11\\g10=move)"
+w.x=4, w.y=2
+w.width=64, w.height=70
+w.xa=1, w.ya=1
+w.closeable=true, w.resizeable=true, w.scrollable=false, w.keyboardHog=1
+w.init="w.path=File.GetAbsolutePathName('.').substring(2); w.offset=0, w.current=0, w.readFiles=false;"
+
+w.update="if (w.readFiles == false) { w.readFiles=true; w.offset=0, w.current=0; Execute('if not exist _processed mkdir _processed >nul 2>nul'); Execute('dir /B /AD /OGN \"' + w.path + '\" > _processed\\\\folderlist.txt'); Execute('dir /B /A-D /OGN \"' + w.path + '\" > _processed\\\\filelist.txt'); w.files=[]; w.folders=[]; w.folders.push('..'); var iStream = File.OpenTextFile('_processed\\\\folderlist.txt', 1, false); while(!iStream.AtEndOfStream) { w.folders.push(iStream.ReadLine()); } iStream.Close(); iStream = File.OpenTextFile('_processed\\\\filelist.txt', 1, false); while(!iStream.AtEndOfStream) { w.files.push(iStream.ReadLine()); } iStream.Close(); }" +
+
+	"if (w == focusWin) {" +
+		"if (KEY==32 || M_LB_DBL==1) { if (w.current >= w.folders.length) { Execute('if not exist NewDrop mkdir NewDrop >nul 2>nul'); tempPath=w.path; if (tempPath.length > 1) tempPath += '\\\\'; Execute('copy /Y \"' + tempPath + w.files[w.current - w.folders.length] + '\" NewDrop >nul 2>nul'); Execute('echo Done>NewDrop\\\\Done.txt 2>nul'); } else { if (w.current > 0) { if (w.path.length > 1) w.path += '\\\\'; w.path += w.folders[w.current]; w.readFiles=false; } else { li = w.path.lastIndexOf('\\\\'); if (li > 0) { w.path=w.path.substring(0,li); } else { w.path = '\\\\'; } w.readFiles=false; } } } " +
+		"if (KEY==328) w.current--; if (w.current < 0) w.current=0;" +
+		"if (KEY==336) w.current++; if (w.current >= w.folders.length + w.files.length - 1) w.current=w.folders.length + w.files.length - 1;" +
+		"if (KEY==331) w.current=0;" +
+		"if (KEY==333) w.current=w.folders.length + w.files.length - 1;" +
+		"if (M_LB ==1) w.current=M_Y - w.y - 2; if (w.current < 0) w.current=0; if (w.current >= w.folders.length + w.files.length - 1) w.current=w.folders.length + w.files.length - 1;" +
+	"}" +
+	"w.offset=0; if (w.current > (w.height-4)) w.offset=-(w.current-(w.height-4));" +
+
+	"out='\\\\0f\\\\b0'; tempI=0; for (j=0; j < w.folders.length; j++) { if (tempI == w.current) out += '\\\\r' + w.folders[j] + '/\\\\r'; else out+=w.folders[j] + '/'; out+='\\\\n'; tempI++; }" +
+	"out+='\\\\0f\\\\70'; for (j=0; j < w.files.length; j++) { if (tempI == w.current) out += '\\\\r' + w.files[j] + '\\\\r'; else out+=w.files[j]; out+='\\\\n'; tempI++; }" +
+	"REPL1=out.replace(/ /g,'_'), REPL2=w.path.replace(/\\\\/g,'/'), REPL3=OFF_Y + w.offset; if (w.path.length > 1) REPL2 += '/';"
+		
+w.content="text b 0 0 \\nREPL1 OFF_X,REPL3 & text e 0 0 REPL2__________________________________________________________________________________________________________________________________________________________ OFF_X,OFF_Y"

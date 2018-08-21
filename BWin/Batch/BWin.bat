@@ -10,7 +10,7 @@ cmdwiz getquickedit
 set /a QE=%errorlevel%
 cmdwiz setquickedit 0
 set __=.
-cmdgfx_input M30nxW30 | call %0 %* | cmdgfx_gdi "" Sf%FONT%:0,0,%WWW%,%HH%,%W%,%H%G%MAXTW%,%MAXTH%N250
+cmdgfx_input M30nxW30R | call %0 %* | cmdgfx_gdi "" Sf%FONT%:0,0,%WWW%,%HH%,%W%,%H%G%MAXTW%,%MAXTH%N250
 set __=
 cmdwiz setquickedit %QE%
 set QE=&set W=&set H=&set WWW=&set HH=&set FONT=&set WPAGES=&set MAXTW=&set MAXTH=
@@ -40,6 +40,7 @@ set CLEAR_COL=0 0 20
 set TEXT_COL=b 0
 set SS0=skip& set SS1=
 set PAL3D=f b b2 f b b2 f b b1 f b b0 b 0 db b 7 b2 b 7 b1 7 0 db 9 7 b1 9 7 b2 9 0 db 9 1 b1 9 1 b0 1 0 db 1 0 b2 1 0 b1 0 0 db
+set IGNORE_SIZE=0
 
 set /a NOF_WIN=3
 
@@ -180,7 +181,7 @@ for /L %%1 in (1,1,100) do if not defined STOP (
 	set NAME=&set TEXTPOS=&set CLOSEPOS=&set BORDER_RIGHT_X=&set BORDER_BOTTOM_Y=&set MAXPOS=&set OFF_X=&set OFF_Y=&set OFF_W=&set OFF_H=
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set /a KEY=%%D, M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22,24,26,28" %%A in ("!INPUT!") do ( set /a KEY=%%D, M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_WHEEL=%%L, SIZE_EVENT=%%M, SIZE_W=%%N, SIZE_H=%%O 2>nul ) 
 	set INPUT=
 	
 	if !M_EVENT!==1 (
@@ -257,15 +258,21 @@ for /L %%1 in (1,1,100) do if not defined STOP (
 			if "!OLDW!"=="" ( cmdwiz getwindowbounds x&set /a OLDWX=!errorlevel!&cmdwiz getwindowbounds y&set /a OLDWY=!errorlevel!&cmdwiz fullscreen 1 & set /a OLDW=W, OLDH=H & cmdwiz getconsoledim sw & set /a W=!errorlevel! + 1 & cmdwiz getconsoledim sh & set /a H=!errorlevel!+3 & set /a WWW=W*WPAGES, HH=H*2, WM=W-1, HM=H-1 & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
 			) else ( cmdwiz fullscreen 0 & cmdwiz setwindowpos !OLDWX! !OLDWY! & set /a W=!OLDW!, H=!OLDH! & set /a WWW=W*WPAGES, HH=H*2, WM=W-1, HM=H-1 & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H! & set OLDW=&set OLDH=&set OLDWX=&set OLDWY=)
 			set /a "MID_OFF_X=W+(WWW-W)/2"
+			set /a IGNORE_SIZE=1
 		)
 		set FSKEY=
 
-		if !KEY! == 371 if "!OLDW!"=="" set /a W-=3 & (if !W! lss 60 set /a W=60) & set /a "WWW=W*WPAGES, WM=W-1, MID_OFF_X=W+(WWW-W)/2" & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
-		if !KEY! == 372 if "!OLDW!"=="" set /a "W+=3, WWW=W*WPAGES, WM=W-1, MID_OFF_X=W+(WWW-W)/2" & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
-		if !KEY! == 397 if "!OLDW!"=="" set /a H-=3 & (if !H! lss 40 set /a H=40) & set /a HH=H*2, HM=H-1, MID_OFF_Y=!H! & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
-		if !KEY! == 401 if "!OLDW!"=="" set /a H+=3, HH=H*2, HM=H-1, MID_OFF_Y=!H! & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
+		if !KEY! == 371 if "!OLDW!"=="" set /a IGNORE_SIZE=1, W-=3 & (if !W! lss 60 set /a W=60) & set /a "WWW=W*WPAGES, WM=W-1, MID_OFF_X=W+(WWW-W)/2" & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
+		if !KEY! == 372 if "!OLDW!"=="" set /a "IGNORE_SIZE=1, W+=3, WWW=W*WPAGES, WM=W-1, MID_OFF_X=W+(WWW-W)/2" & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
+		if !KEY! == 397 if "!OLDW!"=="" set /a IGNORE_SIZE=1, H-=3 & (if !H! lss 40 set /a H=40) & set /a HH=H*2, HM=H-1, MID_OFF_Y=!H! & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
+		if !KEY! == 401 if "!OLDW!"=="" set /a IGNORE_SIZE=1, H+=3, HH=H*2, HM=H-1, MID_OFF_Y=!H! & %MODECMD% !W!,!H! & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H!
 	)
 	
+	if !SIZE_EVENT!==1 (
+		if !IGNORE_SIZE!==0 set /a "W=SIZE_W, H=SIZE_H, WWW=W*WPAGES, MID_OFF_X=W+(WWW-W)/2, HH=H*2, MID_OFF_Y=H" & echo "cmdgfx: " f%FONT%:0,0,!WWW!,!HH!,!W!,!H! & cmdwiz showcursor 0
+		set /a IGNORE_SIZE=0
+	)
+
 	if exist NewDrop\Done.txt call :NEWDROP
 )
 if not defined STOP goto LOOP

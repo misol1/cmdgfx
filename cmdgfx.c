@@ -25,16 +25,14 @@
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
 // 2. Documentation update/expansion, needs several pages and split-up. Add version number too
 // 3. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
-// 4. Major: 32(24?16?)-bit gdi support
-// 5. Major: Port to Linux
+// 4. Actually showing text with text operation in pixel mode
+// 5. Major: 32(24?16?)-bit gdi support
+// 6. Major: Port to Linux
 
 // For 3d:
 // 1. Code fix: Persp correct tmapping edge bug for pcx (cause: chars are drawn with std poly routine, and cols with perspmapper)
 // 2. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
 // 3. Major: Z-buffer (would have to be done for all or most poly routines: perspmapper(easiest), nonperspmapper, flatpoly, goraud... :( )
-
-// DONE:
-// 1. Arg error messages: write out the actual offending operation (if flag 'd' set). Also write out arg number where it might have gone wrong
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -389,8 +387,8 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		bmap2->transpVal = transpVal;
 
 		bmap->bCmdBlock = 1;
-		strncpy(bmap->pathOrBlockString, orgFnameP, strlen(orgFnameP));
-		bmap->pathOrBlockString[strlen(orgFnameP)] = 0;
+		strncpy(bmap->pathOrBlockString, orgFnameP, 64);
+		bmap->pathOrBlockString[64] = 0;
 		bmap->blockRefresh = blockRefresh == 2? 2 : 0;
 		
 		for (i = 0; i < h; i++) {
@@ -554,134 +552,10 @@ void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *v
 HWND g_hWnd = NULL;
 HDC g_hDc = NULL, g_hDcBmp = NULL;
 
-/*
-// Writing ints instead of chars
-void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos) {
-	HBITMAP hBmp1 = NULL;
-	HGDIOBJ hGdiObj = NULL;
-	BITMAP bmp = {0};
-	LONG w = 0, h = 0;
-	int iRet = EXIT_FAILURE;
-	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol;
-	int i,j,ccol,cchar,l,m, index;
-	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
-	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
-	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
-	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
-	int fw, fh, *data, val, bpp = 4;
-	unsigned int *palFg, *palBg;
-
-	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
-	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
-
-	if (fontIndex < 0 || fontIndex > 12)
-		return;
-
-	fw = fontWidth[fontIndex];
-	fh = fontHeight[fontIndex];
-	data = fontData[fontIndex];
-
-	if (!bAbsBitmapPos) {
-		x *= fw; y *= fh;
-	}
-
-	if (g_hDc == NULL) {
-		if ((g_hWnd = GetConsoleWindow())) {
-			if ((g_hDc = GetDC(g_hWnd))) {
-				g_hDcBmp = CreateCompatibleDC(g_hDc);
-			}
-		}
-	}
-	
-	if (g_hDcBmp)
-	{
-		w = outw * fw;
-		h = outh * fh;
-		outdata = (unsigned int *)malloc(w*h*sizeof(unsigned int));
-		if (!outdata) { printf("#ERR: Could not allocate memory for output buffer\n"); return; }
-
-		if (fontIndex < 10) {
-			for (i = 0; i < outh; i++) {
-				for (j = 0; j < outw; j++) {
-					cchar = videoChar[j+i*XRES];
-					ccol = videoCol[j+i*XRES];
-					fgcol = &palFg[(ccol&0xf)];
-					bgcol = &palBg[(ccol>>4)];
-					for (l = 0; l < fh; l++) {
-						index = (j*fw + (i*fh+l)*outw*fw);
-						val = data[cchar*fh+l];
-						outt = &outdata[index];
-						for (m = 0; m < fw; m++) {
-							*outt++ = (val & 1) ? *fgcol : *bgcol;
-							val >>= 1;
-						}
-					}
-				}
-			}
-		} else { // pixelfont
-			if (fw == 1) {
-				for (i = 0; i < outh; i++) {
-					for (j = 0; j < outw; j++) {
-						cchar = videoChar[j+i*XRES];
-						ccol = videoCol[j+i*XRES];
-						fgcol = &palFg[(ccol&0xf)];
-						bgcol = &palBg[(ccol>>4)];
-						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
-						outdata[j + i*outw] = *pcol;
-					}
-				}
-			} else {
-				for (i = 0; i < outh; i++) {
-					for (j = 0; j < outw; j++) {
-						cchar = videoChar[j+i*XRES];
-						ccol = videoCol[j+i*XRES];
-						fgcol = &palFg[(ccol&0xf)];
-						bgcol = &palBg[(ccol>>4)];
-						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
-
-						for (l = 0; l < fh; l++) {
-							index = (j*fw + (i*fh+l)*outw*fw);
-							outt = &outdata[index];
-							for (m = 0; m < fw; m++) {
-								*outt++ = *pcol;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		hBmp1 = (HBITMAP)CreateBitmap(w, h, 1, 8*bpp, outdata);
-		if (hBmp1)
-		{
-			if (GetObject(hBmp1, sizeof(bmp), &bmp))
-			{
-				w = bmp.bmWidth; h = bmp.bmHeight;
-				if ((hGdiObj = SelectObject(g_hDcBmp, hBmp1)) && hGdiObj != HGDI_ERROR)
-				{
-					if (BitBlt(g_hDc, (int)x, (int)y, (int)w, (int)h, g_hDcBmp, 0, 0, SRCCOPY)) {
-						iRet = EXIT_SUCCESS;
-					}
-					DeleteObject(hGdiObj);
-				} 
-			}
-
-			DeleteObject(hBmp1);
-		}
-	}
-	
-	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
-	if (outdata) free(outdata);
-}
-
-#endif
-*/
-
-
 unsigned char* g_lpBitmapBits;
 HBITMAP g_bitmap;
 
-void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos) {
+void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode) {
 	HBITMAP hBmp1 = NULL;
 	HGDIOBJ hGdiObj = NULL;
 	BITMAP bmp = {0};
@@ -695,7 +569,7 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
 	int fw, fh, *data, val, bpp = 4;
 	unsigned int *palFg, *palBg;
-	static int oldw=-1, oldh=-1, oldFontIndex = -1;
+	static int oldw=-1, oldh=-1, oldFontIndex = -1, oldbWindowedMode = -1;
 	
 	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
 	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
@@ -714,17 +588,17 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 	w = outw * fw;
 	h = outh * fh;
 
-	if (g_hDc == NULL || w != oldw || h != oldh || fontIndex != oldFontIndex) {
+	if (g_hDc == NULL || w != oldw || h != oldh || fontIndex != oldFontIndex || bWindowedMode != oldbWindowedMode) {
 		if (g_hDc != NULL) {
 			if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
 			if (g_hDcBmp) DeleteDC(g_hDcBmp);
 			if (g_bitmap) DeleteObject(g_bitmap);
 		}
 		
-		oldw = w; oldh = h; oldFontIndex = fontIndex;
+		oldw = w; oldh = h; oldFontIndex = fontIndex; oldbWindowedMode = bWindowedMode;
 		
 		if ((g_hWnd = GetConsoleWindow())) {
-			if ((g_hDc = GetDC(g_hWnd))) {
+			if ((g_hDc = GetDC(bWindowedMode? g_hWnd : NULL))) {
 				BITMAPINFO bi; 
 
 				g_hDcBmp = CreateCompatibleDC(g_hDc);
@@ -1644,7 +1518,8 @@ int main(int argc, char *argv[]) {
 	int bPaletteSet = 0;
 	int captX = 0, captY=0, captW, captH, captFormat=1, captureCount = 0, bCapture = 0;
 	char sFlags[130];
-	int bIgnoreServerCmdFile = 0;
+	int bIgnoreServerCmdFile = 0, bIgnoreTitleComm = 1;
+	char sTitleBuffer[1024] = "";
 	
 	int gx = 0, gy = 0;
 	int outw = 0, outh = 0;
@@ -1656,6 +1531,7 @@ int main(int argc, char *argv[]) {
 	int bWriteGdiToFile = 0;
 	unsigned int orgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 	0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	int bAbsBitmapPos = 0;
+	int bWindowedMode = 1;
 #else
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
@@ -1670,6 +1546,8 @@ int main(int argc, char *argv[]) {
 	int rotationGranularity = 4;
 	int bAutoCenter3d = 0;
 	float autoScale3dScale = -1;
+
+	int lightSource0Div = 25, lightSource0Plus = 16;
 	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
@@ -1836,12 +1714,19 @@ int main(int argc, char *argv[]) {
 				case 'n': bDoNothing = 1; break;
 #ifdef GDI_OUTPUT
 				case 'a': bAbsBitmapPos = 1; break;
+				case 'U': bWindowedMode = 0; break;
 #endif
 				case 'f': i++; break;
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
 				case 'u': bSendKeyUp = 1; break;
 				case 'd': bPrintFullErrorString = 1; break;
+
+				case 'L': 
+				{
+					nof = sscanf(&argv[2][i+1], "%d,%d", &lightSource0Div, &lightSource0Plus);
+					break;
+				}
 
 				case 'N': 
 				{
@@ -1897,8 +1782,10 @@ int main(int argc, char *argv[]) {
 				case 'S': bServer = 1; 	remove("EL.dat"); remove("servercmd.dat"); break;
 				case 'T': bAllowRepeated3dTextures = 1; break;
 				case 'z': g_bSleepingWait = 1; break;
-				case 'I': g_bFlushAfterELwrite = 1; break;
+				case 'J': g_bFlushAfterELwrite = 1; break;
+				case 'I': bIgnoreTitleComm = 0; break;
 				case 'i': bIgnoreServerCmdFile = 1; break;
+				
 				case 'c': 
 				{
 					char *fnd, fin[64];
@@ -2650,13 +2537,13 @@ int main(int argc, char *argv[]) {
 								if (!z_culling_far || averageZ[j] < z_culling_far)
 								if (!culling || (((v[1].x - v[0].x) * (v[2].y - v[1].y)) - ((v[2].x - v[1].x) * (v[1].y - v[0].y)) < 0)) {
 
-									if (drawmode == 0 || drawmode == 4 || drawmode == 5 || drawmode == 6) {
+									if (drawmode == 0 || drawmode == 4 || drawmode == 5 || drawmode == 6 || (nofFacePoints == 1 && obj3->nofBmaps > 0 && bmap && bmap->data && drawmode == 1)) {
 										fgbg = pfgbg[colIndex%nofcols]; dchar = pchar[colIndex%nofcols];
 										bWriteChars = pbWriteChars[colIndex%nofcols]; bWriteCols = pbWriteCols[colIndex%nofcols];
 
 										video = videoCol;
 										
-										if (obj3->nofBmaps > 0 && bmap && bmap->data && (drawmode == 0 || drawmode == 5 || drawmode == 6)) {
+										if (obj3->nofBmaps > 0 && bmap && bmap->data && (drawmode == 0 || drawmode == 5 || drawmode == 6 || (nofFacePoints == 1 && drawmode == 1)) && nofFacePoints != 2) {
 											transpval = drawoption;
 											
 											if (bmap->transpVal != -1) transpval = bmap->transpVal;
@@ -2729,7 +2616,7 @@ int main(int argc, char *argv[]) {
 										int zcol = 0;
 										for (l=0; l < nofFacePoints; l++) {
 											if ((drawoption & 1) == 0)
-												zcol += v[l].z/25+16;
+												zcol += v[l].z/lightSource0Div+lightSource0Plus;
 											else
 												zcol += v[l].z/divZ+plusZ;
 										}
@@ -2846,7 +2733,7 @@ int main(int argc, char *argv[]) {
 		
 		if (!bDoNothing) {
 	#ifdef GDI_OUTPUT
-			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos);
+			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode);
 			
 			if (bWriteGdiToFile) {
 					FILE *fp = fopen("GDIbuf.dat", "wb");
@@ -2986,6 +2873,26 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			}
+
+			if (!bIgnoreTitleComm && input == NULL) {
+				HWND consoleWindow = GetConsoleWindow();
+				if (consoleWindow!= NULL) {
+					GetWindowText(consoleWindow, argv1, 1023);
+					if (strstr(argv1, "output:") == (char *) argv1) {
+						SetWindowText(consoleWindow, sTitleBuffer);
+
+						fndMe = strchr(argv1, '\"');
+						if (fndMe) {
+							memmove(argv1, (char *)fndMe, strlen(fndMe)+1);
+							input = argv1;
+							argv1[0] = ' ';
+							fndMe = NULL;
+						}
+						
+					} else
+						strcpy(sTitleBuffer, argv1);
+				}
+			}
 			
 			if (input == NULL) {
 				do {
@@ -3084,10 +2991,12 @@ int main(int argc, char *argv[]) {
 							case 'C': frameCounter = 0; startT = milliseconds_now(); break;
 							case 'T': bAllowRepeated3dTextures = neg? 0 : 1; break;
 							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
-							case 'I': g_bFlushAfterELwrite = neg? 0 : 1; break;
+							case 'J': g_bFlushAfterELwrite = neg? 0 : 1; break;
+							case 'I': bIgnoreTitleComm = neg? 1 : 0; break;
 							case 'i': bIgnoreServerCmdFile = neg? 0 : 1; break;
 #ifdef GDI_OUTPUT
 							case 'a': bAbsBitmapPos =  neg? 0 : 1; break;
+							case 'U': bWindowedMode = neg? 1 : 0; break;
 #endif							
 							case 'G': {
 								int GXM=256, GYM=256;
@@ -3110,6 +3019,12 @@ int main(int argc, char *argv[]) {
 								bAutoCenter3d = neg? 0 : 1; autoScale3dScale = -1;
 								if (bAutoCenter3d && pch[i+1] >= '0' && pch[i+1] <= '9')
 									sscanf(&pch[i+1], "%f", &autoScale3dScale);
+								break;
+							}
+
+							case 'L': 
+							{
+								nof = sscanf(&argv[2][i+1], "%d,%d", &lightSource0Div, &lightSource0Plus);
 								break;
 							}
 							
