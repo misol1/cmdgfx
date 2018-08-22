@@ -1,6 +1,6 @@
 @echo off
 set /a F6W=175/2, F6H=80/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Star Wars scroller
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Star Wars scroller (s/S m/M CursorKeys/z/Z Enter p)
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

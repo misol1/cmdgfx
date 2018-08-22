@@ -1,6 +1,6 @@
 @echo off
 set /a F6W=200/2, F6H=90/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Sphere texture pixel
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Sphere texture pixel (mM c t SPACE Dd r s Zz ENTER+Cursorkeys)
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

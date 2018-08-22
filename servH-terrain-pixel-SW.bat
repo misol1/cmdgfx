@@ -1,6 +1,6 @@
 @echo off
 set /a F6W=175/2, F6H=80/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Terrain pixel SW
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Terrain pixel SW (mM Dd r s Zz ENTER Cursorkeys)
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.

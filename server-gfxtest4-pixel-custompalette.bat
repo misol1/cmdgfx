@@ -1,7 +1,7 @@
 @echo off
 set /a W=220, H=100
 set /a F6W=W/2, F6H=H/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title 3d test pixel custom palette
+cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title 3d test pixel palette (n/N Space w d/D b Enter+CursorKeys/z/Z)
 set /a W*=4, H*=6
 cmdwiz showcursor 0
 if defined __ goto :START

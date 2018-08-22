@@ -1,5 +1,5 @@
 @echo off
-cmdwiz setfont 6 & cls & title Loader
+cmdwiz setfont 6 & cls & title Loader (Space)
 set /a F6W=200/2, F6H=90/2
 mode %F6W%,%F6H%
 cmdwiz showcursor 0
