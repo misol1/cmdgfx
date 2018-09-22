@@ -451,6 +451,7 @@ function SetFullScreen(bFull) {
 		OLDWY = Execute('cmdwiz getwindowbounds y')
 		OLDW=W, OLDH=H
 		Execute('cmdwiz fullscreen 1')
+		Execute('cmdwiz showcursor 0')
 		W = Number(Execute('cmdwiz getconsoledim sw')) + 1
 		H = Number(Execute('cmdwiz getconsoledim sh')) + 3
 		WWW=W*WPAGES, HH=H*2
@@ -458,6 +459,7 @@ function SetFullScreen(bFull) {
 	} else {
 		FULLSCREEN=0
 		Execute('cmdwiz fullscreen 0')
+		Execute('cmdwiz showcursor 0')
 		Execute('cmdwiz setwindowpos ' + OLDWX + ' ' + OLDWY)
 		W=OLDW, H=OLDH
 		Execute('mode ' + W + "," + H)

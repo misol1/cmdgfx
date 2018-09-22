@@ -77,6 +77,9 @@ set /a CCNT=%CEND%, CS=2
 set /a STEP=0
 set MONOCOL=fe
 
+set TMOD=0
+if exist timeadjust.txt set /p TMOD=<timeadjust.txt
+
 set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
@@ -124,6 +127,9 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !LIGHT! == 1 for /F "tokens=1-8 delims=:.," %%a in ("!t2!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq %LTIME% set /a KEY=109 & set t2=!time: =0!
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
+	
+	set /a a-=%TMOD%
+
 rem	if !STEP! == 0 if !a! geq 1000 call :SIDECUBE 3 1000 & set /a STEP+=1 & set /a STEP-=1
  	if !STEP! == 0 if !a! geq 15000 set /a CS=1,TV=20,STEP+=1,CDIV=5 & set /a CEND=2*!CDIV! & set /a CCNT=0
 	if !STEP! == 1 if !a! geq 30600 if !a! lss 31100 set MONS=block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=c4??
@@ -497,6 +503,7 @@ set SF=servercmd.dat
 cls & cmdwiz setfont 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
+cmdwiz setwindowstyle clear standard 0x00040000L
 cmdgfx_gdi "" f7
 taskkill.exe /F /IM dlc.exe>nul 2>nul
 start "" /B dlc.exe -p "silence-1sec.mp3">nul

@@ -15,16 +15,16 @@ CC      = gcc -O3
 CCFLAG  =
 
 testlib.exe : $(OBJECTS)
-	$(CC) $(CCFLAG) -o $(TARGET) $(OBJECTS) -lgdi32 -lwinmm
+	$(CC) $(CCFLAG) -o $(TARGET) $(OBJECTS) rc\testlib.o -lgdi32 -lwinmm
 
 cmdgfx.exe : $(OBJECTSLIB)
-	$(CC) $(CCFLAG) -o $(TARGETLIB) $(OBJECTSLIB)
+	$(CC) $(CCFLAG) -o $(TARGETLIB) $(OBJECTSLIB) rc\cmdgfx.o
 
 cmdgfx_gdi.exe : $(OBJECTSLIBGDI)
-	$(CC) $(CCFLAG) -o $(TARGETLIBGDI) $(OBJECTSLIBGDI) -lgdi32
+	$(CC) $(CCFLAG) -o $(TARGETLIBGDI) $(OBJECTSLIBGDI)  rc\cmdgfx_gdi.o -lgdi32
 
 cmdgfx_input.exe : $(INPUTLIB)
-	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB)
+	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB) rc\cmdgfx_input.o
 
 cmdgfx_input.o : cmdgfx_input.c
 	$(CC) $(CCFLAG) -c cmdgfx_input.c

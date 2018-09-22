@@ -25,7 +25,7 @@
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
 // 2. Documentation update/expansion, needs several pages and split-up. Add version number too
 // 3. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
-// 4. Actually showing text with text operation in pixel mode
+// 4. Actually showing text with text operation in pixel mode (actually, all modes. Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big lettes of char/fgcol/bgcol!
 // 5. Major: 32(24?16?)-bit gdi support
 // 6. Major: Port to Linux
 

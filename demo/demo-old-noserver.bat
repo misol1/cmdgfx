@@ -501,6 +501,7 @@ set /a W=55, H=55
 cls & cmdwiz setfont 7 & cmdwiz showcursor 0 & title 
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
+cmdwiz setwindowstyle clear standard 0x00040000L
 cmdgfx_gdi "" f7
 taskkill.exe /F /IM dlc.exe>nul 2>nul
 start "" /B dlc.exe -p "silence-1sec.mp3">nul

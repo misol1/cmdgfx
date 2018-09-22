@@ -4,7 +4,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Gxy cube
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0nuW10x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,90
+cmdgfx_input.exe m0nuW10xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,90
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -23,7 +23,7 @@ set /a DIST=2000, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
 set ASPECT=0.675
 set /A RX=0,RY=0,RZ=0
 
-set HELPMSG=text 3 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,88
+set HELPMSG="text 3 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,88"
 set MSG=%HELPMSG%
 
 set /a OBJINDEX=0, NOFOBJECTS=5
@@ -33,12 +33,14 @@ set /a ACTIVE_KEY=0
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-   echo "cmdgfx: fbox 8 0 fa 0,0,%W%,%H% & !MSG! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !PAL!" F
+   echo "cmdgfx: fbox 8 0 fa 0,0,!W!,!H! & !MSG:~1,-1! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL!" Ff0:0,0,!W!,!H!
 	
    if !ROTMODE! == 0 set /a RX+=2,RY+=6,RZ-=4
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+	
+	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 3 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
@@ -47,7 +49,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			if !KEY! == 32 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
 			if !KEY! == 110 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
 			if !KEY! == 78 set /A OBJINDEX-=1&(if !OBJINDEX! lss 0 set /A OBJINDEX=%NOFOBJECTS%-1)&call :SETOBJECT
-			if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
+			if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG="")&if !SHOWHELP!==1 set MSG=!HELPMSG!
 			if !KEY! == 112 cmdwiz getch
 			if !KEY! == 27 set STOP=1
 		)
