@@ -11,7 +11,7 @@
 #define APP_DEVELOPER   "Mikael Sollenborn"
 #define APP_COMPANY     ""
 #define APP_NAME        "CmdGfx Input"
-#define APP_COMMENT     "A cmd line utility to report key and mouse input. Typically used with CmdGfx"
+#define APP_COMMENT     "CmdGfx Input - Report key and mouse input"
 
 // https://docs.microsoft.com/en-us/windows/desktop/menurc/stringfileinfo-block#remarks
 // ... as four HEX digits each

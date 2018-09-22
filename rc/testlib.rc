@@ -11,7 +11,7 @@
 #define APP_DEVELOPER   "Mikael Sollenborn"
 #define APP_COMPANY     ""
 #define APP_NAME        "TestLib"
-#define APP_COMMENT     "Testing the gfx library"
+#define APP_COMMENT     "TestLib - Test gfx library"
 
 // https://docs.microsoft.com/en-us/windows/desktop/menurc/stringfileinfo-block#remarks
 // ... as four HEX digits each
