@@ -13,7 +13,6 @@ set /a W=%errorlevel% + 1
 cmdwiz getconsoledim sh
 set /a H=%errorlevel% + 2
 
-if defined __ goto :START
 set __=.
 call %0 %* | cmdgfx_gdi "" m0OW18%TOP%Sf7:0,0,%W%,%H%
 set __=
@@ -68,4 +67,3 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-title input:Q

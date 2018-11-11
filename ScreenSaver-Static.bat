@@ -53,5 +53,3 @@ if not defined STOP goto REP
 endlocal
 cmdwiz delay 150
 echo "cmdgfx: quit"
-title input:Q
-

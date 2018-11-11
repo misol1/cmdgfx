@@ -76,4 +76,3 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
-title input:Q

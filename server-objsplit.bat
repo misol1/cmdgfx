@@ -5,7 +5,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Object split
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0nuW10xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,360,%H%,%W%,%H%N315
+cmdgfx_input.exe m0nuW10xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,360,%H%,%W%,%H%N315Z500
 set __=
 set W=&set H=&set F6W=&set F6H=
 cls
@@ -17,7 +17,7 @@ setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -16
 
-set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, DRAWMODE=2, ACTIVE_KEY=0, WW=W*2
+set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, DRAWMODE=2, ACTIVE_KEY=0, WW=W*2, ZVAL=500
 set ASPECT=0.7083
 
 set PAL0=f 0 db  f b b1  b 0 db  b 7 b1  7 0 db  9 7 b1  9 0 db  9 1 b1  1 0 db  1 0 b1
@@ -32,14 +32,16 @@ call :MAKESPLIT
 set STOP=
 :REP
 for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
-	echo "cmdgfx: fbox 8 0 . & 3d objects\torus.plg !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & 3d objects\springy1.plg !DRAWMODE!,!O%%o! !RY!,!RZ!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID2!,!YMID!,!DIST!,%ASPECT% !PAL! & !SPLITSCR:~1,-1!" Ff0:0,0,!WW!,!H!,!W!,!H!
+	echo "cmdgfx: fbox 8 0 . & 3d objects\torus.plg !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & 3d objects\springy1.plg !DRAWMODE!,!O%%o! !RY!,!RZ!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID2!,!YMID!,!DIST!,%ASPECT% !PAL! & !SPLITSCR:~1,-1!" Ff0:0,0,!WW!,!H!,!W!,!H!Z!ZVAL!
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G  2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, XMID2=W/2+W, YMID=H/2, WW=W*2 & cmdwiz showcursor 0 & call :MAKESPLIT
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, XMID2=W/2+W, YMID=H/2, WW=W*2" & set /a "ZVAL=500+(H-100)*6" & cmdwiz showcursor 0 & call :MAKESPLIT
 	
-	set /a RX+=2, RY+=6, RZ-=4
+	set /a RX+=2, RY+=6, RZ-=4, RR=!RANDOM! %% 100
+	if !RR! lss 10 set /a RY+=1
+	if !RR! lss 5 set /a RX+=1
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
