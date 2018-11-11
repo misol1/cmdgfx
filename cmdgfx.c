@@ -23,9 +23,9 @@
 
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
-// 2. Documentation update/expansion, needs several pages and split-up. Add version number too
+// 2. Documentation update/expansion, needs several pages and split-up. Add version number/credits too
 // 3. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
-// 4. Actually showing text with text operation in pixel mode (actually, all modes. Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big lettes of char/fgcol/bgcol!
+// 4. Actually showing text with text operation in pixel mode (actually, all modes). Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big lettes of char/fgcol/bgcol!
 // 5. Major: 32(24?16?)-bit gdi support
 // 6. Major: Port to Linux
 
@@ -372,8 +372,11 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 		if (nofargs < 4)
 			return 0;
 		
-		if (x < 0 || y < 0 || x >= XRES || y >= YRES || x+w >= XRES || y+h >= YRES)
+		if (x < 0 || y < 0 || x >= XRES || y >= YRES)
 			return 0;
+
+		if (x+w >= XRES) w -= (x+w)-(XRES+0);
+		if (y+h >= YRES) h -= (y+h)-(YRES+0);
 
 		bmap2 = (Bitmap *) calloc(sizeof(Bitmap), 1);
 		bmap2->data = (uchar *) malloc( w * h);
@@ -2511,12 +2514,13 @@ int main(int argc, char *argv[]) {
 
 							nofFacePoints = obj3->faceData[j*R3D_MAX_V_PER_FACE];
 							
-							if (bmap && bmap->data && bmap->bCmdBlock && bmap->blockRefresh > 0 && obj3->nofBmaps > 0) {
+							if (bmap && bmap->bCmdBlock && bmap->blockRefresh > 0 && obj3->nofBmaps > 0) {
 								int ok;
-								freeBitmap(bmap, 0);	
+								if (bmap->data)
+									freeBitmap(bmap, 0);	
 								ok = readCmdGfxTexture(bmap, bmap->pathOrBlockString);
 								if (bmap->blockRefresh != 2) bmap->blockRefresh = 0;
-								if (!ok) bmap = NULL;
+								if (!ok) { bmap->data=NULL; bmap = NULL; }
 							}
 										
 							if (averageZ[j] != 99999999 && averageZ[j] >= currZ && averageZ[j] <= currZ + addZ) {

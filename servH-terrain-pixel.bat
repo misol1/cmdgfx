@@ -4,7 +4,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Terrain pixel (mM Dd r s Zz EN
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW10x | call %0 %* | cmdgfx_gdi "" TSfa:0,0,700,480Z400
+cmdgfx_input.exe m0unW10xR | call %0 %* | cmdgfx_gdi "" TSfa:0,0,700,480Z400
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -36,7 +36,7 @@ set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-   echo "cmdgfx: fbox 0 0 fa 0,0,%W%,%H% & skip 3d objects\checkerbox\plane0.obj 0,-1 0,0,!A1! 0,0,0 45,35,45,0,0,0 0,0,0,10 %XMID%,%YMID%,300,%ASPECT% 0 -8 db & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 db & 3d objects/!OBJ! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 db" !XTRAFLAG!F
+   echo "cmdgfx: fbox 0 0 fa & skip 3d objects\checkerbox\plane0.obj 0,-1 0,0,!A1! 0,0,0 45,35,45,0,0,0 0,0,0,10 !XMID!,!YMID!,300,%ASPECT% 0 -8 db & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,7000,!TYSCALE! !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 db & 3d objects/!OBJ! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 db" !XTRAFLAG!Ffa:0,0,!W!,!H!
 	set XTRAFLAG=
 	
 	if !ROTMODE! == 0 set /a "RX+=0,RY+=0,RZ+=2"
@@ -49,11 +49,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !TEX_OFFSET! gtr 74000 set /a TEX_OFFSET = -5000
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+	
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4+1, H=SCRH*2*6+1, XMID=W/2+10, YMID=H/2-80, HLPY=H-3 & cmdwiz showcursor 0
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
 			for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
+			if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 			if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&rem set /a RX=0,RY=0,RZ=0
 			if !KEY! == 109 set XTRAFLAG=D&set /a TYSCALE+=100000 & if !TYSCALE! gtr 1000000 set /a TYSCALE=100000 
 			if !KEY! == 77 set XTRAFLAG=D&set /a TYSCALE-=100000 & if !TYSCALE! lss 100000 set /a TYSCALE=1000000 
@@ -76,8 +79,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		)
 		if !ACTIVE_KEY! == 122 set /a RZ+=4
 		if !ACTIVE_KEY! == 90 set /a RZ-=4
-		if !ACTIVE_KEY! == 100 set /a DIST+=30
-		if !ACTIVE_KEY! == 68 set /a DIST-=30
+		if !ACTIVE_KEY! == 100 set /a DIST+=13
+		if !ACTIVE_KEY! == 68 set /a DIST-=13
    )
 	set /a KEY=0
 )

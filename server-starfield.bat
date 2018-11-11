@@ -2,10 +2,9 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Starfield
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW11x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
+cmdgfx_input.exe knW11xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80Z500
 set __=
 cls
-cmdwiz setwindowstyle set standard 0x00040000L
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
@@ -16,12 +15,11 @@ set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -20
-cmdwiz setwindowstyle clear standard 0x00040000L
 
-set /a NOF_STARS=400&if not "%~1"=="" set /a NOF_STARS=%~1
+set /a NOF_STARS=400 & if not "%~1"=="" set /a NOF_STARS=%~1
 
 set /a XMID=%W%/2, YMID=%H%/2
-set /a DIST=11000, SDIST=5500, DRAWMODE=1, DIR=0, ROTSTARS=0
+set /a DIST=11000, SDIST=5500, DRAWMODE=1, DIR=0, ROTSTARS=0, ZVAL=500
 set ASPECT=0.4533
 if !DIR!==0 set /A TX=0,TX2=-2600,RX=0,RY=0,RZ=0,CRX=0,CRY=0,CRZ=0,TZ=0,TZ2=0
 if !DIR!==1 set /A TX=0,TX2=0,RX=0,RY=0,RZ=0,CRX=0,CRY=0,CRZ=0,TZ=0,TZ2=-4000
@@ -59,13 +57,15 @@ if %FCNT% lss 2 goto SETUPLOOP
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
-	echo "cmdgfx: fbox 0 0 20 0,0,%W%,%H% & 3d objects\starfield400_0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\starfield400_1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 %XMID%,%YMID%,%SDIST%,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 %XMID%,%YMID%,!DIST!,0.75 !COLS2_%%c! & %HELP%" F
+	echo "cmdgfx: fbox 0 0 20 & 3d objects\starfield400_0.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX!,0,!TZ! 10,10,10,0,0,0 0,0,2000,10 !XMID!,!YMID!,!SDIST!,%ASPECT% !COLS! & 3d objects\starfield400_1.ply %DRAWMODE%,1 !RX!,!RY!,!RZ! !TX2!,0,!TZ2! 10,10,10,0,0,0 0,0,2000,10 !XMID!,!YMID!,!SDIST!,%ASPECT% !COLS! & 3d objects\cube.ply 1,0 !CRX!,!CRY!,!CRZ! 0,0,0 -500,-250,-500,0,0,0 0,0,0,0 !XMID!,!YMID!,!DIST!,0.75 !COLS2_%%c! & !HELP!" Ff1:0,0,!W!,!H!Z!ZVAL!
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+		
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-76/2, ZVAL=500+(SCRH-40)*4" & cmdwiz showcursor 0 & set HELP=text 3 0 0  SPACE\-to\-change\-color,\-ENTER\-to\-change\-stars,\-z\-to\-rotate_stars,\-d/D\-to\-zoom !HLPX!,!HLPY!
 
-	if !DIR!==0 set /A TX+=10&if !TX! gtr 2600 set TX=-2600
-	if !DIR!==0 set /A TX2+=10&if !TX2! gtr 2600 set TX2=-2600
+	if !DIR!==0 set /A TX+=10&if !TX! gtr 2300 set TX=-2900
+	if !DIR!==0 set /A TX2+=10&if !TX2! gtr 2300 set TX2=-2900
 	if !DIR!==1 set /A TZ-=100&if !TZ! lss -4000 set TZ=4000
 	if !DIR!==1 set /A TZ2-=100&if !TZ2! lss -4000 set TZ2=4000
 
@@ -73,6 +73,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do (
 
 	if !ROTSTARS!==1 (if !DIR!==1 set /A RZ+=3)&(if !DIR!==0 set /A RY+=5)
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 32 set /A COLCNT+=1&if !COLCNT! gtr 6 set COLCNT=0
 	if !KEY! == 100 set /A DIST+=150

@@ -6,7 +6,7 @@ mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
+cmdgfx_input.exe knW12xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -27,12 +27,12 @@ set /A RX=0,RY=0,RZ=0
 set FN=objects\scroll-planes2.obj
 set ASPECT=0.6
 
-set /A XW=40,YW=10, YROT=0, DRAWMODE=0
-set HELPT=text 1 0 0 'p'_to_pause,_'y'_for_y_rotation,_'space'_to_reset_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'l'_for_lens,_'m'_for_mario,_'h'_to_hide_text 13,78
-set HELP=&set /a HLP=0
+set /A XW=40,YW=10, YROT=0, DRAWMODE=0, HLPX=13, HLPY=78
+set HELP=text 1 0 0 'p'_to_pause,_'y'_for_y_rotation,_'space'_to_reset_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'l'_for_lens,_'m'_for_mario,_'h'_to_hide_text
+set SH=skip&set /a HLP=0
 set /a DIR=1, LENS=1, MARIO=0
 
-set BKG="fbox 1 0 20 0,0,%W%,%H% & fellipse 1 0 20 %XMID%,%YMID%,108,37 & fellipse 9 0 20 %XMID%,%YMID%,100,35 & fellipse b 0 20 %XMID%,%YMID%,94,33 & fellipse f 0 20 %XMID%,%YMID%,90,31"
+set BKG="fbox 1 0 20 & fellipse 1 0 20 !XMID!,!YMID!,108,37 & fellipse 9 0 20 !XMID!,!YMID!,100,35 & fellipse b 0 20 !XMID!,!YMID!,94,33 & fellipse f 0 20 !XMID!,!YMID!,90,31"
 echo "cmdgfx: !BKG:~1,-1!"
 
 if exist %FN% goto SKIPGEN
@@ -84,18 +84,20 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !LENS!==1 set BKG2=" & fellipse 7 0 fa !XMP!,!YMP!,30,25 & fellipse 4 0 20 !XMP!,!YMP!,27,24 & fellipse c 0 20 !XMP!,!YMP!,23,24 & fellipse e 0 20 !XMP!,!YMP!,18,24 & fellipse f 0 20 !XMP!,!YMP!,6,5 "
 	if !MARIO!==1 set /A "MN=(!CNT! %% 10)/5 + 1"&set BKG2="!BKG2:~1,-1! & image img\mario!MN!.gxy 0 0 0 0 9,28"
 
-	echo "cmdgfx: %BKG:~1,-1% !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0  !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% ? 0 !CHAR! & !HELP!" F
+	echo "cmdgfx: !BKG:~1,-1! !BKG2:~1,-1! & 3d %FN% %DRAWMODE%,0 !RX!,0,0 !XP!,0,0 8,8,8,0,0,0 0,-2000,4000,0 !XMID!,!YMID!,!DIST!,%ASPECT% ? 0 !CHAR! & !SH! %HELP% !HLPX!,!HLPY!" Ff1:0,0,!W!,!H!
 	set BKG2=
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+	
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-170/2, XMP=XMID" & cmdwiz showcursor 0 & set BKG="fbox 1 0 20 & fellipse 1 0 20 !XMID!,!YMID!,108,37 & fellipse 9 0 20 !XMID!,!YMID!,100,35 & fellipse b 0 20 !XMID!,!YMID!,94,33 & fellipse f 0 20 !XMID!,!YMID!,90,31"
 	
 	set /A CNT+=1
-	if !CNT! lss 350 set /A YMP-=1 & if !YMP! lss %YMID% set YMP=%YMID%
+	if !CNT! lss 350 set /A YMP-=1 & if !YMP! lss !YMID! set YMP=!YMID!
 	if !CNT! == 140 set YROT=1
 	if !CNT! gtr 350 (
-		set /a "XMP=%XMID%+(%SINE(x):x=!SX!*31416/180%*!XMUL!>>!SHR!)-(%SINE(x):x=!SX2!*31416/180%*!XMUL2!>>!SHR!)"
-		set /a "YMP=%YMID%+(%SINE(x):x=!SY!*31416/180%*!YMUL!>>!SHR!)"
+		set /a "XMP=!XMID!+(%SINE(x):x=!SX!*31416/180%*!XMUL!>>!SHR!)-(%SINE(x):x=!SX2!*31416/180%*!XMUL2!>>!SHR!)"
+		set /a "YMP=!YMID!+(%SINE(x):x=!SY!*31416/180%*!YMUL!>>!SHR!)"
 		
 		set /A SX+=!SXA!&if !SX! gtr 359 set SX=0
 		set /A SX2+=!SXA2!&if !SX2! gtr 359 set SX2=0
@@ -109,6 +111,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !XP! lss -7500 set XP=30
 	if !XP! gtr 100 set XP=-7500
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 116 set CCNT=0&for %%a in (b0 .) do (if !CCNT!==!CHARI! set CHAR=%%a)&set /A CCNT+=1
 	if !KEY! == 116 set /A CHARI+=1&if !CHARI! geq 2 set CHARI=0
 	if !KEY! == 100 set /A DIST+=30
@@ -116,7 +119,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 333 set DIR=-1
 	if !KEY! == 331 set DIR=1
 	if !KEY! == 32 set /A RX=0,RY=0,RZ=0,XROT=0,YROT=0,ZROT=0,DIST=700,CNT=10000
-	if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set HELP=!HELPT!)&(if !HLP!==0 set HELP=)
+	if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set SH=)&(if !HLP!==0 set SH=skip)
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 108 set /A LENS=1-!LENS!
 	if !KEY! == 109 set /A MARIO=1-!MARIO!

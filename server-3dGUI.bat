@@ -2,15 +2,13 @@
 @echo off
 if defined __ goto :START
 cls & cmdwiz setfont 6 & title 3d GUI
-mode con rate=0 delay=10000
 cmdwiz showcursor 0
 set /a F6W=180/2, F6H=90/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe m0unW12x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400
+cmdgfx_input.exe m0unW12xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,180Z400G1000,1000
 set __=
 mode 80,50
-mode con rate=31 delay=0
 cmdwiz showcursor 1
 cls & cmdwiz setfont 6
 set F6W=&set F6H=
@@ -26,7 +24,7 @@ call centerwindow.bat
 set /a CNT=0& for %%a in (00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f) do set CH!CNT!=%%a& set /a CNT+=1
 
 set /a XMID=%W%/2-135, YMID=%H%/2-64
-set /a HH=%H%*2, YMIDCLICK=%YMID%+%H%
+set /a HH=%H%*2, YMIDCLICK=!YMID!+%H%
 set ASPECT=0.75
 set /a DIST=620
 
@@ -50,7 +48,7 @@ set /a MAXPLANES=!CNT!
 
 set /a MINRY=320, MAXRY=1000, KEY=0, SCALE=45
 if not "%MSCALE%" == "" set /a SCALE=%MSCALE%
-set /a RY=!MINRY!, RYP=0, RYSPAN=%MAXRY%-%MINRY%, FORCEDRYP=0, ENDREACH=0, TP=86
+set /a RY=!MINRY!, RYP=0, RYSPAN=%MAXRY%-%MINRY%, FORCEDRYP=0, ENDREACH=0, TX=90, TY=86
 set /a RYDELTA=%RYSPAN%/%MAXPLANES%
 set /a MD=0, RYPMUL=8, SWING=2, ENDCOUNT=-1
 set /a RYPMAX=15*!RYPMUL!
@@ -64,8 +62,8 @@ set /a OBSMIN=%RYMID%*4-13*4, OBSMAX=%RYMID%*4+13*4
 
 set SELTEXT=_&set TEXTCOL=7
 
-set BKSTR="fbox 0 1 db 0,0,%W%,300"
-if exist %BGIMG% set BKSTR="%BKSTR:~1,-1% & image %BGIMG% 0 0 b1 -1 0,0 0 0 %W%,%H%"
+set ORGBKSTR="fbox 0 1 db"
+if exist %BGIMG% set BKSTR="%ORGBKSTR:~1,-1% & image %BGIMG% 0 0 b1 -1 0,0 0 0 %W%,%H%"
 
 set STOP=
 :GUILOOP
@@ -82,13 +80,15 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	if !SELPLANE! geq 0 set /a SELYMID+=2, SELRZ+=8, SELSCALE-=1, MOD=!ENDCOUNT! %% 3 & if !ENDCOUNT! lss 15 if !MOD! == 0 set /a TP+=1
 	set /a ENDINDEX=!ENDREACH!*!SELPLANE!
 	
-	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) & for %%i in (!INDEX!) do set /a "RY+=!RYDELTA!,SYMID=!YMID!,SRZ=0,SSCALE=-!SCALE!, RYC=(!RY!-!MINRY!)/80" & (if !SELPLANE! lss 0 if !RY! gtr !OBSMIN! if !RY! lss !OBSMAX! set text=!T%%i!&set OBSPLANE=%%i) & (if !RYC! gtr 8 set /a RYC=8) & for %%c in (!RYC!) do (if !SELPLANE! geq 0 if %%i neq !SELPLANE! set /a SYMID=!SELYMID!) & (if !SELPLANE! geq 0 if %%i equ !SELPLANE! set /a SRZ=!SELRZ!,SSCALE=!SELSCALE!) & set /a FGCOL=0&(if !G%%i!==0 set FGCOL=!PCOL%%c:~0,2!)&(if %%i neq !ENDINDEX! set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0 0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !PCOL%%c! & 3d plane-t%%i.obj 5,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0  0,0,0,10 %XMID%,!SYMID!,!DIST!,%ASPECT% !FGCOL! 0 b1") & if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
+	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) & for %%i in (!INDEX!) do set /a "RY+=!RYDELTA!,SYMID=!YMID!,SRZ=0,SSCALE=-!SCALE!, RYC=(!RY!-!MINRY!)/80" & (if !SELPLANE! lss 0 if !RY! gtr !OBSMIN! if !RY! lss !OBSMAX! set text=!T%%i!&set OBSPLANE=%%i) & (if !RYC! gtr 8 set /a RYC=8) & for %%c in (!RYC!) do (if !SELPLANE! geq 0 if %%i neq !SELPLANE! set /a SYMID=!SELYMID!) & (if !SELPLANE! geq 0 if %%i equ !SELPLANE! set /a SRZ=!SELRZ!,SSCALE=!SELSCALE!) & set /a FGCOL=0&(if !G%%i!==0 set FGCOL=!PCOL%%c:~0,2!)&(if %%i neq !ENDINDEX! set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0 0,0,0,10 !XMID!,!SYMID!,!DIST!,%ASPECT% !PCOL%%c! & 3d plane-t%%i.obj 5,0 !RYPF!:0,0:!RY!,!SRZ!:0 -3500:0,0:-1150,0:7000 !SSCALE!,!SSCALE!,!SSCALE!,0,0,0  0,0,0,10 !XMID!,!SYMID!,!DIST!,%ASPECT% !FGCOL! 0 b1") & if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
-	echo "cmdgfx: %BKSTR:~1,-1% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!" F
+	echo "cmdgfx: !BKSTR:~1,-1! & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! !TX!,!TY!" Ff0:0,0,!W!,!HH!Z!ZVAL!
 
 	set /p INPUT=
 	
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, MX=%%F, MY=%%G, ML=%%H, MR=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, MX=%%F, MY=%%G, ML=%%H, MR=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+		
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, HDIFF=SCRH-45, XMID=W/2-135-HDIFF*2, YMID=H/2-64-HDIFF-HDIFF/3, HLPY=H-4, HLPX=W/2-76/2, ZVAL=400+HDIFF*7, TX=W/2-10/2, TY=H-5, HH=SCRH*2*2, YMIDCLICK=YMID+SCRH*2" & cmdwiz showcursor 0 & if exist %BGIMG% set BKSTR="%ORGBKSTR:~1,-1% & image %BGIMG% 0 0 b1 -1 0,0 0 0 !W!,!H!"
 		
 	if !RYP! geq 0 set /a RYP-=1 & if !RYP! lss 0 set /a RYP=0
 	if !RYP! leq 0 set /a RYP+=1 & if !RYP! gtr 0 set /a RYP=0
@@ -105,9 +105,10 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 		
 		if not !K_EVENT!==0 (
 			if !K_DOWN!==0 (
-			   set /a KEY=!K_KEY!
+				set /a KEY=!K_KEY!
+				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 				if !KEY! == 27 set STOP=1
-				if !KEY! == 32 if !OBSPLANE! geq 0 set /a SELPLANE=!OBSPLANE!&set SELTEXT=!TEXT!&set TEXTCOL=f&set /a FORCEDRYP=10*!RYPMUL!, ENDCOUNT=50
+				if !KEY! == 32 if !OBSPLANE! geq 0 set /a SELPLANE=!OBSPLANE!&set SELTEXT=!TEXT!&set TEXTCOL=f&set /a FORCEDRYP=10*!RYPMUL!, ENDCOUNT=H/2+5
 				if !KEY! == 115 set /a SWING=3-!SWING!, KEY=0
 				if !KEY! == 112 cmdwiz getch
 				set KEY=0
@@ -150,16 +151,24 @@ goto :eof
 	set /a "INDEX=%MAXPLANES%-(!RY!-!MINRY!)/!RYDELTA!"
 	if !INDEX! geq %MAXPLANES% set /a INDEX=0 
 	set /a RY+=!RYDELTA!*!INDEX!& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
-	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) &set /a RY+=!RYDELTA!&set /a "RYC=(!RY!-!MINRY!)/80" & (if !RYC! gtr 8 set /a RYC=8) & for %%e in (!RYC!) do for %%c in (!INDEX!) do set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,0:0 -3500:0,0:-1150,0:7000 -!SCALE!,-!SCALE!,-!SCALE!,0,0,0 0,0,0,10 %XMID%,%YMIDCLICK%,!DIST!,%ASPECT% 1 0 !CH%%c!"& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
+	for /L %%b in (1,1,%MAXPLANES%) do set /a INDEX+=1 & (if !INDEX! gtr %MAXPLANES% set /a INDEX=1) &set /a RY+=!RYDELTA!&set /a "RYC=(!RY!-!MINRY!)/80" & (if !RYC! gtr 8 set /a RYC=8) & for %%e in (!RYC!) do for %%c in (!INDEX!) do set CRSTR="!CRSTR:~1,-1! & 3d objects\GUIplane.obj 1,0 !RYPF!:0,0:!RY!,0:0 -3500:0,0:-1150,0:7000 -!SCALE!,-!SCALE!,-!SCALE!,0,0,0 0,0,0,10 !XMID!,!YMIDCLICK!,!DIST!,%ASPECT% 1 0 !CH%%c!"& if !RY! gtr !MAXRY! set /a "RY=!RY!-!RYSPAN!"
 
 	set /a MX*=2, MY*=2
 	set /a CHKY=!MY!+%H%
 
 	del /Q capture-1.gxy >nul 2>nul
-	echo "cmdgfx: %BKSTR:~1,-1% & fbox 0 0 20 0,%H%,%W%,%H% & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! 90,!TP!" c:!MX!,!CHKY!,1,1,1,1
+	
+	set t1=!time: =0!
+	:PREPLOOP
+		for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
+	if !a! lss 100 goto PREPLOOP
 
+	echo "cmdgfx: !BKSTR:~1,-1! & fbox 0 0 20 0,!H!,!W!,!H! & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! !TX!,!TY!" c:!MX!,!CHKY!,1,1,1,1
+
+	set t1=!time: =0!
 	:CHKLOOP
-	if not exist capture-1.gxy goto CHKLOOP
+		for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
+	if not exist capture-1.gxy if !a! lss 500 goto CHKLOOP
 
 	set /P INLINE=<capture-1.gxy
 	set /a CHKCHAR=0

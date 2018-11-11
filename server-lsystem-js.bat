@@ -3,7 +3,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System (right/left c d b i/I)
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW50xz | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900
+cmdgfx_input.exe knW50xzR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900
 set __=
 goto :eof
 
@@ -72,9 +72,11 @@ function DrawState(x, y, currRot, swap, linelen, rotation) {
 }
 
 function DrawSystem() {
+	if (newRes) WScript.Echo("\"cmdgfx: fbox 1 0 0" + "\" " + "fa:0,0," + W + "," + H)
 	if (clearScreen) WScript.Echo("\"cmdgfx: fbox 0 0 0" + "\" ")
 
 	LS = LSystems[systemIndex]
+	newRes = false
 	
 	current = LS.axiom
 	rules = LS.rules
@@ -85,7 +87,7 @@ function DrawSystem() {
 	rotation = LS.rotation
 	currRot = LS.startRotation*(Math.PI/180)
 	scrUpdateFreq = LS.updateFrequency
-	xp = LS.x, yp = LS.y
+	xp = LS.x + XPP, yp = LS.y + YPP
 
 	rotation = rotation*(Math.PI/180)
 	linelen = linelen/iterations
@@ -149,6 +151,11 @@ extraIteration=0
 systemIndex = 0
 drawNextSystem = true
 drawCounter = 0
+newRes = false
+firstRun = true
+
+W=1600, H=900, XPP=0, YPP=0
+Shell = new ActiveXObject("WScript.Shell")
 
 while(true) {
 
@@ -161,11 +168,12 @@ while(true) {
 	if (drawCounter > 20) { WScript.Echo("\"cmdgfx: \" "); drawCounter = 0 }
 
 	var input = WScript.StdIn.ReadLine()
-	var ti = input.split(" ")
+	var ti = input.split(/\s+/)
 	if (ti[3] == "1")
 	{
 		var key = ti[5]
 		if (key == "27") break
+		else if (key == "10") { exec = Shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) Shell.Exec('cmdwiz fullscreen 1'); else Shell.Exec('cmdwiz fullscreen 0') }
 		else if (key == "105") { extraIteration--; drawNextSystem=true; }
 		else if (key == "73") { extraIteration++; if (extraIteration > 0) extraIteration=0; else drawNextSystem=true; }
 		else if (key == "98") { drawBezier = !drawBezier; drawNextSystem=true; }
@@ -175,6 +183,17 @@ while(true) {
 		else if (key != "0") { drawNextSystem=true; extraIteration=0; systemIndex++; if (systemIndex >= LSystems.length) systemIndex=0 }
 	}
 	
+	if (ti[23] == "1")
+	{
+		W=Number(ti[25])*8+1, H=Number(ti[27])*12+1
+		XPP=Math.floor((W-1600)/2), YPP=Math.floor((H-900)/2)
+		Shell.Exec('cmdwiz showcursor 0')
+		if (firstRun == false) {
+			drawNextSystem = true
+			newRes = true
+		}
+		firstRun = false
+	}
 }
 
 /*

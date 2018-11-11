@@ -7,7 +7,7 @@ if defined __ goto :START
 set /a F6W=320/2, F6H=110/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW25x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1280,680Z800
+cmdgfx_input.exe M0unW25xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1280,680Z800
 set __=
 mode 80,50
 mode con rate=31 delay=0
@@ -111,10 +111,10 @@ cmdwiz print "!OUTP!">>%FN2%&set OUTP=
 set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in (0,1,4) do set f%%a=&set V%%a=
 
 :SKIPGEN
-set BKSTR="fbox 0 1 20 0,0,%W%,120 & fbox 9 1 b1 0,120,%W%,250 & fbox 9 1 b1 0,105,%W%,10 & fbox 9 1 b1 0,90,%W%,5 & fbox 9 1 b1 0,75,%W%,2 & fbox 9 1 b1 0,60,%W%,1    & fbox 0 0 20 0,343,%W%,5 & fbox 0 2 20 0,344,%W%,320"
+call :MAKEBKG
 
 set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 1220,15
+set MAPTXT=image 3dworld2.dat e 0 0 - 1240,15
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
@@ -129,10 +129,11 @@ for /l %%a in (1,1,10) do set /p INPUT=
 
 set /a SW/=2, SH/=2
 set /a MPY=%SH%-%H%/4 & cmdwiz setmousecursorpos %SW% !MPY!
+set /a ZVAL=800
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+1220, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	set FN3=%FN4%
 	if !ENEMY! == 1 (
@@ -156,12 +157,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>!FN3!
 	)
 	
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" F!DELOBJ!fa:0,0,1280,680Z800
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" F!DELOBJ!fa:0,0,!W!,!H!Z!ZVAL!
 	
 	set /p INPUT=
 rem echo !INPUT!
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=480+W/4 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image 3dworld2.dat e 0 0 - !XMAP!,15& if !MAP!==1 set MAPT=!MAPTXT!
+	
 	if not "!EV_BASE:~0,1!" == "N" (
 	
 		if not "!OLDMX!"=="" if !M_EVENT!==1 if !M_LB!==0 if !M_WHEEL!==0 set /a "RY+=(!OLDMX!-!M_X!)*2,TY-=(!OLDMY!-!M_Y!)*2,YMID+=(!OLDMY!-!M_Y!)*2"&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
@@ -172,7 +175,8 @@ rem echo !INPUT!
 		if !K_EVENT!==1 (
 			if !K_DOWN!==0 (
 			   set /a KEY=!K_KEY!
-				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=%MAPTXT%)
+				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4, TY=0, BOUNDSCHECK=1
 				if !KEY! == 27 set STOP=1
@@ -213,6 +217,11 @@ cmdwiz delay 100
 echo "cmdgfx: quit"
 title input:Q
 del /Q %FN4% wrld-temp?.obj
+goto :eof
+
+:MAKEBKG
+set /a GR_Y=H/2+3, GR_Y2=GR_Y+1, GR_YH=H-GR_Y2, SKY_H=H/2
+set BKSTR="fbox 0 1 20 0,0,!W!,120 & fbox 9 1 b1 0,120,!W!,!SKY_H! & fbox 9 1 b1 0,105,!W!,10 & fbox 9 1 b1 0,90,!W!,5 & fbox 9 1 b1 0,75,!W!,2 & fbox 9 1 b1 0,60,!W!,1  & fbox 0 0 20 0,!GR_Y!,!W!,5 & fbox 0 2 20 0,!GR_Y2!,!W!,!GR_YH!"
 goto :eof
 
 :MOVE <direction> <div>

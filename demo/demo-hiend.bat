@@ -504,6 +504,7 @@ cls & cmdwiz setfont 7 & cmdwiz showcursor 0
 mode %W%,%H%
 call :CENTERWINDOW 0 -20
 cmdwiz setwindowstyle clear standard 0x00040000L
+cmdwiz setwindowstyle clear standard 0x00010000L
 cmdgfx_gdi "" f7
 taskkill.exe /F /IM dlc.exe>nul 2>nul
 start "" /B dlc.exe -p "silence-1sec.mp3">nul
@@ -533,3 +534,5 @@ endlocal
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 taskkill.exe /F /IM dlc.exe>nul
 del /Q EL.dat cachelist.dat CGXMS.dat >nul 2>nul
+cmdwiz setwindowstyle set standard 0x00040000L
+cmdwiz setwindowstyle set standard 0x00010000L

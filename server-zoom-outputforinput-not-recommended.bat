@@ -29,6 +29,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 27 set STOP=1
 	set /a RZ+=10, KEY=0

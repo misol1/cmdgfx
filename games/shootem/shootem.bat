@@ -11,12 +11,16 @@ set __=
 cmdwiz setfont 6 & cls & cmdwiz showcursor 1 & mode 80,50
 mode con rate=31 delay=0
 set F6W=&set F6H=
+cmdwiz setwindowstyle set standard 0x00010000L
+cmdwiz setwindowstyle set standard 0x00040000L
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=240, H=100
 mode con rate=0 delay=10000
+cmdwiz setwindowstyle clear standard 0x00010000L
+cmdwiz setwindowstyle clear standard 0x00040000L
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 set /a HISCORE=0 & if exist hiscore.dat for /F "tokens=*" %%i in (hiscore.dat) do set /a HISCORE=%%i
 

@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Alpha generation
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" SZ300f1:0,0,160,80
+cmdgfx_input.exe knW12xR | call %0 %* | cmdgfx_gdi "" SZ300f1:0,0,160,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -64,14 +64,14 @@ if not "%~1"=="" call :MAKECOMBINEDALPHA "%~1" %2 %3
 
 call sindef.bat
 
-set /a XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=2, DIV=1
+set /a XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=2, DIV=1, ZVAL=100
 set /a CM1=1 & set /a CM2=1
 
 set /a STREAMCNT=0 & call :SETSTREAM
 
 set /a SHOWHELP=1
-set HELPMSG=text 8 0 0 SPACE\-\g11\g10\g1e\g1f\-s\-d/D\-(ENTER:\g11\g10\g1e\g1fzZ)\-h 1,78
-if !SHOWHELP!==1 set MSG=%HELPMSG%
+set MSG="text 8 0 0 SPACE\-\g11\g10\g1e\g1f\-s\-d/D\-(ENTER:\g11\g10\g1e\g1fzZ)\-h 1,78"
+set SH=skip& if !SHOWHELP!==1 set SH=
 
 set STOP=
 :LOOP
@@ -80,19 +80,22 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), COLCNT3-=1
 
 	set /a A1+=1, A2-=1, BGCOL=!COLADD!+1
-	echo "cmdgfx: fbox !BGCOL! 0 b0 0,0,%W%,%H% & 3d %FN% %DRAWMODE%,!COLADD! !CRX!,!CRY!,!CRZ! 0,0,0 3,3,3,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% !COLADD! 0 db & block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! (neq(fgcol(x,y),!BGCOL!)*!CM2!+!CM1!)/!DIV!*(random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3)) & !MSG!" FZ100
+	echo "cmdgfx: fbox !BGCOL! 0 b0 & 3d %FN% %DRAWMODE%,!COLADD! !CRX!,!CRY!,!CRZ! 0,0,0 3,3,3,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !COLADD! 0 db & block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! (neq(fgcol(x,y),!BGCOL!)*!CM2!+!CM1!)/!DIV!*(random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5.5)/35)*(x/3)) & !SH! !MSG:~1,-1!" FZ!ZVAL!f1:0,0,!W!,!H!
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+		
+	if "!RESIZED!"=="1" set /a "W=SCRW*2, H=SCRH*2, XMID=W/2, YMID=H/2, HLPY=H-2, ZVAL=100+(SCRH-40), W+=2, H+=2" & cmdwiz showcursor 0 & set MSG="text 8 0 0 SPACE\-\g11\g10\g1e\g1f\-s\-d/D\-(ENTER:\g11\g10\g1e\g1fzZ)\-h 1,!HLPY!"
 	
 	if !ROTMODE! == 0 set /a CRX+=0,CRY+=0,CRZ+=11
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 100 set /A DIST+=50
 	if !KEY! == 68 set /A DIST-=50
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 110 set /a STREAMCNT+=1 & call :SETSTREAM
 	if !KEY! == 32 set /a CM1=1-!CM1! & set /a CM2=%CM1%+1	
 	if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a CRX=0, CRY=0, CRZ=0
-	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set SH=skip)&if !SHOWHELP!==1 set SH=
 	if !KEY! == 331 if !ROTMODE!==1 set /A CRY+=20
 	if !KEY! == 333 if !ROTMODE!==1 set /A CRY-=20
 	if !KEY! == 328 if !ROTMODE!==1 set /A CRX+=20

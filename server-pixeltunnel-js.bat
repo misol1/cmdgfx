@@ -6,7 +6,7 @@ mode %F8W%,%F8H%
 cmdwiz showcursor 0 & title Pixel tunnel
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -23,9 +23,10 @@ title input:Q
 exit /b 0 */
 
 var fs = new ActiveXObject("Scripting.FileSystemObject")
+var Shell = new ActiveXObject("WScript.Shell")
 
 var W=160, H=80
-var XMID=W/2, YMID=H/2
+var XMID=Math.floor(W/2), YMID=Math.floor(H/2)
 var DIST=2000, DRAWMODE=1
 var CRX=0,CRY=0,CRZ=0, ZROT=0
 var ASPECT=0.75
@@ -69,14 +70,15 @@ while (true) {
 	
 	//WScript.Echo("\"cmdgfx: fbox " + BGC + " 20 0,0," + W + "," + H + " & " + CRSTR + " & " + MSG + "\"")
 	//WScript.Echo("\"cmdgfx: block 0 0,0," + W + "," + H + " 0,0 -1 0 0 " + "f004=f02e,f02e=702e,702e=802e,802e=80fa,????=0000" + " & " + CRSTR + " & " + MSG + "\"")
-	WScript.Echo("\"cmdgfx: fbox " + BGC + " 20 0,0," + W + "," + H + " & " + staticskip[static] + " block 0 0,0," + W + "," + H + " 0,0 -1 0 0 " + " 3???=1004,2???=302e,????=1020 random()*12" + " & " + CRSTR + " & " + MSG + "\"")
+	WScript.Echo("\"cmdgfx: fbox " + BGC + " 20 0,0," + W + "," + H + " & " + staticskip[static] + " block 0 0,0," + W + "," + H + " 0,0 -1 0 0 " + " 3???=1004,2???=302e,????=1020 random()*12" + " & " + CRSTR + " & " + MSG + "\"" + " f1:0,0," + W + "," + H)
 	
 	var input = WScript.StdIn.ReadLine()
-	var ti = input.split(" ")
+	var ti = input.split(/\s+/) // input.split(" ") splits "a  a" into 3 tokens (one empty middle). Using regexp for "consume n spaces between each token", because cmdgfx_input uses double spaces to separate data sections
 	if (ti[3] == "1")
 	{
 		var key=ti[5]
 		if (key == "27") break;
+		if (key == "10") { exec = Shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) Shell.Exec('cmdwiz fullscreen 1'); else Shell.Exec('cmdwiz fullscreen 0') }
 		if (key == "13") { OWI++; if (OWI >= OWV.length) OWI=0; MakeCircle(WNAME, OWV[OWI]); WScript.Echo("\"cmdgfx: \" D") }
 		if (key == "328") { SPEED+=1; if (SPEED > 100) SPEED=100 }
 		if (key == "336") { SPEED-=1; if (SPEED < 15) SPEED=15 }
@@ -93,6 +95,18 @@ while (true) {
 		if (key == "333") { NOF+=5; if (NOF > 70) NOF=70; else PrepareTunnel() }
 		if (key == "115") { static=1-static }
 	}
+	
+	if (ti[23] == "1")
+	{
+		W=Number(ti[25])*2+1, H=Number(ti[27])*2+1, XMID=Math.floor(W/2), YMID=Math.floor(H/2), HLPY=H-3
+		Shell.Exec('cmdwiz showcursor 0')
+		HELPMSG="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\g1e\\g1f\\-Z/z\\-X/x\\-Y/y\\-s\\-p\\-h 1," + HLPY
+		if (SHOWHELP==1) MSG=HELPMSG
+		BDIST = 900+W*2
+		PrepareTunnel()
+		//WScript.Echo("\n\n" + W); WScript.Echo("\"cmdgfx: \" K")
+	}
+	
 	CRZ+=ZROT
 }
 

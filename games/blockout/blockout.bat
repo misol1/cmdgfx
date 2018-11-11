@@ -8,6 +8,8 @@ cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi.exe "" Sf0:0,0,220,110
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz setwindowstyle set standard 0x00010000L
+cmdwiz setwindowstyle set standard 0x00040000L
 goto :eof
 
 :START
@@ -17,6 +19,8 @@ set /a W=220,H=110
 set /a F6W=W/2,F6H=H/2
 mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
+cmdwiz setwindowstyle clear standard 0x00010000L
+cmdwiz setwindowstyle clear standard 0x00040000L
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 cmdwiz getdisplaydim w & set SW=!errorlevel!

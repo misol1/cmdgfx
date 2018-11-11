@@ -3,12 +3,15 @@
 if defined __ goto :START
 cmdwiz showcursor 0 & title Twist scroller
 set __=.
-cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" SZ300f0:0,0,3160,95,160,90
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_gdi "" SZ300f0:0,0,3160,95,160,90
 set __=
 goto :eof
 
 :START
 cmdwiz setfont 6 & cls & mode 80,45 & cmdwiz showcursor 0 & call centerwindow.bat 0 -20
+:: disable maximize button, disable resizing of window
+cmdwiz setwindowstyle clear standard 0x00010000L
+cmdwiz setwindowstyle clear standard 0x00040000L
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 rem cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -16,9 +19,11 @@ rem cmdwiz getch & rem Enable this line to see jscript parse errors
 echo "cmdgfx: quit"
 title input:Q
 mode 80,50 & cmdgfx_gdi ""
+cmdwiz setwindowstyle set standard 0x00010000L
+cmdwiz setwindowstyle set standard 0x00040000L
 exit /b 0 */
 
-
+var Shell = new ActiveXObject("WScript.Shell")
 var w=160, h=90, xmid=w/2, ymid=h/2, yp=ymid + 3, mode=0, dist=12000, drawmode=0, mirror=1, mx=0, my=0
 
 var orgsx=0.0, orgsr=0.0, cc=2.0, sx2=3.0
@@ -74,7 +79,7 @@ while(true) {
 	imgc=(imgc+1)%(10 * 5), imgcd=Math.floor(imgc/5)
 
 	var input = WScript.StdIn.ReadLine()
-	var ti = input.split(" ")
+	var ti = input.split(/\s+/)
 	if (ti[3] == "1") {
 		var key = ti[5]
 		if (key == "27") break
@@ -87,5 +92,15 @@ while(true) {
 		if (key == "333") { tyScale+=250; if (tyScale > 20000) tyScale=20000; tmpFlag="D" }
 		if (key == "32") { mode++; if (mode > 3) mode=0; }
 		if (key == "112") WScript.Echo("\"cmdgfx: \" K")
+	}
+	
+	if (ti[0] != "NO_EVENT" && Number(ti[25]) != 80)
+	{
+		Shell.Exec('cmdwiz fullscreen 0')
+		Shell.Exec('cmd /c mode 80,45')
+		Shell.Exec('cmdwiz showcursor 0')
+		Shell.Exec('cmd /c centerwindow.bat 0 -20')
+		Shell.Exec('cmdwiz setwindowstyle clear standard 0x00010000L')
+		Shell.Exec('cmdwiz setwindowstyle clear standard 0x00040000L')
 	}
 }

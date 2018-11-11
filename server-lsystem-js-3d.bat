@@ -3,7 +3,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d (right/left Space i/I p Enter d/D p x/y/z)
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900N2500L150,8
+cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900N2500L150,8
 set __=
 goto :eof
 
@@ -181,7 +181,10 @@ flatLightPaletteRGB = "000000,1111aa,2525bb,3838cc,4e4edd,5555dd,5e5eee,6666ee,7
 useLight=true
 useBobs=0
 
-fso  = new ActiveXObject("Scripting.FileSystemObject"); 
+W=1600, H=900, XMID=W/2, YMID=H/2
+
+fso = new ActiveXObject("Scripting.FileSystemObject"); 
+Shell = new ActiveXObject("WScript.Shell")
 
 while(true) {
 
@@ -191,9 +194,9 @@ while(true) {
 	}
 
 	if (useLight)
-		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 1) + "," + (isFlat? 0:1) + " " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 800,450," + DIST + ",1 " + lightPalette + " \" F" + extraFlag + " " + (isFlat?flatLightPaletteRGB : lightPaletteRGB) )
+		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 1) + "," + (isFlat? 0:1) + " " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 " + XMID + "," + YMID + "," + DIST + ",1 " + lightPalette + " \" F" + extraFlag + "fa:0,0," + W + "," + H + " " + (isFlat?flatLightPaletteRGB : lightPaletteRGB) )
 	else
-		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 3) + ",-1 " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 800,450," + DIST + ",1 " + (useBobs == 0? color : useBobs == 1? 1 : 8) + " X 0  \" F" + extraFlag + " - -")
+		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 3) + ",-1 " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 " + XMID + "," + YMID + "," + DIST + ",1 " + (useBobs == 0? color : useBobs == 1? 1 : 8) + " X 0  \" F" + extraFlag + "fa:0,0," + W + "," + H + " - -")
 	
 	extraFlag = ""
 
@@ -201,11 +204,12 @@ while(true) {
 		RX += RXD, RY += RYD, RZ += RZD
 	
 	var input = WScript.StdIn.ReadLine()
-	var ti = input.split(" ")
+	var ti = input.split(/\s+/)
 	if (ti[3] == "1")
 	{
 		var key = ti[5]
 		if (key == "27") break
+		else if (key == "10") { exec = Shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) Shell.Exec('cmdwiz fullscreen 1'); else Shell.Exec('cmdwiz fullscreen 0') }
 		else if (key == "120") { if (manualRotation) RX += 12; else RXD = RXD==0? 4 : 0 }
 		else if (key == "121") { if (manualRotation) RY += 12; else RYD = RYD==0? 4 : 0 }
 		else if (key == "122") { if (manualRotation) RZ += 12; else RZD = RZD==0? 4 : 0 }
@@ -224,6 +228,13 @@ while(true) {
 		else if (key == "114") RX = RY = RZ = 0
 		else if (key == "331") { drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex--; if (systemIndex < 0) systemIndex=LSystems.length-1 }
 		else if (key != "0") { drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex++; if (systemIndex >= LSystems.length) systemIndex=0 }
+	}
+	
+	if (ti[23] == "1")
+	{
+		W=Number(ti[25])*8+1, H=Number(ti[27])*12+1
+		XMID=Math.floor(W/2), YMID=Math.floor(H/2)
+		Shell.Exec('cmdwiz showcursor 0')
 	}
 }
 

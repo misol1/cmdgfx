@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Interference
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW16x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,180,80
+cmdgfx_input.exe knW16xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,180,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -22,7 +22,7 @@ set ASPECT=0.75
 
 call sindef.bat
 
-set /a CIRCS=8, OW=15
+set /a CIRCS=16, OW=15
 set /A CNT=180 / %OW%
 set /A CNTV=((%CNT%)*2+2) * 2 * %CIRCS%
 set /A FACES=2*%CIRCS%
@@ -54,18 +54,22 @@ cmdwiz print "!OUTP!">>%WNAME%
 set /A X1=0,Y1=0,XA1=3,YA1=6,COL1=1,XM1=188,YM1=96
 set /A X2=200,Y2=500,XA2=-4,YA2=5,COL2=1,XM2=104,YM2=144
 set OP=XOR&set OUTP=
+set /a HLPY=H-3
 
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-	set CRSTR=""&for /L %%a in (1,1,2) do set /a SV=!X%%a!, CV=!Y%%a! & set /A "XP=(%SINE(x):x=!SV!*31416/180%*!XM%%a!>>%SHR%),YP=(%SINE(x):x=!CV!*31416/180%*!YM%%a!>>%SHR%),X%%a+=!XA%%a!,Y%%a+=!YA%%a!" & set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,!BITOP!  0,0,0 0,0,0 1,1,1,!XP!,!YP!,0 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% 0 !COL%%a! 20"
+	set CRSTR=""&for /L %%a in (1,1,2) do set /a SV=!X%%a!, CV=!Y%%a! & set /A "XP=(%SINE(x):x=!SV!*31416/180%*!XM%%a!>>%SHR%),YP=(%SINE(x):x=!CV!*31416/180%*!YM%%a!>>%SHR%),X%%a+=!XA%%a!,Y%%a+=!YA%%a!" & set CRSTR="!CRSTR:~1,-1! & 3d %WNAME% %DRAWMODE%,!BITOP!  0,0,0 0,0,0 1,1,1,!XP!,!YP!,0 0,0,0,10 !XMID!,!YMID!,%DIST%,%ASPECT% 0 !COL%%a! 20"
 	
-	echo "cmdgfx: fbox !BKG! 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 9 ? 0 !OP!(space)\-Col1:!COL1!(Left/Right)\-Col2:!COL2!(Up/Down) 1,78" F
+	echo "cmdgfx: fbox !BKG! 0 20 & !CRSTR:~1,-1! & text 9 ? 0 !OP!(space)\-Col1:!COL1!(Left/Right)\-Col2:!COL2!(Up/Down) 1,!HLPY!" Ff1:0,0,!W!,!H!
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 	
+	if "!RESIZED!"=="1" set /a "W=SCRW*2, H=SCRH*2, XMID=W/2, YMID=H/2, HLPY=H-3" & cmdwiz showcursor 0
+		
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 32 set /A BITOP+=1&(if !BITOP! gtr 6 set BITOP=0)&set CNT=0&for %%a in (NORMAL OR AND XOR ADD SUB SUB-n) do (if !CNT!==!BITOP! set OP=%%a)&set /A CNT+=1
 	if !KEY! == 13 set /A BKG+=1&if !BKG! gtr 15 set BKG=0
 	if !KEY! == 331 set /A COL1-=1&if !COL1! lss 1 set COL1=15

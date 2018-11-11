@@ -2,7 +2,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Curve
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW14x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,102
+cmdgfx_input.exe knW14xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,102
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -10,7 +10,7 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=200,H=102
+set /a W=200, H=102
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
@@ -22,7 +22,7 @@ rem set STREAM="?"
 
 call sindef.bat
 
-set /a MODE=0, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2
+set /a MODE=0, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=W/2
 set HELP=text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100
 
 :LOOP
@@ -30,14 +30,17 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
 
-	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)*2 & !HELP!" F
-	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)/2 & !HELP!" F
-	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+1*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50+sin(y+!A1!)/30)*20) & !HELP!" F
-	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! sin((x-!COLCNT!/4)/80)*(gtr(y,20))*15 & !HELP!" F
+	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)*2 & !HELP!" Ff0:0,0,!W!,!H!
+	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+!COLCNT2!/10)/80)*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50)*20)/2 & !HELP!" Ff0:0,0,!W!,!H!
+	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+1*(gtr(y,cos((x-!A2!)/55)*(!COLCNT!/6)+50+sin(y+!A1!)/30)*20) & !HELP!" Ff0:0,0,!W!,!H!
+	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! sin((x-!COLCNT!/4)/80)*(gtr(y,20))*15 & !HELP!" Ff0:0,0,!W!,!H!
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
   
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+1, H=SCRH*2+1, WH=W/2, HLPY=H-3, XMUL=300+(W-200)*1, YMUL=280+(W-200)/2" & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!&if not "!HELP!"=="" set HELP=!HELPMSG!
+	
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 3 set MODE=0
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 104 set HELP=

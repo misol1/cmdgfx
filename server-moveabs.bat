@@ -2,17 +2,22 @@
 color 07
 if defined __ goto :START
 cls & cmdwiz showcursor 0 & title Absolute move
+:: disable maximize button, disable resizing of window
+cmdwiz setwindowstyle clear standard 0x00010000L
+cmdwiz setwindowstyle clear standard 0x00040000L
 set __=.
-cmdgfx_input.exe knW10x | call %0 %* | cmdgfx_gdi "" SR10G256,16
+cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" SR10G256,16
 set __=
 cls & mode 80,50 & cmdwiz showcursor 1
+cmdwiz setwindowstyle set standard 0x00010000L
+cmdwiz setwindowstyle set standard 0x00040000L
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=80, H=40
 cmdwiz setfont 6 & cls & mode %W%,%H%
-for /F "Tokens=1 delims==" %%v in ('set')  do if not %%v==H if not %%v==W set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set')  do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 call centerwindow.bat 0 -20
 
 set /a NOFSCROLLS=9, YP=19, XMUL=6
@@ -53,7 +58,10 @@ for /L %%1 in (1,1,3000) do if not defined STOP (
   for /l %%a in (1,1,%NOFSCROLLS%) do set /a CXP=!XP%%a!/%XMUL% & echo "cmdgfx: text !FC%%a! 0 0 !SCROLL%%a:~1,-1! 0,0" af!FI%%a!:!CXP!,!YP%%a!,!W%%a!,1 & set /a XP%%a-=!FS%%a! & if !XP%%a! lss !ENDX%%a! set /a XP%%a=%W%*8*%XMUL%
 
   set /p INPUT=
-  for /f "tokens=1,2,4,6" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+  for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G 2>nul )
+  
+  if "!RESIZED!" == "1" if !SCRW! neq 80 cmdwiz fullscreen 0 & mode 80,40 & call centerwindow.bat 0 -20 & cmdwiz showcursor 0 & cmdwiz setwindowstyle clear standard 0x00010000L & cmdwiz setwindowstyle clear standard 0x00040000L
+  
   if !KEY! == 112 cmdwiz getch
   if !KEY! == 27 set STOP=1
   set /a KEY=0

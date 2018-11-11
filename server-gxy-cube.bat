@@ -1,5 +1,6 @@
 @echo off
 set /a F6W=200/2, F6H=90/2
+if not defined __ cmdwiz fullscreen 0
 cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Gxy cube
 cmdwiz showcursor 0
 if defined __ goto :START
@@ -45,6 +46,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
 			for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
+			if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 			if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a RX=0,RY=0,RZ=0
 			if !KEY! == 32 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
 			if !KEY! == 110 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT

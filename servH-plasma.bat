@@ -2,7 +2,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Plasma
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW35x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102
+cmdgfx_input.exe knW35xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -24,11 +24,11 @@ rem set STREAM="?"
 
 call sindef.bat
 
-set /a MODE=3, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2
+set /a MODE=4, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2, XMID=W/2, YMID=H/2
 set ASPECT=0.58846
-set HELPMSG=text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100
+set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100"
 set /a SHOWHELP=1
-if !SHOWHELP!==1 set HELP=%HELPMSG%
+set HELP=""& if !SHOWHELP!==1 set HELP=%HELPMSG%
 
 set /a CNT=0
 for %%a in (12 18 16 15 16 14 12 16) do set /a WVAL!CNT!=%%a, CNT+=1
@@ -39,31 +39,34 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!), RX+=7,RY+=12,RZ+=2, COLCNT3-=1, FADEIN+=!FADEVAL!/2, FADEVAL+=1
 
-	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5)/35)*(x/3) & !HELP! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 130,51,600,%ASPECT% 0 0 db" Ff0:0,0,%W%,%H%
+	if !MODE! == 0 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/5)/35)*(x/3) & !HELP:~1,-1! & 3d objects\plane-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 10,10,10, 3,3,3 0,0,0,0 !XMID!,!YMID!,600,%ASPECT% 0 0 db" Ff0:0,0,!W!,!H!
 
-	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/160)*(tan(x/(y+30))*3)*(y+!COLCNT2!/5)/16 & !HELP! & skip 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 0 0  0 0 0  0 0 1 0 0 0" Ff0:0,0,%W%,%H%
+	if !MODE! == 1 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/160)*(tan(x/(y+30))*3)*(y+!COLCNT2!/5)/16 & !HELP:~1,-1! & skip 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 !XMID!,!YMID!,1600,%ASPECT% 0 0 0  0 0 0  0 0 1 0 0 0" Ff0:0,0,!W!,!H!
 	
-	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+60+y+!COLCNT!)/200)*sin((40+x/2-y+!COLCNT2!/9)/50)*(x/3) & !HELP! & skip 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 0 db" Ff0:0,0,%W%,%H%
+	if !MODE! == 2 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+60+y+!COLCNT!)/200)*sin((40+x/2-y+!COLCNT2!/9)/50)*(x/3) & !HELP:~1,-1! & skip 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 !XMID!,!YMID!,1400,%ASPECT% 0 0 db" Ff0:0,0,!W!,!H!
 
-	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+y)/60)*(x/5+y/3)+cos((y+!COLCNT2!/5)/35)*(x/3) & !HELP!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,%W%,%H%
+	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x-!COLCNT!/4+y)/60)*(x/5+y/3)+cos((y+!COLCNT2!/5)/35)*(x/3) & !HELP:~1,-1!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 !XMID!,!YMID!,1400,%ASPECT% 0 6 ? & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,!W!,!H!
 
-rem	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,120,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+atan((y-51)/(x-120))*8*cos(!COLCNT!/190+y/145)*24+sin(x/9+!COLCNT2!/36)*4 & !HELP!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ? & block 0 0,0,119,%H% 120,0 -1 1 & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,%W%,%H%
+rem	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,120,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+atan((y-51)/(x-120))*8*cos(!COLCNT!/190+y/145)*24+sin(x/9+!COLCNT2!/36)*4 & !HELP:~1,-1!& skip 3d objects\eye-block.obj 5,-1 70,0,!RY! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 !XMID!,!YMID!,1400,%ASPECT% 0 6 ? & block 0 0,0,119,!H! 120,0 -1 1 & skip 3d objects\eye-block.obj 5,-1 0,40,!RX! 60,40,0 2,2,2, 0,-132,0 0,0,0,0 130,51,2200,%ASPECT% 0 c ?" Ff0:0,0,!W!,!H!
 
-   if !MODE! == 4 set /a A1+=4, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP!&  3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 6 ?" Ff0:0,0,%W%,%H%
+   if !MODE! == 4 set /a A1+=4, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/4)/110)*((x/19-y/6)*1)*sin((y+!COLCNT2!/5)/65)*((x-y)/10) & !HELP:~1,-1! & 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 !XMID!,!YMID!,1400,%ASPECT% 0 6 ?" Ff0:0,0,!W!,!H!
 	
-   if !MODE! == 5 set /a A1+=2, A2+=1 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP!& 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,1600,%ASPECT% 0 9 0  0 9 0  0 9 1 0 9 0" Ff0:0,0,%W%,%H%
+   if !MODE! == 5 set /a A1+=2, A2+=1 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+sin((x+!COLCNT!/10)/110)*88*sin((y+!COLCNT2!/5)/65)*98 & !HELP:~1,-1! & 3d objects\hulk.obj 0,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 !XMID!,!YMID!,1600,%ASPECT% 0 9 0  0 9 0  0 9 1 0 9 0" Ff0:0,0,!W!,!H!
 
-	if !MODE! == 6 set /a A1+=1, A2-=3 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/90)*8+sin((y+x+!COLCNT2!/50)/18)*16 & !HELP! & skip 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 130,51,600,%ASPECT% 0 0 0" Ff0:0,0,%W%,%H%
+	if !MODE! == 6 set /a A1+=1, A2-=3 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+tan((x+!COLCNT!)/90)*8+sin((y+x+!COLCNT2!/50)/18)*16 & !HELP:~1,-1! & skip 3d objects\cube-block-env.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 100,100,100,0,0,0 1,0,0,0 !XMID!,!YMID!,600,%ASPECT% 0 0 0" Ff0:0,0,!W!,!H!
 
-	if !MODE! == 7 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,%W%,%H% 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+(cos((x+!COLCNT2!)/(y+30))*15)+(tan((y+x+!COLCNT!)/100*x/120)) & !HELP! & skip 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 130,51,1400,%ASPECT% 0 0 db" Ff0:0,0,%W%,%H%
+	if !MODE! == 7 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 !STREAM:~1,-1! random()*!RANDPIX!/2+(cos((x+!COLCNT2!)/(y+30))*15)+(tan((y+x+!COLCNT!)/100*x/120)) & !HELP:~1,-1! & skip 3d objects\eye-block.obj 5,-1 !RX!,!RY!,!RZ! 0,0,0 2,2,2, 0,-132,0 0,0,0,0 !XMID!,!YMID!,1400,%ASPECT% 0 0 db" Ff0:0,0,!W!,!H!
 		
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
+	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!"&if !SHOWHELP!==1 set HELP=!HELPMSG!
+		
 	if !KEY! == 32 set /A MODE+=1&(if !MODE! gtr 7 set MODE=0) & for %%a in (!MODE!) do echo W!WVAL%%a!>inputflags.dat
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set HELP=)&if !SHOWHELP!==1 set HELP=!HELPMSG!
+	if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set HELP="")&if !SHOWHELP!==1 set HELP=!HELPMSG!
 	if !KEY! == 328 set /a RANDPIX+=1
 	if !KEY! == 336 set /a RANDPIX-=1 & if !RANDPIX! lss 0 set RANDPIX=0
 	if !KEY! == 13 cmdwiz stringfind "!STREAM!" "04," & (if !errorlevel! gtr -1 set STREAM=!STREAM:04,=b1,!) & (if !errorlevel! equ -1 set STREAM=!STREAM:b1,=04,!)

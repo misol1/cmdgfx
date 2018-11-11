@@ -4,7 +4,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Bezier expression background
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,95
+cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,95
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -14,14 +14,14 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=220, H=95
-echo "cmdgfx: fbox 0 0 00 0,0,%W%,%H%"
+echo "cmdgfx: fbox 0 0 00 0,0,!W!,!H!"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
 call centerwindow.bat 0 -15
 
 call sindef.bat
 
-set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=88/!DIV!, YMUL=38/!DIV!, SXMID=%W%/2,SYMID=%H%/2
+set /a DIV=2 & set /a XMID=!W!/2/!DIV!,YMID=!H!/2/!DIV!, XMUL=88/!DIV!, YMUL=38/!DIV!, SXMID=!W!/2,SYMID=!H!/2
 set /a NOFLINES=30, LNCNT=1, DCNT=0, REP=80, CCYCLE=1
 for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
@@ -42,8 +42,8 @@ set /a P1=9,P2=17,P3=4,P4=6,P5=14,P6=13,P7=10,P8=6,SC1=334,CC1=62,SC2=599,CC2=35
 set STREAM="0???=10??,1???=90??,2???=b0??,3???=f0??,4???=f0??,5???=b0??,6???=90??,7???=10??,8???=10??,9???=90??,a???=b0??,b???=f0??,c???=b0??,d???=90??,e???=10??,f???=10??"
 
 set /a SHOWHELP=1
-set HELPMSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,92
-if !SHOWHELP!==1 set MSG=%HELPMSG%
+set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,92
+set SH=skip& if !SHOWHELP!==1 set SH=
 
 set CLS=&set /a SKIPCLS=0
 
@@ -58,24 +58,29 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (1,1,4) do set /a SV=!SC%%a!,CV=!CC%%a! & set /a "XPOS%%a=!XMID!+(%SINE(x):x=!SV!/2*31416/180%*!XMUL!>>%SHR%), YPOS%%a=!YMID!+(%SINE(x):x=!CV!/2*31416/180%*!YMUL!>>%SHR%)"
 
 	for %%a in (!DCNT!) do set LN!LCNT!=line a 0 !DIC:~%%a,1! !XPOS1!,!YPOS1!,!XPOS2!,!YPOS2! !XPOS3!,!YPOS3!,!XPOS4!,!YPOS4!
-	set STR="!CLS! fbox 0 0 20 0,0,%W%,%H% & "&set REP=1
+	set STR="!CLS! fbox 0 0 20 0,0,!W!,!H! & "&set REP=1
 	for /L %%a in (1,1,%NOFLINES%) do set STR="!STR:~1,-1!&!LN%%a!"
 	
 	set /a PLC1+=3, PLC2+=10
-	if !DIV! == 1 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM:~1,-1% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8 & !MSG!"
-	if !DIV! == 1 if !CCYCLE!==0 echo "cmdgfx: !STR:~1,-1! & !MSG!"
-	if !DIV! == 2 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & block 0 0,0,%W%,%H% 0,0 -1 0 0 %STREAM:~1,-1% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8 & !MSG!"
-	if !DIV! == 2 if !CCYCLE!==0 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,%SXMID%,%SYMID% %SXMID%,0 -1 1 0 & block 0 0,0,%SXMID%,%SYMID% 0,%SYMID% -1 0 1 & block 0 0,0,%SXMID%,%SYMID% %SXMID%,%SYMID% -1 1 1 & !MSG!"
+	if !DIV! == 1 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!W!,!H! 0,0 -1 0 0 %STREAM:~1,-1% sin(x/100+y/160-!PLC1!/240)*4+5 & !SH! !MSG!" f0:0,0,!W!,!H!
+rem	if !DIV! == 1 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!W!,!H! 0,0 -1 0 0 %STREAM:~1,-1% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8 & !SH! !MSG!" f0:0,0,!W!,!H!
+	if !DIV! == 1 if !CCYCLE!==0 echo "cmdgfx: !STR:~1,-1! & !SH! !MSG!" f0:0,0,!W!,!H!
+	if !DIV! == 2 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!SXMID!,!SYMID! !SXMID!,0 -1 1 0 & block 0 0,0,!SXMID!,!SYMID! 0,!SYMID! -1 0 1 & block 0 0,0,!SXMID!,!SYMID! !SXMID!,!SYMID! -1 1 1 & block 0 0,0,!W!,!H! 0,0 -1 0 0 %STREAM:~1,-1% sin(x/100+y/160-!PLC1!/240)*4+5 & !SH! !MSG!" f0:0,0,!W!,!H!
+rem	if !DIV! == 2 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!SXMID!,!SYMID! !SXMID!,0 -1 1 0 & block 0 0,0,!SXMID!,!SYMID! 0,!SYMID! -1 0 1 & block 0 0,0,!SXMID!,!SYMID! !SXMID!,!SYMID! -1 1 1 & block 0 0,0,!W!,!H! 0,0 -1 0 0 %STREAM:~1,-1% sin((x+!PLC1!/4)/110)*4+sin((y+!PLC2!/5)/65)*4+8 & !SH! !MSG!" f0:0,0,!W!,!H!
+	if !DIV! == 2 if !CCYCLE!==0 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!SXMID!,!SYMID! !SXMID!,0 -1 1 0 & block 0 0,0,!SXMID!,!SYMID! 0,!SYMID! -1 0 1 & block 0 0,0,!SXMID!,!SYMID! !SXMID!,!SYMID! -1 1 1 & !SH! !MSG!" f0:0,0,!W!,!H!
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV, HLPY=H-4" & cmdwiz showcursor 0 & set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,!HLPY! 
 	
-	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 16 + 2") & 	for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
-	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=%W%/2/!DIV!, YMID=%H%/2/!DIV!, XMUL=110/!DIV!, YMUL=48/!DIV! 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 20 + 2") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  
+	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=!W!/2/!DIV!, YMID=!H!/2/!DIV!, XMUL=W/2/!DIV!, YMUL=H/2/!DIV! 
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 101 set CLS=&set /a SKIPCLS=1-!SKIPCLS! & if !SKIPCLS!==1 set CLS=skip
 	if !KEY! == 99 set /a CCYCLE=1-!CCYCLE!
-	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set SH=skip)&if !SHOWHELP!==1 set SH=
 	if !KEY! == 97 cls & echo set /a P1=!P1!,P2=!P2!,P3=!P3!,P4=!P4!,P5=!P5!,P6=!P6!,P7=!P7!,P8=!P8!,SC1=!SC!,CC1=!CC!,SC2=!SC2!,CC2=!CC2!,SC3=!SC3!,CC3=!CC3!,SC4=!SC4!,CC4=!CC4! & pause
 	if !KEY! == 27 set STOP=1
 	set /a KEY=0

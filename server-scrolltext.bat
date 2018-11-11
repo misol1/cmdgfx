@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Scrolltext
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,200,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -22,11 +22,13 @@ set ASPECT=0.6
 set FN=objects\scroll-planes.obj
 
 set /a XW=40,YW=10, XROT=0,YROT=0,ZROT=0, HLP=0, DIR=1, DRAWMODE=0
-set HELPT=text a 0 0 'p'_to_pause,_'z'_for_z_rotation,_'y'_for_y_rotation,_'x'_for_x_rotation,_'space'_to_reset_all_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'h'_to_hide_text 6,78
-set HELP=
+set HELP=text a 0 0 'p'_to_pause,_'z'_for_z_rotation,_'y'_for_y_rotation,_'x'_for_x_rotation,_'space'_to_reset_all_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'h'_to_hide_text
+set SH=skip
+set /a HLPX=6, HLPY=H-3
+set HLPPOS=!HLPX!,!HLPY!
 
-set TRANSPCOL=0
-if %TRANSPCOL% geq 0 set BKG=fbox 1 0 fa 0,0,%W%,%H%&cmdgfx "!BKG!"
+set /a TRANSPCOL=0
+set BKG=fbox 1 0 fa
 
 if exist %FN% goto SKIPGEN
 
@@ -61,12 +63,14 @@ set /a CHARI=0, CNT=0, XP=30
 set STOP=
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if "%~1"=="" echo "cmdgfx: %BKG% & 3d %FN% %DRAWMODE%,%TRANSPCOL% !RY!,0,!RX! 0,0,0 110,110,110,!XP!,0,0 0,-2000,4000,0 %XMID%,%YMID%,7000,%ASPECT% 0 0 . & 3d %FN% %DRAWMODE%,%TRANSPCOL% !RX!,!RY!,!RZ! 0,0,0 16,16,16,!XP!,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 !CHAR! & !HELP!" F
-	if not "%~1"=="" echo "cmdgfx: %BKG% & 3d %FN% %DRAWMODE%,%TRANSPCOL%  !RX!,!RY!,!RZ! 0,0,0 16,16,16,!XP!,0,0 0,-2000,4000,0 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 !CHAR! & !HELP!" F
+	if "%~1"=="" echo "cmdgfx: %BKG% & 3d %FN% %DRAWMODE%,%TRANSPCOL% !RY!,0,!RX! 0,0,0 110,110,110,!XP!,0,0 0,-2000,4000,0 !XMID!,!YMID!,7000,%ASPECT% 0 0 . & 3d %FN% %DRAWMODE%,%TRANSPCOL% !RX!,!RY!,!RZ! 0,0,0 16,16,16,!XP!,0,0 0,-2000,4000,0 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 !CHAR! & !SH! !HELP! !HLPPOS!" Ff1:0,0,!W!,!H!
+	if not "%~1"=="" echo "cmdgfx: %BKG% & 3d %FN% %DRAWMODE%,%TRANSPCOL%  !RX!,!RY!,!RZ! 0,0,0 16,16,16,!XP!,0,0 0,-2000,4000,0 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 !CHAR! & !SH! !HELP! !HLPPOS!" Ff1:0,0,!W!,!H!
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPX=W/2-190/2, HLPY=H-4" & set HLPPOS=!HLPX!,!HLPY! & cmdwiz showcursor 0
+
 	if !YROT! == 1 set /A RX+=14
 	if !XROT! == 1 set /A RY+=6
 	if !ZROT! == 1 set /A RZ+=4
@@ -84,6 +88,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !CNT!==640 set XROT=1
 	if !CNT!==1200 if "!HELP!"=="" set /a KEY=104
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 116 set CCNT=0&for %%a in (04 fe . b0 db) do (if !CCNT!==!CHARI! set CHAR=%%a)&set /A CCNT+=1
 	if !KEY! == 116 set /A CHARI+=1&if !CHARI! geq 5 set CHARI=0
 	if !KEY! == 100 set /A DIST+=30
@@ -91,7 +96,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !KEY! == 333 set DIR=-1
 	if !KEY! == 331 set DIR=1
 	if !KEY! == 32 set /A RX=0,RY=0,RZ=0,XROT=0,YROT=0,ZROT=0,DIST=5000,CNT=10000
-	if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set HELP=!HELPT!)&(if !HLP!==0 set HELP=)
+	if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set SH=)&(if !HLP!==0 set SH=skip)
 	if !KEY! == 112 cmdwiz getch
 	if !KEY! == 120 set /A XROT=1-!XROT!
 	if !KEY! == 121 set /A YROT=1-!YROT!

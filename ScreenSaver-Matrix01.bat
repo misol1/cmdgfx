@@ -1,8 +1,21 @@
+@rem Use with "Screen Launcher": http://www.softpedia.com/get/Desktop-Enhancements/Screensavers/Screen-Launcher.shtml
 @echo off
-cmdwiz setfont 7 & cls & cmdwiz showcursor 0 & title Matrix 01
+
+cd /D "%~dp0"
+if defined __ goto :START
+
+cls & cmdwiz setfont 7
+mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+if %ERRORLEVEL% lss 0 set TOP=U
+cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
+cmdwiz getconsoledim sw
+set /a W=%errorlevel% + 1
+cmdwiz getconsoledim sh
+set /a H=%errorlevel% + 2
+
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW18xR | call %0 %* | cmdgfx_gdi "" Sf7:0,0,164,140,82,54
+call %0 %* | cmdgfx_gdi "" m0OW18%TOP%Sf7:0,0,%W%,%H%
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -10,16 +23,12 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=82, H=54
-mode !W!,!H!
 
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
 
 set /a W+=2, H+=2
 set /a WW=W*2, HH=H*2, HP=H+1, HM=H-2
 set CNT=0&for %%a in (0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f) do set HX!CNT!=%%a&set /a CNT+=1
-
-call centerwindow.bat 0 -16
 
 echo "cmdgfx: fbox 0 0 0" f7:0,0,%W%,%H%
 set STREAM="??00=??00,??40=2?41,??41=a000,??80=2?81,??81=a000,??c0=2?c1,??c1=a?00,????=??++"
@@ -46,16 +55,12 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!PALC!) do (
 	
 	echo "cmdgfx: !OUT:~1,-1! & block 0 !W!,0,!W!,!HM! !W!,2 -1 0 0 %STREAM:~1,-1% & block 0 !W!,!H!,!W!,!HM! !W!,!HP! -1 0 0 %STREAM:~1,-1% & block 0 !W!,!H!,!W!,!HM! 0,0 -1 0 0 %STREAM2:~1,-1%& block 0 !W!,2,!W!,!HM! 0,0 00 0 0 %STREAM2:~1,-1%" FW18f7:0,0,!WW!,!HH!,!W!,!H! !PAL%%c!
 	
-	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 
-	if "!RESIZED!"=="1" set /a "W=SCRW+2, H=SCRH+2, WW=W*2, HH=H*2, HP=H+1, HM=H-2" & cmdwiz showcursor 0
-
-	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 18 cmdwiz getkeystate shift & if !errorlevel! gtr 0 cmdwiz getfullscreen & set /a RES=!errorlevel! & (if !RES! equ 0 cmdwiz fullscreen 1) & (if !RES! gtr 0 cmdwiz fullscreen 0)
-	if !KEY! == 27 set STOP=1
-	if !KEY! == 32 set /a PALC+=1 & if !PALC! gtr 2 set /a PALC=0
+	if !KEY! == 13 set /a KEY=0 & set SKTMP=!SKIP!&set SKIP=&if "!SKTMP!"=="" set SKIP=skip
+	if !KEY! == 112 set /a KEY=0 & cmdwiz getch
+	if !KEY! neq 0 set STOP=1
+	if !MOUSE_EVENT! neq 0 set STOP=1
 	set /a KEY=0
 )
 if not defined STOP goto LOOP

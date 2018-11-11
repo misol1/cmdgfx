@@ -7,10 +7,14 @@ if defined __ goto :START
 set __=.
 cmdgfx_input.exe m0unW14x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110W0
 set __=
+cmdwiz setwindowstyle set standard 0x00010000L
+cmdwiz setwindowstyle set standard 0x00040000L
 goto :eof
 
 :START
 setlocal EnableDelayedExpansion
+cmdwiz setwindowstyle clear standard 0x00010000L
+cmdwiz setwindowstyle clear standard 0x00040000L
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
 

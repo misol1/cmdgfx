@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Z-sorted objects
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13x |call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
+cmdgfx_input.exe knW13xR |call %0 %* | cmdgfx_gdi "" Sf1:0,0,160,80
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -30,7 +30,7 @@ set /A XP5=0,YP5=-250,ZP5=0
 set /A XP6=0,YP6=250,ZP6=0
 
 set /a XRA1=5, YRA1=8, XRA2=1,YRA2=-7, XRA3=-5,YRA3=5, XRA4=-10,YRA4=-4, XRA5=3,YRA5=-12, XRA6=5,YRA6=9
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, HLPY=78
 
 set OBJ0=icosahedron.ply&set OBJ1=elephav.obj
 set SCALE0=-131,-131,-131,0,0,0
@@ -54,15 +54,18 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	for /L %%a in (1,1,!NOF!) do set /A "YPP=((!crx!*!YP%%a!)>>14)+((!srx!*!ZP%%a!)>>14),ZPP=((!crx!*!ZP%%a!)>>14)-((!srx!*!YP%%a!)>>14)" & set /A "XPP=((!cry!*!XP%%a!)>>14)+((!sry!*!ZPP!)>>14),ZPP2%%a=((!cry!*!ZPP!)>>14)-((!sry!*!XP%%a!)>>14)" & set /A "XPP2%%a=((!crz!*!XPP!)>>14)+((!srz!*!YPP!)>>14),YPP2%%a=((!crz!*!YPP!)>>14)-((!srz!*!XPP!)>>14), ZPP2%%a*=4"
 
-	for %%i in (!MODE!) do for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set /a XR%%c+=!XRA%%c!,YR%%c+=!YRA%%c!&set CRSTR="!CRSTR:~1,-1!&3d objects\!OBJ%%i! !DRAWMODE!,1 !XR%%c!,!YR%%c!,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! !SCALE%%i! 0,0,0,10 %XMID%,%YMID%,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
+	for %%i in (!MODE!) do for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do set /a XR%%c+=!XRA%%c!,YR%%c+=!YRA%%c!&set CRSTR="!CRSTR:~1,-1!&3d objects\!OBJ%%i! !DRAWMODE!,1 !XR%%c!,!YR%%c!,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! !SCALE%%i! 0,0,0,10 !XMID!,!YMID!,%DIST%,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
 	
-	echo "cmdgfx: fbox 1 0 20 0,0,200,100 & !CRSTR:~1,-1! & text 7 0 20 SPACE 1,78" Ff1
+	echo "cmdgfx: fbox 1 0 20 & !CRSTR:~1,-1! & text 7 0 20 SPACE 1,!HLPY!" Ff1:0,0,!W!,!H!
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
+
+	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0
 	
 	set /a XROT-=3, YROT+=2, ZROT+=1
 
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 331 set /A NOF-=1&if !NOF! lss 2 set NOF=2
 	if !KEY! == 333 set /A NOF+=1&if !NOF! gtr 6 set NOF=6
 	if !KEY! == 32 set /a MODE=1-!MODE!

@@ -1,26 +1,28 @@
+@rem Use with "Screen Launcher": http://www.softpedia.com/get/Desktop-Enhancements/Screensavers/Screen-Launcher.shtml
 @echo off
-set /a F6W=289/2, F6H=100/2
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Bezier (Up/Down c o b p Enter Space)
-cmdwiz showcursor 0
+cd /D "%~dp0"
 if defined __ goto :START
+cmdwiz setfont 6 & cls
+mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+if %ERRORLEVEL% lss 0 set TOP=U
+cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
+cmdwiz getconsoledim sw
+set /a W=%errorlevel% * 2 * 4 + 4
+cmdwiz getconsoledim sh
+set /a H=%errorlevel% * 2 * 6 + 10
 set __=.
-cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" eSfa:0,0,1156,600
+call %0 %* | cmdgfx_gdi "" W10m0O%TOP%eSfa:0,0,!W!,!H!
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
-set F6W=&set F6H=
+set TOP=
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=289, H=100
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if /I not "%%v"=="PATH" set "%%v="
-set /a W*=4, H*=6
 
 call sindef.bat
-
-call centerwindow.bat 0 -15
-
 set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=0, KEY=0
 set /a LINEGAP=15, NOFBEZ=11, LNCNT=1, DCNT=0, REP=80, COL=10, STARTLINE=1, REALCOL=4, CHANGE=1, CHANGESTEPS=200 & set /a NOFLINES=!NOFBEZ!*!LINEGAP!& set /a CHANGECOUNT=!CHANGESTEPS!,STARTCNT=0
 set PALETTE1=000000,000000,000000,000000,000000,0020ff,0040ff,0060ff,0080ff,20a0ff,20b0ff,50c0ff,80e0ff,b0f0ff,f0ffff,ffffff
@@ -59,29 +61,15 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do for %%b in (!CNT!) do (if not "!LN%%b!"==" " set STR="!STR:~1,-1!&!DRAW! !COLVAL! 0 !LN%%b!")& set /a CNT+=!LINEGAP!,COLVAL+=1 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 
-	if !STARTCNT! lss 0 if !DIV! == 1 echo "cmdgfx: fbox !COL! 0 00 & !STR:~1,-1!" Ffa:0,0,!W!,!H! !PAL!
- 	if !STARTCNT! lss 0 if !DIV! == 2 echo "cmdgfx: fbox !COL! 0 00 & !STR:~1,-1! & block 0 0,0,!SXMID!,!SYMID! !SXMID!,0 -1 1 0 & block 0 0,0,!SXMID!,!SYMID! 0,!SYMID! -1 0 1 & block 0 0,0,!SXMID!,!SYMID! !SXMID!,!SYMID! -1 1 1" Ffa:0,0,!W!,!H! !PAL!
+	if !STARTCNT! lss 0 if !DIV! == 1 echo "cmdgfx: fbox !COL! 0 00 & !STR:~1,-1!" fa:0,0,!W!,!H! !PAL!
+ 	if !STARTCNT! lss 0 if !DIV! == 2 echo "cmdgfx: fbox !COL! 0 00 & !STR:~1,-1! & block 0 0,0,!SXMID!,!SYMID! !SXMID!,0 -1 1 0 & block 0 0,0,!SXMID!,!SYMID! 0,!SYMID! -1 0 1 & block 0 0,0,!SXMID!,!SYMID! !SXMID!,!SYMID! -1 1 1" fa:0,0,!W!,!H! !PAL!
 	set STR=
 
-	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
-
-	if "!RESIZED!"=="1" set /a "W=SCRW*2*4+2, H=SCRH*2*6+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV" & cmdwiz showcursor 0
+	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 	
-	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 4 - 1") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 
-	if !KEY! == 13 set /a "DIV=(!DIV! %% 2) + 1" & set /a XMID=!W!/2/!DIV!, YMID=!H!/2/!DIV!, XMUL=!W!/2/!DIV!, YMUL=!H!/2/!DIV! 
-	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 68 set /a DELAY+=10
-	if !KEY! == 100 set /a DELAY-=10 & if !DELAY! lss 0 set DELAY=0
-	if !KEY! == 99 set /a REALCOL+=1 & (if !REALCOL! gtr 4 set REALCOL=1) & for %%a in (!REALCOL!) do set PAL=!PALETTE%%a!
-	if !KEY! == 115 set /a CHANGE=1-!CHANGE!
-	if !KEY! == 111 set /a DRAWOP+=1,BITOP=3 & if !DRAWOP! gtr 5 set DRAWOP=0
-	if !KEY! == 98 set /a BITOP+=1 & if !BITOP! gtr 10 set BITOP=1
-	if !KEY! == 97 cls&echo set /a P1=!P1!,P2=!P2!,P3=!P3!,P4=!P4!,P5=!P5!,P6=!P6!,P7=!P7!,P8=!P8!,SC=!SC!,CC=!CC!,SC2=!SC2!,CC2=!CC2!,SC3=!SC3!,CC3=!CC3!,SC4=!SC4!,CC4=!CC4! & pause
-	if !KEY! == 27 set STOP=1
-	if !KEY! == 328 set /a LINEGAP+=1 & set /a NOFLINES=NOFBEZ*LINEGAP
-	if !KEY! == 336 set /a LINEGAP-=1 & (if !LINEGAP! lss 1 set /a LINEGAP=1) & set /a NOFLINES=NOFBEZ*LINEGAP
+	if !KEY! == 112 set /a KEY=0 & cmdwiz getch
+	if !KEY! neq 0 set STOP=1
+	if !MOUSE_EVENT! neq 0 set STOP=1
 	set /a KEY=0
 )
 if not defined STOP goto LOOP

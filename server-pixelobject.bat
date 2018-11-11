@@ -1,4 +1,5 @@
 @echo off
+if not defined __ cmdwiz fullscreen 0
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Pixel objects
 if defined __ goto :START
 set __=.
@@ -46,6 +47,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do for %%o 
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (
 			for %%a in (331 333 328 336 122 90 100 68) do if !KEY! == %%a set /a ACTIVE_KEY=!KEY!
+			if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 			if !KEY! == 112 cmdwiz getch
 			if !KEY! == 13 set /A ROTMODE=1-!ROTMODE!&set /a RX=0,RY=0,RZ=0
 			if !KEY! == 99 set /A COLCNT+=1&if !COLCNT! gtr 1 set COLCNT=0

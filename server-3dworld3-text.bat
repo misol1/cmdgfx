@@ -6,7 +6,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=110/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW15x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
+cmdgfx_input.exe M0unW15xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110Z400
 set __=
 mode 80,50
 cmdwiz showcursor 1 & cmdwiz showmousecursor 1
@@ -110,7 +110,7 @@ cmdwiz print "!OUTP!">>%FN2%&set OUTP=
 set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in (0,1,4) do set f%%a=&set V%%a=
 
 :SKIPGEN
-set BKSTR="fbox 0 1 b1 0,0,%W%,30 & fbox 0 1 20 0,30,%W%,10 & fbox 9 1 b1 0,40,%W%,6 & fbox 9 1 db 0,46,%W%,4  &  fbox 0 0 20 0,51,%W%,5 & fbox 0 %GROUNDCOL% b2 0,53,%W%,5 & fbox 0 %GROUNDCOL% b1 0,57,%W%,10 & fbox 0 %GROUNDCOL% b0 0,64,%W%,22 & fbox 8 %GROUNDCOL% 20 0,80,%W%,100 "
+call :MAKEBKG
 
 set /A MAP=0,ZMOD=0,XMOD=0
 set MAPTXT=image 3dworld2.dat e 0 0 - 146,2
@@ -137,9 +137,11 @@ set SH=%errorlevel%
 set /a SW/=2, SH/=2
 set /a MPY=%SH%-%H%/4 & cmdwiz setmousecursorpos %SW% !MPY!
 
+set /a MX_LB=W/4-30, MX_RB=W/4+30, MY_TB=H/4-19, MY_BB=H/4+17
+
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+146, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-34), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	set FN3=%FN4%
 	if !ENEMY! == 1 (
@@ -163,20 +165,22 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		echo f !f0!/1/ !f3!/2/ !f2!/3/ !f1!/4/>>!FN3!		
 	)
 	
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP! & skip text 9 0 0 [FRAMECOUNT] 1,1" F!DELOBJ!f0:0,0,180,110
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP! & skip text 9 0 0 [FRAMECOUNT] 1,1" F!DELOBJ!f0:0,0,!W!,!H!Z400
 	
 	set /p INPUT=
 rem echo !INPUT!
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
+	if "!RESIZED!"=="1" set /a W=SCRW*2, H=SCRH*2, XMID=W/2, YMID=H/2, HLPY=H-3,HLPY2=HLPY-1, HLPX=W/2-173/2, HLPX2=HLPX-1, XMAP=W-34, ZVAL=480+W/4, MX_LB=W/4-30, MX_RB=W/4+30, MY_TB=H/4-19, MY_BB=H/4+17 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image 3dworld2.dat e 0 0 - !XMAP!,2&(if !MAP!==1 set MAPT=!MAPTXT!) & set HELPT=box c 0 fe !HLPX2!,!HLPY2!,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ !HLPX!,!HLPY!&if !HLP!==1 set HELP=!HELPT!
+	
 	if not "!EV_BASE:~0,1!" == "N" (
 	
 		set /a MDX=!OLDMX!-!M_X! & (if !MDX! lss 0 set /a MDX=-MDX) & if !MDX! geq 20 set /a M_EVENT=0, OLDMX=!M_X!,OLDMY=!M_Y!
 		set /a MDY=!OLDMY!-!M_Y! & (if !MDY! lss 0 set /a MDY=-MDY) & if !MDY! geq 15 set /a M_EVENT=0, OLDMX=!M_X!,OLDMY=!M_Y!
-		if !M_Y! lss 8 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
-		if !M_Y! gtr 48 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
-		if !M_X! lss 15 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
-		if !M_X! gtr 75 start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_X! lss !MX_LB! start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_X! gtr !MX_RB! start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_Y! lss !MY_TB! start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
+		if !M_Y! gtr !MY_BB! start /B "" cmd /c cmdwiz setmousecursorpos %SW% !MPY!
 		
 		if not "!OLDMX!"=="" if !M_EVENT!==1 if !M_LB!==0 if !M_WHEEL!==0 set /a "OLDYMID=YMID,OLDTY=TY, RY+=(!OLDMX!-!M_X!)*2,TY-=(!OLDMY!-!M_Y!)*2,YMID+=(!OLDMY!-!M_Y!)*2"&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&(if !YMID! leq -100 set /a YMID=OLDYMID,TY=OLDTY)&(if !YMID! geq 200 set /a YMID=OLDYMID,TY=OLDTY)
 		if !M_WHEEL!==1 set /a RY+=720&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
@@ -186,6 +190,7 @@ rem echo !INPUT!
 		if !K_EVENT!==1 (
 			if !K_DOWN!==0 (
 			   set /a KEY=!K_KEY!
+				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=%MAPTXT%)
 				if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set HELP=!HELPT!)&(if !HLP!==0 set HELP=)
 				if !KEY! == 112 cmdwiz getch
@@ -227,6 +232,11 @@ endlocal
 echo "cmdgfx: quit"
 title input:Q
 del /Q %FN4% wrld-temp?.obj
+goto :eof
+
+:MAKEBKG
+set /a GR_Y=H/2+2, GR_Y2=GR_Y+2, GR_Y3=GR_Y+6, GR_Y4=GR_Y+13, GR_Y5=GR_Y+29, SKY_H=H/2
+set BKSTR="fbox 0 1 b1 0,0,!W!,30 & fbox 0 1 20 0,30,!W!,10 & fbox 9 1 b1 0,40,!W!,6 & fbox 9 1 db 0,46,!W!,!SKY_H!  &  fbox 0 0 20 0,!GR_Y!,!W!,5 & fbox 0 %GROUNDCOL% b2 0,!GR_Y2!,!W!,5 & fbox 0 %GROUNDCOL% b1 0,!GR_Y3!,!W!,10 & fbox 0 %GROUNDCOL% b0 0,!GR_Y4!,!W!,22 & fbox 8 %GROUNDCOL% 20 0,!GR_Y5!,!W!,!SKY_H! "
 goto :eof
 
 :MOVE <direction> <div>

@@ -4,7 +4,7 @@ cmdwiz showcursor 0
 if defined __ goto :START
 mode 150,75
 set __=.
-cmdgfx_input.exe mW13 | call %0 %* | cmdgfx_gdi "" Sf2:0,0,350,75,150,75
+cmdgfx_input.exe mW13R | call %0 %* | cmdgfx_gdi "" Sf2:0,0,350,75,150,75
 set __=
 mode 80,50
 cls & cmdwiz setfont 6
@@ -14,9 +14,11 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 for /F "tokens=1 delims==" %%v in ('set') do set "%%v="
 call centerwindow.bat 0 -16
-if "%~1"=="" echo "cmdgfx: image img\mm.txt 0 0 0 -1 200,0 & image img\mm.txt 0 0 0 -1 275,0"
-if not "%~1"=="" echo "cmdgfx: image img\fract.txt 0 0 0 -1 200,0 & image img\fract.txt 0 0 0 -1 275,0"
+set IMG=img/mm.txt
+if not "%~1"=="" set IMG=%1
+echo "cmdgfx: image !IMG! 0 0 0 -1 200,0 & image !IMG! 0 0 0 -1 275,0"
 
+set /a W=150, H=75, WW=350, BUFX=W+50
 set /a DL=0, DR=0, KEY=0, COL=0, SIZE=2, KD=0
 set DRAW=""&set STOP=&set OUTP=
 
@@ -32,16 +34,18 @@ set /a "MX8=-3, MY8=-8, MX9=-6, MY9=-6, MX10=-8, MY10=-3, MX11=-8, MY11=0, MX12=
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
-	echo "cmdgfx: !DRAW:~1,-1! & block 0 200,0,150,75 0,0 -1 0 0 !PAL%%c!" F
+	echo "cmdgfx: !DRAW:~1,-1! & block 0 !BUFX!,0,!W!,!H! 0,0 -1 0 0 !PAL%%c!" f2:0,0,!WW!,!H!,!W!,!H!
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+
+	if "!RESIZED!"=="1" set /a "W=SCRW, H=SCRH+1, WW=W*2+50, W=W+1, IH=H+7, IA=IH*100/82, IW=90*IH/100, IW2=IW*2-6, XP=W-IW2, BUFX=W+50, BUFX1=BUFX+XP, BUFX2=BUFX1+(IW-5)" & cmdwiz showcursor 0 & echo "cmdgfx: image !IMG! 0 0 0 -1 !BUFX!,0 0 0 !IW!,!IH!& image !IMG! 0 0 0 -1 !BUFX2!,0 0 0 !IW!,!IH!" f2:0,0,!WW!,!H!,!W!,!H!
 
 	set DRAW=""
 
 	if not "!EV_BASE:~0,1!" == "N" (
 		if !M_EVENT!==1 (
-			for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!M_X!+200, MYP=!MY%%a!*!SIZE!+!M_Y!"&set OUTP=!OUTP!!MXP!,!MYP!,
+			for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!M_X!+!BUFX!, MYP=!MY%%a!*!SIZE!+!M_Y!"&set OUTP=!OUTP!!MXP!,!MYP!,
 			if !M_WHEEL! == 1 set /a SIZE-=1&if !SIZE! lss 1 set SIZE=1
 			if !M_WHEEL! == -1 set /a SIZE+=1&if !SIZE! gtr 4 set SIZE=4
 			if !M_LB! == 1 set DRAW="ipoly 1 0 ? 4 !OUTP:~0,-1!"
@@ -49,8 +53,10 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 			set OUTP=
 		)
 		if !K_EVENT!==1 if !K_DOWN!==1 (
+				if !K_KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 				if !K_KEY! == 32 set /a COL+=1&if !COL! gtr 4 set COL=0
 				if !K_KEY! == 27 set STOP=1
+				if !K_KEY! == 99 echo "cmdgfx: fbox 0 0 ?"
 			)
 		)
 	)

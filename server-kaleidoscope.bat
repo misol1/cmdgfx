@@ -2,7 +2,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Kaleidoscope
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,110
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,220,110
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -17,7 +17,7 @@ mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -16
 
-set /a XMID=%W%/2, YMID=%H%/2, DIST=7000, DRAWMODE=0, MODE=0
+set /a XMID=%W%/2, YMID=%H%/2, DIST=2100, TRIDIST=7000, DRAWMODE=0, MODE=0
 set /a CRX=0,CRY=0,CRZ=0
 set ASPECT=0.6665
 
@@ -26,10 +26,34 @@ if "%~1" == "1" set /a S1=33, S2=24, S3=15, TRINUM=1
 if "%~1" == "2" set /a S1=100, S2=8, S3=45, TRINUM=2
 if "%~1" == "3" set /a S1=25, S2=30, S3=12, TRINUM=3
 
-set FN=objects\tri%TRINUM%.obj
+set FN0=objects\tri%TRINUM%.obj
+set FN1=objects\tri-FS-%TRINUM%.obj
+set FN2=objects\tri-FS2-%TRINUM%.obj
+set FN=%FN0%
 
-if exist %FN% goto SKIPGEN
+if exist %FN0% if exist %FN1% if exist %FN2% goto SKIPGEN
 
+set FN=%FN2%
+echo usemtl cmdblock 0 0 170 170 >%FN%
+echo v  0 0 0 >>%FN%
+echo v  0 100 0 >>%FN%
+echo v  %S1% 100 0 >>%FN%
+echo vt 0 0 >>%FN%
+echo vt 0 1 >>%FN%
+echo vt 1 1 >>%FN%
+echo f 1/1/ 2/2/ 3/3/ >>%FN%
+
+set FN=%FN1%
+echo usemtl cmdblock 0 0 110 110 >%FN%
+echo v  0 0 0 >>%FN%
+echo v  0 100 0 >>%FN%
+echo v  %S1% 100 0 >>%FN%
+echo vt 0 0 >>%FN%
+echo vt 0 1 >>%FN%
+echo vt 1 1 >>%FN%
+echo f 1/1/ 2/2/ 3/3/ >>%FN%
+
+set FN=%FN0%
 echo usemtl cmdblock 0 0 70 70 >%FN%
 echo v  0 0 0 >>%FN%
 echo v  0 100 0 >>%FN%
@@ -46,7 +70,7 @@ set /a MONO=0 & set MONS=
 
 set /a LIGHT=0, LTIME=990
 
-set /a MODE=1, TV=20, TRANSP=1
+set /a MODE=1, TV=20, TRANSP=1, CUPOS=35
 
 set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
 
@@ -59,22 +83,26 @@ set STOP=
 for /L %%_ in (1,1,300) do if not defined STOP (
 
 	set /a A1+=1, A2+=2, A3-=1, TRZ=!CRZ!
-	if !MODE!==0 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db"
-	if !MODE!==1 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t6.obj 5,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,4000,%ASPECT% 1 0 db 9 0 db 2 0 db a 0 db 3 0 db b 0 db 4 0 db c 0 db 5 0 db d 0 db 6 0 db e 0 db"
-	if !MODE!==2 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\spaceship.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 410,410,410,0,0,0 1,0,0,10 35,35,!DIST!,%ASPECT% 1 0 db"
-	if !MODE!==3 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t-checkers.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 1810,1810,1810,0,0,0 0,0,0,10 35,35,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
-	if !MODE!==4 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\hulk.obj %DRAWMODE%,-1 !A1!,!A2!,!A3! 0,0,0 210,210,210,0,-2,0 0,0,0,10 35,35,!DIST!,%ASPECT% 0 0 db"
-	if !MODE!==5 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 1810,1810,1810,0,0,0 0,0,0,10 35,35,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
-	if !MODE!==6 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
-	if !MODE!==7 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 35,35,!DIST!,%ASPECT% 1 0 db"
+	if !MODE!==0 set OUTP="fbox 7 0 20 & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 1 0 db"
+	if !MODE!==1 set OUTP="fbox 7 0 20 & 3d objects\cube-t6.obj 5,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 1 0 db 9 0 db 2 0 db a 0 db 3 0 db b 0 db 4 0 db c 0 db 5 0 db d 0 db 6 0 db e 0 db"
+	if !MODE!==2 set OUTP="fbox 7 0 20 & 3d objects\spaceship.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 410,410,410,0,0,0 1,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 1 0 db"
+	if !MODE!==3 set OUTP="fbox 7 0 20 & 3d objects\cube-t-checkers.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 1810,1810,1810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
+	if !MODE!==4 set OUTP="fbox 7 0 20 & 3d objects\hulk.obj %DRAWMODE%,-1 !A1!,!A2!,!A3! 0,0,0 210,210,210,0,-2,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db"
+	if !MODE!==5 set OUTP="fbox 7 0 20 & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 1810,1810,1810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
+	if !MODE!==6 set OUTP="fbox 7 0 20 & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
+	if !MODE!==7 set OUTP="fbox 7 0 20 & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 1 0 db"
 
-	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,7000,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
+	set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,0 0,0,0 1,1,1,0,0,0 0,0,0,10 !XMID!,!YMID!,10000,%ASPECT% 0 0 db & fbox 7 0 20"
 	
-	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" F
+	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
+	
+	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" Ff0:0,0,!W!,!H!
 	set OUTP=
 
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul )
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
 
 	set /a CRZ+=3, CNT+=1
 
@@ -99,6 +127,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !KEY! == 109 set /A MONO=1-!MONO!&(if !MONO!==1 set MONS=block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=fe??)&(if !MONO!==0 set MONS=)
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 7 set MODE=0
 	if !KEY! == 27 set STOP=1
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	
 	set /a KEY=0
 )
