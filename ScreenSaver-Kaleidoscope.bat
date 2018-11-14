@@ -2,8 +2,8 @@
 @echo off
 
 if defined __ goto :START
-
 cd /D "%~dp0"
+
 cls & cmdwiz setfont 6
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
@@ -25,9 +25,7 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-rem start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
-del /Q EL.dat >nul 2>nul
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=2200, DRAWMODE=0, MODE=0
 set /a CRX=0,CRY=0,CRZ=0
@@ -65,14 +63,7 @@ echo vt 1 1 >>%FN%
 echo f 1/1/ 2/2/ 3/3/ >>%FN%
 
 set /a A1=155, A2=0, A3=0, CNT=0
-set /a TRANSP=0, TV=-1
-set /a MONO=0 & set MONS=
-
-set /a LIGHT=0, LTIME=990
-
-set /a MODE=1, TV=20, TRANSP=1
-
-set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
+set /a MODE=1, TV=20
 
 set STOP=
 :LOOP
@@ -100,12 +91,10 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch & set /a CKEY=!errorlevel! & if !CKEY! == 115 echo "cmdgfx: " c:0,0,%W%,%H%
 	if !KEY! gtr 0 set STOP=1
 	if !MOUSE_EVENT! == 1 set STOP=1
-	
 	set /a KEY=0
 )
 if not defined STOP goto LOOP
 
 endlocal
 del /Q tri.obj
-taskkill.exe /F /IM dlc.exe>nul
 echo "cmdgfx: quit"

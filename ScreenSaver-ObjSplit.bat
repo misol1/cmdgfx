@@ -21,30 +21,23 @@ set __=.
 call %0 %* | cmdgfx_gdi "" m0OW10Sf0:0,0,%WW%,%H%,%W%,%H%N315Z500
 set __=
 set W=&set H=&set WW=&set F6W=&set F6H=
-cls
-cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
-set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, DRAWMODE=2, ACTIVE_KEY=0, WW=W*2, ZVAL=500+(H-100)*6
+set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, DRAWMODE=2, WW=W*2, ZVAL=500+(H-100)*6
 set ASPECT=0.7083
 
-set PAL0=f 0 db  f b b1  b 0 db  b 7 b1  7 0 db  9 7 b1  9 0 db  9 1 b1  1 0 db  1 0 b1
-set PAL1=f 0 db  f b b2  b 0 db  b 7 b2  b 7 b1  7 0 db  9 7 b1  9 7 b2  9 0 db  9 1 b1 9 1 b0 1 0 db  1 0 b2  1 0 b1  1 0 b0  1 0 b0  0 0 db  0 0 db
-set PAL2=f e b2  f e b2  f e b1  f e b0  e 0 db  e c b2  e c b1  c 0 db  c 4 b1  c 4 b2  4 0 db  4 0 b1 4 0 b0 4 0 db  4 0 b2  4 0 b1  0 0 db  0 0 db
-set PAL3=b 0 db
-set /A O0=-1,O1=0,O2=0,O3=-1
-set PAL=!PAL%DRAWMODE%!
-
+set PAL=f e b2  f e b2  f e b1  f e b0  e 0 db  e c b2  e c b1  c 0 db  c 4 b1  c 4 b2  4 0 db  4 0 b1 4 0 b0 4 0 db  4 0 b2  4 0 b1  0 0 db  0 0 db
 call :MAKESPLIT
 
 set STOP=
 :REP
-for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
-	echo "cmdgfx: fbox 8 0 . & 3d objects\torus.plg !DRAWMODE!,!O%%o! !RX!,!RY!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & 3d objects\springy1.plg !DRAWMODE!,!O%%o! !RY!,!RZ!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID2!,!YMID!,!DIST!,%ASPECT% !PAL! & !SPLITSCR:~1,-1!" f0:0,0,!WW!,!H!,!W!,!H!Z!ZVAL!
+for /L %%1 in (1,1,400) do if not defined STOP (
+	echo "cmdgfx: fbox 8 0 . & 3d objects\torus.plg !DRAWMODE!,0 !RX!,!RY!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & 3d objects\springy1.plg !DRAWMODE!,0 !RY!,!RZ!,!RZ! 0,0,0 -1,-1,-1, 0,0,0 1,-4000,0,10 !XMID2!,!YMID!,!DIST!,%ASPECT% !PAL! & !SPLITSCR:~1,-1!" f0:0,0,!WW!,!H!,!W!,!H!Z!ZVAL!
 	
 	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 	
@@ -55,7 +48,6 @@ for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch & set /a CKEY=!errorlevel! & if !CKEY! == 115 echo "cmdgfx: " c:0,0,%W%,%H%
 	if !KEY! gtr 0 set STOP=1
 	if !MOUSE_EVENT! == 1 set STOP=1
-	
 	set /a KEY=0
 )
 if not defined STOP goto REP

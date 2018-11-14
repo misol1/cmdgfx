@@ -148,7 +148,7 @@ do {
 
 			if (death==1) {
 				stop = 1
-				for (k = 1; k <= 80; k++) {
+				for (k = 1; k <= 40; k++) {
 					WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
 					I=STARTINDEX-1
 					for (j = 1; j <= MAXCUBES; j++) {
@@ -157,8 +157,9 @@ do {
 						var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
 						WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + "," + PY[I] + "," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" n")
 					}
-					TILT+=20
+					TILT+=40
 					WScript.Echo("\"cmdgfx: 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " f " + GROUNDCOL + " " + PLYCHAR + " 7 " + GROUNDCOL + " " + PLYCHAR + " & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1  \"")
+					var input = WScript.StdIn.ReadLine()
 				}
 			}
 

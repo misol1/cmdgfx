@@ -1,7 +1,9 @@
 @rem Use with "Screen Launcher": http://www.softpedia.com/get/Desktop-Enhancements/Screensavers/Screen-Launcher.shtml
 @echo off
+
 cd /D "%~dp0"
 if defined __ goto :START
+
 cmdwiz setfont 6 & cls
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U

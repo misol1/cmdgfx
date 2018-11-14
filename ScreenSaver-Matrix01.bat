@@ -56,7 +56,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!PALC!) do (
 	
 	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 
-	if !KEY! == 13 set /a KEY=0 & set SKTMP=!SKIP!&set SKIP=&if "!SKTMP!"=="" set SKIP=skip
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch
 	if !KEY! neq 0 set STOP=1
 	if !MOUSE_EVENT! neq 0 set STOP=1
