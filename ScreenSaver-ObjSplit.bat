@@ -18,10 +18,10 @@ cls & cmdwiz showcursor 0
 set /a WW=W*2
 
 set __=.
-call %0 %* | cmdgfx_gdi "" m0OW10Sf0:0,0,%WW%,%H%,%W%,%H%N315Z500
+call %0 %* | cmdgfx_gdi "" %TOP%m0OW10Sf0:0,0,%WW%,%H%,%W%,%H%N315Z500
 set __=
 set W=&set H=&set WW=&set F6W=&set F6H=
-cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz fullscreen 0 & cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

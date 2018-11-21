@@ -17,7 +17,7 @@ set /a W=W6*2, H=H6*2
 cls & cmdwiz showcursor 0
 
 set __=.
-cmdgfx_input.exe m0nW14x | call %0 %* | cmdgfx_gdi "" Sf1:0,0,!W!,!H!
+cmdgfx_input.exe m0nW14x | call %0 %* | cmdgfx_gdi "" %TOP%Sf1:0,0,!W!,!H!
 cls & cmdwiz fullscreen 0 & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 set __=& set W6=& set H6=
 goto :eof

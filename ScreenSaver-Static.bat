@@ -16,7 +16,7 @@ set /a W=W6*2, H=H6*2
 set __=.
 call %0 %* | cmdgfx_gdi "" %TOP%m0OSf0:0,0,%W%,%H%W30 000000,555555
 set __=
-cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz fullscreen 0 & cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 set W6=&set H6=
 goto :eof
 

@@ -13,9 +13,9 @@ cmdwiz getconsoledim sh
 set /a H=%errorlevel% + 1
 set /a WW=W*2, HH=H*2
 set __=.
-call %0 %* | cmdgfx_gdi "" Sf2:0,0,!WW!,!HH!,!W!,!H!m0O
+call %0 %* | cmdgfx_gdi "" %TOP%Sf2:0,0,!WW!,!HH!,!W!,!H!m0O
 set __=
-cmdwiz showcursor 1 & goto :eof
+cls & cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & goto :eof
 
 :START
 cscript //nologo //e:javascript "%~dpnx0" %*

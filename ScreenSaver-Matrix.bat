@@ -18,7 +18,7 @@ set /a H=%errorlevel% + 2
 set __=.
 call %0 %* | cmdgfx_gdi "" %TOP%m0OW16eSf5:0,0,310,165,155,55
 set __=
-cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz fullscreen 0 & cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START

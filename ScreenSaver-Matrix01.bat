@@ -17,7 +17,7 @@ set __=.
 call %0 %* | cmdgfx_gdi "" m0OW18%TOP%Sf7:0,0,%W%,%H%
 set __=
 cls
-cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 :START
