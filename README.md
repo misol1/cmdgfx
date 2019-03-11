@@ -74,9 +74,9 @@ Set flags in 4 ways:
 4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: "" e
 
 Debug:
-- \*-\* d  Print entire line causing the error if error happens
-- \*-\* e  Ignore/hide all error messages
-- \*-\* E  Wait for key press after error
+- \- d  Print entire line causing the error if error happens
+- \- e  Ignore/hide all error messages
+- \- E  Wait for key press after error
 
 Input/timing (cmdgfx_input prefered):
 - k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)
