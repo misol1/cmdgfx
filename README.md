@@ -79,45 +79,59 @@ Debug:
 - \- E  Wait for key press after error
 
 Input/timing (cmdgfx_input prefered):
-- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)
-  K  As above, but not persistent, and will *wait* for key press
-- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)
-- M[i]  As above, but reports mouse move even if no mouse key pressed
-- u  Also send keyboard UP events for m and M flags
-- wi  Wait i ms after each frame
-- Wi  Wait up to i ms after each frame (use for smooth frame rate)
-- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth
+- \- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)
+-   K  As above, but not persistent, and will *wait* for key press
+- \- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)
+- \- M[i]  As above, but reports mouse move even if no mouse key pressed
+- \- u  Also send keyboard UP events for m and M flags
+- \- wi  Wait i ms after each frame
+- \- Wi  Wait up to i ms after each frame (use for smooth frame rate)
+- \- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth
 
 Output:
-  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.gxy (i starts at 0 and increases). 0-6 params. Format=0 for txt format. Last param can force i
-  f:x,y,w,h  Set output buffer position and size. 0-4 params
-  n  Produce no output. Used to create a frame in several steps
+-  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.gxy (i starts at 0 and increases). 0-6 params. Format=0 for txt format. Last param can force i
+-  f:x,y,w,h  Set output buffer position and size. 0-4 params
+-  n  Produce no output. Used to create a frame in several steps
 
 3d:
-  b  Clear Z-buffer (only makes sense if n flag was just used)
-- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)
-  D  Clear all 3d objects in memory
-  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16
-- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i
-  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4
-- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures
-- T  Support repeated texture coordinates (above 1.0)
-  Zi  Set projection depth i for all 3d operations. Default: 500
+-   b  Clear Z-buffer (only makes sense if n flag was just used)
+- \- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)
+-   D  Clear all 3d objects in memory
+-   Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16
+- \- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i
+-   Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4
+- \- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures
+- \- T  Support repeated texture coordinates (above 1.0)
+-   Zi  Set projection depth i for all 3d operations. Default: 500
 
 Other:
-  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)
-  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256
-  p  Preserve the content of the cmd window text buffer when starting cmdgfx
+-  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)
+-  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256
+-  p  Preserve the content of the cmd window text buffer when starting cmdgfx
 
 Server:
-  F  Flush the pipe input buffer between script and server
-- i  If set, ignore the file 'servercmd.dat' even if present
-- I  If set, support setting title to supply commands to cmdgfx
-- J  When an input event happens, flush buffer between script and server
-- o  Each frame, write return value (input events) to EL.dat
-- O  Same as o, but only write to El.dat if an event happened (usually better)
-  S  Enable server mode
+-   F  Flush the pipe input buffer between script and server
+- \- i  If set, ignore the file 'servercmd.dat' even if present
+- \- I  If set, support setting title to supply commands to cmdgfx
+- \- J  When an input event happens, flush buffer between script and server
+- \- o  Each frame, write return value (input events) to EL.dat
+- \- O  Same as o, but only write to El.dat if an event happened (usually better)
+-   S  Enable server mode
 
+
+## Server
+
+Running cmdgfx as a server has several advantages, mostly regarding speed. The overhead of running an executable each frame disappears, and 3d objects are kept in memory and don't have to be re-read with each use. Server functionality also presents some problems, such as dealing with asynchronicity and input lag.
+
+In order to run as server, the S flag must be set, and the program needs to be last in a pipe chain, such as: call program.bat | cmdgfx.exe  S . For practical purposes, it is a better idea to have the script call itself this way than to have to type it manually each time. There are many example batch scripts included with this program that show how do to this.
+
+To send operations from the script to the program, use the echo command with a prefix of 'cmdgfx:' within quotes (optionally followed by flags and palette(s)), e.g: echo "cmdgfx: fbox 9 0 A". If the string sent does not have the prefix, the server simply prints it to stdout and otherwise ignores it. It is also possible to send operations either by writing (without 'cmdgfx' prefix) to the file 'servercmd.dat', or (if I flag set) by setting the title of the window, prefixed with 'output:'. These two methods have the advantage that they bypass the frame queue over the pipe and are processed immediately.
+
+Setting flags: see the separate help section for flags. Note that flags can be disabled by preceding with -.
+
+Dealing with input lag: because the batch script may execute faster than cmdgfx, a queue of frames to render may build up over the pipe, which can result in input lag. Actually, the best way to deal with this is to use the separate 'cmdgfx_input' program to handle input, because when put at the beginning of the pipe chain (like: cmdgfx_input.exe m0nW10 | call program.bat | cmdgfx  S) it can control the speed of the batch script, preventing it from running faster than the server. Most of the example scripts included with the program use this approach. Without cmdgfx_input, the best approach is to set the O flag (see flag section), and send in extra data (~2000 characters) prefixed by 'skip' with each call to the server to fill up the pipe buffer to prevent the server from lagging behind.
+
+Quitting the server: To exit the server, use echo as usual but follow 'cmdgfx:' with 'quit'. Using servercmd.dat or setting the title is also supported.
 
 
 
