@@ -134,6 +134,53 @@ Dealing with input lag: because the batch script may execute faster than cmdgfx,
 Quitting the server: To exit the server, use echo as usual but follow 'cmdgfx:' with 'quit'. Using servercmd.dat or setting the title is also supported.
 
 
+## Palette
+
+Unlike cmdgfx_gdi, setting the palette for cmdgfx does not set new RGB colors. Instead, it rearranges the existing palette indices of the 16 colors. To actually set RGB colors for cmdgfx, use the program 'cmdwiz' with the 'setpalette' operation.
+
+The foreground palette for cmdgfx is set as parameter 3, always following flags (use - to set no flags). The background palette can also be set as parameter 4 (it is NOT copied from parameter 3 if omitted).
+
+All 16 color indices can potentially be rearranged, but does not have to be.
+
+The default palette looks like 0123456789abcdef, which means index 0 is color 0, index 10 is color 10(a) etc. As an example, to keep index 0 and 1 as black and dark blue, but set index 2 to light blue, index 3 to cyan, and index 4 to white, use 019bf as palette.
+
+If runninng as server, default palette can be restored by using - as palette.
+
+## Operations
+
+### Poly
+
+Poly - draw a filled polygon of characters
+
+Syntax: poly fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
+
+Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.
+
+Char can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.
+
+A minimum of 3 coordinates (max 24) must be specified to draw a polygon.
+
+The poly operation cannot properly draw self-intersecting polygons. For that, use the ipoly operation.
+
+### Ipoly
+
+Ipoly - draw a filled polygon of characters (supporting self-intersection)
+
+Syntax: ipoly fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
+
+Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.
+
+Char can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.
+
+Except for the 3d operation, ipoly is the only operation that supports bit operations (bitop is only used for color, not char).
+
+Possible bitop values: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=regular
+
+A minimum of 3 coordinates (max 24) must be specified to draw a polygon.
+
+Note that ipoly can be used to simulate other operations such as fbox if bitop is needed. Fcircle, fellipse, line, and pixel can also be simulated with ipoly, though it is slightly cumbersome.
+
+### Gpoly
 
 
 
