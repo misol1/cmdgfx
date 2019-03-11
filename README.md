@@ -29,6 +29,7 @@ Used to process and forward input (key/mouse/resizing). Can be used as standalon
 
 cmdgfx_input | script.bat | cmdgfx
   
+There are many example scripts in the archive which shows this usage, as it is the recommended way to handle input for scripts using cmdgfx.
 
 cmdgfx.exe
 ----------
@@ -534,6 +535,12 @@ If running as server, default palette can be restored by using - as palette.
 
 cmdgfx_input.exe
 ----------
+Used to process and forward input (key/mouse/resizing). Can be used as standalone program but in this context typically used in a pipe chain looking like:
+
+cmdgfx_input | script.bat | cmdgfx
+
+There are many example scripts in the archive which shows this usage, as it is the recommended way to handle input for scripts using cmdgfx.
+
 ```
 CmdGfx_input v1.0 : Mikael Sollenborn 2017-2019
 
