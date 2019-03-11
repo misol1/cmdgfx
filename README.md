@@ -1,9 +1,9 @@
 # cmdgfx
-Windows command line graphic primitives, for text based games/demos by Mikael Sollenborn (2016-2017)
+Windows command line graphic primitives, for text based games/demos by Mikael Sollenborn (2016-2019)
 
-Sorry about the current lack of documentation; have a look at the example files and all will be (kind of) clear...
+The gdi version of cmdgfx produces bitmaps instead of text (but looks like raster font text). It sometimes gives very noticeable speed increases. In general, use the non-gdi version.
 
-The gdi version of cmdgfx produces bitmaps instead of text (but looks like text). It sometimes gives very noticeable speed increases. In general, use the non-gdi version.
+The documentation below for cmdgfx and cmdgfx_gdi is outdated and incomplete, especially regarding flags. Preferably see the in-program help text by running cmdgfx/cmdgfx_gdi with /? parameter
 
 cmdgfx.exe
 ----------
@@ -27,10 +27,12 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
-3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale,tex_x_a,tex_y_a]
+3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 insert   file
+skip
+rem
 
 Fgcol and bgcol can be specified either as decimal or hex.
 Char is specified either as a char or a two-digit hexadecimal ASCII code.
@@ -86,10 +88,12 @@ ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
 block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
-3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale,tex_x_a,tex_y_a]
+3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 insert   file
+skip
+rem
 
 Fgcol and bgcol can be specified either as decimal or hex.
 Char is specified either as a char or a two-digit hexadecimal ASCII code.
