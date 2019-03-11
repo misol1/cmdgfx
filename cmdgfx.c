@@ -1634,11 +1634,9 @@ int main(int argc, char *argv[]) {
 #ifdef GDI_OUTPUT
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_gdi";
-		char extras[128] = ", 'fn[:x,y,w,h[,outw,outh]]' use font n(0-9,default 6), 'P' read/write buffer to 'GDIbuf.dat'";
-		char dspalette[256] = "Fgpalette/bgpalette follows '112233,' repeated, 1=red, 2=green, 3=blue (hex)\n\n";
 #else
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.";
-		char name[2] = "", extras[2] = "", dspalette[2] = "";
+		char name[2] = "";
 #endif
 		if (argc > 2) {
 			if (strcmp(argv[2], "fbox") == 0) {
