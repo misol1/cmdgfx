@@ -6,8 +6,8 @@
 
 // https://docs.microsoft.com/en-us/windows/desktop/menurc/versioninfo-resource
 #define APP_VS          1,0,0,0
-#define APP_BUILD_MONTH "September"
-#define APP_BUILD_YEAR  "2018"
+#define APP_BUILD_MONTH "March"
+#define APP_BUILD_YEAR  "2019"
 #define APP_DEVELOPER   "Mikael Sollenborn"
 #define APP_COMPANY     ""
 #define APP_NAME        "TestLib"
