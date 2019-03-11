@@ -60,6 +60,8 @@ var LSystems = [
    ,new LSystem("Rings", "F+F+F+F", ["F->FF+F+F+F+F+F-F"], 25, "c", 4, 90, 0, 6, 380, 660)
    ,new LSystem("Skipper", "F+F+F+F", ["F->F+1-FF+F+FF+F1+FF-1+FF-F-FF-F1-FFF", "f->ffffff", "1->f" ], 25, "9", 2, 90, 0, 10, 550, 220)
    ,new LSystem("Houdini", "F-F-F-F-F-F-F-F", ["F->F-–-F+F+F+F+F+F+F-–-F" ], 25, "f", 4, 45, 0, 150, 500, 550)
+   ,new LSystem("Houdini", "F-F-F-F-F-F-F-F", ["F->F-–-F+F+F+F+F+F+F-–-F" ], 120, "b", 2, 45, 0, 150, 610, 520)
+   ,new LSystem("Houdini", "F-F-F-F-F-F-F-F", ["F->F-–-F+F+F+F+F+F+F-–-F" ], 39, "d", 3, 14.5, 0, 150, 800, 450)
 ];
 
 function DrawState(x, y, currRot, swap, linelen, rotation) {

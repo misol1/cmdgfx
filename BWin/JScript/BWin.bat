@@ -354,6 +354,7 @@ while(true) {
 			HH=H*2, MID_OFF_Y=H
 			WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
 			Execute('cmdwiz showcursor 0')
+			FULLSCREEN = Execute('cmdwiz getfullscreen')
 		}
 		IGNORE_SIZE=false
 	}
@@ -446,7 +447,7 @@ function NewDrop() {
 
 function SetFullScreen(bFull) {
 	if(bFull) {
-		FULLSCREEN=1
+		FULLSCREEN=true
 		OLDWX = Execute('cmdwiz getwindowbounds x')
 		OLDWY = Execute('cmdwiz getwindowbounds y')
 		OLDW=W, OLDH=H
@@ -457,7 +458,7 @@ function SetFullScreen(bFull) {
 		WWW=W*WPAGES, HH=H*2
 		WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
 	} else {
-		FULLSCREEN=0
+		FULLSCREEN=false
 		Execute('cmdwiz fullscreen 0')
 		Execute('cmdwiz showcursor 0')
 		Execute('cmdwiz setwindowpos ' + OLDWX + ' ' + OLDWY)

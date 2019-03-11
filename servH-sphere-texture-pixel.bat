@@ -59,7 +59,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, XPMAX=W-80 & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4+7, H=SCRH*2*6+11, XMID=W/2, YMID=H/2, XPMAX=W-80 & cmdwiz showcursor 0
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

@@ -23,13 +23,14 @@ extern int FRAMESIZE;
 extern unsigned char *video;
 extern int bAllowRepeated3dTextures;
 extern float texture_offset_x, texture_offset_y;
+extern float *ZBufVideo;
 
 
 #define GORAUD_TYPE_STATIC	0
 #define GORAUD_TYPE_Z		1
 
 #define BIT_OP_NORMAL		0
-#define BIT_OP_OR				1
+#define BIT_OP_OR			1
 #define BIT_OP_AND			2
 #define BIT_OP_XOR			3
 #define BIT_OP_ADD			4

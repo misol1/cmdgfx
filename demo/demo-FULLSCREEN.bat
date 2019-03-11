@@ -3,19 +3,19 @@ if defined __ goto :STARTDEMO %1
 set __=.
 
 cls & cmdwiz setfont 6
-mode 80,50 & cmdwiz fullscreen 1 & cmdwiz setmousecursorpos 10000 100 & cmdwiz showmousecursor 0
+mode 80,50 & (if "%~2"=="M" cmdwiz showwindow maximize) & (if not "%~2"=="M" cmdwiz fullscreen 1) & cmdwiz setmousecursorpos 10000 100 & cmdwiz showmousecursor 0
 cmdwiz getconsoledim sw
 set /a W6=%errorlevel% + 1
 cmdwiz getconsoledim sh
 set /a H6=%errorlevel% + 3
-if "%~2"=="U" set /a H6 += 3 & set REALFS=1
+if "%~2"=="U" set /a H6 += 3, REALFS=1 & set TOP=U
 set /a W=W6*2, H=H6*2
 cls & cmdwiz showcursor 0
 
-call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,%W%,%H%W12%2
+call %0 %* | cmdgfx_gdi "" ekOSf0:0,0,%W%,%H%W12%TOP%
 set __=
 cls
-cmdwiz fullscreen 0 & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
+(if not "%~2"=="M" cmdwiz fullscreen 0) & cmdwiz showmousecursor 1 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
 
 

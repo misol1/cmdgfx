@@ -13,6 +13,7 @@ uchar *video;
 int SCR_XRES, SCR_YRES;
 int bAllowRepeated3dTextures = 0;
 float texture_offset_x = 0, texture_offset_y = 0;
+float *ZBufVideo = NULL;
 
 long long milliseconds_now() {
 	static LARGE_INTEGER s_frequency;

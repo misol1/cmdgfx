@@ -54,16 +54,16 @@ if %H% leq 110 set /a TRISIZE=70
 
 set FN=tri.obj
 echo usemtl cmdblock 0 0 %TRISIZE% %TRISIZE% >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
+echo v  -25 -25 0 >>%FN%
+echo v  25 -25 0 >>%FN%
+echo v  0 25 0 >>%FN%
 echo vt 0 0 >>%FN%
 echo vt 0 1 >>%FN%
 echo vt 1 1 >>%FN%
 echo f 1/1/ 2/2/ 3/3/ >>%FN%
 
 set /a A1=155, A2=0, A3=0, CNT=0
-set /a MODE=1, TV=20
+set /a MODE=1, TV=20, RV=0, CE=1
 
 set STOP=
 :LOOP
@@ -79,7 +79,8 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !MODE!==6 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 %CUPOS%,%CUPOS%,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
 	if !MODE!==7 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 %CUPOS%,%CUPOS%,!DIST!,%ASPECT% 1 0 db"
 
-	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
+	set /a ZZT=0, XXT=-500*5, YYT=-800*3, ZZT2=0,CPP=-2
+	for /L %%2 in (1,1,5) do set /a YYT+=980, XXT=-490*5, ZZT=!ZZT2!, ZZT2+=180*4*!RV!, CPP+=1, CPP2=CPP & for /L %%1 in (1,1,10) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% !CPP2! 0 db"&set /A ZZT+=180*4, XXT+=490, CPP2+=1*!CE!
 	
 	echo "cmdgfx: !OUTP:~1,-1!"
 	set OUTP=
@@ -87,10 +88,12 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 
 	set /a CRZ+=4, CNT+=1
-	if !CNT! gtr 1370 set /a A2+=1
-	if !CNT! gtr 1400 set /a CNT=0
-
+	if !CNT! gtr 137 set /a A2+=1
+	if !CNT! gtr 140 set /a CNT=0
+	
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch & set /a CKEY=!errorlevel! & if !CKEY! == 115 echo "cmdgfx: " c:0,0,%W%,%H%
+	if !KEY! == 13 set /a RV=1-!RV!, KEY=0
+	if !KEY! == 32 set /a CE=1-!CE!, KEY=0
 	if !KEY! gtr 0 set STOP=1
 	if !MOUSE_EVENT! == 1 set STOP=1
 	set /a KEY=0

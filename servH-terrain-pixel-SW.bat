@@ -35,7 +35,7 @@ set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-   echo "cmdgfx: fbox 0 0 fa 0,0,%W%,%H% & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,187000,!TYSCALE!,0,-10000 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 db & 3d objects/!OBJ! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 db" !XTRAFLAG!Ffa:0,0,!W!,!H!
+   echo "cmdgfx: fbox 0 0 fa & 3d objects/!OBJ! 0,-1,!TEX_OFFSET!,0,187000,!TYSCALE!,0,-10000 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 db & 3d objects/!OBJ! 3,-1 !RX!,!RY!,!RZ! 0,0,0 !OSX!,!OSY!,!OSZ!,0,0,0 1,-10000,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 1 0 db" !XTRAFLAG!Ffa:0,0,!W!,!H!
 	set XTRAFLAG=
 	
 	if !ROTMODE! == 0 set /a "RX+=0,RY+=0,RZ+=2"
@@ -49,7 +49,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4+1, H=SCRH*2*6+1, XMID=W/2+10, YMID=H/2-80, HLPY=H-3 & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4+7, H=SCRH*2*6+11, XMID=W/2+10, YMID=H/2-80, HLPY=H-3 & cmdwiz showcursor 0
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

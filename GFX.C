@@ -1527,6 +1527,9 @@ static float dxdya, dxdyb, dizdya, duizdya, dvizdya;
 static char *texture;
 
 static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal);
+static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal);
+
+void (*drawPerspFunc)(int y1, int y2, int xSize, int ySize, int plusVal);
 
 int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 {
@@ -1539,6 +1542,8 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 	int y1i, y2i, y3i;
 	int side;
 
+	drawPerspFunc = ZBufVideo != NULL? drawtpolyperspsubtriseg_ZBuffer : drawtpolyperspsubtriseg;
+	
 	// Shift XY coordinate system (+0.5, +0.5) to match the subpixeling technique
 	
 	x1 = (float)tri[0].x + 0.5;
@@ -1666,7 +1671,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 			xb = x1 + dy * dxdy1;
 			dxdyb = dxdy1;
 
-			drawtpolyperspsubtriseg(y1i, y2i, bild->xSize, bild->ySize, plusVal);
+			(*drawPerspFunc)(y1i, y2i, bild->xSize, bild->ySize, plusVal);
 		}
 		if (y2i < y3i)	// Draw lower segment if possibly visible
 		{
@@ -1675,7 +1680,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 			xb = x2 + (1 - (y2 - y2i)) * dxdy3;
 			dxdyb = dxdy3;
 
-			drawtpolyperspsubtriseg(y2i, y3i, bild->xSize, bild->ySize, plusVal);
+			(*drawPerspFunc)(y2i, y3i, bild->xSize, bild->ySize, plusVal);
 		}
 	}
 	else	// Longer edge is on the right side
@@ -1699,7 +1704,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 			uiza = uiz1 + dy * duizdya;
 			viza = viz1 + dy * dvizdya;
 
-			drawtpolyperspsubtriseg(y1i, y2i, bild->xSize, bild->ySize, plusVal);
+			(*drawPerspFunc)(y1i, y2i, bild->xSize, bild->ySize, plusVal);
 		}
 		if (y2i < y3i)	// Draw lower segment if possibly visible
 		{
@@ -1715,7 +1720,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 			uiza = uiz2 + dy * duizdya;
 			viza = viz2 + dy * dvizdya;
 
-			drawtpolyperspsubtriseg(y2i, y3i, bild->xSize, bild->ySize, plusVal);
+			(*drawPerspFunc)(y2i, y3i, bild->xSize, bild->ySize, plusVal);
 		}
 	}
 	
@@ -1730,7 +1735,7 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 	float iz, uiz, viz;
 	int texPos, maxTexPos = xSize * ySize;
 
-	while (y1 < y2)		// Loop through all lines in the segment
+	while (y1 < y2)	// Loop through all lines in the segment
 	{
 		x1 = xa;
 		x2 = xb;
@@ -1758,6 +1763,95 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 				
 				if (iz == 0) iz = 0.001;
 				z = 1 / iz;
+				u = uiz * z;
+				v = viz * z;
+
+				if (bAllowRepeated3dTextures) {
+					u = ((int)u) % xSize;
+					v = ((int)v) % ySize;
+				}
+
+				// Copy pixel from texture to screen
+
+				texPos = ((((int) v) ) * (xSize)) + (((int) u) );
+				if (texPos < maxTexPos && texPos >= 0)
+					*scr = texture[texPos] + plusVal;
+				scr++;
+
+				// Step 1/Z, U/Z and V/Z horizontally
+
+				iz += dizdx;
+				uiz += duizdx;
+				viz += dvizdx;
+			}
+		}
+
+		// Step along both edges
+
+		xa += dxdya;
+		xb += dxdyb;
+		iza += dizdya;
+		uiza += duizdya;
+		viza += dvizdya;
+
+		y1++;
+	}
+}
+
+
+static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal)
+{
+	unsigned char *scr;
+	int x1, x2;
+	float z, u, v, dx;
+	float iz, uiz, viz;
+	int texPos, maxTexPos = xSize * ySize;
+	float *zBufScr;
+
+	while (y1 < y2)	// Loop through all lines in the segment
+	{
+		x1 = xa;
+		x2 = xb;
+
+		// Perform subtexel pre-stepping on 1/Z, U/Z and V/Z
+
+		dx = 1 - (xa - x1);
+		iz = iza + dx * dizdx;
+		uiz = uiza + dx * duizdx;
+		viz = viza + dx * dvizdx;
+
+		scr = &video[y1 * XRES + x1];
+
+		zBufScr = &ZBufVideo[y1 * XRES + x1];
+
+		if (y1 >= 0 && y1 < YRES) {
+			while (x1++ < x2 && x1 <= XRES)	// Draw horizontal line
+			{
+				// Calculate U and V from 1/Z, U/Z and V/Z
+				if (x1 <= 0) {
+					zBufScr++;
+					scr++;
+					iz += dizdx;
+					uiz += duizdx;
+					viz += dvizdx;
+					continue;
+				}
+				
+				if (iz == 0) iz = 0.001;
+				
+				if (iz + 0.00000001 < *zBufScr) { // the 0.00000001 is a hack for cmdgfx since we sometimes draw the same poly twice
+					zBufScr++;
+					scr++;
+					iz += dizdx;
+					uiz += duizdx;
+					viz += dvizdx;
+					continue;
+				}
+				
+				z = 1 / iz;
+				*zBufScr = iz;
+				zBufScr++;
+				
 				u = uiz * z;
 				v = viz * z;
 

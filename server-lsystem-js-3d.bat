@@ -1,6 +1,6 @@
 @if (true == false) @end /*
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d (right/left Space i/I p Enter d/D p x/y/z)
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d (right/left Space i/I p Enter d/D p x/y/z a/A n)
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900N2500L150,8
@@ -58,6 +58,8 @@ var LSystems = [
    ,new LSystem("Crystal", "F+F+F+F", ["F->FF+F++F+F"], 30, "e", 4, 90, 0, 0, 0)
    ,new LSystem("Rotated Koch Curve", "F+F+F+F", ["F->F+/F-F-F//F+F+/F-F/"], 22, "c", 3, 90, 0, 0.5, 90)
    ,new LSystem("Pentaplexity3d", "F++F++F++F++F", ["F->F++/F++//F|F-F++F"], 45, "f", 4, 36, 0, 3, 0)
+   ,new LSystem("Houdini", "F-F-F-F-F-F-F-F", ["F->F-–-F+F+F+F+F+F+F-–-F" ], 39, "d", 3, 14.5, 90, 0, 0)
+   ,new LSystem("Board", "F+F+F+F", ["F->FF+F+F+F+FF"], 40, "5", 4, 150, 0, 0, 0)
 
 ];
 
@@ -84,7 +86,7 @@ function DrawSystem() {
 	color = LS.linecolor
 	iterations = LS.iterations + extraIteration
 	if (iterations < 1) { iterations=1; extraIteration++; }
-	rotationX = LS.rotationX
+	rotationX = LS.rotationX + modRotX
 	rotationY = LS.rotationY
 	currRotX = LS.startRotationX*(Math.PI/180)
 	currRotY = LS.startRotationY*(Math.PI/180)
@@ -186,6 +188,8 @@ W=1600, H=900, XMID=W/2, YMID=H/2
 fso = new ActiveXObject("Scripting.FileSystemObject"); 
 Shell = new ActiveXObject("WScript.Shell")
 
+modRotX = 0
+
 while(true) {
 
 	if (drawNextSystem) {
@@ -219,6 +223,7 @@ while(true) {
 		else if (key == "100") DIST+=40
 		else if (key == "68") DIST-=40
 		else if (key == "109") manualRotation = !manualRotation
+		else if (key == "110") { RZ=0; RX=90; RY=360; RXD=4; RYD=RZD=0 }
 		else if (key == "98") { useBobs++; if (useBobs > 2) useBobs=0; drawNextSystem=true; extraFlag="D"; }
 		else if (key == "32") useLight = !useLight
 		else if (key == "105") { extraIteration--; drawNextSystem=true; extraFlag="D"; }
@@ -226,8 +231,12 @@ while(true) {
 		else if (key == "13") { singleAxis=!singleAxis; drawNextSystem=true; extraFlag="D"; }
 		else if (key == "112") WScript.Echo("\"cmdgfx: \" K")
 		else if (key == "114") RX = RY = RZ = 0
-		else if (key == "331") { drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex--; if (systemIndex < 0) systemIndex=LSystems.length-1 }
-		else if (key != "0") { drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex++; if (systemIndex >= LSystems.length) systemIndex=0 }
+		else if (key == "115") { exec = Shell.Exec('cmd /c echo ' + modRotX + ' >>modXOut.txt'); exec.StdOut.ReadAll(); }
+		else if (key == "331") { modRotX = 0; drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex--; if (systemIndex < 0) systemIndex=LSystems.length-1 }
+		else if (key == "97") { modRotX += 0.2; drawNextSystem=true; extraFlag="D"; }
+		else if (key == "65") { modRotX -= 0.2; drawNextSystem=true; extraFlag="D"; }
+
+		else if (key != "0") { modRotX = 0; drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex++; if (systemIndex >= LSystems.length) systemIndex=0 }
 	}
 	
 	if (ti[23] == "1")
