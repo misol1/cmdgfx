@@ -352,22 +352,22 @@ Text - write a formatted text string
 
 Syntax: text fgcol bgcol char string x,y
 
-Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\  ' to ignore/type out all gxy control codes inside the text.
+Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the text.
 
 Char has no meaning for the text operation, unless '?' is used to keep the character in the buffer at each position.
 
-The 'string' allows formatting text output using the same control codes used in gxy files. Note that it is *not* possible to write blank spaces in the string. Instead, spaces must be written as underscores (_), or as \\  g20, or as \\  - to skip writing the character. To actually write an underscore in a string, use the Ascii code formatting \\  g5f
+The 'string' allows formatting text output using the same control codes used in gxy files. Note that it is *not* possible to write blank spaces in the string. Instead, spaces must be written as underscores (_), or as \\g20, or as \\- to skip writing the character. To actually write an underscore in a string, use the Ascii code formatting \\g5f
 
 The following gxy control codes are supported in the string:
 
-   \\  r: restore previous fgcol and bgcol
- \\  gxx: ascii character in hex (xx)
-   \\  n: newline (new line starts from initial x position)
-   \\  -: skip character (transparent)
-   \\  \\  : print \\  
-  \\  xx: fgcol and bgcol in hex, e.g. \\  A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window
+  \\r: restore previous fgcol and bgcol
+  \\gxx: ascii character in hex (xx)
+  \\n: newline (new line starts from initial x position)
+  \\-: skip character (transparent)
+  \\\\  : print \\  
+  \\xx: fgcol and bgcol in hex, e.g. \\A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window
 
-Apart from blank space, a few other characters must be written using control codes, including & (\\  g26), " (\\  g22), and possibly ! (\\  g21) and % (\\  g25)
+Apart from blank space, a few other characters must be written using control codes, including & (\\g26), " (\\g22), and possibly ! (\\g21) and % (\\g25)
 
 X and y are column and row coordinates with 0,0 as top left.
 
