@@ -24,6 +24,7 @@ Use cmdgfx_gdi:
   6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each
 
 cmdgfx_input:
+
 Used to process and forward input (key/mouse/resizing). Can be used as standalone program but in this context typically used in a pipe chain looking like:
 
 cmdgfx_input | script.bat | cmdgfx
@@ -73,9 +74,9 @@ Set flags in 4 ways:
 4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: "" e
 
 Debug:
-- d  Print entire line causing the error if error happens
-- e  Ignore/hide all error messages
-- E  Wait for key press after error
+- - d  Print entire line causing the error if error happens
+- - e  Ignore/hide all error messages
+- - E  Wait for key press after error
 
 Input/timing (cmdgfx_input prefered):
 - k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)
