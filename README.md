@@ -528,7 +528,7 @@ All 16 colors can potentially be set, but does not have to be.
 
 The palette follows the format RRGGBB,RRGGBB,... up to 16 colors, where RR is the red component 0-255 in hexadecimal, GG is the green component, and BB is the blue component. As an example, to keep index 0 black but set color 1 to orange and color 2 to lime green, use 000000,ff9900,99ff00 as palette.
 
-If runninng as server, default palette can be restored by using - as palette.
+If running as server, default palette can be restored by using - as palette.
 
 
 
