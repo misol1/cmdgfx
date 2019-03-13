@@ -23,8 +23,8 @@
 
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects
-// 2. (Free?) rotation for image and/or block? Scaling for block? Force col for tpoly/3d?
-// 3. Actually showing text with text operation in pixel mode (actually, all modes). Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big letters of char/fgcol/bgcol!
+// 2. Force col for tpoly/3d? Free rotation for block?
+// 3. GDI: Actually showing text with text operation in pixel mode (actually, all modes). Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big letters of char/fgcol/bgcol!
 // 4. For text and image op, have option to really ignore all gxy codes (without typing them out as with \ )
 // 5. Major: 32(24?16?)-bit gdi support
 // 6. Major: Port to Linux
@@ -32,6 +32,7 @@
 // For 3d:
 // 1. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
 // 2. Z-buffer support for mode 0 texture, goraud, (and flat with bitop?)
+
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -997,7 +998,7 @@ double my_shr(double v1, double v2) {
 }
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0, moveCol=7;
@@ -1005,7 +1006,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	int outFg, outBg, outChar;
 	int *m_inFg = NULL, *m_inBg = NULL, *m_inChar = NULL;
 	int *m_outFg = NULL, *m_outBg = NULL, *m_outChar = NULL;
-
+	
 	for (i=0; i < 5; i++) store[i] = 0;
 	
 	if (s_mode) {
@@ -1029,15 +1030,18 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 	sw = w, sh = h;
 		
 	if (x >= XRES || nx >= XRES) return 0;
-	if (x+w < 0 || nx+w < 0) return 0;
 	if (y >= YRES || ny >= YRES) return 0;
-	if (y+h < 0 || ny+h < 0) return 0;
-	if (x < 0) { w+=x; x=0; }
-	if (y < 0) { h+=y; y=0; }
-	if (h < 0 || w < 0) return 0;
-	if (x+w >= XRES) { w-=(x+w)-XRES; }
-	if (y+h >= YRES) { h-=(y+h)-YRES; }
-	if (h < 0 || w < 0) return 0;
+
+	if (rz != 90 && rz != 270 && (nw <= 0 || nh <= 0)) {
+		if (x+w < 0 || nx+w < 0) return 0;
+		if (y+h < 0 || ny+h < 0) return 0;
+		if (x < 0) { w+=x; x=0; }
+		if (y < 0) { h+=y; y=0; }
+		if (h < 0 || w < 0) return 0;
+		if (x+w >= XRES) { w-=(x+w)-XRES; }
+		if (y+h >= YRES) { h-=(y+h)-YRES; }
+		if (h < 0 || w < 0) return 0;
+	}
 	
 	blockCol = (uchar *)malloc(w*h*sizeof(uchar));
 	blockChar = (uchar *)malloc(w*h*sizeof(uchar));
@@ -1203,6 +1207,75 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, cha
 		if (n2) te_free(n2);
 	}
 
+	//if ((nw > 0 && nh > 0 && (nw != w || nh != h)) || (nw > 0 && nw != w)) {
+	if (nw > 0 && nh > 0 && (nw != w || nh != h)) {
+		uchar *blockCol2, *blockChar2;
+		float dx, dy, ax=0, ay=0;
+		int ry, dry;
+		
+		/*
+		if (nh <= 0) {
+			float change = (float)nw / (float)w;
+			nh = (int)((float)h * change);
+		}*/
+		
+		blockCol2 = (uchar *)malloc(nw*nh*sizeof(uchar));
+		blockChar2 = (uchar *)malloc(nw*nh*sizeof(uchar));
+
+		dx = (float)w / (float)nw;
+		dy = (float)h / (float)nh;
+		
+		for (i=0; i < nh; i++) {
+			ry = i*nw;
+			dry = ((int)ay) * w;
+			ax = 0;
+			for (j=0; j < nw; j++) {
+				blockChar2[ry+j] = blockChar[dry + (int)ax];
+				blockCol2[ry+j] = blockCol[dry + (int)ax];
+				ax = ax + dx;
+			}
+			ay = ay + dy;
+		}
+		
+		w=nw, h=nh;
+		free(blockChar); free(blockCol);
+		blockChar = blockChar2;
+		blockCol = blockCol2;
+	}
+	
+	if (rz == 90 || rz == 180 || rz == 270) {
+		uchar *blockCol2, *blockChar2;
+		int rw = w, rh=h, oy;
+		int rsy, rdy, rsx, rdx;
+		int rx, ry;
+		
+		if (rz != 180) rw = h, rh = w;
+		
+		blockCol2 = (uchar *)malloc(rw*rh*sizeof(uchar));
+		blockChar2 = (uchar *)malloc(rw*rh*sizeof(uchar));
+
+		if(rz==180) { rsy=w*(h-1), rdy=-w, rsx=w-1, rdx=-1; }
+		else if(rz==90) { rsy=h-1, rdy=-1, rsx=0, rdx=h; }
+		else if(rz==270) { rsy=0, rdy=1, rsx=h*(w-1), rdx=-h; }
+		
+		ry = rsy;
+		for (i=0; i<h; i++) {
+			oy = w*i;
+			rx = rsx;
+			for (j=0; j<w; j++) {
+				blockChar2[ry+rx] = blockChar[oy + j];
+				blockCol2[ry+rx] = blockCol[oy + j];
+				rx += rdx;
+			}
+			ry += rdy;
+		}
+	
+		w=rw, h=rh;
+		free(blockChar); free(blockCol);
+		blockChar = blockChar2;
+		blockCol = blockCol2;
+	}
+	
 	if (nofT < 1) {
 		for (i = 0; i < h; i++) {
 			i2 = i; if (bFlipY) i2 = h-1-i;
@@ -1695,7 +1768,7 @@ int main(int argc, char *argv[]) {
 				printf("\n3d - draw a 3d object file\n\nSyntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n\n[objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports pcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx files) or character (for gxy and txt) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)\n\ndrawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture\n\ndrawoption: For mode 0,5,6 with texture, drawoption is transpchar(for gxy/txt) and transpcol(for pcx); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high byte of drawoption.\n\n[,tex_offset,tey_offset,tex_scale,tey_scale]: optional parameters used to set/scroll texture offset. Since calculating floating point in Batch is hard, the values are integers, where 0 is 0 and 100000 is 1. The scale is used to determine how much of the texture is seen at once, e.g a value of 33000 would show 1/3 of the texture in the given dimension, and 200000 would show it double.\n\nrx[:rx2],ry[:ry2],rz[:rz2]: rotation of 3d object in 3 axis, specified as Euler angles. If specifying a second rotation (for all axis), it is performed *after* the first translation. Keep in mind that angles are integers, and by default multiplied by 4 (can be changed with R flag), so a full circle is 1440 degrees.\n\ntx[:tx2],ty[:ty2],tz[:tz2]: floating point translation (move) of 3d object in 3 dimensions. The translation is done after the rotation. If specifying a second translation (for all dimensions), it is performed after the second rotation.\n\nscalex,scaley,scalez,xmod,ymod,zmod: Floating point initial moving (mod) and scaling of the object done before any translations or rotations. Note that mod is done before scaling, and thus uses the initial object size.\n\ncull,z_near_cull,z_far_cull,z_levels: Set cull to 1 to use backface culling, otherwise 0. Z_near_cull sets the close-to-camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_far_cull sets the far-away camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_levels is used to sort faces within a single object, where a higher value gives better precision (a default of 10  will be used if 0 is set)\n\nxpos,ypos,distance,aspect: Xpos,ypos is the screen center point (column and row) around which the object is drawn. Distance is the distance of the object from the camera. Negative values produce an 'inverted' object. Aspect (floating point value) is used for correction when fonts are not the same width as height, and thus make objects appear distorted (not true for pixel fonts, where aspect is 1). To get the correct aspect for a font, divide its width in pixels by its height, e.g. raster font 1 is 6/8=0.75.\n\nfgcol1 bgcol1 char1...: Faces are drawn using at mimimum 1 set of fgcol/bgcol/char, and at most 32. If only 1 is provided, the same set is used for all faces. If 2 are provided, set 1 is used for face 1, set 2 for face 2, set 1 for face 3, etc. Use '?' for fgcol or bgcol to keep the current foreground AND background colors in the buffer. Use '?' for char to keep the current characters in the buffer. If drawing with a texture, fgcol and bgcol are not ignored but instead *added* to the texture's foreground and background colors. Char is ignored for textures unless it is a pcx file. Cols are 0-15 in hex or decimal (u and U for current console fg/bg colors), and chars are 0-255 in hex or written as an actual character.\n\nNote that faces with less than 3 vertices are treated differently when drawing, since they cannot form a polygon. For single vertex faces, a single character (dot) is drawn (except in drawmode 2). However, for mode 0,1,5 and 6, if a texture has been set, the texture is drawn (as unscaled image) instead of a dot, with the vertex as center point. For faces with 2 vertices, a line is drawn between the points (except in drawmode 2).\n\nAlso note that the Z-buffer (if enabled) only works for textured graphics in drawmode 5 by default. Set the s flag too to support Z-buffer for flat shade in 3d modes 0,1,4 as well.\n");
 			}
 			else if (strcmp(argv[2], "block") == 0) {
-				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block mode[:1233] x,y,w,h x2,y2 [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\nx,y,w,h x2,y2: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. \n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n[transform]: The block operation allows per-character search and replace functionality. A transform string follows the format 1233=1233,... and the characters used are 0-f, ?=any, +=add 1, -=minus 1. To take all blank spaces (hex 20) with color 5 and bgcolor 1, and replace with A(hex 41) with color 9 and 0, the transform string would look like: 2051=4190. To also change all B's(42) to C's(43), regardless of color, ? would be used to disregard color(s), and get the string: 2051=4190,42??=43??. Finally, to take all characters from 40-4f(@ and A-O) and keep it, BUT increase the color and decrease the bgcolor, the string would be: 2051=4190,42??=43??,4???=??+-. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining characters to black spaces(20), use: 2051=4190,42??=43??,4???=??+-,????=2000. Note that + and - can also be used for characters (++ or --), and that ? can be used for color AND/OR bgcolor.\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n");
+				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\nx,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.\n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n[transform]: The block operation allows per-character search and replace functionality. A transform string follows the format 1233=1233,... and the characters used are 0-f, ?=any, +=add 1, -=minus 1. To take all blank spaces (hex 20) with color 5 and bgcolor 1, and replace with A(hex 41) with color 9 and 0, the transform string would look like: 2051=4190. To also change all B's(42) to C's(43), regardless of color, ? would be used to disregard color(s), and get the string: 2051=4190,42??=43??. Finally, to take all characters from 40-4f(@ and A-O) and keep it, BUT increase the color and decrease the bgcolor, the string would be: 2051=4190,42??=43??,4???=??+-. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining characters to black spaces(20), use: 2051=4190,42??=43??,4???=??+-,????=2000. Note that + and - can also be used for characters (++ or --), and that ? can be used for color AND/OR bgcolor.\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n");
 			}
 			
 			else if (strcmp(argv[2], "flags") == 0) {
@@ -2417,21 +2490,25 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_FBOX, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"block ") == pch) {
-			int x1,y1,w,h, nx,ny, xFlip = 0, yFlip = 0;
+			int x1,y1,w,h, nx,ny,nw=-1,nh=-1, rz=0, xFlip = 0, yFlip = 0;
 			int mvx=-1, mvy=-1, mvw=-1, mvh=-1;
-			char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0}, xyExprToCh[16] = {0};
+			char transf[2510]= {0}, mode[8], colorExpr[1024] = {0}, xExpr[1024] = {0}, yExpr[1024] = {0}, xyExprToCh[16] = {0}, nys[64] = {0};
 
 			pch = pch + 6;
-			nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%d %2s %d %d %2500s %1022s %1022s %1022s %10s %d,%d,%d,%d", mode, &x1, &y1, &w, &h, &nx, &ny, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh, &mvx, &mvy, &mvw, &mvh);
+			nof = sscanf(pch, "%6s %d,%d,%d,%d %d,%60s %2s %d %d %2500s %1022s %1022s %1022s %10s %d,%d,%d,%d", mode, &x1, &y1, &w, &h, &nx, &nys, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh, &mvx, &mvy, &mvw, &mvh);
 			
 			transpval = -1;
 			if (nof >= 7) {
 				g_errH = &errH; g_opCount = opCount;
-				if (mode[0] == '2' || mode[0] == '3')
-					parseInput(s_transpval, "0", "0", &transpval, &fgcol, &bgcol, NULL, NULL);
-				else
-					parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-				transformBlock(mode, x1, y1, w, h, nx, ny, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
+				nof=sscanf(nys, "%d,%d,%d,%d", &ny, &nw, &nh, &rz);
+				if (nof > 0) {
+					if (mode[0] == '2' || mode[0] == '3')
+						parseInput(s_transpval, "0", "0", &transpval, &fgcol, &bgcol, NULL, NULL);
+					else
+						parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+					transformBlock(mode, x1, y1, w, h, nx, ny, nw, nh, rz, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
+				} else
+					reportArgError(&errH, OP_BLOCK, opCount, pch, 7);
 			} else
 				reportArgError(&errH, OP_BLOCK, opCount, pch, nof);
 		 }

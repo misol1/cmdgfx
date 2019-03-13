@@ -1,6 +1,8 @@
 # cmdgfx / cmdgfx_gdi / cmdgfx_input
 Windows command line graphic primitives and 3d, for text based games/demos by Mikael Sollenborn (2016-2019)
 
+Initially, cmdgfx was made to be used with Batch scripts. There is, however, nothing that stops using other scripting languages as well, such as Jscript or Python. In fact, doing so will increase speed drastically. In several provided examples in the archive (marked with the postfix '-js'), a hybrid solution is used for increased speed, where Batch does the initial setup, and the rest of the script uses Jscript.
+
 ## Comparison 
 
 The main difference between cmdgfx and cmdgfx_gdi is that while the former outputs actual text into the cmd window buffer, the output of cmdgfx_gdi is not text but a bitmap, simulating text output.
@@ -54,7 +56,7 @@ fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
+block    mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
@@ -376,13 +378,13 @@ X and y are column and row coordinates with 0,0 as top left.
 
 Block - copy, move, and transform a block of characters
 
-Syntax: block mode[:1233] x,y,w,h x2,y2 [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]
+Syntax: block mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]
 
 In its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0
 
 mode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0
 
-x,y,w,h x2,y2: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height.
+x,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.
 
 [transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.
 
@@ -476,7 +478,7 @@ fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
 text     fgcol bgcol char string x,y
-block    mode[:1233] x,y,w,h x2,y2 [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
+block    mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
