@@ -21,9 +21,9 @@ Use cmdgfx_gdi:
   1. When speed is of the essence (when making animations)
   2. When needing to write pixels instead of characters
   3. When needing to write to desktop instead of current window (set flag U)
-  4. When needing to place the output with pixel precision instead of character precision (set a flag, then use f flag)
+  4. When needing to place the output with pixel precision instead of character precision (set 'a' flag, then use 'f' flag)
   5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each
-  6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each
+  6. For advanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each
 
 cmdgfx_input:
 
@@ -363,12 +363,12 @@ The 'string' allows formatting text output using the same control codes used in 
 
 The following gxy control codes are supported in the string:
 
-  \\r: restore previous fgcol and bgcol
-  \\gxx: ascii character in hex (xx)
-  \\n: newline (new line starts from initial x position)
-  \\-: skip character (transparent)
-  \\\\  : print \\  
-  \\xx: fgcol and bgcol in hex, e.g. \\A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window
+- \\r: restore previous fgcol and bgcol
+- \\gxx: ascii character in hex (xx)
+- \\n: newline (new line starts from initial x position)
+- \\-: skip character (transparent)
+- \\\\  : print \\  
+- \\xx: fgcol and bgcol in hex, e.g. \\A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window
 
 Apart from blank space, a few other characters must be written using control codes, including & (\\g26), " (\\g22), and possibly ! (\\g21) and % (\\g25)
 
