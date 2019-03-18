@@ -26,37 +26,37 @@ cmdgfx_gdi.exe : $(OBJECTSLIBGDI)
 cmdgfx_input.exe : $(INPUTLIB)
 	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB) rc\cmdgfx_input.o
 
-cmdgfx_input.o : cmdgfx_input.c
+cmdgfx_input.o : cmdgfx_input.c datasize.h
 	$(CC) $(CCFLAG) -c cmdgfx_input.c
 
-testlib.o : testlib.c gfx.h bmap.h rgbcol.h r3d.h
+testlib.o : testlib.c gfx.h bmap.h rgbcol.h r3d.h datasize.h
 	$(CC) $(CCFLAG) -c testlib.c
 
-cmdgfx.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h
+cmdgfx.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -c cmdgfx.c
 
-cmdgfx_gdi.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h
+cmdgfx_gdi.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -o cmdgfx_gdi.o -D GDI_OUTPUT -c cmdgfx.c
 
-bmap.o : bmap.c bmap.h rgbcol.h gfx.h
+bmap.o : bmap.c bmap.h rgbcol.h gfx.h datasize.h
 	$(CC) $(CCFLAG) -c bmap.c
 
-rgbcol.o : rgbcol.c rgbcol.h
+rgbcol.o : rgbcol.c rgbcol.h datasize.h
 	$(CC) $(CCFLAG) -c rgbcol.c
 
-r3d.o : r3d.c r3d.h
+r3d.o : r3d.c r3d.h datasize.h
 	$(CC) $(CCFLAG) -c r3d.c
 
-gfx.o : gfx.c gfx.h
+gfx.o : gfx.c gfx.h datasize.h
 	$(CC) $(CCFLAG) -c gfx.c
 	
-outputText.o : outputText.c outputText.h
+outputText.o : outputText.c outputText.h datasize.h
 	$(CC) $(CCFLAG) -c outputText.c
 
-algebra.o : algebra.c algebra.h
+algebra.o : algebra.c algebra.h datasize.h
 	$(CC) $(CCFLAG) -c algebra.c
 	
-tinyexpr.o : tinyexpr.c tinyexpr.h
+tinyexpr.o : tinyexpr.c tinyexpr.h datasize.h
 	$(CC) $(CCFLAG) -c tinyexpr.c
 
 clean :

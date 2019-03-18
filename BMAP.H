@@ -4,6 +4,7 @@
 #define BMAPH
 
 #include "RGBcol.h"
+#include "datasize.h"
 
 struct PCXheader {     // Header för filer av typen PCX
 	char mfacturer;      // ID-byte, 0A (10) betyder PCX
@@ -30,7 +31,7 @@ struct PCXheader {     // Header för filer av typen PCX
 
 typedef struct Bitmap {
 	int xSize, ySize;
-	unsigned char *data;
+	uchar *data;
 	void *extras;
 	int extrasType;
 	RGBcol cols[256];

@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include "datasize.h"
 
 CHAR_INFO * readScreenBlock();
 void clrScr(int color, int scale, int SCR_XRES, int SCR_YRES);
-void convertToText(int mode, int scale, int palette[], int startx, int starty, CHAR_INFO *old, int mapIndex, int XRES, int YRES, unsigned char *video);
+void convertToText(int mode, int scale, int palette[], int startx, int starty, CHAR_INFO *old, int mapIndex, int XRES, int YRES, uchar *video);
 
 int saveScreenBlock(char *filename, int x, int y, int w, int h, int bEncode, int transpChar, int transpBg, int transpFg);
 

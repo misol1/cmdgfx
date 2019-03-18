@@ -4,7 +4,7 @@
 #include "r3d.h"
 #include <math.h>
 
-void setpixel(int x, int y, unsigned char col) {
+void setpixel(int x, int y, uchar col) {
 
 	if(x>=0 && x<XRES && y>=0 && y<YRES)
 		video[y*XRES + x] = col;
@@ -1382,7 +1382,7 @@ int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, int plusVal)
 
 static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal)
 {
-	unsigned char *scr, *scrEnd;
+	uchar *scr, *scrEnd;
 	int x1, x2;
 	int x, xcount;
 	float z, dx;
@@ -1524,7 +1524,7 @@ static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int
 static float dizdx, duizdx, dvizdx, dizdy, duizdy, dvizdy;
 static float xa, xb, iza, uiza, viza;
 static float dxdya, dxdyb, dizdya, duizdya, dvizdya;
-static char *texture;
+static uchar *texture;
 
 static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal);
 static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal);
@@ -1729,7 +1729,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 
 static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal)
 {
-	unsigned char *scr;
+	uchar *scr;
 	int x1, x2;
 	float z, u, v, dx;
 	float iz, uiz, viz;
@@ -1801,7 +1801,7 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 
 static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal)
 {
-	unsigned char *scr;
+	uchar *scr;
 	int x1, x2;
 	float z, u, v, dx;
 	float iz, uiz, viz;
@@ -2084,7 +2084,7 @@ int __scan3(intVector tri[], uchar col) {
 
 static void drawpolyseg(int y1, int y2, int col)
 {
-	unsigned char *scr;
+	uchar *scr;
 	int x1, x2;
 	float z, u, v, dx;
 	float iz, uiz, viz;

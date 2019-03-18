@@ -6,10 +6,10 @@
 
 int PCXload (Bitmap *bild,char filename[]) {
 	FILE *ifp;
-	unsigned char c,d;
+	uchar c,d;
 	unsigned int i,j=0,k=0;
 	struct PCXheader PCXh;
-	unsigned char *filedata = NULL;
+	uchar *filedata = NULL;
 
 	ifp=fopen(filename,"rb");
 	if (ifp!=NULL) { // Öppna fil
@@ -24,11 +24,11 @@ int PCXload (Bitmap *bild,char filename[]) {
 
 		fseek(ifp,128,0);  // Hoppa förbi headern.
 
-		bild->data=(unsigned char *)calloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4, sizeof(unsigned char));
+		bild->data=(uchar *)calloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4, sizeof(uchar));
 		if (bild->data==NULL) {
 			return 0;
 		}
-		filedata=(unsigned char *)malloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4 *  sizeof(unsigned char));
+		filedata=(uchar *)malloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4 *  sizeof(uchar));
 		if (filedata==NULL) {
 			free(bild->data);
 			return 0;
@@ -81,7 +81,7 @@ void freeBitmap(Bitmap *bild, int bFreeBasePointer) {
 
 /*
 void putBitmap (int x, int y, Bitmap *bild) {
-	register unsigned char *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
+	register uchar *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
 	register int i, xsize = bild->xSize;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )
@@ -99,8 +99,8 @@ void putBitmap (int x, int y, Bitmap *bild) {
 
 
 void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild) {
-	register unsigned char *vid=video+x+y*XRES,*bmp=bild->data;
-	register unsigned char *v1=video+FRAMESIZE, *bbmp;
+	register uchar *vid=video+x+y*XRES,*bmp=bild->data;
+	register uchar *v1=video+FRAMESIZE, *bbmp;
 	register int i,j;
 	float dx,dy,x0,y0=0,xs=0;
 
@@ -128,8 +128,8 @@ void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild) {
 }
 
 void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild) {
-	register unsigned char *vid=video+x+y*XRES,*bmp=bild->data;
-	register unsigned char *v1=video+FRAMESIZE, *bbmp;
+	register uchar *vid=video+x+y*XRES,*bmp=bild->data;
+	register uchar *v1=video+FRAMESIZE, *bbmp;
 	register int i,j;
 	float dx,dy,x0,y0=0,xs=0;
 
@@ -159,7 +159,7 @@ void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild)
 */
 
 void put_transparent_Bitmap (int x, int y, Bitmap *bild) {
-	register unsigned char *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
+	register uchar *vid=video+x+y*XRES, *bmp=bild->data, *v1=video+FRAMESIZE;
 	register int i,j, xsize = bild->xSize;
 
 	if (x>=XRES || y>=YRES || (x<0 && x+bild->xSize<0) || (y<0 && y+bild->ySize<0) )

@@ -90,7 +90,7 @@ int saveScreenBlock(char *filename, int x, int y, int w, int h, int bEncode, int
 	WORD oldAttrib = 6666;
 	FILE *ofp = NULL;
 	int i, j;
-	unsigned char ch;
+	uchar ch;
 	char fName[512];
 
 	sprintf(fName, "%s.gxy", filename);
@@ -159,7 +159,7 @@ int saveScreenBlock(char *filename, int x, int y, int w, int h, int bEncode, int
 }
 
 
-void convertToText(int mode, int scale, int palette[], int startx, int starty, CHAR_INFO *old, int mapIndex, int XRES, int YRES, unsigned char *video) {
+void convertToText(int mode, int scale, int palette[], int startx, int starty, CHAR_INFO *old, int mapIndex, int XRES, int YRES, uchar *video) {
 	CHAR_INFO *str;
 	COORD a, b;
 	int col, ct;

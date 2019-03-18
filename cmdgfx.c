@@ -145,11 +145,12 @@ void GetConsoleColor(){
 int GXY_MAX_X = 256, GXY_MAX_Y = 256;
 
 int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor, int bIgnoreAllCodes) {
-	char *text, ch, *pbcol, *pbchar;
+	char *text, ch;
+	uchar *pbcol, *pbchar;
 	int fr, i, j, 	inlen;
 	int x = 0, y = 0, yp=0;
 	int v, v16, fgCol, bgCol, oldColor;
-	unsigned char *cchars, *ccols;
+	uchar *cchars, *ccols;
 	int w = GXY_MAX_X, h = GXY_MAX_Y;
 	FILE *ifp;
 
@@ -159,12 +160,12 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 	fgCol = color & 0xf;
 	oldColor = color;
 	
-	b_cols->data = (unsigned char *)malloc(w*h*sizeof(unsigned char));
-	b_chars->data = (unsigned char *)malloc(w*h*sizeof(unsigned char));
+	b_cols->data = (uchar *)malloc(w*h*sizeof(uchar));
+	b_chars->data = (uchar *)malloc(w*h*sizeof(uchar));
 	text = (char *)malloc(GXY_MAX_X * GXY_MAX_Y * 6);
 	if (!text || !b_cols->data || !b_chars->data) { if (text) free(text); if (b_cols->data) free(b_cols->data); if(b_chars->data) free(b_chars->data); b_cols->data = b_chars->data = NULL; return 0; }
-	memset(b_cols->data, 0, w*h*sizeof(unsigned char));
-	memset(b_chars->data, 255, w*h*sizeof(unsigned char));
+	memset(b_cols->data, 0, w*h*sizeof(uchar));
+	memset(b_chars->data, 255, w*h*sizeof(uchar));
 
 	pbchar = b_chars->data;
 	pbcol = b_cols->data;
@@ -261,8 +262,8 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, int 
 	*h1 = y;
 	if (x > *w1) *w1 = x;
 	
-	ccols = (unsigned char *)malloc((*w1)*y*sizeof(unsigned char));
-	cchars = (unsigned char *)malloc((*w1)*y*sizeof(unsigned char));
+	ccols = (uchar *)malloc((*w1)*y*sizeof(uchar));
+	cchars = (uchar *)malloc((*w1)*y*sizeof(uchar));
 	if (!ccols || !cchars) { free(b_cols->data); free(b_chars->data); free(text); if (ccols) free(ccols); if (cchars) free(cchars); return 0; }
 	
 	for (i = 0; i < *h1; i++)
@@ -339,7 +340,7 @@ int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgc
 ErrorHandler *g_errH;
 int g_opCount;
 void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op);
-unsigned char *g_videoCol, *g_videoChar;
+uchar *g_videoCol, *g_videoChar;
 int g_bSleepingWait = 0;
 int g_bFlushAfterELwrite = 0;
 
@@ -514,7 +515,7 @@ CHAR_INFO * readScreenBlock() {
 
 #ifndef GDI_OUTPUT
 
-void convertToText(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y) {
+void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y) {
 	CHAR_INFO *str;
 	COORD a, b;
 	SMALL_RECT r;
@@ -559,7 +560,7 @@ HDC g_hDc = NULL, g_hDcBmp = NULL;
 unsigned char* g_lpBitmapBits;
 HBITMAP g_bitmap;
 
-void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode) {
+void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode) {
 	HBITMAP hBmp1 = NULL;
 	HGDIOBJ hGdiObj = NULL;
 	BITMAP bmp = {0};
@@ -627,8 +628,8 @@ void convertToGdiBitmap(int XRES, int YRES, unsigned char *videoCol, unsigned ch
 		if (fontIndex < 10) {
 			for (i = 0; i < outh; i++) {
 				for (j = 0; j < outw; j++) {
-					cchar = videoChar[j+i*XRES];
-					ccol = videoCol[j+i*XRES];
+					cchar = videoChar[j+i*XRES]; // & 0xff; // uchar unsigned int (these values are not cleared due to memset etc working with bytes)
+					ccol = videoCol[j+i*XRES];   // & 0xff;
 					fgcol = &palFg[(ccol&0xf)];
 					bgcol = &palBg[(ccol>>4)];
 					for (l = 0; l < fh; l++) {
@@ -998,7 +999,7 @@ double my_shr(double v1, double v2) {
 }
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, unsigned char *videoCol, unsigned char *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, uchar *videoCol, uchar *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	char moveFg = 7, moveBg = 0, moveCol=7;
@@ -1470,7 +1471,7 @@ char *GetAttribs(WORD attributes, char *utp) {
 int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 	WORD oldAttrib = 6666;
 	FILE *ofp = NULL;
-	unsigned char ch;
+	uchar ch;
 	char fName[128];
 	int i, j;
 	char *output, attribS[16], charS[8];
@@ -1586,7 +1587,7 @@ int main(int argc, char *argv[]) {
 	intVector v[64];
 	float us[4] = {0, 1, 1, 0}, vs[4] = {0, 0, 1, 1};
 	float *averageZ, lowZ, highZ, addZ, currZ;
-	unsigned char *argv1;
+	char *argv1;
 	obj3d *objs[MAX_OBJECTS_IN_MEM];
 	char *objNames[MAX_OBJECTS_IN_MEM];
 	int objCnt = 0;
@@ -1633,7 +1634,7 @@ int main(int argc, char *argv[]) {
 	int bZBuffer = 0;
 	int bUsePerspectiveSingleCol = 0;
 
-	unsigned char singleColData[16] = { 0 };
+	uchar singleColData[16] = { 0 };
 	Bitmap singleColBitmap = { 0 };
 	
 	int showHelp=0;
@@ -1810,14 +1811,14 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	videoCol = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
+	videoCol = (uchar *)calloc(XRES*YRES,sizeof(uchar));
 	if (videoCol == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer!\n");
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
 		return 0;
 	}
 
-	videoChar = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
+	videoChar = (uchar *)calloc(XRES*YRES,sizeof(uchar));
 	if (videoChar == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer(2)!\n");
 		free(videoCol);
@@ -1825,7 +1826,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	videoTransp = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
+	videoTransp = (uchar *)malloc(XRES*YRES*sizeof(uchar));
 	if (videoTransp == NULL) {
 		printf("Error: Couldn't allocate memory for transpbuffer!\n");
 		free(videoCol);
@@ -1834,7 +1835,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 
-	videoTranspChar = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
+	videoTranspChar = (uchar *)malloc(XRES*YRES*sizeof(uchar));
 	if (videoTranspChar == NULL) {
 		printf("Error: Couldn't allocate memory for transpbuffer(2)!\n");
 		free(videoCol);
@@ -1894,8 +1895,8 @@ int main(int argc, char *argv[]) {
 								blockSize = width * height;
 								if (blockSize > XRES * YRES)
 									blockSize = XRES * YRES;
-								nofread += fread(videoCol, sizeof(unsigned char)*blockSize, 1, fp);
-								nofread += fread(videoChar, sizeof(unsigned char)*blockSize, 1, fp);
+								nofread += fread(videoCol, sizeof(uchar)*blockSize, 1, fp);
+								nofread += fread(videoChar, sizeof(uchar)*blockSize, 1, fp);
 								fclose(fp);
 							}
 						} while (rep++ < 100 && nofread != 4 && fp != NULL);
@@ -2088,7 +2089,7 @@ int main(int argc, char *argv[]) {
 			int gValue[32], gchar[256];
 			int m;
 
-			memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
+			memset(videoTransp, 255, XRES*YRES*sizeof(uchar));
 			
 			pch = pch + 6;
 			nof = sscanf(pch, "%500s %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", goraudPalette,
@@ -2372,7 +2373,7 @@ int main(int argc, char *argv[]) {
 					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
 					res = PCXload (&b_cols,fname);
 					if (res) {
-						b_chars.data = (unsigned char *) malloc(b_cols.xSize*b_cols.ySize);
+						b_chars.data = (uchar *) malloc(b_cols.xSize*b_cols.ySize);
 						if (!b_chars.data) {
 							free(b_cols.data);
 							res = 0;
@@ -2521,7 +2522,7 @@ int main(int argc, char *argv[]) {
 			int nofcols, nof_ext;
 			int l,colIndex=0, nofFacePoints, bDrawPerspective;
 			int divZ, plusZ, z_levels;;
-			unsigned char pfgbg[64], fgbg;
+			uchar pfgbg[64], fgbg;
 			int m, pchar[64], pbWriteChars[64], pbWriteCols[64];
 			Bitmap *paletteBmap = NULL, *bmap = NULL;
 			int rx,ry,rz;
@@ -2626,7 +2627,7 @@ int main(int argc, char *argv[]) {
 
 				if (obj3) {
 					if (drawmode == 2)
-						memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
+						memset(videoTransp, 255, XRES*YRES*sizeof(uchar));
 
 					for (i = 0; i < nofcols; i++) {
 						parseInput(s_fgcols[i%nofcols], s_bgcols[i%nofcols], s_dchars[i%nofcols], &fgcol, &bgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
@@ -2715,7 +2716,7 @@ int main(int argc, char *argv[]) {
 													k++;
 												}
 											}
-											memset(videoTransp, 255, XRES*YRES*sizeof(unsigned char));
+											memset(videoTransp, 255, XRES*YRES*sizeof(uchar));
 										}									
 
 										nofcols = nof;
@@ -3004,8 +3005,8 @@ int main(int argc, char *argv[]) {
 						fwrite(&XRES, sizeof(int), 1, fp);
 						fwrite(&YRES, sizeof(int), 1, fp);
 						blockSize = XRES * YRES;
-						fwrite(videoCol, sizeof(unsigned char), blockSize, fp);
-						fwrite(videoChar, sizeof(unsigned char), blockSize, fp);
+						fwrite(videoCol, sizeof(uchar), blockSize, fp);
+						fwrite(videoChar, sizeof(uchar), blockSize, fp);
 					}
 			}
 	#else
@@ -3334,10 +3335,10 @@ int main(int argc, char *argv[]) {
 								if (oldtx != txres || oldty != tyres) {
 									setResolution(txres, tyres);
 									free(videoCol); free(videoChar); free(videoTransp); free(videoTranspChar);
-									videoCol = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
-									videoChar = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
-									videoTransp = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
-									videoTranspChar = (uchar *)malloc(XRES*YRES*sizeof(unsigned char));
+									videoCol = (uchar *)calloc(XRES*YRES,sizeof(uchar));
+									videoChar = (uchar *)calloc(XRES*YRES,sizeof(uchar));
+									videoTransp = (uchar *)malloc(XRES*YRES*sizeof(uchar));
+									videoTranspChar = (uchar *)malloc(XRES*YRES*sizeof(uchar));
 									g_videoCol = videoCol;
 									g_videoChar = videoChar;
 									

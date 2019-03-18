@@ -1,10 +1,10 @@
 // gfx.h
 #include <stdio.h>
+#include "datasize.h"
 
 #ifndef GFXH
 #define GFXH
 
-#define uchar unsigned char
 #define repeat do
 #define until(a) while(!(a)) 
 
@@ -20,7 +20,7 @@ typedef struct intVector {
 
 extern int XRES, YRES;
 extern int FRAMESIZE;
-extern unsigned char *video;
+extern uchar *video;
 extern int bAllowRepeated3dTextures;
 extern float texture_offset_x, texture_offset_y;
 extern float *ZBufVideo;
@@ -59,7 +59,7 @@ void line(int x1, int y1, int x2, int y2, uchar col, int clip);
 void vline(int x, int y1, int y2, uchar col); 
 void hline(int x1, int x2, int y, uchar col); 
 int line_clip(int *x1, int *y1, int *x2, int *y2);
-void setpixel(int x, int y, unsigned char col);
+void setpixel(int x, int y, uchar col);
 void bezier(long n, int *xPoints, int *yPoints, uchar col);
 
 int __scan3(intVector vv[], uchar col);

@@ -70,7 +70,7 @@ void change_clipedges(int clipedges[], int chx_1, int chy_1, int chx_2, int chy_
 	if (clipedges[3]>=SCR_YRES) clipedges[3]=SCR_YRES;
 }
 
-void set_clipbox (int clipedges[], char *base) {
+void set_clipbox (int clipedges[], uchar *base) {
 	int x1=clipedges[0],y1=clipedges[1],x2=clipedges[2],y2=clipedges[3];
 
 	if (x2<=x1 || y2<=y1 || x1<0 || x1>SCR_XRES || y1<0 || y1>SCR_YRES ||
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
 	clipedges[2] = XRES - 2;
 	clipedges[3] = YRES - 2;
 
-	virtual = (uchar *)calloc(XRES*YRES,sizeof(unsigned char));
+	virtual = (uchar *)calloc(XRES*YRES,sizeof(uchar));
 	if (virtual == NULL) {
 		printf("Error: Couldn't allocate memory for framebuffer!\n");
 		return 0;
