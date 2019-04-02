@@ -535,6 +535,96 @@ If running as server, default palette can be restored by using - as palette.
 
 
 
+cmdgfx_RGB.exe
+--------------
+```
+CmdGfx_RGB v1.0 : Mikael Sollenborn 2016-2019
+
+Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette]
+
+Drawing operations (separated by &):
+
+poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
+ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
+gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
+tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]
+box      fgcol bgcol char x,y,w,h
+fbox     fgcol bgcol char x,y,w,h
+line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
+pixel    fgcol bgcol char x,y
+circle   fgcol bgcol char x,y,r
+fcircle  fgcol bgcol char x,y,r
+ellipse  fgcol bgcol char x,y,rx,ry
+fellipse fgcol bgcol char x,y,rx,ry
+text     fgcol bgcol char string x,y
+block    mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
+3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
+         rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
+         face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
+insert   file
+skip
+rem
+
+Arguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.
+
+'cmdgfx /? operation' to see operation info, e.g. 'cmdgfx /? fbox'
+
+'cmdgfx /? flags' for information about flags.
+
+'cmdgfx /? server' for info on running as server.
+
+'cmdgfx /? palette' for info on setting the color palette.
+
+'cmdgfx /? compare' for a comparison of cmdgfx and cmdgfx_gdi.
+
+```
+Syntax above is almost exactly the same as cmdgfx.exe (there is a difference in block, where fgblend and bgblend can be set to RGB alpha blend the block. There are also more bitops for ipoly.
+
+Below are help sections where cmdgfx_RGB differs from cmdgfx_gdi:
+
+## Bugs and issues
+
+Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower.
+
+Since cmdgfx_RGB is still in its early stages, it has several problems, some known, some not. To name a few, block transform will give strange results for color changes, 'c' flag to save a snapshot gxy file will not work properly, image/text op separate fgcol/bgcol transparency does not work, transparent color can not be set as RRGGBB, 3d colors also can not be set as RRGGBB, etc etc. Hopefully most, but not all, of these issues will eventually be fixed.
+
+
+## General
+
+For all fgcol/bgcol settings, it is possible BOTH to specify a color index (as usual, using either hex or decimal), OR to specify a hexadecimal 24 bit RGB color of the form RRGGBB, where each pair is a hex value 0-ff(0-255). To set an RGB color, use at least 3 characters. E.g. to use a red-light-bluish color, write ff0080. To set an only blue color, use an extra preceding 0 to make 3 characters, such as 0ff.
+
+For all operations using an image as input (image, tpoly, 3d), cmdgfx_RGB also allows using an uncompressed 24-bit BMP file.
+
+Cmdgfx_RGB, like cmdgfx_gdi, does not care which font is currently set in the cmd window, but always uses raster font 6 by default. The font can be changed with the f flag.
+
+Similarly, cmdgfx_RGB, does not care which codepage is set, it always uses code page 437 since the font data is embedded in the program.
+
+### Ipoly
+
+Ipoly is the only operation (except for block) that allows drawing with alpha blending. While this may seem restrictive, keep in mind that ipoly can (with some extra work) be used to draw everything from pixels to filled boxes to lines to filled circles. Also remember that the 3d operation allows setting a bitop for flat shading, which means it too can make use of these blending modes.
+
+There are 6 extra bitop operators when using cmdgfx_RGB, dealing with various forms of color blending: 
+
+16=Add_RGB_Fg, 17=Add_RGB, 18=Sub_RGB_Fg, 19=Sub_RGB, 20=Blend_RGB_Fg, 21=Blend_RGB
+
+The Fg versions deal only with changing the Fg color but does not blend the Bg color. This can be faster.
+
+Mode 16 and 17 adds the given 24 bit RGB color of the form RRGGBB to the current color in the buffer. Mode 18 and 19 subtracts in the same manner.
+
+For mode 20 and 21, the colors given must be 32 bit. This means that they follow the form AARRGGBB, where AA specifies the opacity of the drawn color, 0-255.
+
+
+### Block
+
+Syntax: block mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
+
+For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, bgblend is automatically set to the same value. Alternatively, bgblend can be set separately.
+
+E.g. to copy with alpha blend 128 for both fgcol and bgcol: "block 0,128 5,5,40,40 20,20". To move (and set specific move char) and use separate blend for fgcol and bgcol: "block 1:a021,128,64 5,5,40,40 20,20"
+
+
+
 cmdgfx_input.exe
 ----------
 Used to process and forward input (key/mouse/resizing). Can be used as standalone program but in this context typically used in a pipe chain looking like:
