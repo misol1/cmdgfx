@@ -41,13 +41,22 @@ extern float *ZBufVideo;
 #define BIT_OP_SUB_REAL		9
 #define BIT_OP_SUB_ME_REAL	10
 
+#ifdef _RGB32
+#define BIT_OP_ADD_FGRGB	16
+#define BIT_OP_ADD_RGB		17
+#define BIT_OP_SUB_FGRGB	18
+#define BIT_OP_SUB_RGB		19
+#define BIT_OP_BLEND_FGRGB	20
+#define BIT_OP_BLEND_RGB	21
+#endif
+
 int scan3(intVector vv[], int clipedges[], uchar col);
-int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ);
-int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal);
+int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, PREPCOL plusVal, int divZ, int plusZ, int maxZ);
+int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, PREPCOL plusVal);
 int scanPoly(intVector p[],int points, uchar col, uchar bitOp);
 int scanConvex(intVector vv[], int points, int clipedges[], uchar col);
-int scanConvex_goraud(intVector vv[], int points, int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ);
-int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal, int bPerspectiveCorrected);
+int scanConvex_goraud(intVector vv[], int points, int clipedges[], int I[], int goraudType, PREPCOL plusVal, int divZ, int plusZ, int maxZ);
+int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, PREPCOL plusVal, int bPerspectiveCorrected);
 void polyLine(intVector v[], int points, uchar col, uchar connect, int clip);
 void circle(int x, int y, int radius, uchar col);
 void ellipse(int xc, int yc, int rx, int ry, uchar col);

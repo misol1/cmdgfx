@@ -42,12 +42,18 @@ typedef struct Bitmap {
 	struct Bitmap *next;
 } Bitmap;
 	
-int PCXload (Bitmap *bild,char filename[]); // only 256 color image supported
+int PCXload (Bitmap *bild,char filename[]); // only 256 color image supported (but should use only first 16 colors for cmdgfx)
 void putBitmap (int x, int y, Bitmap *bild);
 void put_transparent_Bitmap (int x, int y, Bitmap *bild);
 void putBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild);
 void put_transBitmap_scaled (int x, int y, int xrange, int yrange, Bitmap *bild);
 void shadeBitmap (int x, int y, Bitmap *bild, int addon);
 void freeBitmap(Bitmap *bild, int bFreeBasePointer);
+#ifdef _RGB32
+int BMPload (Bitmap *bild,char filename[]); // only 32-bit
+int BMPsave (uchar *cols,char filename[], int w, int h);
+int BXYsave (unsigned char *chars, uchar *cols, char filename[], int w, int h);
+int BXYload (Bitmap *bCols,Bitmap *bChars,char filename[]);
+#endif
 
 #endif

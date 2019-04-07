@@ -1,15 +1,13 @@
 @echo off
-cls & cmdwiz setfont 6 & title 3d maze test2 (Mouse + left/right/j/k up/down/w/s a/d PgUp/PgDwn Home/End Space m)
-mode con rate=0 delay=10000
+cls & cmdwiz setfont 6 & title RGB 3d maze test (Mouse + left/right/j/k up/down/w/s a/d PgUp/PgDwn Home/End Space m)
 cmdwiz showcursor 0
 if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600
+cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600
 set __=
 mode 80,50
-mode con rate=31 delay=0
 cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
@@ -19,7 +17,6 @@ goto :eof
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180, H=80
-mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==W if not %%v==H set "%%v="
 
 set /a W*=4, H*=6
@@ -43,8 +40,8 @@ if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /a CNT+=1
 set /a YSLOTS=%CNT%
 
-set FN=objects\3dworld-maze2.obj
-set FN2=objects\3dworld-ground-maze2.obj
+set FN=objects\3dworld-maze-RGB.obj
+set FN2=objects\3dworld-ground-maze-RGB.obj
 
 set /a PLX=%SLOTS%/2, PLZ=%YSLOTS%/2
 set /a XC=-%SLOTS%, SLOTM=%SLOTS%-1
@@ -81,7 +78,7 @@ set /a F5_0=5, F5_1=4, F5_2=0, F5_3=1
 
 set /a NOF_O=%NOF_OBJECTS%-1
 set CNT=1&for /l %%a in (0,1,%NOF_O%) do for /l %%b in (0,1,7) do set /a vx=!Vx%%b!&(if not "!sx%%a!"=="" set /a vx*=!sx%%a!)&set /a vx-=!dx%%a!&set /a vx*=%MULVAL% & set /a vy=!Vy%%b!&(if not "!sy%%a!"=="" if !vy! lss 0 set /a vy*=!sy%%a!)&set /a vy+=!dy%%a!&set /a vy*=%YMULVAL% & set /a vz=!Vz%%b!&(if not "!sz%%a!"=="" set /a vz*=!sz%%a!)&set /a vz+=!dz%%a!&set /a vz*=%MULVAL%&echo v !vx! !vy! !vz!>>%FN%&set /a CNT+=1
-for /l %%a in (0,1,%NOF_O%) do for /l %%b in (0,1,5) do if not !t%%a!==M if not !t%%a!==N set /a f0=!F%%b_0!+%%a*8+1&set /a f1=!F%%b_1!+%%a*8+1&set /a f2=!F%%b_2!+%%a*8+1&set /a f3=!F%%b_3!+%%a*8+1,MODDER=%%a %% 4&echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN%&if %%b==0 (if !MODDER!==0 echo usemtl img\dos_shade.pcx >>%FN%)&(if !MODDER!==1 echo usemtl img\dos_shade2.pcx >>%FN%)&(if !MODDER!==2 echo usemtl img\dos_shade3.pcx >>%FN%)&(if !MODDER!==3 echo usemtl img\dos_shade4.pcx >>%FN%)
+for /l %%a in (0,1,%NOF_O%) do for /l %%b in (0,1,5) do if not !t%%a!==M if not !t%%a!==N set /a f0=!F%%b_0!+%%a*8+1&set /a f1=!F%%b_1!+%%a*8+1&set /a f2=!F%%b_2!+%%a*8+1&set /a f3=!F%%b_3!+%%a*8+1,MODDER=%%a %% 4&echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN%&if %%b==0 (if !MODDER!==0 echo usemtl img\water2.bmp >>%FN%)&(if !MODDER!==1 echo usemtl img\flame.bmp >>%FN%)&(if !MODDER!==2 echo usemtl img\water2.bmp >>%FN%)&(if !MODDER!==3 echo usemtl img\flame.bmp >>%FN%)
 echo usemtl img\dos_shade4.pcx >>%FN%
 for /l %%a in (0,1,%NOF_O%) do for /l %%b in (0,1,5) do if !t%%a!==M set /a f0=!F%%b_0!+%%a*8+1&set /a f1=!F%%b_1!+%%a*8+1&set /a f2=!F%%b_2!+%%a*8+1&set /a f3=!F%%b_3!+%%a*8+1&echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN%
 
@@ -96,7 +93,7 @@ echo vt 1 0 >>%FN2%
 
 set /a TILESIZE=2000, CNT=1, CNT2=0
 for /l %%a in (-25000,%TILESIZE%,25000) do for /l %%b in (-25000,%TILESIZE%,25000) do set /a V1=%%a,V2=%%a+%TILESIZE%,V3=%%b,V4=%%b+%TILESIZE% & echo v !V1! 500 !V3! >>%FN2% & echo v !V2! 500 !V3! >>%FN2% & echo v !V2! 500 !V4! >>%FN2% & echo v !V1! 500 !V4! >>%FN2%&set /a CNT2+=1
-for /l %%a in (1,1,%CNT2%) do set /a f0=!CNT!, f1=!CNT!+1, f2=!CNT!+2, f3=!CNT!+3, MODDER=%%a %% 3, CNT+=4 & echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN2% &(if !MODDER!==0 echo usemtl img\mario1.gxy >>%FN2%)&(if !MODDER!==1 echo usemtl img\tile_door.pcx >>%FN2%)&(if !MODDER!==2 echo usemtl img\eye.pcx >>%FN2%)
+for /l %%a in (1,1,%CNT2%) do set /a f0=!CNT!, f1=!CNT!+1, f2=!CNT!+2, f3=!CNT!+3, MODDER=%%a %% 3, CNT+=4 & echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN2% &(if !MODDER!==0 echo usemtl img\6hld.bmp >>%FN2%)&(if !MODDER!==1 echo usemtl img\hmmm.bmp >>%FN2%)&(if !MODDER!==2 echo usemtl img\123.bmp >>%FN2%)
 
 set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /l %%a in (0,1,4) do set f%%a=&set V%%a=
 
@@ -127,7 +124,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5 & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W="(SCRW*2+2)*4, H=(SCRH*2+2)*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5" & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
 
 	if not "!EV_BASE:~0,1!" == "N" (
 	
@@ -179,7 +176,6 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 cmdwiz showcursor 1
-mode con rate=31 delay=0
 echo "cmdgfx: quit"
 title input:Q
 goto :eof

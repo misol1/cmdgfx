@@ -86,7 +86,7 @@ double naiveToD(const char *p, char **outP) {
 	}
 	
 	if (outP != NULL)
-		*outP = p;
+		*outP = (char *)p;
 	
 	return r;
 }

@@ -1,7 +1,6 @@
 :: 3dworld with perspective correct texture mapping and z-buffer: Mikael Sollenborn 2016-17
 @echo off
 cls & cmdwiz setfont 6 & title 3d World big pixel Z-buffer (Mouse + left/right/j/k up/down/w/s a/d PgUp/PgDwn Home/End Space m e)
-mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START
 set /a F6W=320/2, F6H=110/2
@@ -10,7 +9,6 @@ set __=.
 cmdgfx_input.exe M0unW25xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1280,680Z800B
 set __=
 mode 80,50
-mode con rate=31 delay=0
 cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof

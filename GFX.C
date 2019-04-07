@@ -24,10 +24,10 @@ int scanConvex(intVector vv[], int points, int clipedges[], uchar col) {
 	return (ok > 0);
 }
 
-int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, int plusVal);
-int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal);
+int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, PREPCOL plusVal);
+int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, PREPCOL plusVal);
 
-int scanConvex_tmap_perspective(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal) {
+int scanConvex_tmap_perspective(intVector vv[], int points, int clipedges[], Bitmap *bild, PREPCOL plusVal) {
 	intVector v[3];
 	register int i,j;
 	int ok = 0;
@@ -74,7 +74,7 @@ int scanConvex_tmap_perspective(intVector vv[], int points, int clipedges[], Bit
 }
 
 
-int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, int plusVal, int bPerspectiveCorrected) {
+int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, PREPCOL plusVal, int bPerspectiveCorrected) {
 	intVector v[3];
 	register int i,j;
 	int ok = 0;
@@ -116,7 +116,7 @@ int scanConvex_tmap(intVector vv[], int points, int clipedges[], Bitmap *bild, i
 }
 
 
-int scanConvex_goraud(intVector vv[], int points, int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ) {
+int scanConvex_goraud(intVector vv[], int points, int clipedges[], int I[], int goraudType, PREPCOL plusVal, int divZ, int plusZ, int maxZ) {
 	intVector v[3];
 	int I2[3];
 	register int i;
@@ -207,7 +207,7 @@ int scan3(intVector vv[], int clipedges[], uchar col) {
 			if(xx2<0) {
 				if(xx1<=0) goto esc; else xx2=0;
 			}
-			memset(vid+xx2,col,xx1-xx2+1);
+			MYMEMSET(vid+xx2,col,xx1-xx2+1);
 		}
 		else {
 			if(xx2>=XRES) {
@@ -216,7 +216,7 @@ int scan3(intVector vv[], int clipedges[], uchar col) {
 			if(xx1<0) {
 				if(xx2<=0) goto esc; else xx1=0;
 			}
-			memset(vid+xx1,col,xx2-xx1+1);
+			MYMEMSET(vid+xx1,col,xx2-xx1+1);
 		}
 
 esc:
@@ -233,7 +233,7 @@ Fyller trianglar(polygoner med 3 koordinater). Goraudshade.
 Returnerar -1 om polygonen var korrupt, annars 1.
 */
 
-int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, int plusVal, int divZ, int plusZ, int maxZ) {
+int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, PREPCOL plusVal, int divZ, int plusZ, int maxZ) {
 	register int ysweep,xx1,xx2,yyy;
 	register uchar *vid;
 	int i,MINy,MAXy,MIDy=0,yEND,j;
@@ -340,7 +340,7 @@ int scan3_goraud(intVector vv[], int clipedges[], int I[], int goraudType, int p
 		}
 
 		for (i=xx1; i<=xx2; i++) { // Rita ut pixlar mellan x-positioner.
-			vid[i]=diff_sx + plusVal;
+			vid[i]=(PREPCOL)diff_sx PLUSVAL_OP plusVal;
 			diff_sx+=diff_sxa;  // Interpolera diffuse
 		}
 skip:
@@ -363,7 +363,7 @@ void fbox(int x, int y, int xrange, int yrange, uchar col) {
 
 	vid=video+y*XRES+x;
 	for (i=0; i<=yrange; i++) {
-		memset(vid, col, xrange+1);
+		MYMEMSET(vid, col, xrange+1);
 		vid+=XRES;
 	}
 }
@@ -508,10 +508,10 @@ void filled_ellipse(int xc, int yc, int rx, int ry, uchar col) {
 		if (bx<0) { if (bx+xx<0) goto stop1; else xx+=bx, dx=xc;}
 		v1=vid-dx-y;
 		if (v1>=video && v1<v2)
-			memset(v1, col, xx);
+			MYMEMSET(v1, col, xx);
 		v1=vid-dx+y;
 		if (v1>=video && v1<v2)
-			memset(v1, col, xx);
+			MYMEMSET(v1, col, xx);
 
 stop1:
 		y+=XRES;
@@ -533,10 +533,10 @@ stop1:
 		if (bx<0) { if (bx+xx<0) goto stop2; else xx+=bx, dx=xc;}
 		v1=vid-dx-y;
 		if (v1>=video && v1<v2)
-			memset(v1, col, xx);
+			MYMEMSET(v1, col, xx);
 		v1=vid-dx+y;
 		if (v1>=video && v1<v2)
-			memset(v1, col, xx);
+			MYMEMSET(v1, col, xx);
 
 stop2:
 		x--;
@@ -589,7 +589,11 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 	register uchar *vid;
 	int divVal;
 	int bitTemp,bitTemp2;
-
+#ifdef _RGB32
+	int r,g,b;
+	long long r2,g2,b2;
+#endif
+	
 	if (points<3) return 0; // Returnera 0 om färre än 3 punkter(korrupt poly)
 	p[points].x=p[0].x; p[points].y=p[0].y; // Sista punkt=första punkt.
 
@@ -656,6 +660,17 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 			}
 
 			switch(bitOp) {
+#ifdef _RGB32
+			case BIT_OP_ADD_FGRGB: for (k = x1; k < x1 + x2-x1+1; k++) { b = (((vid[k] & 0xff) + (col & 0xff)) ); g = ((((vid[k]>>8) & 0xff) + ((col >> 8) & 0xff)) ); r = ((((vid[k]>>16) & 0xff) + ((col >> 16) & 0xff)) ); if(b>255)b=255; if(g>255)g=255; if(r>255)r=255; vid[k] = b | (g<<8) | (r<<16) | (col & 0xffffff00000000); } break;
+			case BIT_OP_ADD_RGB: for (k = x1; k < x1 + x2-x1+1; k++) { b = (((vid[k] & 0xff) + (col & 0xff)) ); g = ((((vid[k]>>8) & 0xff) + ((col >> 8) & 0xff)) ); r = ((((vid[k]>>16) & 0xff) + ((col >> 16) & 0xff)) ); b2 = ((((vid[k]>>32) & 0xff) + ((col >> 32) & 0xff)) ); g2 = ((((vid[k]>>40) & 0xff) + ((col >> 40) & 0xff)) ); r2 = ((((vid[k]>>48) & 0xff) + ((col >> 48) & 0xff)) );  if(b>255)b=255; if(g>255)g=255; if(r>255)r=255;if(b2>255)b2=255; if(g2>255)g2=255; if(r2>255)r2=255; vid[k] = b | (g<<8) | (r<<16) | (b2<<32)  | (g2<<40)  | (r2<<48); } break;
+
+			case BIT_OP_SUB_FGRGB: for (k = x1; k < x1 + x2-x1+1; k++) { b = (((vid[k] & 0xff) - (col & 0xff)) ); g = ((((vid[k]>>8) & 0xff) - ((col >> 8) & 0xff)) ); r = ((((vid[k]>>16) & 0xff) - ((col >> 16) & 0xff)) ); if(b<0)b=0; if(g<0)g=0; if(r<0)r=0; vid[k] = b | (g<<8) | (r<<16) | (col & 0xffffff00000000); } break;
+			case BIT_OP_SUB_RGB: for (k = x1; k < x1 + x2-x1+1; k++) { b = (((vid[k] & 0xff) - (col & 0xff)) ); g = ((((vid[k]>>8) & 0xff) - ((col >> 8) & 0xff)) ); r = ((((vid[k]>>16) & 0xff) - ((col >> 16) & 0xff)) ); b2 = ((((vid[k]>>32) & 0xff) - ((col >> 32) & 0xff)) ); g2 = ((((vid[k]>>40) & 0xff) - ((col >> 40) & 0xff)) ); r2 = ((((vid[k]>>48) & 0xff) - ((col >> 48) & 0xff)) );  if(b<0)b=0; if(g<0)g=0; if(r<0)r=0;if(b2<0)b2=0; if(g2<0)g2=0; if(r2<0)r2=0; vid[k] = b | (g<<8) | (r<<16) | (b2<<32)  | (g2<<40)  | (r2<<48); } break;
+			
+			case BIT_OP_BLEND_FGRGB: for (k = x1; k < x1 + x2-x1+1; k++) { int blNew, blOrg; blNew=(col >> 24) & 0xff; blOrg=255-blNew;  b=((((vid[k] & 0xff) * blOrg / 256) + ((col & 0xff) * blNew / 256))); g=(((((vid[k]>>8) & 0xff) * blOrg / 256) + (((col>>8) & 0xff) * blNew / 256))); r=(((((vid[k]>>16) & 0xff) * blOrg / 256) + (((col>>16) & 0xff) * blNew / 256))); vid[k] = b | (g<<8) | (r<<16) | (col & 0xffffff00000000); } break;
+
+			case BIT_OP_BLEND_RGB: for (k = x1; k < x1 + x2-x1+1; k++) { int blNew, blOrg, bl2New, bl2Org; blNew=(col >> 24) & 0xff; blOrg=255-blNew; bl2New=(col >> 56) & 0xff; bl2Org=255-bl2New; b=((((vid[k] & 0xff) * blOrg / 256) + ((col & 0xff) * blNew / 256))); g=(((((vid[k]>>8) & 0xff) * blOrg / 256) + (((col>>8) & 0xff) * blNew / 256))); r=(((((vid[k]>>16) & 0xff) * blOrg / 256) + (((col>>16) & 0xff) * blNew / 256))); b2=(((((vid[k]>>32) & 0xff) * bl2Org / 256) + (((col>>32) & 0xff) * bl2New / 256))); g2=(((((vid[k]>>40) & 0xff) * bl2Org / 256) + (((col>>40) & 0xff) * bl2New / 256))); r2=(((((vid[k]>>48) & 0xff) * bl2Org / 256) + (((col>>48) & 0xff) * bl2New / 256)));  vid[k] = b | (g<<8) | (r<<16) | (b2<<32)  | (g2<<40)  | (r2<<48); } break;
+#endif
 			case BIT_OP_OR: for (k = x1; k < x1 + x2-x1+1; k++) vid[k] |= col; break;
 			case BIT_OP_AND: for (k = x1; k < x1 + x2-x1+1; k++) vid[k] &= col; break;
 			case BIT_OP_XOR: for (k = x1; k < x1 + x2-x1+1; k++) vid[k] ^= col; break;
@@ -665,7 +680,7 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 			case BIT_OP_ADD: for (k = x1; k < x1 + x2-x1+1; k++) { bitTemp = vid[k]&0xf; bitTemp+=col&0xf; if (bitTemp > 15) bitTemp = 15; bitTemp2 = (vid[k]>>4)&0xf; bitTemp2+=(col>>4)&0xf; if (bitTemp2 > 15) bitTemp2 = 15; vid[k] = (bitTemp2 << 4) | bitTemp; } break;
 			case BIT_OP_SUB: for (k = x1; k < x1 + x2-x1+1; k++) { bitTemp = vid[k]&0xf; bitTemp-=col&0xf; if (bitTemp < 0) bitTemp = 0; bitTemp2 = (vid[k]>>4)&0xf; bitTemp2-=(col>>4)&0xf; if (bitTemp2 < 0) bitTemp2 = 0; vid[k] = (bitTemp2 << 4) | bitTemp; } break;
 			case BIT_OP_SUB_ME: for (k = x1; k < x1 + x2-x1+1; k++) { bitTemp = col&0xf; bitTemp-=vid[k]&0xf; if (bitTemp < 0) bitTemp = 0; bitTemp2 = (col>>4)&0xf; bitTemp2-=(vid[k]>>4)&0xf; if (bitTemp2 < 0) bitTemp2 = 0; vid[k] = (bitTemp2 << 4) | bitTemp; } break;
-			default: memset(vid+x1,col,x2-x1+1);
+			default: MYMEMSET(vid+x1,col,x2-x1+1);
 			}
 		}
 
@@ -952,8 +967,8 @@ void vecpol_addxdelt(vec_interpolate *vp) {
 	vp->ip_pos.z+=vp->z_ax;
 }
 
-int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal) {
-	register int I;
+int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, PREPCOL plusVal) {
+	register uchar I;
 	uchar *vid;
 	register int ysweep,xx1,xx2,yyy;
 	register int texw, texh;
@@ -1055,7 +1070,7 @@ int scan3_tmap(intVector vv[], int clipedges[], Bitmap *tex, int plusVal) {
 			if (upp >= texw) upp = upp % texw;
 			if (vpp >= texh) vpp = vpp % texh;
 			I=tex->data[(vpp*texw)+upp];
-			vid[i]=I + plusVal;
+			vid[i]=I PLUSVAL_OP plusVal;
 			vecpol_addxdelt(&tex_ip);
 		}
 
@@ -1092,7 +1107,7 @@ void hline(int x1, int x2, int y, uchar col) {
 	if (x1 < 0) { if (x2 < 0) return; x1=0;}
 	if (x2 >= XRES) { if (x1 >= XRES) return; x2=XRES-1; }
 
-	memset(video+y*XRES+x1, col, x2-x1+1);
+	MYMEMSET(video+y*XRES+x1, col, x2-x1+1);
 }
 
 
@@ -1179,9 +1194,9 @@ static char *texture;
 #define SUBDIVSHIFT	4
 #define SUBDIVSIZE	(1 << SUBDIVSHIFT)
 
-static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal);
+static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, PREPCOL plusVal);
 
-int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, int plusVal)
+int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, PREPCOL plusVal)
 {
 	float x1, y1, x2, y2, x3, y3;
 	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
@@ -1380,7 +1395,7 @@ int drawtpolyperspdivsubtri(intVector *tri, Bitmap *bild, int plusVal)
 	return 1;
 }
 
-static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal)
+static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, PREPCOL plusVal)
 {
 	uchar *scr, *scrEnd;
 	int x1, x2;
@@ -1448,7 +1463,7 @@ static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int
 
 					texPos = ((((int) v) & 0xff0000) >> 8) + ((((int) u) & 0xff0000) >> 16);
 					if (texPos < maxTexPos && texPos >= 0 && x1 > 0 && x1 < XRES)
-						*scr = texture[texPos] + plusVal;
+						*scr = texture[texPos] PLUSVAL_OP plusVal;
 					scr++;
 					x1++;
 					
@@ -1493,7 +1508,7 @@ static void drawtpolyperspdivsubtriseg(int y1, int y2, int xSize, int ySize, int
 
 					texPos = ((((int) v) & 0xff0000) >> 8) + ((((int) u) & 0xff0000) >> 16);
 					if (texPos < maxTexPos && texPos >= 0 && x1 > 0 && x1 < XRES)
-						*scr = texture[texPos] + plusVal;
+						*scr = texture[texPos] PLUSVAL_OP plusVal;
 					scr++;
 					x1++;
 					
@@ -1526,12 +1541,12 @@ static float xa, xb, iza, uiza, viza;
 static float dxdya, dxdyb, dizdya, duizdya, dvizdya;
 static uchar *texture;
 
-static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal);
-static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal);
+static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, PREPCOL plusVal);
+static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, PREPCOL plusVal);
 
-void (*drawPerspFunc)(int y1, int y2, int xSize, int ySize, int plusVal);
+void (*drawPerspFunc)(int y1, int y2, int xSize, int ySize, PREPCOL plusVal);
 
-int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
+int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, PREPCOL plusVal)
 {
 	float x1, y1, x2, y2, x3, y3;
 	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
@@ -1727,7 +1742,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, int plusVal)
 	return 1;
 }
 
-static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int plusVal)
+static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, PREPCOL plusVal)
 {
 	uchar *scr;
 	int x1, x2;
@@ -1775,7 +1790,7 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 
 				texPos = ((((int) v) ) * (xSize)) + (((int) u) );
 				if (texPos < maxTexPos && texPos >= 0)
-					*scr = texture[texPos] + plusVal;
+					*scr = texture[texPos] PLUSVAL_OP plusVal;
 				scr++;
 
 				// Step 1/Z, U/Z and V/Z horizontally
@@ -1799,7 +1814,7 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, int pl
 }
 
 
-static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, int plusVal)
+static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize, PREPCOL plusVal)
 {
 	uchar *scr;
 	int x1, x2;
@@ -1864,7 +1879,7 @@ static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize
 
 				texPos = ((((int) v) ) * (xSize)) + (((int) u) );
 				if (texPos < maxTexPos && texPos >= 0)
-					*scr = texture[texPos] + plusVal;
+					*scr = texture[texPos] PLUSVAL_OP plusVal;
 				scr++;
 
 				// Step 1/Z, U/Z and V/Z horizontally

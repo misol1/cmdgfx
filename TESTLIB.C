@@ -529,11 +529,11 @@ return 1;
 
 		if (clip) {
 			convertToText(usebgchars, scale, palette, clipedges[0], clipedges[1], usebg? old : NULL, mapIndex, XRES, YRES, video);
-			memset(virtual,0, FRAMESIZE);
+			MYMEMSET(virtual,0, FRAMESIZE);
 		}
 		else {
 			convertToText(usebgchars, scale, palette, 0, 0, usebg? old : NULL, mapIndex, XRES, YRES, video);
-			memset(virtual,0, FRAMESIZE);
+			MYMEMSET(virtual,0, FRAMESIZE);
 		}
 
 		if (timerMaxCnt == 0 && vblank)

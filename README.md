@@ -233,7 +233,7 @@ Syntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip]
 
 Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the file.
 
-Note that fgcol and bgcol will have no effect for a gxy or pcx file unless forcing the color with '-', or if using '?'.
+Note that fgcol only has effect for txt files and bgcol will have no effect for a gxy or pcx file (unless forcing fgcol and/or bgcol with '-', or if using '?').
 
 Char can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position. For a gxy file or text file, the char argument has no effect unless '?' is used.
 
@@ -587,14 +587,14 @@ Below are help sections where cmdgfx_RGB differs from cmdgfx_gdi:
 
 Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower.
 
-Since cmdgfx_RGB is still in its early stages, it has several problems, some known, some not. To name a few, block transform will give strange results for color changes, 'c' flag to save a snapshot gxy file will not work properly, image/text op separate fgcol/bgcol transparency does not work, transparent color can not be set as RRGGBB, 3d colors also can not be set as RRGGBB, etc etc. Hopefully most, but not all, of these issues will eventually be fixed.
+Since cmdgfx_RGB is still in its early stages, it may have issues, some known, some not. One example is the block transform parameteter, which will give strange results for color changes.
 
 
 ## General
 
-For all fgcol/bgcol settings, it is possible BOTH to specify a color index (as usual, using either hex or decimal), OR to specify a hexadecimal 24 bit RGB color of the form RRGGBB, where each pair is a hex value 0-ff(0-255). To set an RGB color, use at least 3 characters. E.g. to use a red-light-bluish color, write ff0080. To set an only blue color, use an extra preceding 0 to make 3 characters, such as 0ff.
+For all fgcol/bgcol settings, it is possible to BOTH specify a color index (as usual, using either hex or decimal), OR to specify a hexadecimal 24 bit RGB color of the form RRGGBB, where each pair is a hex value 0-ff(0-255). To set an RGB color, use at least 3 characters. E.g. to use a red-light-bluish color, write ff0080. To set an only blue color, use an extra preceding 0 to make 3 characters, such as 0ff.
 
-For all operations using an image as input (image, tpoly, 3d), cmdgfx_RGB also allows using an uncompressed 24-bit BMP file.
+For all operations using an image as input (image, tpoly, 3d), cmdgfx_RGB also allows using an uncompressed 24-bit BMP file, or 48-bit color/8-bit char bxy file (can only be produced with the c flag).
 
 Cmdgfx_RGB, like cmdgfx_gdi, does not care which font is currently set in the cmd window, but always uses raster font 6 by default. The font can be changed with the f flag.
 
@@ -622,6 +622,18 @@ Syntax: block mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transp
 For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, bgblend is automatically set to the same value. Alternatively, bgblend can be set separately.
 
 E.g. to copy with alpha blend 128 for both fgcol and bgcol: "block 0,128 5,5,40,40 20,20". To move (and set specific move char) and use separate blend for fgcol and bgcol: "block 1:a021,128,64 5,5,40,40 20,20"
+
+There are several new helper functions for colExpr to deal with 24 bit color values. Please note that currently, due to lack of precision, ONLY fgcol values can be changed and even *preserved* in colExpr for cmdgfx_RGB! The bgcol for values set in colExpr will ALWAYS be (re)set to 0. 
+
+New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct a color from r,g,b values in range 0-255.  4. fgr(col),fgg(col),fgb(col) to get a color's red,green or blue value (0-255).
+
+
+## Flags
+
+Same as for cmdgfx_gdi, exept:
+
+Output:
+-  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp. Last param can force i
 
 
 

@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gfxlib.h"
+#include "datasize.h"
 
 int PCXload (Bitmap *bild,char filename[]) {
 	FILE *ifp;
 	uchar c,d;
 	unsigned int i,j=0,k=0;
 	struct PCXheader PCXh;
-	uchar *filedata = NULL;
+	unsigned char *filedata = NULL;
 
 	ifp=fopen(filename,"rb");
 	if (ifp!=NULL) { // Öppna fil
@@ -28,7 +29,7 @@ int PCXload (Bitmap *bild,char filename[]) {
 		if (bild->data==NULL) {
 			return 0;
 		}
-		filedata=(uchar *)malloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4 *  sizeof(uchar));
+		filedata=(unsigned char *)malloc((PCXh.Xmax+1)*(PCXh.Ymax+1)*4 *  sizeof(unsigned char));
 		if (filedata==NULL) {
 			free(bild->data);
 			return 0;
@@ -61,6 +62,229 @@ int PCXload (Bitmap *bild,char filename[]) {
 	
 	return 0;
 }
+
+
+#ifdef _RGB32
+
+unsigned int endianReadInt(FILE* file) {
+	unsigned char  b[4]; 
+	unsigned int i;
+
+   if ( fread( b, 1, 4, file) < 4 )
+     return 0;
+   i = (b[3]<<24) | (b[2]<<16) | (b[1]<<8) | b[0]; // big endian
+   //i = (b[0]<<24) | (b[1]<<16) | (b[2]<<8) | b[3]; // little endian
+   return i;
+}
+
+unsigned short int endianReadShort(FILE* file) {
+	unsigned char  b[2]; 
+	unsigned short s;
+
+   if ( fread( b, 1, 2, file) < 2 )
+     return 0;
+   s = (b[1]<<8) | b[0]; // big endian
+   //s = (b[0]<<8) | b[1]; // little endian
+   return s;
+}
+
+
+int BMPload (Bitmap *image,char filename[]) {
+    FILE *file = NULL;
+    unsigned long size;                 // size of the image in bytes.
+    unsigned long i;                    // standard counter.
+    unsigned short int planes;          // number of planes in image (must be 1) 
+    unsigned short int bpp;             // number of bits per pixel (must be 24)
+    unsigned int temp;                          // temporary color storage for bgr-rgb conversion.
+	unsigned char *data = NULL;
+	int j, k, mod, modSize;
+	
+    if ((file = fopen(filename, "rb"))==NULL)
+    {
+		//printf("File Not Found : %s\n",filename);
+		return 0;
+    }
+    
+    // seek through the bmp header, up to the width/height:
+    fseek(file, 18, SEEK_CUR);
+
+    if (!(image->xSize = endianReadInt(file))) {
+		//printf("Error reading width from %s.\n", filename);
+		goto OUT;
+    }
+    //printf("Width of %s: %lu\n", filename, image->xSize);
+    
+    if (!(image->ySize = endianReadInt(file))) {
+		//printf("Error reading height from %s.\n", filename);
+		goto OUT;
+    }
+    //printf("Height of %s: %lu\n", filename, image->ySize);
+    
+	mod = image->xSize % 4;
+	
+    size = image->xSize * image->ySize;
+
+    if (!(planes=endianReadShort(file))) {
+		//printf("Error reading planes from %s.\n", filename);
+		goto OUT;
+    }
+    if (planes != 1) {
+		//printf("Planes from %s is not 1: %u\n", filename, planes);
+		goto OUT;
+    }
+
+    if (!(bpp = endianReadShort(file))) {
+		//printf("Error reading bpp from %s.\n", filename);
+		goto OUT;
+    }
+    if (bpp != 24) {
+		//printf("Bpp from %s is not 24: %u\n", filename, bpp);
+		goto OUT;
+    }
+	
+    // seek past the rest of the bitmap header.
+    fseek(file, 24, SEEK_CUR);
+
+    image->data = (uchar *) malloc(size * sizeof(uchar));
+    if (image->data == NULL) {
+		//printf("Error allocating memory for color-corrected image data");
+		goto OUT;
+    }
+	
+	modSize = size * 3 + image->ySize * mod;
+    data = (unsigned char *) malloc(modSize);
+    if (data == NULL) {
+		//printf("Error allocating memory for color-corrected image data");
+		goto OUT;
+    }
+	
+    if ((i = fread(data, modSize, 1, file)) != 1) {
+		//printf("Error reading image data from %s.\n", filename);
+		goto OUT;
+    }
+
+	j = (image->ySize - 1) * image->xSize;
+	k = 0;
+    for (i=0; i<modSize; i+=3) { // reverse all colors. (bgr -> rgb)
+		image->data[j + k] = (data[i]) | (data[i+1]<<8) | (data[i+2]<<16);
+		k++; if(k == image->xSize) { k=0; j-= image->xSize; i+=mod; }
+    }
+
+OUT:
+	if (data) free(data);
+	if (file) fclose(file);
+    return 1;
+}
+
+
+
+int BMPsave (uchar *cols, char filename[], int w, int h){
+	long buffer_size, byte_width;
+	unsigned char b1;
+	unsigned short b2;
+	unsigned long b4;
+	int i, j, k;
+	FILE *fp;
+	
+	byte_width = w * 3;
+	byte_width = (byte_width + 3) & ~3;	// aligned to 4 bytes
+	buffer_size = byte_width * h;
+
+	if ((fp = fopen(filename, "wb")) == NULL) {
+		//printf("Couldn't open the file!!\n");
+		return 0;
+	}
+	
+	/* can't write struct in single call because compiler might put in alignments */
+	b1='B'; fwrite(&b1, 1, 1, fp);
+  	b1='M'; fwrite(&b1, 1, 1, fp);
+	b4 = 14 + 40 + buffer_size; fwrite(&b4, 4, 1, fp);
+	b4 = 0; fwrite(&b4, 4, 1, fp);
+	b4 = 14 + 40; fwrite(&b4, 4, 1, fp);
+
+	/* write image header */
+	b4=40; fwrite(&b4, 4, 1, fp);
+	b4=w; fwrite(&b4, 4, 1, fp);
+	b4=h; fwrite(&b4, 4, 1, fp);
+	b2=1; fwrite(&b2, 2, 1, fp);
+	b2=24; fwrite(&b2, 2, 1, fp);
+	b4=0; fwrite(&b4, 4, 1, fp);
+	b4=buffer_size; fwrite(&b4, 4, 1, fp);
+	b4=2952; fwrite(&b4, 4, 1, fp);
+	b4=2952; fwrite(&b4, 4, 1, fp);
+	b4=0; fwrite(&b4, 4, 1, fp);
+	b4=0; fwrite(&b4, 4, 1, fp);
+		
+	/* order of colors are blue, green, red */	
+	for (i=h-1; i>=0; i--) {
+		for (j=0; j<w; j++) {
+			b1=(cols[i*w+j]) & 0xff; fwrite(&b1, 1, 1, fp); // b
+			b1=(cols[i*w+j]>>8) & 0xff; fwrite(&b1, 1, 1, fp); // g
+			b1=(cols[i*w+j]>>16) & 0xff; fwrite(&b1, 1, 1, fp); // r
+		}
+		/* row alignment */
+		for (k=0; k < (byte_width - w*3); k++) {
+			fputc(0, fp);
+		}
+	}
+	
+	fclose(fp);
+	return 1;
+}
+
+int BXYsave (unsigned char *chars, uchar *cols, char filename[], int w, int h) {
+	unsigned char b1;
+	unsigned long b4;
+	FILE *fp;
+	
+	if ((fp = fopen(filename, "wb")) == NULL) {
+		//printf("Couldn't open the file!!\n");
+		return 0;
+	}
+	
+	b4=w; fwrite(&b4, 4, 1, fp);
+	b4=h; fwrite(&b4, 4, 1, fp);
+
+	fwrite(cols, 8, w*h, fp);
+	fwrite(chars, 1, w*h, fp);
+	
+	fclose(fp);
+	return 1;
+}
+
+
+int BXYload (Bitmap *bCols,Bitmap *bChars,char filename[]) {
+	unsigned long b4;
+	FILE *fp;
+	int w,h;
+	unsigned char *chTemp;
+	
+	if ((fp = fopen(filename, "rb")) == NULL) {
+		//printf("Couldn't open the file!!\n");
+		return 0;
+	}
+	
+	fread(&b4, 4, 1, fp); w = bCols->xSize=bChars->xSize=b4;
+	fread(&b4, 4, 1, fp); h = bCols->ySize=bChars->ySize=b4;
+
+	chTemp = (unsigned char *)malloc(w*h);
+	bChars->data = (uchar *)malloc(w*h*sizeof(uchar));
+	bCols->data = (uchar *)malloc(w*h*sizeof(uchar));
+	
+	fread(bCols->data, 8, w*h, fp);
+	fread(chTemp, 1, w*h, fp);
+	
+	for (int i = 0; i < w*h; i++) bChars->data[i] = chTemp[i];
+	
+	free(chTemp);
+	
+	fclose(fp);
+	return 1;
+}
+
+
+#endif
+
 
 
 void freeBitmap(Bitmap *bild, int bFreeBasePointer) {
