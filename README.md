@@ -1,4 +1,4 @@
-# cmdgfx / cmdgfx_gdi / cmdgfx_input
+# cmdgfx / cmdgfx_gdi / cmdgfx_RGB / cmdgfx_input
 Windows command line graphic primitives and 3d, for text based games/demos by Mikael Sollenborn (2016-2019)
 
 Initially, cmdgfx was made to be used with Batch scripts. There is, however, nothing that stops using other scripting languages as well, such as Jscript or Python. In fact, doing so will increase speed drastically. In several provided examples in the archive (marked with the postfix '-js'), a hybrid solution is used for increased speed, where Batch does the initial setup, and the rest of the script uses Jscript.
@@ -24,6 +24,10 @@ Use cmdgfx_gdi:
   4. When needing to place the output with pixel precision instead of character precision (set 'a' flag, then use 'f' flag)
   5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each
   6. For advanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each
+
+cmdgfx_RGB : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.
+
+Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. On top of that, it may have early version bugs and issues.
 
 cmdgfx_input:
 
