@@ -1505,7 +1505,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
 									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
 								} else
-									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (vc & 0xffffff00000000);
 							}
 #endif
 							videoChar[k2+j] = blockChar[k+j2];
@@ -1529,7 +1529,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
 									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
 								} else
-									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (vc & 0xffffff00000000);
 							}
 #endif
 							videoChar[k2+j] = blockChar[k+j2];
@@ -1576,7 +1576,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
 									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
 								} else
-									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (vc & 0xffffff00000000);
 							}
 #endif
 							
