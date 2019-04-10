@@ -72,8 +72,6 @@ set /a MONO=0 & set MONS=
 
 set /a LIGHT=0, LTIME=990
 
-rem set /a MODE=1, TV=20, TRANSP=1, CUPOS=35
-
 set /a MODE=0, TV=0, TRANSP=1, CUPOS=35, CUPOS2=CUPOS+WW
 
 set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
@@ -81,6 +79,8 @@ set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C
 set /a SHOWHELP=1
 set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,108
 if !SHOWHELP!==1 set MSG=%HELPMSG%
+
+echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!"
 
 set STOP=
 :LOOP
@@ -95,13 +95,13 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H! & block 0,100 !WW!,0,!W!,!H! 0,0 -1 & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" Ff0:0,0,!WWW!,!H!,!W!,!H!
+	echo "cmdgfx: !OUTP:~1,-1! & skip image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H! & block 0,100 !WW!,0,!W!,!H! 0,0 -1 & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" f0:0,0,!WWW!,!H!,!W!,!H!
 	set OUTP=
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WWW=W*3, WW=W*2, XMID=W/2, XMID2=WW+XMID, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3, CUPOS2=CUPOS+WW" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WWW=W*3, WW=W*2, XMID=W/2, XMID2=WW+XMID, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3, CUPOS2=CUPOS+WW" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!" f0:0,0,!WWW!,!H!,!W!,!H! & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
 
 	set /a CRZ+=3, CNT+=1
 

@@ -623,9 +623,9 @@ For mode 20 and 21, the colors given must be 32 bit. This means that they follow
 
 Syntax: block mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 
-For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, bgblend is automatically set to the same value. Alternatively, bgblend can be set separately.
+For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, only the foreground color is blended. If bgblend is set, both fgcol and bgcol are blended separately.
 
-E.g. to copy with alpha blend 128 for both fgcol and bgcol: "block 0,128 5,5,40,40 20,20". To move (and set specific move char) and use separate blend for fgcol and bgcol: "block 1:a021,128,64 5,5,40,40 20,20"
+E.g. to copy with alpha blend 128 for fgcol only: "block 0,128 5,5,40,40 20,20". To move (and set specific move char) and use separate blend for fgcol and bgcol: "block 1:a021,128,64 5,5,40,40 20,20"
 
 There are several new helper functions for colExpr to deal with 24 bit color values. Please note that currently, due to lack of precision, ONLY fgcol values can be changed and even *preserved* in colExpr for cmdgfx_RGB! The bgcol for values set in colExpr will ALWAYS be (re)set to 0. 
 

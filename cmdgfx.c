@@ -1216,6 +1216,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 					if (nf > 0) {
 						if (blendValBg < 0) blendValBg = -1;
 						if (blendValBg > 255) blendValBg = 255;
+						bBlend=2;
 						//printf("%d\n", blendValBg); getch();
 					} else
 						blendValBg = blendVal;
@@ -1496,10 +1497,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 							if (!bBlend)
 								videoCol[k2+j] = blockCol[k+j2];
 							else {
-								blNew=blendVal; blOrg=255-blNew; bl2New=blendValBg; bl2Org=255-bl2New;
 								vc = videoCol[k2+j]; bc = blockCol[k+j2];
-								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256))); _b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
-								videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								blNew=blendVal; blOrg=255-blNew;
+								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256)));
+								if (bBlend ==2) {
+									bl2New=blendValBg; bl2Org=255-bl2New;
+									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								} else
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
 							}
 #endif
 							videoChar[k2+j] = blockChar[k+j2];
@@ -1515,10 +1521,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 							if (!bBlend)
 								videoCol[k2+j] = blockCol[k+j2];
 							else {
-								blNew=blendVal; blOrg=255-blNew; bl2New=blendValBg; bl2Org=255-bl2New;
 								vc = videoCol[k2+j]; bc = blockCol[k+j2];
-								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256))); _b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
-								videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								blNew=blendVal; blOrg=255-blNew;
+								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256)));
+								if (bBlend ==2) {
+									bl2New=blendValBg; bl2Org=255-bl2New;
+									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								} else
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
 							}
 #endif
 							videoChar[k2+j] = blockChar[k+j2];
@@ -1557,10 +1568,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 							if (!bBlend)
 								videoCol[k2+j] = (outBg << 4) | outFg;
 							else {
-								blNew=blendVal; blOrg=255-blNew; bl2New=blendValBg; bl2Org=255-bl2New;
-								vc = videoCol[k2+j]; bc = (outBg << 4) | outFg;
-								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256))); _b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
-								videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								vc = videoCol[k2+j]; bc = blockCol[k+j2];
+								blNew=blendVal; blOrg=255-blNew;
+								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256)));
+								if (bBlend ==2) {
+									bl2New=blendValBg; bl2Org=255-bl2New;
+									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
+								} else
+									videoCol[k2+j] = _b | (_g<<8) | (_r<<16);
 							}
 #endif
 							
@@ -2114,7 +2130,7 @@ int main(int argc, char *argv[]) {
 					char blockExtra[] = "";
 					char blockExtraFuncs[] = "";
 				#else
-					char blockExtra[] = "*RGB* : ,fgblend[,bgblend]: For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, bgblend is automatically set to the same value. Alternatively, bgblend can be set separately. E.g. to copy with alpha blend 128 for both fgcol and bgcol: block 0,128 5,5,40,40 20,20. To move (and set specific move char) and use separate blend for fgcol and bgcol: block 1:a021,128,64 5,5,40,40 20,20\n\n";
+					char blockExtra[] = "*RGB* : ,fgblend[,bgblend]: For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, only the foreground color is blended. If bgblend is set, both fgcol and bgcol are blended separately. E.g. to copy with alpha blend 128 for fgcol only: block 0,128 5,5,40,40 20,20. To move (and set specific move char) and use separate blend for fgcol and bgcol: block 1:a021,128,64 5,5,40,40 20,20\n\n";
 					char blockExtraFuncs[] = "\n\n*RGB* : There are several new helper functions for colExpr to deal with 24 bit color values. Please note that currently, due to lack of precision, ONLY fgcol values can be changed and even *preserved* in colExpr! The bgcol for values set in colExpr will ALWAYS be (re)set to 0.  New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct a color from r,g,b values in range 0-255.  4. fgr(col),fgg(col),fgb(col) to get a color's red,green or blue value (0-255).";
 				#endif
 				
