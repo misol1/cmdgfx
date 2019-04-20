@@ -7,7 +7,7 @@ set __=
 cmdwiz showcursor 1 & goto :eof
 
 :START
-cmdwiz setfont 2 & cls & mode 100,75 & cmdwiz showcursor 0 & title RGB Fire
+cmdwiz setfont 2 & cls & mode 100,75 & cmdwiz showcursor 0 & title RGB Fire (Space/Enter/f)
 call centerwindow.bat 0 -10
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors

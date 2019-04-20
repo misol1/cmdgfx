@@ -13,7 +13,7 @@ TARGETINPUT  = cmdgfx_input.exe
 #CC      = cl
 #CC      = C:\Dos\tcc\tcc32\tcc.exe
 #CC      = gcc -O3 -Wall
-CC      = gcc -O3 -Wno-trigraphs
+CC      = gcc -O3 -ffast-math -Wno-trigraphs
 CCFLAG  =
 
 testlib.exe : $(OBJECTS)

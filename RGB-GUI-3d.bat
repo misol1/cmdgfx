@@ -163,7 +163,7 @@ goto :eof
 		for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
 	if !a! lss 100 goto PREPLOOP
 
-	echo "cmdgfx: !BKSTR:~1,-1! & fbox 0 0 20 0,!H!,!W!,!H! & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! !TX!,!TY!" c:!MX!,!CHKY!,1,1,1,1
+	echo "cmdgfx: !BKSTR:~1,-1! & fbox 0 0 20 0,!H!,!W!,!H! & !CRSTR:~1,-1! & text !TEXTCOL! 0 0 !TEXT! !TX!,!TY!" c:!MX!,!CHKY!,1,1,3,1
 
 	set t1=!time: =0!
 	:CHKLOOP

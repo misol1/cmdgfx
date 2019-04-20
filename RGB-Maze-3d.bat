@@ -5,14 +5,14 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600
+cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600B
 set __=
 mode 80,50
 cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
 
-:: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016-17
+:: 3dworld maze with perspective correct texture mapping : Mikael Sollenborn 2016-19
 :START
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
@@ -31,8 +31,8 @@ set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"
 set ASPECT=1.26667
 
-set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
-set GROUNDCOLS=0 0 b2  0 0 b0
+set CUBECOLS=0 0 ? 0 0 ?  0 0 ?  0 0 ?  0 0 ? 0 0 ?
+set GROUNDCOLS=0 0 ?  0 0 ?
 
 set /a CNT=0, SLOTS=0
 set FWORLD=3dworld-maze.dat
@@ -93,7 +93,7 @@ echo vt 1 0 >>%FN2%
 
 set /a TILESIZE=2000, CNT=1, CNT2=0
 for /l %%a in (-25000,%TILESIZE%,25000) do for /l %%b in (-25000,%TILESIZE%,25000) do set /a V1=%%a,V2=%%a+%TILESIZE%,V3=%%b,V4=%%b+%TILESIZE% & echo v !V1! 500 !V3! >>%FN2% & echo v !V2! 500 !V3! >>%FN2% & echo v !V2! 500 !V4! >>%FN2% & echo v !V1! 500 !V4! >>%FN2%&set /a CNT2+=1
-for /l %%a in (1,1,%CNT2%) do set /a f0=!CNT!, f1=!CNT!+1, f2=!CNT!+2, f3=!CNT!+3, MODDER=%%a %% 3, CNT+=4 & echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN2% &(if !MODDER!==0 echo usemtl img\6hld.bmp >>%FN2%)&(if !MODDER!==1 echo usemtl img\hmmm.bmp >>%FN2%)&(if !MODDER!==2 echo usemtl img\123.bmp >>%FN2%)
+for /l %%a in (1,1,%CNT2%) do set /a f0=!CNT!, f1=!CNT!+1, f2=!CNT!+2, f3=!CNT!+3, MODDER=%%a %% 3, CNT+=4 & echo f !f0!/1/ !f1!/2/ !f2!/3/ !f3!/4/ >>%FN2% &(if !MODDER!==0 echo usemtl img\6hld.bmp >>%FN2%)&(if !MODDER!==1 echo usemtl img\hmm.bmp >>%FN2%)&(if !MODDER!==2 echo usemtl img\123.bmp >>%FN2%)
 
 set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /l %%a in (0,1,4) do set f%%a=&set V%%a=
 
@@ -101,7 +101,7 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /l %%a in 
 for /l %%a in (0,1,7) do set Vx%%a=&set Vy%%a=&set Vz%%a=&set F%%a_0=&set F%%a_1=&set F%%a_2=&set F%%a_3=
 for /l %%a in (0,1,%CNT%) do set sx%%a=&set sy%%a=&set sz%%a=&set dx%%a=&set dy%%a=&set dz%%a=&set t%%a=
 
-set BKSTR="fbox 9 1 b1"
+set BKSTR="fbox 9 1 ?"
 set /a MAP=0,ZMOD=0,XMOD=0
 set MAPTXT=image 3dworld-maze.dat 5 0 0 - 680,5
 
@@ -113,18 +113,19 @@ set /a MPY=%SH%-%H%/3 & cmdwiz setmousecursorpos %SW% !MPY!
 cmdwiz gettime & set ORGT=!errorlevel!
 set /a KEY=0
 for /l %%a in (1,1,10) do set /p INPUT=
-set /a ZVAL=600
+set /a ZVAL=600, CLRBKG=20
 
 :LOOP
 for /l %%1 in (1,1,300) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
+	if !CLRBKG! gtr 0 set /a CLRBKG-=1 & echo "cmdgfx: fbox ? ? b1"
 	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-500,25000,300 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" Ffa:0,0,!W!,!H!Z!ZVAL!
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W="(SCRW*2+2)*4, H=(SCRH*2+2)*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5" & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W="(SCRW*2+2)*4, H=(SCRH*2+2)*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5, CLRBKG=20" & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
 
 	if not "!EV_BASE:~0,1!" == "N" (
 	

@@ -593,7 +593,7 @@ int scanPoly(intVector p[],int points, uchar col, uchar bitOp) {
 	int r,g,b;
 	long long r2,g2,b2;
 #endif
-	
+
 	if (points<3) return 0; // Returnera 0 om färre än 3 punkter(korrupt poly)
 	p[points].x=p[0].x; p[points].y=p[0].y; // Sista punkt=första punkt.
 
@@ -1764,26 +1764,29 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, PREPCO
 
 		scr = &video[y1 * XRES + x1];
 
+		if (x1 <= 0) {
+			int xp=-x1;
+			scr = scr + xp;
+			iz += dizdx * xp;
+			uiz += duizdx * xp;
+			viz += dvizdx * xp;
+			x1=0;
+		}
+		
 		if (y1 >= 0 && y1 < YRES) {
 			while (x1++ < x2 && x1 <= XRES)	// Draw horizontal line
 			{
 				// Calculate U and V from 1/Z, U/Z and V/Z
-				if (x1 <= 0) {
-					scr++;
-					iz += dizdx;
-					uiz += duizdx;
-					viz += dvizdx;
-					continue;
-				}
 				
 				if (iz == 0) iz = 0.001;
 				z = 1 / iz;
+				
 				u = uiz * z;
 				v = viz * z;
 
 				if (bAllowRepeated3dTextures) {
-					u = ((int)u) % xSize;
-					v = ((int)v) % ySize;
+					if (u >= xSize) u = ((int)u) % xSize;
+					if (v >= ySize) v = ((int)v) % ySize;
 				}
 
 				// Copy pixel from texture to screen
@@ -1839,18 +1842,20 @@ static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize
 
 		zBufScr = &ZBufVideo[y1 * XRES + x1];
 
+		if (x1 <= 0) {
+			int xp=-x1;
+			zBufScr = zBufScr + xp;
+			scr = scr + xp;
+			iz += dizdx * xp;
+			uiz += duizdx * xp;
+			viz += dvizdx * xp;
+			x1=0;
+		}
+		
 		if (y1 >= 0 && y1 < YRES) {
 			while (x1++ < x2 && x1 <= XRES)	// Draw horizontal line
 			{
 				// Calculate U and V from 1/Z, U/Z and V/Z
-				if (x1 <= 0) {
-					zBufScr++;
-					scr++;
-					iz += dizdx;
-					uiz += duizdx;
-					viz += dvizdx;
-					continue;
-				}
 				
 				if (iz == 0) iz = 0.001;
 				
@@ -1864,6 +1869,7 @@ static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize
 				}
 				
 				z = 1 / iz;
+
 				*zBufScr = iz;
 				zBufScr++;
 				
@@ -1871,8 +1877,8 @@ static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize
 				v = viz * z;
 
 				if (bAllowRepeated3dTextures) {
-					u = ((int)u) % xSize;
-					v = ((int)v) % ySize;
+					if (u >= xSize) u = ((int)u) % xSize;
+					if (v >= ySize) v = ((int)v) % ySize;
 				}
 
 				// Copy pixel from texture to screen

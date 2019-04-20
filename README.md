@@ -414,7 +414,7 @@ Syntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_s
 
 drawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture
 
-drawoption: For mode 0,5,6 with texture, drawoption is transpchar(for gxy/txt) and transpcol(for pcx); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high byte of drawoption.
+drawoption: In hexadecimal! For mode 0,5,6 with texture, drawoption is transpchar(for gxy/txt) and transpcol(for pcx); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high nibble (bitop*16) of drawoption.
 
 [,tex_offset,tey_offset,tex_scale,tey_scale]: optional parameters used to set/scroll texture offset. Since calculating floating point in Batch is hard, the values are integers, where 0 is 0 and 100000 is 1. The scale is used to determine how much of the texture is seen at once, e.g a value of 33000 would show 1/3 of the texture in the given dimension, and 200000 would show it double.
 
@@ -637,7 +637,7 @@ New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r
 Same as for cmdgfx_gdi, exept:
 
 Output:
--  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp. Last param can force i
+-  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp, 3 for gxy(legacy). Last param can force i
 
 
 

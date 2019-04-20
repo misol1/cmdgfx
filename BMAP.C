@@ -185,7 +185,7 @@ int BMPsave (uchar *cols, char filename[], int w, int h){
 	unsigned long b4;
 	int i, j, k;
 	FILE *fp;
-	
+
 	byte_width = w * 3;
 	byte_width = (byte_width + 3) & ~3;	// aligned to 4 bytes
 	buffer_size = byte_width * h;

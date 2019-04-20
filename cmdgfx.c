@@ -1109,6 +1109,13 @@ double my_shr(double v1, double v2) {
 	return ((int)v1) >> ((int)v2);
 }
 
+double my_min(double in1, double in2) {
+	return in1 < in2? in1 : in2;
+}
+double my_max(double in1, double in2) {
+	return in1 > in2? in1 : in2;
+}
+
 #ifdef _RGB32
 double my_shade(double inColor, double or, double og, double ob) {
 	long long inCol=inColor, rp=or, gp=og, bp=ob, r,g,b;
@@ -1308,14 +1315,15 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
 		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
 #ifndef _RGB32
-		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}
+		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
 		};
-		te_expr *n = te_compile(colorExpr, vars, 23, &err);
+		te_expr *n = te_compile(colorExpr, vars, 25, &err);
 #else
 		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2},  {"shade", my_shade, TE_FUNCTION4},  {"blend", my_blend, TE_FUNCTION5}
 		, {"makecol", my_makecol, TE_FUNCTION3},  {"fgr", my_fgr, TE_FUNCTION1},  {"fgg", my_fgg, TE_FUNCTION1},  {"fgb", my_fgb, TE_FUNCTION1}
+		, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
 		};
-		te_expr *n = te_compile(colorExpr, vars, 29, &err);
+		te_expr *n = te_compile(colorExpr, vars, 31, &err);
 #endif
 		
 		if (n) {
@@ -1356,11 +1364,11 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
 		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
 		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
-		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}
+		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
 		};
 		te_expr *n, *n2;
-		n = te_compile(xExpr, vars, 23, &err); errX = err;
-		n2 = te_compile(yExpr, vars, 23, &err);
+		n = te_compile(xExpr, vars, 25, &err); errX = err;
+		n2 = te_compile(yExpr, vars, 25, &err);
 		
 		if (n && n2) {
 			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
@@ -1715,7 +1723,6 @@ char DecToHex(int i) {
 	return i;
 }
 
-#ifndef _RGB32
 
 char *GetAttribs(WORD attributes, char *utp) {
 	int i;
@@ -1725,6 +1732,9 @@ char *GetAttribs(WORD attributes, char *utp) {
 	utp[3] = 0;
 	return utp;
 }
+
+#ifndef _RGB32
+
 int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 	WORD oldAttrib = 6666;
 	FILE *ofp = NULL;
@@ -1791,6 +1801,8 @@ int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 		sprintf(fName, "capture-%d.txt", indexNr);
 	else if (bEncode == 2)
 		sprintf(fName, "capture-%d.bmp", indexNr);
+	else if (bEncode == 3)
+		sprintf(fName, "capture-%d.gxy", indexNr);
 	else
 		sprintf(fName, "capture-%d.bxy", indexNr);
 	
@@ -1810,6 +1822,7 @@ int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 		fclose(ofp);
 	} else if (bEncode == 2) {
 		uchar *cBlock = (uchar *)malloc(w*h*sizeof(uchar));
+		
 		for (j=0; j < h; j++) {
 			for (i=0; i < w; i++) {
 				cBlock[i + j*w] = g_videoCol[x + i + j*XRES + y*XRES];
@@ -1817,6 +1830,42 @@ int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 		}
 		BMPsave(cBlock, fName, w, h);
 		free(cBlock);
+	} else if (bEncode == 3) {
+		char *output, attribS[16], charS[8];
+		WORD oldAttrib = 6666;
+
+		output = (char*) malloc(10 * w*h);
+		if (!output) return 3;
+		output[0] = 0;
+		
+		ofp = fopen(fName, "w");
+		if (!ofp) return 1;
+		
+		for (j=0; j < h; j++) {
+			output[0]=0;
+			for (i=0; i < w; i++) {
+				ch = g_videoChar[x + i + j*XRES + y*XRES];
+				if (!(ch ==32 || (ch >='0' && ch <='9') || (ch >='A' && ch <='Z') || (ch >='a' && ch <='z'))) {
+					int v;
+					charS[0] = '\\'; charS[1] = 'g';
+					v = ch / 16; charS[2]=DecToHex(v);
+					v = ch % 16; charS[3]=DecToHex(v);
+					charS[4]=0;
+				} else {
+					charS[0] = ch; charS[1]=0;
+				}
+				if (oldAttrib == g_videoCol[x + i + j*XRES + y*XRES])
+					sprintf(output, "%s%s", output, charS);
+				else
+					sprintf(output, "%s%s%s", output, GetAttribs(g_videoCol[x + i + j*XRES + y*XRES], attribS), charS);
+				oldAttrib = g_videoCol[x + i + j*XRES + y*XRES];
+			}
+			fprintf(ofp, "%s\\n", output);
+		}
+
+		free(output);
+		fclose(ofp);		
+		
 	}  else {
 		unsigned char *chBlock = (unsigned char *)malloc(w*h*sizeof(unsigned char));
 		uchar *cBlock = (uchar *)malloc(w*h*sizeof(uchar));
@@ -1947,6 +1996,13 @@ int main(int argc, char *argv[]) {
 	unsigned char *cp;
 	long long startT = milliseconds_now();
 
+#ifdef _RGB32
+	int MAXBITOP=BIT_OP_BLEND_RGB;
+#else
+	int MAXBITOP=BIT_NORMAL_IPOLY;
+#endif
+
+
 #ifdef GDI_OUTPUT
 	g_rgbFgPalette = fgPalette;
 	g_rgbBgPalette = bgPalette;
@@ -2054,14 +2110,17 @@ int main(int argc, char *argv[]) {
 #ifndef _RGB32
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_gdi";
+		char ver[] = "v1.0";
 #else		
 		char colspec[] = "Cmdgfx_RGB can take colors as 24 bit hexadecimal RRGGBB values, e.g. ff00ff for violet. Fgcol and bgcol values can ALSO use palette index range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_RGB";
+		char ver[] = "v1.1";
 #endif
 	
 #else
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.";
 		char name[2] = "";
+		char ver[] = "v1.0";
 #endif
 		if (argc > 2) {
 			if (strcmp(argv[2], "fbox") == 0) {
@@ -2123,7 +2182,7 @@ int main(int argc, char *argv[]) {
 			}
 			
 			else if (strcmp(argv[2], "3d") == 0) {
-				printf("\n3d - draw a 3d object file\n\nSyntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n\n[objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports %spcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx%s files) or character (for other formats) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)\n\ndrawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture\n\ndrawoption: For mode 0,5,6 with texture, drawoption is transpchar(for %s) and transpcol(for pcx%s); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high byte of drawoption.\n\n[,tex_offset,tey_offset,tex_scale,tey_scale]: optional parameters used to set/scroll texture offset. Since calculating floating point in Batch is hard, the values are integers, where 0 is 0 and 100000 is 1. The scale is used to determine how much of the texture is seen at once, e.g a value of 33000 would show 1/3 of the texture in the given dimension, and 200000 would show it double.\n\nrx[:rx2],ry[:ry2],rz[:rz2]: rotation of 3d object in 3 axis, specified as Euler angles. If specifying a second rotation (for all axis), it is performed *after* the first translation. Keep in mind that angles are integers, and by default multiplied by 4 (can be changed with R flag), so a full circle is 1440 degrees.\n\ntx[:tx2],ty[:ty2],tz[:tz2]: floating point translation (move) of 3d object in 3 dimensions. The translation is done after the rotation. If specifying a second translation (for all dimensions), it is performed after the second rotation.\n\nscalex,scaley,scalez,xmod,ymod,zmod: Floating point initial moving (mod) and scaling of the object done before any translations or rotations. Note that mod is done before scaling, and thus uses the initial object size.\n\ncull,z_near_cull,z_far_cull,z_levels: Set cull to 1 to use backface culling, otherwise 0. Z_near_cull sets the close-to-camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_far_cull sets the far-away camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_levels is used to sort faces within a single object, where a higher value gives better precision (a default of 10  will be used if 0 is set)\n\nxpos,ypos,distance,aspect: Xpos,ypos is the screen center point (column and row) around which the object is drawn. Distance is the distance of the object from the camera. Negative values produce an 'inverted' object. Aspect (floating point value) is used for correction when fonts are not the same width as height, and thus make objects appear distorted (not true for pixel fonts, where aspect is 1). To get the correct aspect for a font, divide its width in pixels by its height, e.g. raster font 1 is 6/8=0.75.\n\nfgcol1 bgcol1 char1...: Faces are drawn using at mimimum 1 set of fgcol/bgcol/char, and at most 32. If only 1 is provided, the same set is used for all faces. If 2 are provided, set 1 is used for face 1, set 2 for face 2, set 1 for face 3, etc. Use '?' for fgcol or bgcol to keep the current foreground AND background colors in the buffer. Use '?' for char to keep the current characters in the buffer. If drawing with a texture, fgcol and bgcol are not ignored but instead *added* to the texture's foreground and background colors. Char is ignored for textures unless it is a pcx%s file. Cols are 0-15 in hex or decimal (u and U for current console fg/bg colors), and chars are 0-255 in hex or written as an actual character.\n\nNote that faces with less than 3 vertices are treated differently when drawing, since they cannot form a polygon. For single vertex faces, a single character (dot) is drawn (except in drawmode 2). However, for mode 0,1,5 and 6, if a texture has been set, the texture is drawn (as unscaled image) instead of a dot, with the vertex as center point. For faces with 2 vertices, a line is drawn between the points (except in drawmode 2).\n\nAlso note that the Z-buffer (if enabled) only works for textured graphics in drawmode 5 by default. Set the s flag too to support Z-buffer for flat shade in 3d modes 0,1,4 as well.\n",filePl,filePlus,charFF,filePlus,filePlus);
+				printf("\n3d - draw a 3d object file\n\nSyntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n\n[objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports %spcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx%s files) or character (for other formats) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)\n\ndrawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture\n\ndrawoption: In hexadecimal! For mode 0,5,6 with texture, drawoption is transpchar(for %s) and transpcol(for pcx%s); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high nibble (bitop*16) of drawoption.\n\n[,tex_offset,tey_offset,tex_scale,tey_scale]: optional parameters used to set/scroll texture offset. Since calculating floating point in Batch is hard, the values are integers, where 0 is 0 and 100000 is 1. The scale is used to determine how much of the texture is seen at once, e.g a value of 33000 would show 1/3 of the texture in the given dimension, and 200000 would show it double.\n\nrx[:rx2],ry[:ry2],rz[:rz2]: rotation of 3d object in 3 axis, specified as Euler angles. If specifying a second rotation (for all axis), it is performed *after* the first translation. Keep in mind that angles are integers, and by default multiplied by 4 (can be changed with R flag), so a full circle is 1440 degrees.\n\ntx[:tx2],ty[:ty2],tz[:tz2]: floating point translation (move) of 3d object in 3 dimensions. The translation is done after the rotation. If specifying a second translation (for all dimensions), it is performed after the second rotation.\n\nscalex,scaley,scalez,xmod,ymod,zmod: Floating point initial moving (mod) and scaling of the object done before any translations or rotations. Note that mod is done before scaling, and thus uses the initial object size.\n\ncull,z_near_cull,z_far_cull,z_levels: Set cull to 1 to use backface culling, otherwise 0. Z_near_cull sets the close-to-camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_far_cull sets the far-away camera cutoff z distance where the object is no longer visible (set 0 for no cutoff). Z_levels is used to sort faces within a single object, where a higher value gives better precision (a default of 10  will be used if 0 is set)\n\nxpos,ypos,distance,aspect: Xpos,ypos is the screen center point (column and row) around which the object is drawn. Distance is the distance of the object from the camera. Negative values produce an 'inverted' object. Aspect (floating point value) is used for correction when fonts are not the same width as height, and thus make objects appear distorted (not true for pixel fonts, where aspect is 1). To get the correct aspect for a font, divide its width in pixels by its height, e.g. raster font 1 is 6/8=0.75.\n\nfgcol1 bgcol1 char1...: Faces are drawn using at mimimum 1 set of fgcol/bgcol/char, and at most 32. If only 1 is provided, the same set is used for all faces. If 2 are provided, set 1 is used for face 1, set 2 for face 2, set 1 for face 3, etc. Use '?' for fgcol or bgcol to keep the current foreground AND background colors in the buffer. Use '?' for char to keep the current characters in the buffer. If drawing with a texture, fgcol and bgcol are not ignored but instead *added* to the texture's foreground and background colors. Char is ignored for textures unless it is a pcx%s file. Cols are 0-15 in hex or decimal (u and U for current console fg/bg colors), and chars are 0-255 in hex or written as an actual character.\n\nNote that faces with less than 3 vertices are treated differently when drawing, since they cannot form a polygon. For single vertex faces, a single character (dot) is drawn (except in drawmode 2). However, for mode 0,1,5 and 6, if a texture has been set, the texture is drawn (as unscaled image) instead of a dot, with the vertex as center point. For faces with 2 vertices, a line is drawn between the points (except in drawmode 2).\n\nAlso note that the Z-buffer (if enabled) only works for textured graphics in drawmode 5 by default. Set the s flag too to support Z-buffer for flat shade in 3d modes 0,1,4 as well.\n",filePl,filePlus,charFF,filePlus,filePlus);
 			}
 			else if (strcmp(argv[2], "block") == 0) {
 				#ifndef _RGB32
@@ -2151,7 +2210,7 @@ int main(int argc, char *argv[]) {
 #ifndef _RGB32
 				char cFlag[] = "Capture buffer to file, as capture-i.gxy (i starts at 0 and increases). 0-6 params. Format=0 for txt format. Last param can force i\n";
 #else
-				char cFlag[] = "Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp format. Last param can force i\n";
+				char cFlag[] = "Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp format, 3 for gxy(legacy). Last param can force i\n";
 #endif
 
 				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
@@ -2176,7 +2235,7 @@ int main(int argc, char *argv[]) {
 
 		
 		} else {
-			printf("\nCmdGfx%s v1.0 : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, and cmdgfx_RGB.\n", name, name, blockMode, name, name, name, name, name, name);
+			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, and cmdgfx_RGB.\n", name, ver, name, blockMode, name, name, name, name, name, name);
 		}
 		
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
@@ -3136,17 +3195,19 @@ int main(int argc, char *argv[]) {
 				}
 
 				if (obj3) {
+					unsigned int lfgcol, lbgcol;
+				
 					if (drawmode == 2)
 						MYMEMSET(videoTransp, TRANSPVAL, XRES*YRES);
 
 					for (i = 0; i < nofcols; i++) {
 						int modi = i%nofcols;
-						parseInput(s_fgcols[modi], s_bgcols[modi], s_dchars[modi], &fgcol, &bgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
+						parseInput(s_fgcols[modi], s_bgcols[modi], s_dchars[modi], &lfgcol, &lbgcol, &pchar[i], &pbWriteChars[i], &pbWriteCols[i]);
 #ifdef _RGB32
-						if(s_fgcols[modi][0] == '0' && s_fgcols[modi][1] == 0) fgcol = 0;
-						if(s_bgcols[modi][0] == '0' && s_bgcols[modi][1] == 0) bgcol = 0;
+						if(s_fgcols[modi][0] == '0' && s_fgcols[modi][1] == 0) lfgcol = 0;
+						if(s_bgcols[modi][0] == '0' && s_bgcols[modi][1] == 0) lbgcol = 0;
 #endif						
-						pfgbg[i] = ((PREPCOL)bgcol << BITSHL) | fgcol;
+						pfgbg[i] = ((PREPCOL)lbgcol << BITSHL) | lfgcol;
 					}
 
 					for (j = 0; j < obj3->nofPoints; j++) {
@@ -3342,7 +3403,7 @@ int main(int argc, char *argv[]) {
 
 										} else {
 											if (nofFacePoints > 2) {
-												if (drawoption > 0 && drawoption <= BIT_NORMAL_IPOLY) {
+												if (drawoption > 0 && drawoption <= MAXBITOP) {
 													int option = drawoption; if (option == BIT_NORMAL_IPOLY) option=0;
 													if (bWriteCols) scanPoly(v, nofFacePoints, fgbg, option);
 													video = videoChar;
@@ -3394,7 +3455,7 @@ int main(int argc, char *argv[]) {
 
 										video = videoCol;
 										if (nofFacePoints > 2) {
-											if ((drawoption>>4) > 0 && (drawoption>>4) <= BIT_NORMAL_IPOLY) {
+											if ((drawoption>>4) > 0 && (drawoption>>4) <= MAXBITOP) {
 												int option = drawoption>>4; if (option == BIT_NORMAL_IPOLY) option=0;
 												if (bWriteCols) scanPoly(v, nofFacePoints, fgbg, option);
 												video = videoChar;
