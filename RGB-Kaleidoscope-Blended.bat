@@ -77,10 +77,12 @@ set /a MODE=0, TV=0, TRANSP=1, CUPOS=35, CUPOS2=CUPOS+WW
 set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
 
 set /a SHOWHELP=1
-set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,108
+set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,108
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!"
+
+set /a C16=0 & if !C16!==1 set XF=X
 
 set STOP=
 :LOOP
@@ -95,13 +97,13 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & skip image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H! & block 0,100 !WW!,0,!W!,!H! 0,0 -1 & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" f0:0,0,!WWW!,!H!,!W!,!H!
+	echo "cmdgfx: !OUTP:~1,-1! & skip image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H! & block 0,100 !WW!,0,!W!,!H! 0,0 -1 & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" !XF!f0:0,0,!WWW!,!H!,!W!,!H! - - \g20.-+jR
 	set OUTP=
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WWW=W*3, WW=W*2, XMID=W/2, XMID2=WW+XMID, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3, CUPOS2=CUPOS+WW" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!" f0:0,0,!WWW!,!H!,!W!,!H! & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-m\-f\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WWW=W*3, WW=W*2, XMID=W/2, XMID2=WW+XMID, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3, CUPOS2=CUPOS+WW" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!" f0:0,0,!WWW!,!H!,!W!,!H! & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
 
 	set /a CRZ+=3, CNT+=1
 
@@ -118,15 +120,14 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !CNT! gtr 1307 set /a A3+=1
 	if !CNT! gtr 1400 set /a CNT=0
 	if !KEY! == 112 cmdwiz getch & set /a CKEY=!errorlevel! & if !CKEY! == 115 echo "cmdgfx: " c:0,0,%W%,%H%
-	if !KEY! == 102 if !CS!==0 set /a CS=1,CCNT=0
 	if !KEY! == 104  set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG=)&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	if !KEY! == 100 set /A DIST+=50
 	if !KEY! == 68 set /A DIST-=50
 	if !KEY! == 13 set /A TRANSP=1-!TRANSP!&(if !TRANSP!==1 set /a TV=20)&(if !TRANSP!==0 set /a TV=-1)
-	if !KEY! == 109 set /A MONO=1-!MONO!&(if !MONO!==1 set MONS=block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=fe??)&(if !MONO!==0 set MONS=)
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 2 set MODE=0
 	if !KEY! == 27 set STOP=1
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	if !KEY! == 120 set /a C16=1-C16 & set XF=-X& if !C16!==1 set XF=X0,3,2000
 	
 	set /a KEY=0
 )

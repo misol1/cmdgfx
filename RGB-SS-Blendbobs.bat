@@ -69,7 +69,8 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 		set /a "SIZE=2, RS=!RANDOM! %% 4, BS=!RANDOM! %% 9, NOFSB=2 + !RANDOM! %% 2, TIMEOUT=4500+!RANDOM! %% 2000"
 		call :GETCOLORS
 rem		echo "cmdgfx: fbox 0 0 !CHAR!"& set /a "OLDCOL=COL, COL=!RANDOM! %% 3, DRWMODE=21" & if !COL!==!OLDCOL! set /a "COL=!RANDOM! %% 3"
-		set /a BINR=!RANDOM! %% 10 & if !BINR!==1 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 00??=0031,????=0030 random()*5"
+rem		set /a BINR=!RANDOM! %% 10 & if !BINR!==1 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 00??=0031,????=0030 random()*5"
+		set /a BINR=!RANDOM! %% 10 & if !BINR!==1 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 00??=0031,10??=0030,????=0020 random()*5"
 		set /a BINR=!RANDOM! %% 2 & if !BINR!==0 echo "cmdgfx: fbox 0 0 !CHAR!"& set /a "OLDCOL=COL, COL=!RANDOM! %% 3, DRWMODE=21" & if !COL!==!OLDCOL! set /a "COL=!RANDOM! %% 3"
 		if !BS! geq 7 set /a SIZE=3
 		set t1=!time: =0!

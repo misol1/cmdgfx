@@ -5,8 +5,8 @@
 // ************* Update these 9 macros and the language statement. Don't alter the rest. *************
 
 // https://docs.microsoft.com/en-us/windows/desktop/menurc/versioninfo-resource
-#define APP_VS          1,1,0,0
-#define APP_BUILD_MONTH "April"
+#define APP_VS          1,2,0,0
+#define APP_BUILD_MONTH "May"
 #define APP_BUILD_YEAR  "2019"
 #define APP_DEVELOPER   "Mikael Sollenborn"
 #define APP_COMPANY     ""

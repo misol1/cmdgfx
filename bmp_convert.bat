@@ -1,6 +1,6 @@
 @echo off & setlocal enabledelayedexpansion
 
-if "%~2"=="" echo Usage: bmp_convert image.bmp gray^|invert^|mirror^|flip^|contrast(1)^|poster(1)^|light(1)^|saturate(1)^|soften(1)^|mono(1)^|blend(2)^|noise(2)^|pixelate(2)^|color(3)^|tint(3)^|replacecol(7) [value [value2 [value3 ...]]] & goto :eof
+if "%~2"=="" echo Usage: bmp_convert image.bmp gray^|invert^|mirror^|flip^|contrast(1)^|poster(1)^|light(1)^|saturate(1)^|soften(1)^|mono(1)^|custom(1)^|blend(2)^|noise(2)^|pixelate(2)^|color(3)^|tint(3)^|replacecol(7) [value [value2 [value3 ...]]] & goto :eof
 if not "%~x1"==".bmp" echo Error: Only bmp files supported & goto :eof
 if not exist "%~1" echo Error: No such file & goto :eof
 
@@ -37,7 +37,8 @@ if %2==noise if %V2%==0	set OP="shade(fgcol(x,y),random()*(%V1%*2)-%V1%,random()
 if %2==noise if %V2% gtr 0 set OP="store(random()*(%V1%*2)-%V1%,0)+shade(fgcol(x,y),s0,s0,s0)"
 if %2==pixelate set OP=""& set XTRA="& block 0 0,0,%W%,%H% 0,0,%V1%,%V2% & block 0 0,0,%V1%,%V2% 0,0,%W%,%H%"
 if %2==blend set OP=""& set fName2="%~3"&set fName2=!fName2: =~!&set XTRA="& image !fName2:~1,-1! 0 0 0 -1 %W%,0 0 0 %W%,%H% & block 0,%V2% %W%,0,%W%,%H% 0,0"
-if %2==mono 	set OP="store(fgcol(x,y),0)+store((fgr(s0)*0.2126+fgg(s0)*0.7152+fgb(s0)*0.0722),1)+gtr(s1,%V1%)*makecol(255,255,255)"
+if %2==mono  set OP="store(fgcol(x,y),0)+store((fgr(s0)*0.2126+fgg(s0)*0.7152+fgb(s0)*0.0722),1)+gtr(s1,%V1%)*makecol(255,255,255)"
+if %2==custom set OP=""& set XTRA="& %~3"
 
 if %OP%=="NOP" echo Error: No such operation & goto :eof
 

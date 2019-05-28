@@ -31,10 +31,12 @@ set /a OBJINDEX=0, NOFOBJECTS=2
 call :SETOBJECT
 set /a ACTIVE_KEY=0
 
+set /a C16=0 & if !C16!==1 set XF=X
+
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-   echo "cmdgfx: skip fbox 8 0 fa 0,0,!W!,!H! & image img/water2.bmp 0 0 fe -1 0,0 0 0 !W!,!H! & !MSG:~1,-1! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip ipoly 89010101 0 ? 20 5,5,50,5,50,60,5,60" Ff0:0,0,!W!,!H!
+   echo "cmdgfx: skip fbox 8 0 fa 0,0,!W!,!H! & image img/water2.bmp 0 0 fe -1 0,0 0 0 !W!,!H! & !MSG:~1,-1! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip ipoly 89010101 0 ? 20 5,5,50,5,50,60,5,60" Ff0:0,0,!W!,!H!!XF!
 	
    if !ROTMODE! == 0 set /a RX+=2,RY+=6,RZ-=4
 
@@ -52,6 +54,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			if !KEY! == 110 set /A OBJINDEX+=1&(if !OBJINDEX! geq %NOFOBJECTS% set /A OBJINDEX=0)&call :SETOBJECT
 			if !KEY! == 78 set /A OBJINDEX-=1&(if !OBJINDEX! lss 0 set /A OBJINDEX=%NOFOBJECTS%-1)&call :SETOBJECT
 			if !KEY! == 104 set /A SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set MSG="")&if !SHOWHELP!==1 set MSG=!HELPMSG!
+			if !KEY! == 120 set /a C16=1-C16 & set XF=-X& if !C16!==1 set XF=X
 			if !KEY! == 112 cmdwiz getch
 			if !KEY! == 27 set STOP=1
 		)

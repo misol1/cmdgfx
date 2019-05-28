@@ -10,6 +10,7 @@ if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
 cmdwiz getconsoledim sw
 set /a W=%errorlevel% + 1
+if %W% lss 201 set /a W=201
 cmdwiz getconsoledim sh
 set /a H=%errorlevel% + 2
 set /a WW=W*2, WWW=W*3

@@ -7,7 +7,7 @@ set __=
 cmdwiz showcursor 1 & goto :eof
 
 :START
-cmdwiz setfont 2 & cls & mode 100,90 & cmdwiz showcursor 0 & title RGB Fire 2 (try fullscreen) SPACE/Enter/r
+cmdwiz setfont 2 & cls & mode 100,90 & cmdwiz showcursor 0 & title RGB Fire 2 : SPACE/Enter
 call centerwindow.bat 0 -10
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -23,7 +23,7 @@ W=80, H=75, WW=W*2, HH=H*2
 WScript.Echo("\"cmdgfx: fbox 0 0 db \"")
 
 MOD=35, MOD2=Math.floor(MOD/2)
-SEED=0; MODE=0; COLI=0; setColFade(COLI); YD=12
+SEED=0; MODE=1; COLI=0; setColFade(COLI); YD=12
 
 while(true) {
 

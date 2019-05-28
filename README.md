@@ -410,7 +410,7 @@ x,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as t
 
 Syntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 
-[objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports pcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx files) or character (for gxy and txt) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)
+[objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports pcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx files) or character (for gxy and txt) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]. There is also cmdcolblock, which copies only colors, not characters, with syntax: cmdcolblock x y w h [transpcol]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)
 
 drawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture
 
@@ -544,7 +544,7 @@ cmdgfx_RGB.exe
 ```
 CmdGfx_RGB v1.0 : Mikael Sollenborn 2016-2019
 
-Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette]
+Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette] [convertTo16colChars]
 
 Drawing operations (separated by &):
 
@@ -634,10 +634,11 @@ New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r
 
 ## Flags
 
-Same as for cmdgfx_gdi, exept:
+Same as for cmdgfx_gdi, except:
 
 Output:
 -  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp, 3 for gxy(legacy). Last param can force i
+- \- Xmode,set,range  Turn on conversion from RGB to 16 colors, using fgpalette. Default values are 0,0,1000. Mode is 0 or 1. Set is 0-3. Set can also be custom set by using the 5th parameter to cmdgfx_RGB (using either normal characters or gxy format \gxx per char)
 
 
 

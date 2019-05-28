@@ -34,7 +34,7 @@ set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_
 set MSG=""& if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set OBJINDEX=2
-set NOFOBJECTS=21
+set NOFOBJECTS=22
 call :SETOBJECT
 set /a ACTIVE_KEY=0
 
@@ -118,4 +118,5 @@ if %OBJINDEX% == 16 set FNAME=chopper.plg& set MOD=-1,-1,-1, 0,0,0 1
 if %OBJINDEX% == 17 set FNAME=humanoid_quad.obj& set MOD=1,1,1, 0,0,0 1
 if %OBJINDEX% == 18 set FNAME=fracttree.ply& set MOD=1,1,1, 0,0,0 1
 if %OBJINDEX% == 19 set FNAME=hulk.obj& set MOD=1,1,1, 0,0,0 1& set PAL0=0 0 db 0 0 b1 
-if %OBJINDEX% == 20 set FNAME=al.obj& set MOD=1,1,1, 0,0,0 0
+if %OBJINDEX% == 20 set FNAME=mengersponge.obj& set MOD=1,1,1, 0,0,0 1
+if %OBJINDEX% == 21 set FNAME=al.obj& set MOD=1,1,1, 0,0,0 0

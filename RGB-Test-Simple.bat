@@ -13,11 +13,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=150, H=80, F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
-set /a XMID=%W%/2, YMID=%H%/2
-set /a RX=0,RY=0,RZ=0, DIST=1000,MUL=2000, MMID=2600, SC=0, SCALE=150
-set ASPECT=0.66 & set STOP=
 call centerwindow.bat 0 -18
-call sindef.bat
 
 echo "cmdgfx: fbox ff9944 0 A 2,2,90,60 & " f1:0,0,!W!,!H!
 
@@ -47,27 +43,18 @@ echo "cmdgfx: text 55bbff 0 0 _Hey_Mr_Tambourine\-\a0MAN_ 10,8"
 
 echo "cmdgfx: pixel f 4 X 0,0 "
 
-rem echo "cmdgfx: piixel f 4 X 110,8 "
-
 echo "cmdgfx: tpoly img\apa.gxy 0 0 0 -1 3,3,0,0,60,7,1,0,90,40,1,1,10,20,0,1"
 
+rem echo "cmdgfx: piixel f 4 X 110,8 "
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-	for %%a in (!SC!) do set /a A1=%%a & set /a "DIST=!MMID!+(%SINE(x):x=!A1!*31416/180%*!MUL!>>!SHR!), SC+=1"
-
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 	
-	echo "cmdgfx: skip hej"
-	
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2" & cmdwiz showcursor 0
-
-	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-	if !KEY! == 112 cmdwiz getch
+	echo "cmdgfx: skip "
 	if !KEY! == 27 set STOP=1
-	set /a RZ+=10, KEY=0
 )
 if not defined STOP goto LOOP
 
