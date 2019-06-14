@@ -1,4 +1,4 @@
-# cmdgfx / cmdgfx_gdi / cmdgfx_RGB / cmdgfx_input
+# cmdgfx / cmdgfx_gdi / cmdgfx_RGB / cmdgfx_VT / cmdgfx_input
 Windows command line graphic primitives and 3d, for text based games/demos by Mikael Sollenborn (2016-2019)
 
 Initially, cmdgfx was made to be used with Batch scripts. There is, however, nothing that stops using other scripting languages as well, such as Jscript or Python. In fact, doing so will increase speed drastically. In several provided examples in the archive (marked with the postfix '-js'), a hybrid solution is used for increased speed, where Batch does the initial setup, and the rest of the script uses Jscript.
@@ -27,7 +27,9 @@ Use cmdgfx_gdi:
 
 cmdgfx_RGB : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.
 
-Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. On top of that, it may have early version bugs and issues.
+Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower.
+
+cmdgfx_VT: This is the RGB equivalent of standard cmdgfx, which means it can output actual text and use the current font of the console window. It only works on Windows 10 machines, as only Windows 10 supports VT-100 escape codes to set colors. cmdgfx_VT has significantly slower output than cmdgfx_RGB.
 
 cmdgfx_input:
 
@@ -40,7 +42,7 @@ There are many example scripts in the archive which shows this usage, as it is t
 cmdgfx.exe
 ----------
 ```
-CmdGfx v1.0 : Mikael Sollenborn 2016-2019
+CmdGfx v1.3 : Mikael Sollenborn 2016-2019
 
 Usage: cmdgfx [operations] [flags] [fgpalette] [bgpalette]
 
@@ -78,7 +80,7 @@ Arguments within brackets are optional, but if used they must be written in the 
 
 'cmdgfx /? palette' for info on setting the color palette.
 
-'cmdgfx /? compare' for a comparison of cmdgfx and cmdgfx_gdi.
+'cmdgfx /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB and cmdgfx_VT.
 
 ```
 
@@ -109,7 +111,7 @@ Input/timing (cmdgfx_input prefered):
 
 Output:
 -  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.gxy (i starts at 0 and increases). 0-6 params. Format=0 for txt format. Last param can force i
--  f:x,y,w,h  Set output buffer position and size. 0-4 params
+-  f:x,y,w,h,outW,outH  Set output buffer position and size. 0-6 params. Force outW and outH to screen width/height for better performance
 -  n  Produce no output. Used to create a frame in several steps
 
 3d:
@@ -124,10 +126,12 @@ Output:
 -   Zi  Set projection depth i for all 3d operations. Default: 500
 
 Other:
--  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)
--  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256
--  p  Preserve the content of the cmd window text buffer when starting cmdgfx
-
+-   C  Clear frame counter (print using [FRAMECOUNT] in string for text op)
+-   Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256
+-   p  Preserve the content of the cmd window text buffer when starting cmdgfx
+- \- v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)
+- \- V  Enable origo mode for all box operations
+  
 Server:
 -   F  Flush the pipe input buffer between script and server
 - \- i  If set, ignore the file 'servercmd.dat' even if present
@@ -462,7 +466,7 @@ Use rem to ignore all operations on the line following rem.
 cmdgfx_gdi.exe
 --------------
 ```
-CmdGfx_gdi v1.0 : Mikael Sollenborn 2016-2019
+CmdGfx_gdi v1.3 : Mikael Sollenborn 2016-2019
 
 Usage: cmdgfx_gdi [operations] [flags] [fgpalette] [bgpalette]
 
@@ -500,7 +504,7 @@ Arguments within brackets are optional, but if used they must be written in the 
 
 'cmdgfx /? palette' for info on setting the color palette.
 
-'cmdgfx /? compare' for a comparison of cmdgfx and cmdgfx_gdi.
+'cmdgfx /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB and cmdgfx_VT.
 
 ```
 Syntax above is exactly the same as cmdgfx.exe, but listed again for clarity.
@@ -542,9 +546,9 @@ If running as server, default palette can be restored by using - as palette.
 cmdgfx_RGB.exe
 --------------
 ```
-CmdGfx_RGB v1.0 : Mikael Sollenborn 2016-2019
+CmdGfx_RGB v1.3 : Mikael Sollenborn 2016-2019
 
-Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette] [convertTo16colChars]
+Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette]
 
 Drawing operations (separated by &):
 
@@ -566,6 +570,7 @@ block    mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar]
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
+color16  [mode] [set] [range]
 insert   file
 skip
 rem
@@ -580,7 +585,7 @@ Arguments within brackets are optional, but if used they must be written in the 
 
 'cmdgfx /? palette' for info on setting the color palette.
 
-'cmdgfx /? compare' for a comparison of cmdgfx and cmdgfx_gdi.
+'cmdgfx /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB and cmdgfx_VT.
 
 ```
 Syntax above is almost exactly the same as cmdgfx.exe (there is a difference in block, where fgblend and bgblend can be set to RGB alpha blend the block. There are also more bitops for ipoly.
@@ -632,13 +637,29 @@ There are several new helper functions for colExpr to deal with 24 bit color val
 New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct a color from r,g,b values in range 0-255.  4. fgr(col),fgg(col),fgb(col) to get a color's red,green or blue value (0-255).
 
 
+### Color16
+
+Converts RGB buffer to 16 colors using a mix of characters
+
+Syntax: color16 [mode] [set] [range]
+
+Note that color16 can only be called *once* per frame, further calls will be ignored. Also note that after calling color16, any drawing operations during the same frame will not be preserved in the buffer.
+
+The current 16 color palette will be used in the conversion (console window default colors unless previously specified)
+
+[mode]: Either 0 or 1 (default 0). Affects how conversion is done, experiment for best results.
+
+[set]: The character set index used in the conversion, *or* a custom character set. Standard set indices are 0-3 (default 0). In order to set a custom set, specify a string of characters starting with the least solid character and ending with the most solid character. Gxy format of \g is supported for special characters. Example: \g20-+jW
+
+[range]: Represents the numerical color distance range used for each character in the set. Default value is 1000. Experiment for best results (for a set with a long string of characters, the range should typically be smaller).
+
+
 ## Flags
 
 Same as for cmdgfx_gdi, except:
 
 Output:
 -  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp, 3 for gxy(legacy). Last param can force i
-- \- Xmode,set,range  Turn on conversion from RGB to 16 colors, using fgpalette. Default values are 0,0,1000. Mode is 0 or 1. Set is 0-3. Set can also be custom set by using the 5th parameter to cmdgfx_RGB (using either normal characters or gxy format \gxx per char)
 
 
 

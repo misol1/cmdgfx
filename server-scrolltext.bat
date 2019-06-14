@@ -86,7 +86,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !CNT! gtr 380 if !CNT! lss 500 set /A DIST+=20
 	if !CNT!==605 set /a YROT=0, RX=0
 	if !CNT!==640 set XROT=1
-	if !CNT!==1200 if "!HELP!"=="" set /a KEY=104
+	if !CNT!==1200 if "!SH!"=="skip" set /a KEY=104
 
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 116 set CCNT=0&for %%a in (04 fe . b0 db) do (if !CCNT!==!CHARI! set CHAR=%%a)&set /A CCNT+=1

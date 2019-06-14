@@ -1,0 +1,8 @@
+usemtl cmdcolblock 0 0 320 320 
+v  0 0 0 
+v  0 100 0 
+v  66 100 0 
+vt 0 0 
+vt 0 1 
+vt 1 1 
+f 1/1/ 2/2/ 3/3/ 

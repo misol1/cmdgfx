@@ -10,8 +10,8 @@
 #define APP_BUILD_YEAR  "2019"
 #define APP_DEVELOPER   "Mikael Sollenborn"
 #define APP_COMPANY     ""
-#define APP_NAME        "CmdGfx RGB"
-#define APP_COMMENT     "CmdGfx RGB - Fast 24 bit RGB console games and graphic effects (GDI bitmap output)"
+#define APP_NAME        "CmdGfx VT"
+#define APP_COMMENT     "CmdGfx VT - 24 bit RGB console games and graphic effects (VT-100 text output)"
 
 // https://docs.microsoft.com/en-us/windows/desktop/menurc/stringfileinfo-block#remarks
 // ... as four HEX digits each

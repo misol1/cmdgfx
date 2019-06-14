@@ -80,7 +80,8 @@ set /a SHOWHELP=1
 set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,108
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 
-set /a C16=0 & if !C16!==1 set XF=X
+set CONV16=color16 0 .-+jR 3000
+set /a C16=0 & set XF=skip& if !C16!==1 set XF=
 
 set STOP=
 :LOOP
@@ -95,7 +96,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" !XF!Ff0:0,0,!W!,!H! - - .-+jR
+	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & !XF! %CONV16% & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" Ff0:0,0,!W!,!H!
 	set OUTP=
 
 	set /p INPUT=
@@ -125,7 +126,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 2 set MODE=0
 	if !KEY! == 27 set STOP=1
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-	if !KEY! == 120 set /a C16=1-C16 & set XF=-X& if !C16!==1 set XF=X0,3,2000
+	if !KEY! == 120 set /a C16=1-C16 & set XF=skip& if !C16!==1 set XF=
 	
 	set /a KEY=0
 )

@@ -1,6 +1,6 @@
-/**********************************************
- * Cmdgfx v 1.0 (c) Mikael Sollenborn 2016-19 *
- **********************************************/
+/****************************************
+ * Cmdgfx (c) Mikael Sollenborn 2016-19 *
+ ****************************************/
 
 //#define GDI_OUTPUT
 
@@ -22,22 +22,11 @@
 #endif
 
 // Issues/ideas:
-// 1. Code optimization: Re-use images used several times, same way as for 3d objects
-// 2. Force col for tpoly/3d? Free rotation for block? Offset for poly ops?
-// 3. GDI: Actually showing text with text operation in pixel mode (actually, all modes). Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big letters of char/fgcol/bgcol!
-// 4. For text and image op: option to really ignore all gxy codes (without typing them out as with \ )
-// 5. Major: Port to Linux
-
-// For 3d:
-// 1. Code fix: Figure out why RX rotation not working as in ASM 3d world (i.e. not working as expected in 3dworld??.bat)
-
-// For RGB:
-// long double for colexpr? Automatically call ipoly for e.g. fbox,pixel etc if color has AA? Draw after Convto16?
-
-// Done: 1. RGB: convert back to 16 col
-//       2. L flag bug fix (could not set after startup)
-//		 3. cmdcolblock
-
+// 1. Code optimization: Re-use images used several times, same way as for 3d objects (or possibly, use binary alternative to gxy to remove parsing, might be almost as fast)
+// 2. Force col for tpoly/3d? Free rotation for block?
+// 3. GDI: Actually showing text with text operation in pixel mode. Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big letters of char/fgcol/bgcol!
+// 4. Major: Port to Linux
+// 5. RGB: long double for colexpr?
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -253,7 +242,8 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, ucha
 					#ifndef _RGB32
 					color = fgCol | (bgCol<<4);
 					#else
-					color = g_rgbFgPalette[fgCol] | ((PREPCOL)g_rgbBgPalette[bgCol]<<BITSHL);
+					if (bIgnoreFgColor) color = fgCol; else color = g_rgbFgPalette[fgCol];
+					if (bIgnoreBgColor) color |= (PREPCOL)bgCol<<BITSHL; else color |= ((PREPCOL)g_rgbBgPalette[bgCol]<<BITSHL);
 					#endif
 				}
 			}
@@ -628,28 +618,36 @@ CHAR_INFO * readScreenBlock() {
 
 #ifndef GDI_OUTPUT
 
-void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y) {
+#ifndef _RGB32
+void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y, int outw, int outh) {
 	CHAR_INFO *str;
 	COORD a, b;
 	SMALL_RECT r;
 	HANDLE hCurrHandle;
-	int i;
+	int i,j,k,l;
 
-	a.X = XRES; a.Y = YRES;
+	a.X = outw; a.Y = outh;
 
 	hCurrHandle = g_conout;
 	str = (CHAR_INFO *) calloc (sizeof(CHAR_INFO) * (a.X * a.Y), 1);
 	if (!str) return;
 
 	if (fgPalette == NULL) {
-		for (i = 0; i < XRES * YRES; i++) {
-			str[i].Attributes = videoCol[i];
-			str[i].Char.AsciiChar = videoChar[i];
+		
+		for (i = 0; i < outh; i++) {
+			k = i * XRES; l = i * outw;
+			for (j = 0; j < outw; j++) {
+				str[l+j].Attributes = videoCol[k+j];
+				str[l+j].Char.AsciiChar = videoChar[k+j];
+			}
 		}
 	} else {
-		for (i = 0; i < XRES * YRES; i++) {
-			str[i].Attributes = fgPalette[videoCol[i] & 0xf] | (bgPalette[videoCol[i] >> 4] << 4);
-			str[i].Char.AsciiChar = videoChar[i];
+		for (i = 0; i < outh; i++) {
+			k = i * XRES; l = i * outw;
+			for (j = 0; j < outw; j++) {
+				str[l+j].Attributes = fgPalette[videoCol[k+j] & 0xf] | (bgPalette[videoCol[k+j] >> 4] << 4);
+				str[l+j].Char.AsciiChar = videoChar[k+j];
+			}
 		}
 	}
 	
@@ -662,6 +660,38 @@ void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar 
 
 	free(str);
 }
+
+#else
+
+void convertToVT100(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int x, int y, int outw, int outh) {
+	unsigned int i,j,fcol,bcol,cchar, oldfcol = -1, oldbcol = -1, k=0;
+	unsigned char *outS = malloc(40 * XRES + 10);
+
+	for (i = 0; i < outh-1; i++) {
+		*outS=0; k=0;
+		k += sprintf(outS, "%c[%d;%dH",27,y+i+1,x);
+		for (j = 0; j < outw; j++) {
+			cchar = videoChar[j+i*XRES] SAFE_AND; if (cchar==0) cchar=255;
+			fcol = videoCol[j+i*XRES] & 0xffffff;
+			bcol = videoCol[j+i*XRES] >> BITSHL;
+			if (fcol != oldfcol) {
+				k += sprintf(&outS[k], "%c[38;2;%d;%d;%dm",27,(fcol>>16)&0xff,(fcol>>8)&0xff,fcol&0xff);
+				oldfcol = fcol;
+			}
+			if (bcol != oldbcol) {
+				k += sprintf(&outS[k], "%c[48;2;%d;%d;%dm",27,(bcol>>16)&0xff,(bcol>>8)&0xff,bcol&0xff);
+				oldbcol = bcol;
+			}
+			outS[k] = cchar; k++; outS[k] = 0; 
+		}
+		puts(outS);
+	}
+	
+	free(outS);
+}
+
+
+#endif
 
 #endif
 
@@ -827,6 +857,10 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 }
 
+#endif
+
+
+
 #ifdef _RGB32
 
 void readOutChars(char *pch, unsigned char *outCh) {
@@ -855,13 +889,24 @@ void readOutChars(char *pch, unsigned char *outCh) {
 }
 
 void parseConv16Flag(char *inVal, unsigned char *outCh, int *div, int *mode) {
-	int tempMode, tempDiv, chIndex, nof;
+	int tempMode, tempDiv, chIndex, nof, bCustomSet=0;
+	char tempOutCh[64];
 	*mode = 0;
 	*div = 1000;
 	outCh[0]=0x20; outCh[1]=0x2b; outCh[2]=0x04; outCh[3]=0x05; outCh[4]=0; // 0x08 på index 3 (visar MER av färg1 än färg0 (som det eg ej ska vara), så får man lite "kromigt" utseende
-
+	tempOutCh[0]=0;
+	
 	if (inVal[0]== 0) return;
-	nof = sscanf(inVal, "%d,%d,%d", &tempMode, &chIndex, &tempDiv);
+	nof = sscanf(inVal, "%d %62s %d", &tempMode, tempOutCh, &tempDiv);
+	
+	if (nof > 1) {
+		if (strlen(tempOutCh) > 1) {
+			readOutChars(tempOutCh, outCh);
+			bCustomSet=1;
+		} else
+			sscanf(tempOutCh, "%d", &chIndex);
+	}
+	
 	if (nof < 1) tempMode=0;
 	if (nof < 2) { chIndex = 0; }
 	if (tempMode < 0 || tempMode > 1) tempMode = 0;
@@ -872,6 +917,9 @@ void parseConv16Flag(char *inVal, unsigned char *outCh, int *div, int *mode) {
 	
 	*mode = tempMode;
 	*div = tempDiv;
+	
+	if (bCustomSet)
+		return;
 	
 	switch(chIndex) {
 		case 0: outCh[0]=0x20; outCh[1]=0x2b; outCh[2]=0x04; outCh[3]=0x05; outCh[4]=0; break;
@@ -944,8 +992,6 @@ void convertFgRgbTo16Col(int XRES, int YRES, uchar *videoCol, uchar *videoChar, 
 	}
 	
 }
-#endif
-
 #endif
 
 
@@ -2074,6 +2120,8 @@ void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int
 }
 #else
 
+#ifndef _RGB32
+	
 void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, int *bPaletteSet) {	
 	if (argv3) {
 		int i, nofc = strlen(argv3);
@@ -2090,6 +2138,35 @@ void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, i
 			bgPalette[i] = GetHex(argv4[i]);
 	}
 }
+#else
+void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
+	if (argv3) {
+		int nofc, gr,gg,gb,i;
+		nofc = (strlen(argv3)+1) / 7;
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++) {
+			gr = (GetHex(argv3[i*7]) << 4) | GetHex(argv3[i*7+1]);
+			gg = (GetHex(argv3[i*7+2]) << 4) | GetHex(argv3[i*7+3]);
+			gb = (GetHex(argv3[i*7+4]) << 4) | GetHex(argv3[i*7+5]);
+			fgPalette[i] = (0xff << 24) | (gr << 16) | (gg << 8) | (gb);
+			if (!argv4) bgPalette[i] = fgPalette[i];
+		}
+	}
+
+	if (argv4) {
+		int nofc, gr,gg,gb,i;
+		nofc = (strlen(argv4)+1) / 7;
+		if (nofc > 16) nofc = 16;
+		for (i = 0; i < nofc; i++) {
+			gr = (GetHex(argv4[i*7]) << 4) | GetHex(argv4[i*7+1]);
+			gg = (GetHex(argv4[i*7+2]) << 4) | GetHex(argv4[i*7+3]);
+			gb = (GetHex(argv4[i*7+4]) << 4) | GetHex(argv4[i*7+5]);
+			bgPalette[i] = (0xff << 24) | (gr << 16) | (gg << 8) | (gb); 
+		}
+	}
+}
+#endif
+
 #endif	
 
 void transformFilenameSpaces(char *inout) {
@@ -2097,6 +2174,41 @@ void transformFilenameSpaces(char *inout) {
 		if (*inout == '~') *inout=' ';
 		inout++;
 	}
+}
+
+void makeOrigoPoly(intVector vv[], int *nofp, int bUseTextures) {
+	int i, xo, yo;
+	
+	xo = vv[0].x; yo = vv[0].y; 
+	for (int i=0; i<*nofp-1; i++) {
+		vv[i].x = vv[i+1].x + xo;
+		vv[i].y = vv[i+1].y + yo;
+		if (bUseTextures) {
+			vv[i].z = vv[i+1].z;
+			vv[i].tex_coord = vv[i+1].tex_coord;
+		}
+	}
+	(*nofp)--;
+}
+
+void RemoveGxyCodes(char *tstring, int bRemoveNewLineCode) {
+	int i = 0, o = 0, len = strlen(tstring);
+
+	for (i = 0; i < len; i++) {
+		if (tstring[i] == '\\') {
+			i++;
+			if (tstring[i] == '\\' || tstring[i] == '-' || tstring[i] == 'r' || tstring[i] == 'n')
+				;
+			else if (tstring[i] == 'g')
+				i+=2;
+			else
+				i+=1;
+		} else {
+			tstring[o] = tstring[i];
+			o++;
+		}
+	}
+	tstring[o] = 0;
 }
 
 	
@@ -2128,6 +2240,7 @@ int main(int argc, char *argv[]) {
 	char sFlags[130];
 	int bIgnoreServerCmdFile = 0, bIgnoreTitleComm = 1;
 	char sTitleBuffer[1024] = "";
+	int bUseOrigoPoly = 0, bUseOrigoBox = 0;
 	
 	int gx = 0, gy = 0;
 	int outw = 0, outh = 0;
@@ -2142,24 +2255,38 @@ int main(int argc, char *argv[]) {
 	int bWindowedMode = 1;
 	
 #else
+	
+#ifndef _RGB32
 	uchar fgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar bgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 	uchar orgPalette[20] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+#else
+	unsigned int fgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	unsigned int bgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	unsigned int orgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 	0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+		
+#endif	
+		
 #endif
+
+
 	int i, j, k, retVal = 0, ii, bSendKeyUp = 0;
 	int bServer = 0, bDoNothing = 0, bInserted = 0, frameCounter = 0;
-	DWORD oldfdwMode;
+	DWORD oldfdwMode, oldOutMode, outMode;
 	unsigned char *cp;
 	long long startT = milliseconds_now();
 
 #ifdef _RGB32
 	int MAXBITOP=BIT_OP_BLEND_RGB;
-	int bConvertBackTo16 = 0;
 	
 	unsigned char outCh[64] = "";
 	outCh[0]=0x20; outCh[1]=0x2b; outCh[2]=0x04; outCh[3]=0x05; outCh[4]=0;
 	int conv16mode = 0;
 	int conv16div = 1000;
+	
+	int	bWasConvertedTo16 = 0;
+	uchar *conv16Col=NULL, *conv16Char=NULL, *oldVidCol=NULL, *oldVidChar=NULL;
+	int conv16W=-1, conv16H=-1;
 	
 #else
 	int MAXBITOP=BIT_NORMAL_IPOLY;
@@ -2167,6 +2294,10 @@ int main(int argc, char *argv[]) {
 
 
 #ifdef GDI_OUTPUT
+	g_rgbFgPalette = fgPalette;
+	g_rgbBgPalette = bgPalette;
+#endif
+#ifdef _RGB32
 	g_rgbFgPalette = fgPalette;
 	g_rgbBgPalette = bgPalette;
 #endif
@@ -2207,9 +2338,7 @@ int main(int argc, char *argv[]) {
 	orgW = txres = getConsoleDim(0);
 	orgH = tyres = getConsoleDim(1);
 
-#ifdef GDI_OUTPUT
 	outw = txres; outh = tyres;
-#endif
 
 	errH.errCnt = 0;
 
@@ -2232,6 +2361,8 @@ int main(int argc, char *argv[]) {
 					nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
 					if (nof >= 3 && nof < 5) outw = txres;
 					if (nof >= 4 && nof < 6) outh = tyres;
+					if (outw > txres || outw < 0) outw = txres;
+					if (outh > tyres || outh < 0) outh = tyres;
 				}
 				break;
 				case 'o': bWriteReturnToFile = 1; break;
@@ -2268,22 +2399,26 @@ int main(int argc, char *argv[]) {
 		char filePl[]="bmp,bxy,";
 		char charFF[]="gxy/bxy/txt";
 #endif	
+
+		char ver[] = "v1.3";
 		
 #ifdef GDI_OUTPUT
 #ifndef _RGB32
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_gdi";
-		char ver[] = "v1.1";
 #else		
 		char colspec[] = "Cmdgfx_RGB can take colors as 24 bit hexadecimal RRGGBB values, e.g. ff00ff for violet. Fgcol and bgcol values can ALSO use palette index range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_RGB";
-		char ver[] = "v1.2";
 #endif
 	
 #else
+#ifndef _RGB32
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.";
 		char name[2] = "";
-		char ver[] = "v1.1";
+#else		
+		char colspec[] = "Cmdgfx_VT can take colors as 24 bit hexadecimal RRGGBB values, e.g. ff00ff for violet. Fgcol and bgcol values can ALSO use palette index range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
+		char name[16] = "_VT";
+#endif
 #endif
 		if (argc > 2) {
 			if (strcmp(argv[2], "fbox") == 0) {
@@ -2362,16 +2497,12 @@ int main(int argc, char *argv[]) {
 			else if (strcmp(argv[2], "flags") == 0) {
 #ifdef GDI_OUTPUT
 				char gdiflag1[] = "\n- a  Absolute (pixel) output positioning (used by f flag)";
-#ifndef _RGB32
 				char gdiflag2[] = "\n- U  Draw straight on top of Windows desktop instead of current window";
-#else
-				char gdiflag2[] = "\n- U  Draw straight on top of Windows desktop instead of current window\n- Xmode,set,range  Turn on conversion from RGB to 16 colors, using fgpalette. Default values are 0,0,1000. Mode is 0 or 1. Set is 0-3. Set can also be custom set by using the 5th parameter to cmdgfx_RGB (using either normal characters or gxy format \\gxx per char)";
-#endif	
 				char gdiflag3[] = "\n  P  Save buffer to 'GDIbuf.dat' at end of run, read back when start again";
 				char fFlag[] = "  fFont:x,y,w,h,outW,outH  Set buffer font(0-9,a-c), position, and size. 1-7 params. Force outW and outH to screen width/height for better performance\n";
 #else
 				char gdiflag1[] = "", gdiflag2[] = "", gdiflag3[] = "";
-				char fFlag[] = "  f:x,y,w,h  Set output buffer position and size. 0-4 params\n";
+				char fFlag[] = "  f:x,y,w,h,outW,outH  Set output buffer position and size. 0-6 params. Force outW and outH to screen width/height for better performance\n";
 #endif
 
 #ifndef _RGB32
@@ -2380,7 +2511,7 @@ int main(int argc, char *argv[]) {
 				char cFlag[] = "Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp format, 3 for gxy(legacy). Last param can force i\n";
 #endif
 
-				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
+				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n  v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)\n  V  Enable origo mode for all box operations\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
 			}
 			else if (strcmp(argv[2], "palette") == 0) {
 #ifdef GDI_OUTPUT
@@ -2393,9 +2524,14 @@ int main(int argc, char *argv[]) {
 				printf("\nRunning as server has several advantages, mostly regarding speed. The overhead of running an executable each frame disappears, and 3d objects are kept in memory and don't have to be re-read with each use. Server functionality also presents some problems, such as dealing with asynchronicity and input lag.\n\nIn order to run as server, the S flag must be set, and the program needs to be last in a pipe chain, such as: call program.bat | cmdgfx.exe "" S . For practical purposes, it is a better idea to have the script call itself this way than to have to type it manually each time. There are many example batch scripts included with this program that show how do to this.\n\nTo send operations from the script to the program, use the echo command with a prefix of 'cmdgfx:' within quotes (optionally followed by flags and palette(s)), e.g: echo \"cmdgfx: fbox 9 0 A\". If the string sent does not have the prefix, the server simply prints it to stdout and otherwise ignores it. It is also possible to send operations either by writing (without 'cmdgfx' prefix) to the file 'servercmd.dat', or (if I flag set) by setting the title of the window, prefixed with 'output:'. These two methods have the advantage that they bypass the frame queue over the pipe and are processed immediately.\n\nSetting flags: see the separate help section for flags. Note that flags can be disabled by preceding with -.\n\nDealing with input lag: because the batch script may execute faster than cmdgfx, a queue of frames to render may build up over the pipe, which can result in input lag. Actually, the best way to deal with this is to use the separate 'cmdgfx_input' program to handle input, because when put at the beginning of the pipe chain (like: cmdgfx_input.exe m0nW10 | call program.bat | cmdgfx "" S) it can control the speed of the batch script, preventing it from running faster than the server. Most of the example scripts included with the program use this approach. Without cmdgfx_input, the best approach is to set the O flag (see flag section), and send in extra data (~2000 characters) prefixed by 'skip' with each call to the server to fill up the pipe buffer to prevent the server from lagging behind.\n\nQuitting the server: To exit the server, use echo as usual but follow 'cmdgfx:' with 'quit'. Using servercmd.dat or setting the title is also supported.\n");
 			}
 			else if (strcmp(argv[2], "compare") == 0) {
-				printf("\nThe main difference between cmdgfx and cmdgfx_gdi is that while the former outputs actual text into the cmd window buffer, the output of cmdgfx_gdi is not text but a bitmap, simulating text output.\n\nProducing a bitmap instead of text may seem nonsensical, but there is a simple explanation: it is (usually) much faster! That is because the Windows API to output text to a console is very slow, as soon as there is more than one color in the output.\n\nThe cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-c which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and font c 3x3). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).\n\nUse cmdgfx:\n  1. For single output, not animating in a loop (speed is not crucial)\n  2. When the resulting characters actually need to be put into the text buffer\n  3. When needing to use another font than the 9 raster fonts or pixel fonts\n  4. If output is monochrome/single color (speed will be same or better)\n\nUse cmdgfx_gdi:\n  1. When speed is of the essence (when making animations)\n  2. When needing to write pixels instead of characters\n  3. When needing to write to desktop instead of current window (set flag U)\n  4. When needing to place the output with pixel precision instead of character precision (set a flag, then use f flag)\n  5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each\n  6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each\n\n\n*RGB* : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.\n\nOnly use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. On top of that, it may have early version bugs and issues.\n");
+				printf("\nThe main difference between cmdgfx and cmdgfx_gdi is that while the former outputs actual text into the cmd window buffer, the output of cmdgfx_gdi is not text but a bitmap, simulating text output.\n\nProducing a bitmap instead of text may seem nonsensical, but there is a simple explanation: it is (usually) much faster! That is because the Windows API to output text to a console is very slow, as soon as there is more than one color in the output.\n\nThe cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-c which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and font c 3x3). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).\n\nUse cmdgfx:\n  1. For single output, not animating in a loop (speed is not crucial)\n  2. When the resulting characters actually need to be put into the text buffer\n  3. When needing to use another font than the 9 raster fonts or pixel fonts\n  4. If output is monochrome/single color (speed will be same or better)\n\nUse cmdgfx_gdi:\n  1. When speed is of the essence (when making animations)\n  2. When needing to write pixels instead of characters\n  3. When needing to write to desktop instead of current window (set flag U)\n  4. When needing to place the output with pixel precision instead of character precision (set a flag, then use f flag)\n  5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each\n  6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each\n\n\n*RGB* : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.\n\nOnly use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. \n\n\n*VT*: This is the RGB equivalent of standard cmdgfx, which means it can output actual text and use the current font of the console window. It only works on Windows 10 machines, as only Windows 10 supports VT-100 escape codes to set colors. It has significantly slower output than cmdgfx_RGB.\n");
 			}
+#ifdef _RGB32			
+			else if (strcmp(argv[2], "color16") == 0) {
 
+				printf("\nColor16 - convert RGB buffer to 16 colors using a mix of characters\n\nSyntax: color16 [mode] [set] [range]\n\nNote that color16 can only be called *once* per frame, further calls will be ignored. Also note that after calling color16, any drawing operations during the same frame will not be preserved in the buffer.\n\nThe current 16 color palette will be used in the conversion (console window default colors unless previously specified)\n\n[mode]: Either 0 or 1 (default 0). Affects how conversion is done, experiment for best results.\n\n[set]: The character set index used in the conversion, *or* a custom character set. Standard set indices are 0-3 (default 0). In order to set a custom set, specify a string of characters starting with the least solid character and ending with the most solid character. Gxy format of \\g is supported for special characters. Example: \\g20-+jW\n\n[range]: Represents the numerical color distance range used for each character in the set. Default value is 1000. Experiment for best results (for a set with a long string of characters, the range should typically be smaller).\n");
+			}
+#endif
 			else {
 				printf("\nError: Unknown help section\n");
 			}
@@ -2403,11 +2539,11 @@ int main(int argc, char *argv[]) {
 		
 		} else {
 #ifdef _RGB32
-			char extraParam5[] = " [convertTo16colChars]";
+			char color16op[] = "color16  [mode] [set] [range]\n";
 #else
-			char extraParam5[] = "";
-#endif			
-			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]%s\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\ninsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, and cmdgfx_RGB.\n", name, ver, name, extraParam5, blockMode, name, name, name, name, name, name);
+			char color16op[] = "";
+#endif
+			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, blockMode, color16op, name, name, name, name, name, name);
 		}
 		
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
@@ -2530,6 +2666,8 @@ int main(int argc, char *argv[]) {
 				case 'k': bReadKey = 1; break;
 				case 'K': bWaitKey = 1; break;
 				case 'u': bSendKeyUp = 1; break;
+				case 'v': bUseOrigoPoly = 1; break;
+				case 'V': bUseOrigoBox = 1; break;
 				case 'd': bPrintFullErrorString = 1; break;
 
 				case 'L': 
@@ -2587,9 +2725,6 @@ int main(int argc, char *argv[]) {
 					if (rotationGranularity < 1)rotationGranularity = 4;
 					break;
 				}
-#ifdef _RGB32
-				case 'X': bConvertBackTo16 = 1; parseConv16Flag(&argv[2][i+1], outCh, &conv16div, &conv16mode); break;
-#endif
 				case 'e': bSuppressErrors = 1; break;
 				case 'E': bWaitAfterErrors = 1; break;
 				case 's': bUsePerspectiveSingleCol = 1; break;
@@ -2636,7 +2771,18 @@ int main(int argc, char *argv[]) {
 	g_conout = GetOutputHandle();
 			
 	GetConsoleMode(g_conin, &oldfdwMode);
-
+	
+#ifdef _RGB32
+#ifndef GDI_OUTPUT
+	GetConsoleMode(g_conout, &oldOutMode);
+	outMode = oldOutMode | 0x0004; // 0x0004 = ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    if (!SetConsoleMode(g_conout, outMode))
+        return 0;
+	GetConsoleColor();
+#endif
+#endif
+	
+	
 	if (bZBuffer)
 		ZBufVideo = (float *) malloc(XRES * YRES * sizeof(float));
 	
@@ -2674,6 +2820,7 @@ int main(int argc, char *argv[]) {
 					int nofp = 3 + (nof-9) / 2;
 					parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 					video = videoCol;
+					if (bUseOrigoPoly) makeOrigoPoly(vv, &nofp, 0);
 					if (bWriteCols) scanConvex(vv, nofp, NULL, ((PREPCOL)bgcol << BITSHL) | fgcol);
 					video = videoChar;
 					if (bWriteChars) scanConvex(vv, nofp, NULL, dchar);
@@ -2698,6 +2845,7 @@ int main(int argc, char *argv[]) {
 					parseInput(s_fgcol, s_bgcol, s_dchar, &lfgcol, &lbgcol, &dchar, &bWriteChars, &bWriteCols);
 					video = videoCol;
 					inCol = ((PREPCOL)lbgcol << BITSHL) | lfgcol;
+					if (bUseOrigoPoly) makeOrigoPoly(vv, &nofp, 0);
 					if (bWriteCols) scanPoly(vv, nofp, inCol, bitOp);
 					video = videoChar;
 					if (bWriteChars) scanPoly(vv, nofp, dchar, BIT_OP_NORMAL);
@@ -2724,6 +2872,9 @@ int main(int argc, char *argv[]) {
 			if (nof >= 10) {
 				int nofp, nofc;
 				nofp = 3 + (nof-10) / 3;
+				
+				if (bUseOrigoPoly) makeOrigoPoly(vv, &nofp, 0);
+				
 				nofc = (strlen(goraudPalette)+1) / 5;
 				for (i = 0; i < nofc; i++) {
 					if (goraudPalette[i*5+2] == '?' && goraudPalette[i*5+3] == '?')
@@ -2732,8 +2883,9 @@ int main(int argc, char *argv[]) {
 						gchar[i] = (GetHex(goraudPalette[i*5+2]) << 4) | GetHex(goraudPalette[i*5+3]);
 					gfgbg[i] = (GetHex(goraudPalette[i*5+1]) << 4) | GetHex(goraudPalette[i*5]);
 				}
+				
 				video = videoTransp;
-				scanConvex_goraud(vv, nofp, NULL, gValue, GORAUD_TYPE_STATIC, 0, 0,0,0);
+				scanConvex_goraud(vv, nofp, NULL, &(gValue[bUseOrigoPoly]), GORAUD_TYPE_STATIC, 0, 0,0,0);
 				for (i = 0; i < YRES; i++) {
 					k = i*XRES;
 					for (j = 0; j < XRES; j++) {
@@ -2782,6 +2934,8 @@ int main(int argc, char *argv[]) {
 
 				transformFilenameSpaces(fname);
 				
+				if (bUseOrigoPoly) makeOrigoPoly(vv, &nofp, 1);
+
 				if (strstr(fname,".pcx")) {
 					if (b_pcx.data) { free(b_pcx.data); b_pcx.data = NULL; }
 					if (PCXload (&b_pcx,fname)) {
@@ -2978,19 +3132,19 @@ int main(int argc, char *argv[]) {
 		 }
 		 else if (strstr(pch,"text ") == pch) {
 			Bitmap b_cols, b_chars;
-			char tstring[12096];
+			char tstring[12096], *tsfgc=s_fgcol, *tsbgc=s_bgcol;
 			int x1,y1,w1,h1,xb,xdb,res;
 			int writeCols;
-			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
+			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0, bRemoveAllCodes = 0;
 			pch = pch + 5;
 			nof = sscanf(pch, "%13s %13s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
 
 			if (nof == 6) {
-				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
-				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
-				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
-				
-				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; tsfgc++; }
+				else if (s_fgcol[0] == '/') { bRemoveAllCodes=1; tsfgc++; }
+				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; tsfgc++; }
+				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; tsbgc++; }
+				writeCols = parseInput(tsfgc, tsbgc, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 
 				b_cols.data = b_chars.data = NULL;
 				for (i = 0; i < strlen(tstring); i++)
@@ -3015,6 +3169,8 @@ int main(int argc, char *argv[]) {
 						
 					}
 				}
+				
+				if (bRemoveAllCodes) RemoveGxyCodes(tstring, 1);
 				
 				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, (((PREPCOL)bgcol << BITSHL) | fgcol), -1, 0, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
 
@@ -3042,9 +3198,10 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_TEXT, opCount, pch, nof);
 		 }
 		 else if (strstr(pch,"image ") == pch) {
-			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0;
+			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0, bRemoveAllCodes=0;
 			int x1,y1,w1,h1, res, xflip=0, yflip=0, xb, xdb, xdir=1, w2=-1, h2=-1, writeCols;
 			Bitmap b_cols, b_chars;
+			char *tsfgc=s_fgcol, *tsbgc=s_bgcol;
 			b_cols.data = b_chars.data = NULL;
 
 			pch = pch + 6;
@@ -3052,12 +3209,12 @@ int main(int argc, char *argv[]) {
 			if (xflip) xdir = -1;
 			if (nof >= 7) {
 				transformFilenameSpaces(fname);
-				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
-				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; s_fgcol[0]=s_fgcol[1]; s_fgcol[1]=s_fgcol[2]; s_fgcol[2]=0; }
-				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; s_bgcol[0]=s_bgcol[1]; s_bgcol[1]=s_bgcol[2]; s_bgcol[2]=0; }
-				writeCols = parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
+				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; tsfgc++; }
+				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; tsfgc++; }
+				if (s_bgcol[0] == '-') { bIgnoreBgCol=1; tsbgc++; }
+				writeCols = parseInput(tsfgc, tsbgc, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				if (strstr(fname, ".pcx")){
-					parseInput(s_transpval, s_bgcol, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
+					parseInput(s_transpval, tsbgc, s_dchar, &transpval, &bgcol, &dchar, NULL, NULL);
 #ifdef _RGB32							
 					if(atoi(s_transpval) == -1)
 						transpval = -1;
@@ -3134,19 +3291,31 @@ int main(int argc, char *argv[]) {
 				
 				} else if (strstr(fname, ".bxy")) {
 
-					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+					parseInput(tsfgc, tsbgc, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 					if(atoi(s_transpval) == -1)
 						transpval = -1;
 
 					res = BXYload (&b_cols, &b_chars, fname);
 					if (res) {
+						
+						if (bIgnoreFgCol) {
+							for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
+								b_cols.data[i] = (b_cols.data[i] & BG_AND_MASK) | fgcol;
+							}
+						}
+						if (bIgnoreBgCol) {
+							for(i = 0; i < b_cols.xSize*b_cols.ySize; i++) {
+								b_cols.data[i] = (b_cols.data[i] & AND_MASK) | ((PREPCOL)bgcol << BITSHL);
+							}
+						}
+						
 						w1 = b_cols.xSize; h1 = b_cols.ySize;
 						dchar = TRANSPVAL;
 					} else
 						reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname, NULL);
 #endif					
 				} else {
-					parseInput(s_fgcol, s_bgcol, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
+					parseInput(tsfgc, tsbgc, s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 					res = readGxy(fname, &b_cols, &b_chars, &w1, &h1, (((PREPCOL)bgcol << BITSHL) | fgcol), dchar, 1, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
 					if (!res) reportFileError(&errH, OP_IMAGE, ERR_IMAGE_LOAD, opCount, fname, NULL);
 				}
@@ -3213,6 +3382,9 @@ int main(int argc, char *argv[]) {
 			nof = sscanf(pch, "%12s %12s %2s %d,%d,%d,%d", s_fgcol, s_bgcol, s_dchar, &x1, &y1, &w, &h);
 
 			if (nof == 7) {
+				
+				if (bUseOrigoBox){ x1-=w/2; y1-=h/2; }
+				
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				video = videoCol;
 				if (bWriteCols) box(x1, y1, w, h, ((PREPCOL)bgcol << BITSHL) | fgcol);
@@ -3230,7 +3402,7 @@ int main(int argc, char *argv[]) {
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
 				video = videoCol;
 				
-				if (nof == 3) { x1=y1=0; w=txres; h=tyres; }
+				if (nof == 3) { x1=y1=0; w=txres; h=tyres; } else { if (bUseOrigoBox){ x1-=w/2; y1-=h/2; } }
 				
 				if (bWriteCols) fbox(x1, y1, w, h, ((PREPCOL)bgcol << BITSHL) | fgcol);
 				video = videoChar;
@@ -3733,6 +3905,32 @@ int main(int argc, char *argv[]) {
 				reportArgError(&errH, OP_3D, opCount, pch, nof);
 		}	else if (strstr(pch,"skip ") == pch) {
 			// do nothing
+#ifdef _RGB32			
+		}	else if (strstr(pch,"color16 ") == pch) {
+			int x1,y1,w,h;
+			pch = pch + 8;
+
+			if (!bWasConvertedTo16) {
+				bWasConvertedTo16 = 1;
+				
+				parseConv16Flag(pch, outCh, &conv16div, &conv16mode); 
+
+				if (conv16W != txres || conv16H != tyres) {
+					if (conv16Col) free (conv16Col);
+					if (conv16Char) free (conv16Char);
+					
+					conv16Col = (uchar *)malloc(XRES*YRES*sizeof(uchar));
+					conv16Char = (uchar *)malloc(XRES*YRES*sizeof(uchar));
+					conv16W=txres; conv16H=tyres;
+				}
+				
+				convertFgRgbTo16Col(XRES, YRES, videoCol, videoChar, conv16Col, conv16Char, &fgPalette[0], outCh, conv16div, conv16mode, outw, outh);
+				
+				oldVidCol = videoCol; oldVidChar = videoChar;
+				videoCol = conv16Col; videoChar = conv16Char;
+				
+			}
+#endif
 		} else {
 			char faultyOp[42], *fnd;
 			strncpy(faultyOp, pch, 40);
@@ -3753,19 +3951,12 @@ int main(int argc, char *argv[]) {
 				bWaitKey = 1;
 		}
 		
+		
 		if (!bDoNothing) {
+				
 	#ifdef GDI_OUTPUT
-	
-	#ifdef _RGB32
-			if (bConvertBackTo16) {
-				convertFgRgbTo16Col(XRES, YRES, videoCol, videoChar, videoTransp, videoTranspChar, &fgPalette[0], outCh, conv16div, conv16mode, outw, outh);
-				convertToGdiBitmap(XRES, YRES, videoTransp, videoTranspChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode);
-			} else
-				convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode);
-	#else
 			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode);
-	#endif
-			
+	
 			if (bWriteGdiToFile) {
 					FILE *fp = fopen("GDIbuf.dat", "wb");
 					if (fp != NULL) {
@@ -3778,10 +3969,24 @@ int main(int argc, char *argv[]) {
 					}
 			}
 	#else
+		
+	#ifdef _RGB32
+			convertToVT100(XRES, YRES, videoCol, videoChar, gx, gy, outw, outh);
+	#else
 			if (bPaletteSet)
-				convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette, gx, gy);
+				convertToText(XRES, YRES, videoCol, videoChar, fgPalette, bgPalette, gx, gy, outw, outh);
 			else
-				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL, gx, gy);
+				convertToText(XRES, YRES, videoCol, videoChar, NULL, NULL, gx, gy, outw, outh);
+	#endif		
+			
+	#endif
+	
+	#ifdef _RGB32			
+			if (bWasConvertedTo16) {
+				bWasConvertedTo16 = 0;
+				videoCol = oldVidCol;
+				videoChar = oldVidChar;
+			}
 	#endif
 	
 			frameCounter++;
@@ -4030,12 +4235,11 @@ int main(int argc, char *argv[]) {
 							case 'J': g_bFlushAfterELwrite = neg? 0 : 1; break;
 							case 'I': bIgnoreTitleComm = neg? 1 : 0; break;
 							case 'i': bIgnoreServerCmdFile = neg? 0 : 1; break;
+							case 'v': bUseOrigoPoly = neg? 0 : 1; break;
+							case 'V': bUseOrigoBox = neg? 0 : 1; break;
 #ifdef GDI_OUTPUT
 							case 'a': bAbsBitmapPos =  neg? 0 : 1; break;
 							case 'U': bWindowedMode = neg? 1 : 0; break;
-#endif							
-#ifdef _RGB32
-							case 'X': bConvertBackTo16 = neg? 0 : 1; if (bConvertBackTo16) parseConv16Flag(&pch[i+1], outCh, &conv16div, &conv16mode); break;
 #endif
 							case 'G': {
 								int GXM=256, GYM=256;
@@ -4101,6 +4305,8 @@ int main(int argc, char *argv[]) {
 									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
 									if (nof >= 3 && nof < 5) outw = txres;
 									if (nof >= 4 && nof < 6) outh = tyres;
+									if (outw > txres || outw < 0) outw = txres;
+									if (outh > tyres || outh < 0) outh = tyres;
 								}
 							
 								if (oldtx != txres || oldty != tyres) {
@@ -4170,13 +4376,6 @@ int main(int argc, char *argv[]) {
 						readPalette(fgPal, pch, fgPalette, bgPalette, &bPaletteSet);
 					}
 					
-#ifdef _RGB32
-					if (pch) {
-						pch = strtok (NULL, " \n");
-						if (pch) readOutChars(pch, outCh);
-					}
-#endif
-					
 				}
 				
 			}
@@ -4237,6 +4436,24 @@ int main(int argc, char *argv[]) {
 	free(argv1);
 	
 	SetConsoleMode(g_conin, oldfdwMode);
+	
+#ifndef GDI_OUTPUT
+#ifdef _RGB32
+	{
+	unsigned int fcol, bcol;
+	fcol = orgPalette[consoleFgCol];
+	bcol = orgPalette[consoleBgCol];
+	printf("%c[38;2;%d;%d;%dm",27,(fcol>>16)&0xff,(fcol>>8)&0xff,fcol&0xff);
+	printf("%c[48;2;%d;%d;%dm",27,(bcol>>16)&0xff,(bcol>>8)&0xff,bcol&0xff);
+	}
+	SetConsoleMode(g_conout, oldOutMode);
+#endif
+#endif
+
+#ifdef _RGB32
+	if (conv16Col) free(conv16Col);
+	if (conv16Char) free(conv16Char);
+#endif
 
 	CloseHandle(g_conin);
 	CloseHandle(g_conout);

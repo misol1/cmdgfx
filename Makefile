@@ -8,6 +8,8 @@ OBJECTSLIBGDI = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx_gdi.o
 TARGETLIBGDI  = cmdgfx_gdi.exe
 OBJECTSLIBRGB = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx_rgb.o
 TARGETLIBRGB  = cmdgfx_RGB.exe
+OBJECTSLIBVT = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx_VT.o
+TARGETLIBVT  = cmdgfx_VT.exe
 INPUTLIB = cmdgfx_input.o
 TARGETINPUT  = cmdgfx_input.exe
 #CC      = cl
@@ -28,6 +30,9 @@ cmdgfx_gdi.exe : $(OBJECTSLIBGDI)
 cmdgfx_RGB.exe : $(OBJECTSLIBRGB)
 	$(CC) $(CCFLAG) -o $(TARGETLIBRGB) $(OBJECTSLIBRGB)  rc\cmdgfx_rgb.o -lgdi32
 	
+cmdgfx_VT.exe : $(OBJECTSLIBVT)
+	$(CC) $(CCFLAG) -o $(TARGETLIBVT) $(OBJECTSLIBVT)  rc\cmdgfx_VT.o
+	
 cmdgfx_input.exe : $(INPUTLIB)
 	$(CC) $(CCFLAG) -o $(TARGETINPUT) $(INPUTLIB) rc\cmdgfx_input.o
 
@@ -45,6 +50,9 @@ cmdgfx_gdi.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
 
 cmdgfx_rgb.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -o cmdgfx_rgb.o -D GDI_OUTPUT -c cmdgfx.c
+
+cmdgfx_VT.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
+	$(CC) $(CCFLAG) -o cmdgfx_VT.o -c cmdgfx.c
 
 
 bmap.o : bmap.c bmap.h rgbcol.h gfx.h datasize.h

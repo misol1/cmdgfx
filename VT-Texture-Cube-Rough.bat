@@ -1,20 +1,18 @@
 @echo off
-set /a F6W=220/2, F6H=100/2
 if not defined __ cmdwiz fullscreen 0
-cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title RGB textured cube
+cmdwiz setfont 6 & mode 110,50 & cls & title VT-100 RGB textured cube
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0nuW10xR | call %0 %* | cmdgfx_RGB "" Sf0:0,0,220,100s
+cmdgfx_input.exe m0nuW10xR | call %0 %* | cmdgfx_VT "" Sf:0,0,110,50sZ300
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
-set F6W=&set F6H=
 goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-set /a W=220, H=100
+set /a W=110, H=50
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 call centerwindow.bat 0 -15
@@ -24,7 +22,7 @@ set /a DIST=2000, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
 set ASPECT=0.675
 set /A RX=0,RY=0,RZ=0
 
-set HELPMSG="text e 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,98"
+set HELPMSG="text e 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,48"
 set MSG=%HELPMSG%
 
 set /a OBJINDEX=0, NOFOBJECTS=2
@@ -37,14 +35,14 @@ set /a C16=0 & set XF=skip& if !C16!==1 set XF=
 set STOP=
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
-   echo "cmdgfx: skip fbox 8 0 fa 0,0,!W!,!H! & image img/water2.bmp 0 0 fe -1 0,0 0 0 !W!,!H! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip ipoly 89010101 0 ? 20 5,5,50,5,50,60,5,60 & !XF! %CONV16% & !MSG:~1,-1!" Ff0:0,0,!W!,!H!
+   echo "cmdgfx: skip fbox 8 0 fa 0,0,!W!,!H! & image img/water2.bmp 0 0 fe -1 0,0 0 0 !W!,!H! & 3d objects/!FNAME! !DRAWMODE!,!O! !RX!,!RY!,!RZ! 0,0,0 !MOD!,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip ipoly 89010101 0 ? 20 5,5,50,5,50,60,5,60 & !XF! %CONV16% & !MSG:~1,-1!" Ff:0,0,!W!,!H!
 	
    if !ROTMODE! == 0 set /a RX+=2,RY+=6,RZ-=4
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text e 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW, H=SCRH, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text e 0 0 SPACE\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

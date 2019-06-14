@@ -51,10 +51,17 @@ set MUL=&set OW=&set CNT=&set CNTV=&set COS=&set STOP=
 
 echo "cmdgfx: fbox 0 0 20"
 
-:: set XF=X0,0,3000
-set /a C16=1 & set XF=-X& if !C16!==1 set XF=X
 set /a push=0, pushstep=!random! %% 200 + 100, coli=0
 set colsk=skip
+
+::0,0,3000
+set CONV16=color16
+set /a C16=1 & set XF=skip& if !C16!==1 set XF=
+
+set /a HELP=1
+set HS=&if !HELP!==0 set HS=skip
+set /a HLPY=H-2
+set MSG="text 8 0 0 x\-ENTER\-\g11\g10\-qcC\-d/D\-p\-h 1"
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -76,15 +83,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 :: should(?) work properly with z-buffer, does not (not transparent in some cases)
 rem	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%a!,!YPP2%%a!,!ZPP2%%a! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"
 	
-rem	if !CLR!==0 echo "cmdgfx: ipoly !TA!!TA!!TA! 0 ? 18 0,0,!W!,0,!W!,!H!,0,!H! & !CRSTR:~1,-1! & !MSG:~1,-1!" !XF!f6:0,0,!W!,!H!
-	if !CLR!==0 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H!" !XF!f6:0,0,!W!,!H!
-	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H!" !XF!f6:0,0,!W!,!H!
-	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H!n" !XF!f6:0,0,!W!,!H!
+	if !CLR!==0 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
+	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
+	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+2, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+2, XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0
 	
 	set /a XROT-=2, YROT+=1, ZROT+=1
 
@@ -102,9 +108,11 @@ rem	if !CLR!==0 echo "cmdgfx: ipoly !TA!!TA!!TA! 0 ? 18 0,0,!W!,0,!W!,!H!,0,!H! 
 	if !KEY! == 13 set /A CLR+=1 & if !CLR! gtr 2 set /a CLR=0
 	if !KEY! == 100 set /A DIST+=120
 	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 120 set /a C16=1-C16 & set XF=-X& if !C16!==1 set XF=X
+	if !KEY! == 104 set /a HELP=1-HELP & set HS=&if !HELP!==0 set HS=skip
+	if !KEY! == 120 set /a C16=1-C16 & set XF=skip& if !C16!==1 set XF=
 	if !KEY! == 27 set STOP=1
 	if !KEY! == 113 set /A push=1
+	
 	if !KEY! == 99 set /A col=1,coli=0& set colsk=&set COLBASE=ffffff
 	if !KEY! == 67 set /A col=1,coli=0& set colsk=&set COLBASE=000000
 	set /a KEY=0
