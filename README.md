@@ -485,7 +485,7 @@ circle   fgcol bgcol char x,y,r
 fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
-text     fgcol bgcol char string x,y
+text     fgcol bgcol char string x,y [bigFontIndex]
 block    mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
@@ -516,6 +516,10 @@ Below are help sections where cmdgfx_gdi differs from cmdgfx:
 Cmdgfx_gdi does not care which font is currently set in the cmd window, but always uses raster font 6 by default. The font can be changed with the f flag.
 
 Similarly, cmdgfx_gdi does not care which codepage is set, it always uses code page 437 since the font data is embedded in the program.
+
+## Text
+
+[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.
 
 ## Flags
 
@@ -565,7 +569,7 @@ circle   fgcol bgcol char x,y,r
 fcircle  fgcol bgcol char x,y,r
 ellipse  fgcol bgcol char x,y,rx,ry
 fellipse fgcol bgcol char x,y,rx,ry
-text     fgcol bgcol char string x,y
+text     fgcol bgcol char string x,y [bigFontIndex]
 block    mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from]
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
@@ -636,6 +640,9 @@ There are several new helper functions for colExpr to deal with 24 bit color val
 
 New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct a color from r,g,b values in range 0-255.  4. fgr(col),fgg(col),fgb(col) to get a color's red,green or blue value (0-255).
 
+## Text
+
+[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.
 
 ### Color16
 

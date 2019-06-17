@@ -6,7 +6,7 @@ mode %F8W%,%F8H%
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_RGB "" Sf6:0,0,200,80dZ1000
+cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_RGB "" Sf6:0,0,400,500,200,80dZ1000B
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -47,15 +47,16 @@ set /A XP5=0,YP5=-200,ZP5=0
 set /A XP6=0,YP6=200,ZP6=0
 set /A XP7=15,YP7=-15,ZP7=0
 
-set MUL=&set OW=&set CNT=&set CNTV=&set COS=&set STOP=
-
 echo "cmdgfx: fbox 0 0 20"
+call :DRAWBALLS
 
 set /a push=0, pushstep=!random! %% 200 + 100, coli=0
 set colsk=skip
+set /a noise=0&set NS=&if !noise!==0 set NS=skip
+set /a bkclear=1&set BS=&if !bkclear!==0 set BS=skip
 
 ::0,0,3000
-set CONV16=color16
+set CONV16=color16 0 2
 set /a C16=1 & set XF=skip& if !C16!==1 set XF=
 
 set /a HELP=1
@@ -78,23 +79,21 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	for /L %%a in (1,1,!NOF!) do set /A "YPP=((!crx!*!YP%%a!)>>14)+((!srx!*!ZP%%a!)>>14),ZPP=((!crx!*!ZP%%a!)>>14)-((!srx!*!YP%%a!)>>14)" & set /A "XPP=((!cry!*!XP%%a!)>>14)+((!sry!*!ZPP!)>>14),ZPP2%%a=((!cry!*!ZPP!)>>14)-((!sry!*!XP%%a!)>>14)" & set /A "XPP2%%a=((!crz!*!XPP!)>>14)+((!srz!*!YPP!)>>14),YPP2%%a=((!crz!*!YPP!)>>14)-((!srz!*!XPP!)>>14), ZPP2%%a*=4"
 
-	for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do for %%d in (!DRAWMODE!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"&set ZPP2%%c=-999999
-
-:: should(?) work properly with z-buffer, does not (not transparent in some cases)
-rem	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%a!,!YPP2%%a!,!ZPP2%%a! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"
+	:: no manual sorting, use Z-Buffer
+	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%a!,!YPP2%%a!,!ZPP2%%a! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"
 	
-	if !CLR!==0 echo "cmdgfx: block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
-	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
-	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,!W!,!H!
+	if !CLR!==0 echo "cmdgfx: !BS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !NS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - shade(fgcol(x,y),random()*40-20,random()*40-20,random()*40-20) &  !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
+	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 0,0,!W!,!H!& !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
+	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+2, XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+2, XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & call :DRAWBALLS
 	
 	set /a XROT-=2, YROT+=1, ZROT+=1
 
-	if !push!==1 set /a DIST-=80 & if !DIST! lss 1000 set /a push=2
+	if !push!==1 set /a DIST-=80 & if !DIST! lss 1300 set /a push=2
 	if !push!==2 set /a DIST+=80 & if !DIST! geq 2300 set /a push=0
 	rem set /a pushstep-=1 & if !pushstep! leq 0 set /a pushstep=!random! %% 200 + 100, push=1
 	
@@ -108,13 +107,14 @@ rem	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-b
 	if !KEY! == 13 set /A CLR+=1 & if !CLR! gtr 2 set /a CLR=0
 	if !KEY! == 100 set /A DIST+=120
 	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 104 set /a HELP=1-HELP & set HS=&if !HELP!==0 set HS=skip
 	if !KEY! == 120 set /a C16=1-C16 & set XF=skip& if !C16!==1 set XF=
 	if !KEY! == 27 set STOP=1
-	if !KEY! == 113 set /A push=1
-	
-	if !KEY! == 99 set /A col=1,coli=0& set colsk=&set COLBASE=ffffff
-	if !KEY! == 67 set /A col=1,coli=0& set colsk=&set COLBASE=000000
+	if !KEY! == 104 set /a HELP=1-HELP & set HS=&if !HELP!==0 set HS=skip
+	if !KEY! == 113 set /a push=1
+	if !KEY! == 114 set /a noise=1-noise&set NS=&if !noise!==0 set NS=skip
+	if !KEY! == 98 set /a bkclear=1-bkclear&set BS=&if !bkclear!==0 set BS=skip
+	if !KEY! == 99 set /a col=1,coli=0& set colsk=&set COLBASE=ffffff
+	if !KEY! == 67 set /a col=1,coli=0& set colsk=&set COLBASE=000000
 	set /a KEY=0
 )
 if not defined STOP goto LOOP
@@ -123,3 +123,16 @@ endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
 title input:Q
+goto :eof
+
+:DRAWBALLS
+echo "cmdgfx: image img\ball.bmp 0 0 db -1 0,420" !XF!f6:0,0,400,500,!W!,!H!
+
+echo "cmdgfx: block 0 0,420,48,48 50,420 -1 0 0 - store(fgcol(x,y),0)+makecol(fgg(s0),fgb(s0),fgr(s0))"
+echo "cmdgfx: block 0 0,420,48,48 100,420 -1 1 0 - store(fgcol(x,y),0)+makecol(fgb(s0),fgr(s0),fgg(s0))"
+echo "cmdgfx: block 0 0,420,48,48 150,420 -1 0 0 - store(fgcol(x,y),0)+makecol(fgr(s0),fgr(s0),fgb(s0))"
+echo "cmdgfx: block 0 0,420,48,48 200,420 -1 0 1 - store(fgcol(x,y),0)+makecol(fgr(s0),fgg(s0),fgr(s0))"
+echo "cmdgfx: block 0 0,420,48,48 250,420 -1 1 1 - store(fgcol(x,y),0)+makecol(fgg(s0),fgr(s0),fgr(s0))"
+echo "cmdgfx: block 0 0,420,48,48 300,420 -1 0 0 - store(fgcol(x,y),0)+makecol(fgr(s0),fgg(s0),fgb(s0))"
+echo "cmdgfx: block 0 0,420,48,48 0,420 -1 0 1 - store(fgcol(x,y),0)+makecol(fgr(s0),fgg(s0),fgb(s0))"
+rem echo "cmdgfx: block 0 0,420,48,48 0,420 -1 0 0 - store(fgcol(x,y),0)+makecol(fgg(s0),fgg(s0),fgg(s0))"

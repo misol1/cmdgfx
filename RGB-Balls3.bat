@@ -81,9 +81,6 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do for %%d in (!DRAWMODE!) do set CRSTR="!CRSTR:~1,-1!&3d objects/colblockballs/ball%%c.obj !DRAWMODE!,101010 0,0,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"&set ZPP2%%c=-999999
 
-:: should(?) work properly with z-buffer, does not (not transparent in some cases)
-rem	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%a!,!YPP2%%a!,!ZPP2%%a! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"
-	
 	if !CLR!==0 echo "cmdgfx: !BS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !NS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - shade(fgcol(x,y),random()*40-20,random()*40-20,random()*40-20) &  !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
 	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 0,0,!W!,!H!& !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
 	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!

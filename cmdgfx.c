@@ -24,9 +24,8 @@
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects (or possibly, use binary alternative to gxy to remove parsing, might be almost as fast)
 // 2. Force col for tpoly/3d? Free rotation for block?
-// 3. GDI: Actually showing text with text operation in pixel mode. Add last optional param to text op for cmdgfx_gdi. For text modes, will draw big letters of char/fgcol/bgcol!
-// 4. Major: Port to Linux
-// 5. RGB: long double for colexpr?
+// 3. Major: Port to Linux
+// 4. RGB: long double for colexpr to support/keep bgcol?
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -34,6 +33,7 @@ float *ZBufVideo = NULL;
 int bAllowRepeated3dTextures = 0;
 float texture_offset_x = 0, texture_offset_y = 0;
 int bPrintFullErrorString = 0;
+int g_bUsingPixelFont = 0;
 
 #define MAX_ERRS 64
 typedef enum {ERR_NOF_ARGS, ERR_IMAGE_LOAD, ERR_OBJECT_LOAD, ERR_PARSE, ERR_MEMORY, ERR_OPTYPE, ERR_EXPRESSION } ErrorType;
@@ -857,6 +857,110 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 }
 
+
+
+void writeGdiFontString(int XRES, int YRES, int x, int y, uchar *videoCol, uchar *videoChar, unsigned char *tstring, unsigned long fcol, unsigned long bcol, unsigned char dchar, int bIgnoreFgCol, int bIgnoreBgCol, int bWriteChars, int bIgnoreAllCodes, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg)
+{
+	unsigned int *outdata = NULL, *pcol, *fgcol, *bgcol, rgbfgcol, rgbbgcol;
+	int i,j,ccol,cchar,l,m, index;
+	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
+	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0] };
+	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w };
+	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h };
+	int fw, fh, *data, val;
+	unsigned int *palFg, *palBg;
+	uchar colfgbg, oldfgbg, coltemp;
+	uchar *outCh, *outCol;
+	int v16, xi;
+	int ch;
+	
+	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
+	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
+
+	if (fontIndex < 0 || fontIndex > 9)
+		return;
+
+	fw = fontWidth[fontIndex];
+	fh = fontHeight[fontIndex];
+	data = fontData[fontIndex];
+
+	colfgbg = oldfgbg = (((PREPCOL)bcol << BITSHL) | fcol);
+	
+	for (i = 0, j = 0; i < strlen(tstring); i++) {
+		cchar = tstring[i];
+		
+		if (cchar == '\\' && !bIgnoreAllCodes) {
+			i++;
+			switch(tstring[i]) {
+				case 'n': y+=fh+1; j=0; if (y >= YRES) return; continue; break;
+				case '-': j++; continue; break;
+				case '\\': break;
+				case 'g':  i++; v16 = GetHex(tstring[i]) * 16 + GetHex(tstring[i+1]); i++; tstring[i] = v16; break;
+				case 'r': coltemp=colfgbg; colfgbg=oldfgbg; oldfgbg=coltemp; continue; break;
+				case 0: return;
+				default: 
+					oldfgbg=colfgbg; 
+					ch = tstring[i];
+					if (!bIgnoreFgCol) {
+						if (ch == 'u' || ch == 'U') {
+							if (consoleBgCol==-1)
+								GetConsoleColor();
+							fcol = ch == 'u'? consoleFgCol : consoleBgCol;
+						} else if (ch == 'k')
+							;
+						else
+							fcol = GetCol(ch, fcol);
+					}
+					i++;
+					if (!bIgnoreBgCol) {
+						ch = tstring[i];
+						if (ch == 'u' || ch == 'U') {
+							if (consoleBgCol==-1)
+								GetConsoleColor();
+							bcol = ch == 'u'? consoleFgCol : consoleBgCol;
+						} else if (ch == 'k')
+							;
+						else
+							bcol = GetCol(ch, bcol);
+					}
+					#ifndef _RGB32
+					colfgbg = fcol | (bcol<<4);
+					#else
+					if (bIgnoreFgCol) colfgbg = fcol; else colfgbg = g_rgbFgPalette[fcol];
+					if (bIgnoreBgCol) colfgbg |= (PREPCOL)bcol<<BITSHL; else colfgbg |= ((PREPCOL)g_rgbBgPalette[bcol]<<BITSHL);
+					#endif
+				continue; 
+				break;
+			}
+			if (tstring[i]==0) return;
+			cchar = tstring[i];
+		}
+		
+		for (l = 0; l < fh; l++) {
+			if (y+l >= YRES || y+l < 0) continue;
+			index = x + j*fw + (y+l)*XRES;
+			xi = x + j*fw;
+			val = data[cchar*fh+l];
+			outCol = &videoCol[index];
+			outCh = &videoChar[index];
+			
+			for (m = 0; m < fw; m++) {
+				if ((val & 1) && (xi+m >= 0) && (xi+m < XRES)) {
+					if (bWriteChars) *outCh = dchar;
+					*outCol = colfgbg;
+				}
+				outCh++;
+				outCol++;
+
+				val >>= 1;
+			}
+		}
+		
+		j++;
+	}
+
+}
+
 #endif
 
 
@@ -1061,14 +1165,13 @@ char *insertCgx(char *inp) {
 }
 
 
-void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h) {
-	int i,j,k,l;
+void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
+	int i,j,k,l, o;
 
 	if (x+w < XRES) w++;
 	if (y+h < YRES) h++;
 	
-	l = y*XRES + x;
-	
+	l = y*XRES + x;	
 	for (i = 0; i < h; i++) {
 		k = l;
 		for (j = 0; j < w; j++) {
@@ -1080,6 +1183,21 @@ void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoCh
 		}
 		l += XRES;
 	}
+	
+	if (ZBufVideo && zBufBackup) {
+		l = y*XRES + x;
+		for (i = 0; i < h; i++) {
+			k = l;
+			o = i * zw;
+			for (j = 0; j < zw; j++) {
+				if ((videoTransp[k] & AND_MASK) == transpcol) {
+					ZBufVideo[k] = zBufBackup[o + j];
+				}
+				k++;
+			}
+			l += XRES;
+		}
+	}	
 }
 
 void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, int *_maxy) {
@@ -1105,19 +1223,39 @@ void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, i
 
 void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpval, int dchar, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, PREPCOL plusVal, int bPerspectiveCorrected) {
 	int minx, maxx, miny, maxy, i, ok;
+	int j,i2,j2, zw=0;
+	float *zBufBackup = NULL;
 	video = videoTransp;
 	
 	getBounds(vv, points, &minx, &maxx, &miny, &maxy);
+	
+	if (ZBufVideo) {
+		int w,h, yp,yp2;
+		w=maxx-minx; if (minx+w < XRES) w++;
+		h=maxy-miny; if (miny+h < YRES) h++;
+		zBufBackup = (float *) malloc(w*h*sizeof(float));
+		for (i=miny,i2=0; i <= maxy; i++,i2++) {
+			yp = i * XRES;
+			yp2 = i2 * w;
+			for (j=minx,j2=0; j <= maxx; j++,j2++) {
+				zBufBackup[yp2 + j2] = ZBufVideo[yp + j];
+			}
+		}
+		zw=w;
+	}
+	
 	transpval &= AND_MASK;
 	//printf("%llx\n",plusVal);getch();
 	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
 	ok = scanConvex_tmap(vv, points, NULL, bild, plusVal, bPerspectiveCorrected);
-	if (ok) processFromTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny);
+	if (ok) processFromTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny, zBufBackup, zw);
+	
+	if (zBufBackup) free(zBufBackup);
 }
 
 
-void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h) {
-	int i,j,k,l;
+void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
+	int i,j,k,l, o;
 
 	if (x+w < XRES) w++;
 	if (y+h < YRES) h++;
@@ -1134,10 +1272,26 @@ void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp
 		}
 		l += XRES;
 	}
+	
+	if (ZBufVideo && zBufBackup) {
+		l = y*XRES + x;
+		for (i = 0; i < h; i++) {
+			k = l;
+			o = i * zw;
+			for (j = 0; j < zw; j++) {
+				if (videoCharTransp[k] == transpchar || videoCharTransp[k] == TRANSPVAL) {
+					ZBufVideo[k] = zBufBackup[o + j];
+				}
+				k++;
+			}
+			l += XRES;
+		}
+	}
 }
 
 void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *videoCol, uchar *videoChar, int transpval, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, int plusVal, int bPerspectiveCorrected, Bitmap *bild2) {
-	int minx, maxx, miny, maxy, i, ok;
+	int minx, maxx, miny, maxy, i,j,i2,j2, ok, zw=0;
+	float *zBufBackup = NULL;
 	
 	video = videoTransp;
 	ok = scanConvex_tmap(vv, points, NULL, bild, plusVal, bPerspectiveCorrected);
@@ -1146,16 +1300,41 @@ void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *vi
 	
 	getBounds(vv, points, &minx, &maxx, &miny, &maxy);
 	
+	if (ZBufVideo) {
+		int w,h, yp,yp2;
+		w=maxx-minx; if (minx+w < XRES) w++;
+		h=maxy-miny; if (miny+h < YRES) h++;
+		zBufBackup = (float *) malloc(w*h*sizeof(float));
+		for (i=miny,i2=0; i <= maxy; i++,i2++) {
+			yp = i * XRES;
+			yp2 = i2 * w;
+			for (j=minx,j2=0; j <= maxx; j++,j2++) {
+				zBufBackup[yp2 + j2] = ZBufVideo[yp + j];
+			}
+		}
+		zw=w;
+	}
+	
 	video = videoTranspChar;
 	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
 	ok = scanConvex_tmap(vv, points, NULL, bild2, 0, bPerspectiveCorrected);
 	if (ok)
-		processFromDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny);
+		processFromDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny, zBufBackup, zw);
+
+	if (zBufBackup) free(zBufBackup);
 }
 
 
 void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *videoCol, uchar *videoChar) {
 	int i;
+	
+	#ifdef GDI_OUTPUT
+	if (g_bUsingPixelFont) {
+		writeGdiFontString(XRES, YRES, x, y*(cmd_font4_h + 1), videoCol, videoChar, text, fgcol, bgcol, 0xdb, 0, 0, 1, 0, 4, NULL, NULL); // &fgPalette[0], &bgPalette[0]);
+		return;
+	}
+	#endif
+	
 	video = videoCol;
 	line(x, y, x+strlen(text)-1, y, ((PREPCOL)bgcol << BITSHL) | fgcol, 1);
 	video = videoChar;
@@ -1187,15 +1366,21 @@ void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 		displayMessage(tstring, 0, y, 0xa, 0x2, videoCol, videoChar);
 #endif	
 		y++;
-		if (bPrintFullErrorString && errH->op[i]) {
+		if (bPrintFullErrorString && errH->op[i]) { // Note: not printed if the OP is unknown (because the error is already explained)
 			sprintf(tstring, "%s %*.*s", opNames[errH->opType[i]], 0, 1000, errH->op[i]);
 			partstring = tstring;
 
 			do {
 #ifdef _RGB32
-				displayMessage(partstring, 0, y, 0x0, 0x00ff00, videoCol, videoChar);
+				if (g_bUsingPixelFont)
+					displayMessage(partstring, 0, y, 0xffff00, 0, videoCol, videoChar);
+				else
+					displayMessage(partstring, 0, y, 0x0, 0x00ff00, videoCol, videoChar);
 #else
-				displayMessage(partstring, 0, y, 0x0, 0xa, videoCol, videoChar);
+				if (g_bUsingPixelFont)
+					displayMessage(partstring, 0, y, 0xe, 0, videoCol, videoChar);
+				else
+					displayMessage(partstring, 0, y, 0x0, 0xa, videoCol, videoChar);
 #endif	
 				y++;
 				if (strlen(partstring) < XRES) break;
@@ -2353,7 +2538,8 @@ int main(int argc, char *argv[]) {
 				case 'f': 
 #ifdef GDI_OUTPUT
 				i++; fontIndex = GetHex(argv[2][i]);
-				if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+				if (fontIndex < 0 || fontIndex > 12) fontIndex = 6;
+				if (fontIndex > 9) g_bUsingPixelFont = 1;
 #endif
 				if (argv[2][i+1] == ':' && argv[2][i+2]) {
 					fnd = strchr(&argv[2][i+2], ';');
@@ -2400,7 +2586,7 @@ int main(int argc, char *argv[]) {
 		char charFF[]="gxy/bxy/txt";
 #endif	
 
-		char ver[] = "v1.3";
+		char ver[] = "v1.4";
 		
 #ifdef GDI_OUTPUT
 #ifndef _RGB32
@@ -2411,6 +2597,8 @@ int main(int argc, char *argv[]) {
 		char name[16] = "_RGB";
 #endif
 	
+		char bigFont[] = " [bigFontIndex]";
+	
 #else
 #ifndef _RGB32
 		char colspec[] = "Fgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position.";
@@ -2419,6 +2607,8 @@ int main(int argc, char *argv[]) {
 		char colspec[] = "Cmdgfx_VT can take colors as 24 bit hexadecimal RRGGBB values, e.g. ff00ff for violet. Fgcol and bgcol values can ALSO use palette index range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255 (code page 437 is always used). Use '?' to keep the character in the buffer at each position.";
 		char name[16] = "_VT";
 #endif
+		char bigFont[] = "";
+
 #endif
 		if (argc > 2) {
 			if (strcmp(argv[2], "fbox") == 0) {
@@ -2470,7 +2660,12 @@ int main(int argc, char *argv[]) {
 				printf("\nImage - draw an image or text file of characters\n\nSyntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\n\n'filename' should point to %sa gxy file, a 16 color pcx file, or any other (preferably text) file.\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the file.\n\nNote that fgcol will only have effect for a txt file, and bgcol will have no effect for a gxy%s file (unless forcing fgcol and/or bgcol with '-', or if using '?').\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position. For a %s file, the char argument has no effect unless '?' is used.\n\n'transpchar' or 'transpcol' can be used to make part of the image transparent. For a gxy file and text file, set 'transpchar' to either a char or a two-digit hexadecimal character to make that character transparent. For a pcx%s file, set 'transpcol' to make that color transparent.\n\nX and y are column and row coordinates with 0,0 as top left.\n\nBoth 'xflip' and 'yflip' are normally 0. Set 'xflip' to 1 to flip the image horizontally, and set 'yflip' to 1 to flip the image vertically.\n\nSpecify 'w' and 'h' (width and height) to scale the image to the given width and height. Negative values are not allowed.\n", fileFormat,bxyPlus,charFF,filePlus);
 			}
 			else if (strcmp(argv[2], "text") == 0) {
-				printf("\nText - write a formatted text string\n\nSyntax: text fgcol bgcol char string x,y\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the text.\n\nChar has no meaning for the text operation, unless '?' is used to keep the character in the buffer at each position.\n\nThe 'string' allows formatting text output using the same control codes used in gxy files. Note that it is *not* possible to write blank spaces in the string. Instead, spaces must be written as underscores (_), or as \\g20, or as \\- to skip writing the character. To actually write an underscore in a string, use the Ascii code formatting \\g5f\n\nThe following gxy control codes are supported in the string:\n\n   \\r: restore previous fgcol and bgcol\n \\gxx: ascii character in hex (xx)\n   \\n: newline (new line starts from initial x position)\n   \\-: skip character (transparent)\n   \\\\: print \\\n  \\xx: fgcol and bgcol in hex, e.g. \\A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window\n\nApart from blank space, a few other characters must be written using control codes, including & (\\g26), \" (\\g22), and possibly ! (\\g21) and %% (\\g25)\n\nX and y are column and row coordinates with 0,0 as top left.\n");
+#ifdef GDI_OUTPUT
+				char bigFontDesc[] = "\n[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a \"big font\". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.\n";
+#else
+				char bigFontDesc[] = "";
+#endif
+				printf("\nText - write a formatted text string\n\nSyntax: text fgcol bgcol char string x,y%s\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the text.\n\nChar has no meaning for the text operation, unless '?' is used to keep the character in the buffer at each position.\n\nThe 'string' allows formatting text output using the same control codes used in gxy files. Note that it is *not* possible to write blank spaces in the string. Instead, spaces must be written as underscores (_), or as \\g20, or as \\- to skip writing the character. To actually write an underscore in a string, use the Ascii code formatting \\g5f\n\nThe following gxy control codes are supported in the string:\n\n   \\r: restore previous fgcol and bgcol\n \\gxx: ascii character in hex (xx)\n   \\n: newline (new line starts from initial x position)\n   \\-: skip character (transparent)\n   \\\\: print \\\n  \\xx: fgcol and bgcol in hex, e.g. \\A0 for green text on black background. Use 'k' to keep the current fgcol and/or bgcol, and 'u' and 'U' to use current foreground/background color of the cmd window\n\nApart from blank space, a few other characters must be written using control codes, including & (\\g26), \" (\\g22), and possibly ! (\\g21) and %% (\\g25)\n\nX and y are column and row coordinates with 0,0 as top left.\n%s",bigFont,bigFontDesc);
 			}
 			else if (strcmp(argv[2], "tpoly") == 0) {
 				printf("\nTpoly - draw an affine texture-mapped polygon of characters\n\nSyntax: tpoly image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\n\n'filename' should point to %sa gxy file, a 16 color pcx file, or any other (preferably text) file.\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Unlike the image operation, fgcol and bgcol are not ignored but instead *added* to the texture's foreground and background colors. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' to keep the foreground AND background color in the buffer at each position. Precede fgcol or bgcol with '-' to force using that color instead of the colors in the image.\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Note that char is ignored unless the image is a pcx%s file. Use '?' to keep the character in the buffer at each position.\n\n%s For each coordinate you must also specify x and y floating point texture coordinates. 0,0 is the top left coordinate and 1,1 is the bottom right. It is also possible to repeat the texture in x and/or y by specifying a value larger than 1, i.e. 2.5 to repeat the texture 2.5 times. Unlike the 3d operation, the 'T' flag does not have to be set for this to work properly.\n\nThe tpoly operation cannot draw self-intersecting polygons.\n", fileFormat,filePlus, polyhelp);
@@ -2543,7 +2738,7 @@ int main(int argc, char *argv[]) {
 #else
 			char color16op[] = "";
 #endif
-			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, blockMode, color16op, name, name, name, name, name, name);
+			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y%s\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, bigFont, blockMode, color16op, name, name, name, name, name, name);
 		}
 		
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
@@ -3136,10 +3331,13 @@ int main(int argc, char *argv[]) {
 			int x1,y1,w1,h1,xb,xdb,res;
 			int writeCols;
 			int bIgnoreFgCol=0, bIgnoreBgCol=0, bIgnoreAllCodes=0, bRemoveAllCodes = 0;
+			int gdiFontIndex = -1, bSupportGdiFonts = 0;
 			pch = pch + 5;
-			nof = sscanf(pch, "%13s %13s %2s %12090s %d,%d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1);
-
-			if (nof == 6) {
+			nof = sscanf(pch, "%13s %13s %2s %12090s %d,%d %d", s_fgcol, s_bgcol, s_dchar, tstring, &x1, &y1, &gdiFontIndex);
+#ifdef GDI_OUTPUT
+			bSupportGdiFonts = 1;
+#endif
+			if (nof == 6 || (nof == 7 && bSupportGdiFonts)) {
 				if (s_fgcol[0] == '\\') { bIgnoreAllCodes=1; tsfgc++; }
 				else if (s_fgcol[0] == '/') { bRemoveAllCodes=1; tsfgc++; }
 				else if (s_fgcol[0] == '-') { bIgnoreFgCol=1; tsfgc++; }
@@ -3172,7 +3370,13 @@ int main(int argc, char *argv[]) {
 				
 				if (bRemoveAllCodes) RemoveGxyCodes(tstring, 1);
 				
-				res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, (((PREPCOL)bgcol << BITSHL) | fgcol), -1, 0, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
+				if (nof == 7) {
+#ifdef GDI_OUTPUT
+					writeGdiFontString(XRES, YRES, x1, y1, videoCol, videoChar, tstring, fgcol, bgcol, dchar, bIgnoreFgCol, bIgnoreBgCol, bWriteChars, bIgnoreAllCodes, gdiFontIndex, &fgPalette[0], &bgPalette[0]);
+#endif
+					res = 0;
+				} else
+					res = readGxy(tstring, &b_cols, &b_chars, &w1, &h1, (((PREPCOL)bgcol << BITSHL) | fgcol), -1, 0, bIgnoreFgCol, bIgnoreBgCol, bIgnoreAllCodes);
 
 				if (res) {
 					for (j=0; j < h1; j++) {
@@ -4298,6 +4502,7 @@ int main(int argc, char *argv[]) {
 #ifdef GDI_OUTPUT
 								i++; fontIndex = GetHex(pch[i]);
 								if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+								if (fontIndex > 9) g_bUsingPixelFont = 1;
 #endif
 								if (pch[i+1] == ':' && pch[i+2]) {
 									fnd = strchr(&pch[i+2], ';');
