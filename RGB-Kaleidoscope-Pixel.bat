@@ -1,8 +1,8 @@
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Kaleidoscope
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Kaleidoscope (SPACE d/D)
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,220,110s
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,220,110
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -45,7 +45,7 @@ echo f 1/1/ 2/2/ 3/3/ >>%FN%
 set /a A1=155, A2=0, A3=0, CNT=0
 set /a TRANSP=0, TV=-1
 
-set /a MODE=1, TV=0, TRANSP=1, CUPOS=35
+set /a MODE=1, TV=0, TRANSP=1, CUPOS=35, BCLR=20
 
 set CONV16=color16 0 f 3000 \g20.-+jR
 set /a C16=0 & set XF=skip& if !C16!==1 set XF=
@@ -54,22 +54,23 @@ set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
 
+	set SCLR=skip & set /a BCLR-=1 & if !BCLR! gtr 0 set SCLR=
 	set /a A1+=1, A2+=2, A3-=1, TRZ=!CRZ!
-	if !MODE!==0 set OUTP="fbox 0 0 20 & 3d objects\cube-t-RGB.obj 0,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db"
-	if !MODE!==1 set OUTP="fbox 0 0 20 & 3d objects\cube-t-RGB2.obj 0,-1 !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 1,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db"
-	if !MODE!==2 set OUTP="fbox 0 0 20 & 3d objects\cube-t-RGB2.obj 0,-1 !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 1,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 db 1 0 db 9 0 db 2 0 db a 0 db 3 0 db b 0 db 4 0 db c 0 db 5 0 db d 0 db 6 0 db e 0 db"
+	if !MODE!==0 set OUTP="!SCLR! fbox 0 0 db & fbox 0 0 db 0,0,320,320 & 3d objects\cube-t-RGB.obj 0,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 ?"
+	if !MODE!==1 set OUTP="!SCLR! fbox 0 0 db & fbox 0 0 db 0,0,320,320 & 3d objects\cube-t-RGB2.obj 0,-1 !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 1,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 ?"
+	if !MODE!==2 set OUTP="!SCLR! fbox 0 0 db & fbox 0 0 db 0,0,320,320 & 3d objects\cube-t-RGB2.obj 0,-1 !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 1,0,0,10 !CUPOS!,!CUPOS!,!DIST!,%ASPECT% 0 0 ? 1 0 ? 9 0 ? 2 0 ? a 0 ? 3 0 ? b 0 ? 4 0 ? c 0 ? 5 0 ? d 0 ? 6 0 ? e 0 ?"
 
-	set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,0 0,0,0 1,1,1,0,0,0 0,0,0,10 !XMID!,!YMID!,10000,%ASPECT% ? ? ? & fbox 7 0 20"
+	rem set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,0 0,0,0 1,1,1,0,0,0 0,0,0,10 !XMID!,!YMID!,10000,%ASPECT% ? ? ? & fbox 7 0 ?"
 	
-	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
+	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 ?"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & !XF! %CONV16%" Ffa:0,0,!W!,!H!
+	echo "cmdgfx: !OUTP:~1,-1! & !XF! %CONV16% & text f 0 0 [FRAMECOUNT] 10,10 4" Ffa:0,0,!W!,!H!
 	set OUTP=
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2*4+2, H=SCRH*2*6+2, XMID=W/2, YMID=H/2, DIST=1400-(W-882)/2, TRIDIST=1700-(W-882)/1, HLPY=H-4, CUPOS=35+(W-222)/7+3" & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a "W=SCRW*8+7, H=SCRH*12+11, XMID=W/2, YMID=H/2, DIST=1400-(W-882)/2, TRIDIST=1700-(W-882)/1, HLPY=H-4, CUPOS=35+(W-222)/7+3, BCLR=20" & cmdwiz showcursor 0
 
 	set /a CRZ+=3, CNT+=1
 	

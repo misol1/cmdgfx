@@ -3771,16 +3771,16 @@ int main(int argc, char *argv[]) {
 						obj3->objData[j].z = (obj3->objData[j].oz + modz) * scalez;
 					}
 
-					rrx = (float)(rx/rotationGranularity) * 3.14159265359 / 180.0;
-					rry = (float)(ry/rotationGranularity) * 3.14159265359 / 180.0;
-					rrz = (float)(rz/rotationGranularity) * 3.14159265359 / 180.0;
+					rrx = (float)((float)rx/(float)rotationGranularity) * 3.14159265359 / 180.0;
+					rry = (float)((float)ry/(float)rotationGranularity) * 3.14159265359 / 180.0;
+					rrz = (float)((float)rz/(float)rotationGranularity) * 3.14159265359 / 180.0;
 
 					if (rx2 == 0 && ry2 == 0 && rz2 == 0 && postmodx2 == 0 && postmody2 == 0 && postmodz2 == 0) {
 						rot3dPoints(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth);
 					} else {
-						rrx2 = (float)(rx2/rotationGranularity) * 3.14159265359 / 180.0;
-						rry2 = (float)(ry2/rotationGranularity) * 3.14159265359 / 180.0;
-						rrz2 = (float)(rz2/rotationGranularity) * 3.14159265359 / 180.0;
+						rrx2 = (float)((float)rx2/(float)rotationGranularity) * 3.14159265359 / 180.0;
+						rry2 = (float)((float)ry2/(float)rotationGranularity) * 3.14159265359 / 180.0;
+						rrz2 = (float)((float)rz2/(float)rotationGranularity) * 3.14159265359 / 180.0;
 
 						rot3dPoints_doubleRotation(obj3->objData, obj3->nofPoints, xg, yg, dist, rrx, rry, rrz, aspect, postmodx, postmody, postmodz, z_culling_near != 0, projectionDepth, rrx2, rry2, rrz2, postmodx2, postmody2, postmodz2);
 					}

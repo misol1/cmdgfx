@@ -2,7 +2,7 @@
 cmdwiz setfont 1 & cls & cmdwiz showcursor 0 & title VT-100 RGB Test
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW12xR | call %0 %* | cmdgfx_VT "" TSf:0,0,150,80
+cmdgfx_input.exe knW12xR | call %0 %* | cmdgfx_VT "" TSf:0,0,150,80z
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
