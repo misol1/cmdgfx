@@ -99,6 +99,8 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 		
 		if !ML!==1 (if !MD!==0 set /a ORGX=!MX!, ORGY=!MY!) & set /a MD=1
 		if !ML!==0 (if !MD!==1 if "!MX!"=="!ORGX!" if "!MY!"=="!ORGY!" call :CHECK_CLICK) & set /a MD=0
+		if !M_WHEEL! neq 0 set /a RYP=6*!M_WHEEL!*!RYPMUL!
+		
 		set CRSTR=
 		
       set /a OLDMX=!MX!,OLDMY=!MY!

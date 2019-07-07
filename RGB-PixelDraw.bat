@@ -29,7 +29,10 @@ set /a BORD=60, DH=H+340, DG=H-100, WB=W-BORD*2, WBB=WB+1, GUI_H=50, GUI_HB=GUI_
 :: a circle shape
 set /a "MX0=0,MY0=2000, MX1=539,MY1=1925, MX2=1039,MY2=1708, MX3=1461,MY3=1365, MX4=1775,MY4=920, MX5=1958,MY5=406, MX6=1995,MY6=-136, MX7=1884,MY7=-669, MX8=1633,MY8=-1153, MX9=1262,MY9=-1551, MX10=796,MY10=-1834, MX11=272,MY11=-1981, MX12=-272,MY12=-1981, MX13=-796,MY13=-1834, MX14=-1262,MY14=-1551, MX15=-1633,MY15=-1153, MX16=-1884,MY16=-669, MX17=-1995,MY17=-136, MX18=-1958,MY18=406, MX19=-1775,MY19=920, MX20=-1461,MY20=1365, MX21=-1039,MY21=1708, MX22=-539,MY22=1925"
 
-set /a CO0=48, CR0=255, CG0=34, CB0=153, SIZE0=24
+:: a box shape
+set /a "BMX0=-1600,BMY0=-1600, BMX1=1600,BMY1=-1600, BMX2=1600,BMY2=1600, BMX3=-1600,BMY3=1600"
+
+set /a CO0=48, CR0=255, CG0=34, CB0=153, SIZE0=24, SHAPE=0
 call :MAKECOL 0
 call :MAKEPOLYSTR 0
 set /a CO1=60, CR1=0, CG1=0, CB1=0, SIZE1=36
@@ -75,6 +78,9 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 		if !KEY! == 336 for %%c in (!SELCOL!) do set /a SIZE%%c-=1,GUI_UPD=1 &(if !SIZE%%c! lss 1 set SIZE%%c=1) & call :MAKEPOLYSTR !SELCOL!
 		if !KEY! == 32 set GUI=& set /a FGUI=1-FGUI & if !FGUI!==0 set GUI=rem
 		if !KEY! == 27 set STOP=1
+
+		if !KEY! == 329 set /a GUI_UPD=1, SHAPE+=1 &(if !SHAPE! gtr 5 set /a SHAPE=0) & call :MAKEPOLYSTR 0 & call :MAKEPOLYSTR 1
+		if !KEY! == 337 set /a GUI_UPD=1, SHAPE-=1 &(if !SHAPE! lss 0 set /a SHAPE=5) & call :MAKEPOLYSTR 0 & call :MAKEPOLYSTR 1
 		
 		if !KEY! == 114 set /a "GUI_UPD=1, CR!SELCOL!+=2" & (for %%c in (!SELCOL!) do if !CR%%c! gtr 255 set /a CR!SELCOL!=255) & call :MAKECOL !SELCOL!
 		if !KEY! == 82  set /a "GUI_UPD=1, CR!SELCOL!-=2" & (for %%c in (!SELCOL!) do if !CR%%c! lss 0 set /a CR!SELCOL!=0) & call :MAKECOL !SELCOL!
@@ -251,7 +257,12 @@ goto :eof
 
 :MAKEPOLYSTR
 set POLY=
-for %%c in (%1) do for /L %%a in (0,1,22) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==0 for %%c in (%1) do for /L %%a in (0,1,22) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==1 for %%c in (%1) do for /L %%a in (0,1,3) do set /a "MXP=!BMX%%a!*!SIZE%%c!/1000, MYP=!BMY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==2 for %%c in (%1) do for /L %%a in (2,4,22) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==3 for %%c in (%1) do for %%a in (2 16 7 21 11) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==4 for %%c in (%1) do for %%a in (4 19 11) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
+if !SHAPE!==5 for %%c in (%1) do for %%a in (1 2 15 16) do set /a "MXP=!MX%%a!*!SIZE%%c!/1000, MYP=!MY%%a!*!SIZE%%c!/1000"&set POLY=!POLY!!MXP!,!MYP!,
 set POLYSTR%1=!POLY!& set POLY=
 goto :eof
 
