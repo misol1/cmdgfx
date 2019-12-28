@@ -34,10 +34,9 @@ exit /b 0 */
 var W=180*4+1, H=110*6+1, RY=0
 var XMID=W/2, YMID=H/2-53
 var DIST=2500, ASPECT=1
-var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="db"
+var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="."
 var ZVAL=500, LOGOX=28, TEXTX=80, NIGHTY=22
 
-var ACCSPEED=270
 var MAXCUBES=30
 var SHADOW=true
 var NIGHTSKIP=""
@@ -52,23 +51,23 @@ var inputfile = "hiscore.dat";
 if (fs.FileExists(inputfile))
 {
 	var f1 = fs.OpenTextFile(inputfile, 1)  // 1=ForReading
-    HISCORE = parseInt(f1.ReadLine())
-    f1.close()
+	HISCORE = parseInt(f1.ReadLine())
+	f1.close()
 }
 
 var cubecols = [
-	["c 1 db c 1 db  4 1  1  4 1  1  4 1 00", "e 0 db e 0 db  6 e db  6 e db  6 3 00", "a a db a a db  2 a b1  2 a b1  2 5 00", "d d db d d db  5 d b1  5 d b1  5 7 00"],
-	["4 1 b2 4 1 b2  4 2 00  4 2 00  c c b1", "6 1 b2 6 1 b2  6 4 00  6 4 00  e 0 db", "2 1 b2 2 1 b2  2 6 00  2 6 00  a a b1", "5 1 b2 5 1 b2  5 8 00  5 8 00  d d b1"],
-	["4 2 00 4 2 00  4 2 00  4 2 00  4 0 b2", "6 4 00 4 4 00  6 4 00  6 4 00  6 0 b2", "2 6 00 2 6 00  2 6 00  2 6 00  6 0 b2", "5 8 00 5 8 00  5 8 00  5 8 00  5 0 b2"]
+	["c 0 .  c 0 .  4 0 .  4 0 .  0 1 00", "e 0 .  e 0 .  6 0 .   6 0 .   0 3 00", "a 0 .  a 0 .  2 0 .   2 0 .   0 5 00", "d 0 .  d 0 .  5 0 .   5 0 .   0 7 00"],
+	["4 0 .  4 0 .  0 2 00 0 2 00 c 0 . ", "6 0 .  6 0 .  0 4 00  0 4 00  e 0 . ", "2 0 .  2 0 .  0 6 00  0 6 00  a 0 . ", "5 0 .  5 0 .  0 8 00  0 8 00  d 0 . "],
+	["0 2 00 0 2 00 0 2 00 0 2 00 4 0 . ", "0 4 00 0 4 00 0 4 00  0 4 00  6 0 . ", "0 6 00 0 6 00 0 6 00  0 6 00  6 0 . ", "0 8 00 0 8 00 0 8 00  0 8 00  5 0 . "]
 ];
 var shadowcols = ["0 f 00","0 e 00","0 0 ."];
-var nightcols =  ["a 0 b2","a 0 b0","2 0 b1"];
+var nightcols =  ["a 0 . ","a 0 . ","2 0 ."];
 
 shell.Exec("cmd /c dlc.exe -p paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3");
 Resize(180/2,110/2);
 
 do {
-	var NOFCUBES=15, SCORE=0, NIGHTCNT=0, TILT=0, ACTIVECUBES=0, NIGHT=false, NIGHTSKIP="", DRAWMODE=0
+	var NOFCUBES=15, SCORE=0, NIGHTCNT=0, TILT=0, ACTIVECUBES=0, NIGHT=false, NIGHTSKIP="", DRAWMODE=0, ACCSPEED=270
 
 	var CURRZ=30000
 	var ACZ=CURRZ/MAXCUBES
@@ -80,7 +79,7 @@ do {
 	}
 
 	var STARTINDEX=1
-	shell.Exec("cmd /c echo W14>inputflags.dat"); 
+	shell.Exec("cmd /c title input:W14"); 
 
 	var stop=0, death=0
 	
@@ -90,7 +89,8 @@ do {
 		if (!NIGHT && SHADOW)
 			for (I = 1; I <= MAXCUBES; I++) {
 				var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-				WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 "+0+":360," + 0 + ":0,"+(-RY)+":0 0:" + PX[I] + ",0:" + (PY[I]-HGHT[I]-20) + ",0:" + PZ[I] + "  -450,-450,-10,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + shadowcols[COLD] +"\" n")
+				
+				WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 "+0+":360," + 0 + ":0,"+(-RY)+":0 0:" + PX[I] + ",0:" + (PY[I]-HGHT[I]-20) + ",0:" + PZ[I] + "  -450,-450,-10,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + shadowcols[COLD] +"\" n'")
 			}
 		
 		I=STARTINDEX-1
@@ -129,9 +129,10 @@ do {
 	}
 
 
+	var deadcnt=0, DEADSKIP=""
 	if (stop <= 1) {
 		stop=0, death=0
-		shell.Exec("cmd /c echo W15>inputflags.dat"); 
+		shell.Exec("cmd /c title input:W15"); 
 		var ACTIVE_KEY=0
 		
 		while (stop == 0) {
@@ -165,39 +166,17 @@ do {
 			}
 
 			PLS1=" f ",PLS2=" 7 "; if (NIGHT) PLS1=" a ",PLS2=" 2 ";
-			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 0 f 00 & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
+			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + DEADSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 0 f 00 & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
 
 			if (death==1) {
-				stop = 1
-				for (k = 1; k <= 40; k++) {
-					WScript.Echo("\"cmdgfx: " + BKNSTR + "\" n")
-
-					if (!NIGHT && SHADOW)
-						for (I = 1; I <= MAXCUBES; I++) {
-							var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-							if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 "+0+":360," + 0 + ":0,"+(-RY)+":0 0:" + PX[I] + ",0:" + (PY[I]-HGHT[I]-20) + ",0:" + PZ[I] + "  -450,-450,-10,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + shadowcols[COLD] +"\" n")
-						}
-
-					I=STARTINDEX-1
-					for (j = 1; j <= MAXCUBES; j++) {
-						I++
-						if (I > MAXCUBES) I=1;
-						var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-						var COLS=cubecols[COLD][CPAL[I]]; if (NIGHT) COLS=nightcols[COLD];
-						if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + "," + PY[I] + "," + PZ[I] + "  -250,"+(-HGHT[I])+",-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + COLS + "\" n")
-					}
-					TILT+=40
-					WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
-					var input = WScript.StdIn.ReadLine()
-					var ti = input.split(/\s+/)
-					if (ti[23] == "1") Resize(ti[25],ti[27]);
-				}
+				deadcnt++; if (deadcnt==40) stop = 1
+				ACCSPEED=0, TILT+=40, DEADSKIP="skip "
 			}
 
 			var input = WScript.StdIn.ReadLine()
 			var ti = input.split(/\s+/)
 			var key = ti[5]
-			if (ti[3] == "1")
+			if (ti[3] == "1" && death==0)
 			{
 				if (key == "27") stop=1
 				if (key == "10") { exec = shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) shell.Exec('cmdwiz fullscreen 1'); else shell.Exec('cmdwiz fullscreen 0') }
@@ -206,26 +185,27 @@ do {
 			} else {
 				if (key == "331" || key == "333") ACTIVE_KEY=0
 			}
-
 			if (ti[23] == "1") {
 				Resize(ti[25],ti[27]);
 			}
 			
-			NOFCUBES = 15 + Math.floor(SCORE/250)
-			if (NOFCUBES > MAXCUBES) NOFCUBES=MAXCUBES
-			
-			if (TILT > 0) TILT-=1
-			if (TILT < 0) TILT+=1
+			if (death==0) {
+				NOFCUBES = 15 + Math.floor(SCORE/250)
+				if (NOFCUBES > MAXCUBES) NOFCUBES=MAXCUBES
+				
+				if (TILT > 0) TILT-=1
+				if (TILT < 0) TILT+=1
 
-			if (ACTIVE_KEY==331) { TILT+=4; if (TILT > 55) TILT=55 }
-			if (ACTIVE_KEY==333) { TILT-=4; if (TILT <-55) TILT=-55 }
+				if (ACTIVE_KEY==331) { TILT+=4; if (TILT > 55) TILT=55 }
+				if (ACTIVE_KEY==333) { TILT-=4; if (TILT <-55) TILT=-55 }
 
-			if (TILT != 0) for (j = 1; j <= MAXCUBES; j++) PX[j]+=TILT
-			
-			RY+=8, SCORE+=1, NIGHTCNT+=1
-			if (USENIGHT && NIGHTCNT >= 2000 && !NIGHT) { NIGHTCNT=0, NIGHT=true, NIGHTSKIP="skip ", DRAWMODE=3 }
-			if (USENIGHT && NIGHTCNT >= 1000 && NIGHT) { NIGHTCNT=0, NIGHT=false, NIGHTSKIP="", DRAWMODE=0 }
-			if (SCORE > HISCORE) HISCORE = SCORE			
+				if (TILT != 0) for (j = 1; j <= MAXCUBES; j++) PX[j]+=TILT
+				
+				RY+=8, SCORE+=1, NIGHTCNT+=1
+				if (USENIGHT && NIGHTCNT >= 2000 && !NIGHT) { NIGHTCNT=0, NIGHT=true, NIGHTSKIP="skip ", DRAWMODE=3 }
+				if (USENIGHT && NIGHTCNT >= 1000 && NIGHT) { NIGHTCNT=0, NIGHT=false, NIGHTSKIP="", DRAWMODE=0 }
+				if (SCORE > HISCORE) HISCORE = SCORE
+			}
 		}
 
 		f1 = fs.OpenTextFile(inputfile, 2, true)  // 2=ForWriting

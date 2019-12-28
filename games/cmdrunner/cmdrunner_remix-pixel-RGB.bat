@@ -5,7 +5,7 @@ cmdwiz showcursor 0
 
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110W0Bs
+cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_RGB_32 "" Sfa:0,0,180,110
 set __=
 goto :eof
 
@@ -31,14 +31,14 @@ endlocal
 exit /b 0 */
 
 
-var W=180, H=110, RY=0
+var W=180*4+1, H=110*6+1, RY=0
 var XMID=W/2, YMID=H/2-53
-var DIST=2500, ASPECT=0.6925
-var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="db"
+var DIST=2500, ASPECT=1
+var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="."
 var ZVAL=500, LOGOX=28, TEXTX=80, NIGHTY=22
 
 var MAXCUBES=30
-var SHADOW="" // "skip "
+var SHADOW=true
 var NIGHTSKIP=""
 var NIGHT=false
 var USENIGHT=true
@@ -54,14 +54,13 @@ if (fs.FileExists(inputfile))
 	HISCORE = parseInt(f1.ReadLine())
 	f1.close()
 }
-
 var cubecols = [
-	["4 c db 4 c db  4 c b1  4 c b1  4 c 20", "6 0 db 6 0 db  6 e b1  6 e b1  6 e 20", "2 a db 2 a db  2 a b1  2 a b1  2 a 20", "5 d db 5 d db  5 d b1  5 d b1  5 d 20"],
-	["4 1 b2 4 1 b2  4 c b2  4 c b2  0 c b1", "6 1 b2 6 1 b2  6 e b2  6 e b2  0 e b1", "2 1 b2 2 1 b2  2 a b2  2 a b2  0 a b1", "5 1 b2 5 1 b2  5 d b2  5 d b2  0 d b1"],
-	["4 0 b0 4 0 b0  4 0 b1  4 0 b1  4 0 b2", "6 0 b0 6 0 b0  6 0 b1  6 0 b1  6 0 b2", "2 0 b0 2 0 b0  2 0 b1  2 0 b1  2 0 b2", "5 0 b0 5 0 b0  5 0 b1  5 0 b1  5 0 b2"]
+	["red1", "yel1", "green1", "purp1"],
+	["red2", "yel2", "green2", "purp2"],
+	["red3", "yel3", "green3", "purp3"]
 ];
-var shadowcols = ["0 8 b2","0 3 b2","3 0 :"];
-var nightcols =  ["a 0 b2","a 0 b0","2 0 b1"];
+var shadowcols = ["shad1","shad2","shad3"];
+var nightcols =  ["a 0 . ","a 0 . ","2 0 ."];
 
 shell.Exec("cmd /c dlc.exe -p paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazzi.mp3");
 Resize(180/2,110/2);
@@ -73,10 +72,12 @@ do {
 	var ACZ=CURRZ/MAXCUBES
 
 	var PX=[0], PY=[0], PZ=[0], CPAL=[0], HGHT=[0], YP=[0], ACT=[0]
+	
 	for (j = 1; j <= MAXCUBES; j++) {
 		CURRZ-=ACZ; PZ.push(CURRZ + Math.floor(Math.random() * ACZ)); PX.push(Math.floor(Math.random() * 8000) - 4000); CPAL.push(Math.floor(Math.random() * 4)); HGHT.push(Math.floor(Math.random() * 400) + 250); PY.push(-1800+(HGHT[j]-250)); ACT.push(0);
 	}
 
+	var STARTINDEX=1
 	shell.Exec("cmd /c title input:W14"); 
 
 	var stop=0, death=0
@@ -84,18 +85,28 @@ do {
 	while (stop == 0) {
 		WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
 
-		for (I = 1; I <= MAXCUBES; I++) {
+		if (!NIGHT && SHADOW)
+			for (I = 1; I <= MAXCUBES; I++) {
+				var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
+				WScript.Echo("\"cmdgfx: 3d RGB/obj/" + shadowcols[COLD] + ".obj " + DRAWMODE + ",-1 0," + (RY) + ",0 " + PX[I] + "," + (PY[I]-HGHT[I]-20) + "," + PZ[I] + "  -450,-10,-450,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." +"\" n'")
+			}
+		
+		I=STARTINDEX-1
+		for (j = 1; j <= MAXCUBES; j++) {
+			I++
+			if (I > MAXCUBES) I=1;
 			var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-			WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  -250,"+(-HGHT[I])+",-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + " & "+SHADOW+" 3d cube.ply " + DRAWMODE + ",-1 "+0+":360," + 0 + ":0,"+(-RY)+":0 0:" + PX[I] + ",0:" + (PY[I]-HGHT[I]-20) + ",0:" + PZ[I] + "  -450,-450,-10,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + shadowcols[COLD] +"\" ns")
+			WScript.Echo("\"cmdgfx: 3d RGB/obj/" + cubecols[COLD][CPAL[I]] + ".obj " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  250,"+(-HGHT[I])+",-250,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." +"\" n")
 
-			PZ[I]-=ACCSPEED
+			PZ[j]-=ACCSPEED
 			if (PZ[I] < 1000) {
 				PZ[I]=30000
 				PX[I]=Math.floor(Math.random() * 8000) - 4000
+				STARTINDEX-=1; if (STARTINDEX < 1) STARTINDEX=MAXCUBES
 			}
 		}
 		
-		WScript.Echo("\"cmdgfx: image CR2.gxy 0 0 0 20 "+LOGOX+",2 & text f 1 0 _Press_SPACE_to_play_ "+TEXTX+",15\" Z"+ZVAL+"f0:0,0,"+W+","+H)
+		WScript.Echo("\"cmdgfx: image CR2.gxy 0 0 0 20 "+LOGOX+",2 & text f 1 0 _Press_SPACE_to_play_ "+TEXTX+",15 0 & skip text e 1 0 [FRAMECOUNT] 5,5 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
 
 		var input = WScript.StdIn.ReadLine()
 		var ti = input.split(/\s+/) // input.split(" ") splits "a  a" into 3 tokens (one empty middle). Using regexp for "consume n spaces between each token", because cmdgfx_input uses double spaces to separate data sections
@@ -115,6 +126,7 @@ do {
 		RY+=8
 	}
 
+
 	var deadcnt=0, DEADSKIP=""
 	if (stop <= 1) {
 		stop=0, death=0
@@ -124,25 +136,39 @@ do {
 		while (stop == 0) {
 			BKNSTR=BKSTR; if (NIGHT) BKNSTR="fbox 0 0 db & line 2 0 = 0,"+NIGHTY+","+W+","+NIGHTY+" "
 			WScript.Echo("\"cmdgfx: " + BKNSTR + "\" n")
+
+			if (!NIGHT && SHADOW)
+				for (I = 1; I <= MAXCUBES; I++) {
+					var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
+					if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d RGB/obj/" + shadowcols[COLD] + ".obj " + DRAWMODE + ",-1 0," + (RY) + ",0 " + PX[I] + "," + (PY[I]-HGHT[I]-20) + "," + PZ[I] + "  -450,-10,-450,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." +"\" n'")
+				}
 			
-			for (I = 1; I <= MAXCUBES; I++) {
+			I=STARTINDEX-1
+			for (j = 1; j <= MAXCUBES; j++) {
+				I++
+				if (I > MAXCUBES) I=1;
 			
 				if (ACT[I] == 1 && PZ[I] < 4000 && PZ[I] > 3500 && PX[I] > -300 && PX[I] < 300) death=1
 
 				var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
 				var COLS=cubecols[COLD][CPAL[I]]; if (NIGHT) COLS=nightcols[COLD];
-				if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  -250,"+(-HGHT[I])+",-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + COLS + " & "+SHADOW+" "+NIGHTSKIP+" 3d cube.ply " + DRAWMODE + ",-1 "+0+":360," + 0 + ":0,"+(-RY)+":0 0:" + PX[I] + ",0:" + (PY[I]-HGHT[I]-20) + ",0:" + PZ[I] + "  -450,-450,-10,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + shadowcols[COLD] + "\" ns")
-
+				if (NIGHT) {
+					if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  250,"+(-HGHT[I])+",-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + COLS + "\" n")
+				} else {
+					if (ACT[I] == 1) WScript.Echo("\"cmdgfx: 3d RGB/obj/" + COLS + ".obj " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  250,"+(-HGHT[I])+",-250,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." + "\" n")
+				}
+				
 				PZ[I]-=ACCSPEED
 				if (PZ[I] < 1000) {
 					PZ[I]=30000
 					PX[I]=Math.floor(Math.random() * 8000) - 4000 - TILT*50
 					if (ACTIVECUBES <= NOFCUBES && ACT[I] == 0 && Math.random() < 0.3333) { ACT[I]=1; ACTIVECUBES+=1; }
+					STARTINDEX-=1; if (STARTINDEX < 1) STARTINDEX=MAXCUBES
 				}
 			}
 
 			PLS1=" f ",PLS2=" 7 "; if (NIGHT) PLS1=" a ",PLS2=" 2 ";
-			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + DEADSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 0 " + GROUNDCOL + " b2 0 " + GROUNDCOL + " b2 & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1  \" -sZ"+ZVAL+"f0:0,0,"+W+","+H)
+			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + DEADSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 003535 0 . & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
 
 			if (death==1) {
 				deadcnt++; if (deadcnt==40) stop = 1
@@ -161,7 +187,6 @@ do {
 			} else {
 				if (key == "331" || key == "333") ACTIVE_KEY=0
 			}
-
 			if (ti[23] == "1") {
 				Resize(ti[25],ti[27]);
 			}
@@ -196,14 +221,16 @@ shell.Exec("cmd /c taskkill.exe /F /IM dlc.exe>nul")
 
 function Resize(XRes, YRes) {
 	shell.Exec('cmdwiz showcursor 0')
-	W=Number(XRes)*2+1, H=Number(YRes)*2+1
-	YMDIV=2.1; if (H<110) YMDIV=2
+	W=(Number(XRes)+1)*2*4, H=(Number(YRes)+1)*2*6+1
+	YMDIV=2.1; if (H<110*4) YMDIV=2
 	XMID=Math.floor(W/2), YMID=Math.floor(H/2)-52-Math.floor((H-110)/YMDIV)
-	ZMUL=4; if (H<110) ZMUL=4.6
+	ZMUL=2.7; if (H<110*4) ZMUL=2.3
 	ZVAL=500+Math.floor((H-110)*ZMUL)
-	//BGH=110; if (H<BGH-1) BGH=H-1; BKSTR="image bgshade.gxy 0 0 0 -1 0,0 & block 0 0,0,1,"+BGH+" 0,0,"+(W+2)+","+(H+2) + " " //block is buggy when src block bigger than screen
-	BKSTR="image bgshade.gxy 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+2)+" "
+	//BGH=110; if (H<BGH-1) BGH=H-1; BKSTR="image bgshade-RGB.bmp 0 0 0 -1 0,0 & block 0 0,0,1,"+BGH+" 0,0,"+(W+2)+","+(H+2) + " " //block is buggy when src block bigger than screen
+	BKSTR="image bgshade-RGB.bmp 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+2)+" "
+	//BKSTR="image bgshade-pixel.gxy 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+2)+" "
+	//BKSTR="fbox 0 0 ."
 	LOGOX=Math.floor(W/2)-62
-	TEXTX=Math.floor(W/2)-10
+	TEXTX=Math.floor(W/2)-10*4
 	NIGHTY=Math.floor(H*0.2)
 }

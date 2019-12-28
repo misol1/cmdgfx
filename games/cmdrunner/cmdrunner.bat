@@ -5,7 +5,7 @@ cmdwiz showcursor 0
 
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW14x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110W0
+cmdgfx_input.exe m0unW14x | call %0 %* | cmdgfx_gdi "" Sf0:0,0,180,110W0Bs
 set __=
 cmdwiz setwindowstyle set standard 0x00010000L
 cmdwiz setwindowstyle set standard 0x00040000L
@@ -40,7 +40,6 @@ var XMID=W/2, YMID=H/2-53
 var DIST=2500, ASPECT=0.6925
 var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="db"
 
-var ACCSPEED=270
 var MAXCUBES=30
 
 var fs = new ActiveXObject("Scripting.FileSystemObject")
@@ -51,8 +50,8 @@ var inputfile = "hiscore.dat";
 if (fs.FileExists(inputfile))
 {
 	var f1 = fs.OpenTextFile(inputfile, 1)  // 1=ForReading
-    HISCORE = parseInt(f1.ReadLine())
-    f1.close()
+	HISCORE = parseInt(f1.ReadLine())
+	f1.close()
 }
 
 var cubecols = [
@@ -65,7 +64,7 @@ shell.Exec("cmd /c dlc.exe -p paparazzi.mp3 paparazzi.mp3 paparazzi.mp3 paparazz
 
 
 do {
-	var NOFCUBES=15, SCORE=0, TILT=0, ACTIVECUBES=0
+	var NOFCUBES=15, SCORE=0, TILT=0, ACTIVECUBES=0, ACCSPEED=270
 
 	var CURRZ=30000
 	var ACZ=CURRZ/MAXCUBES
@@ -75,27 +74,22 @@ do {
 		CURRZ-=ACZ; PZ.push(CURRZ + Math.floor(Math.random() * ACZ)); PX.push(Math.floor(Math.random() * 8000) - 4000); PY.push(-18000); CPAL.push(Math.floor(Math.random() * 4));
 	}
 
-	var STARTINDEX=1
-	shell.Exec("cmd /c echo W14>inputflags.dat"); 
+	shell.Exec("cmd /c title input:W14"); 
 
 	var BKSTR="fbox 0 1 b1 0,0," + W + ",10 & fbox 0 1 20 0,10," + W + ",5 & fbox 9 1 b1 0,15," + W + ",5 & fbox 9 1 db 0,19," + W + ",1  &  fbox 0 0 20 0,21," + W + ",5 & fbox 0 " + GROUNDCOL + " b2 0,23," + W + ",5 & fbox 0 " + GROUNDCOL + " b1 0,27," + W + ",10 & fbox 0 " + GROUNDCOL + " b0 0,34," + W + ",22 & fbox 8 " + GROUNDCOL + " 20 0,50," + W + ",100 "
 	var stop=0, death=0
 
 	while (stop == 0) {
-		I=STARTINDEX-1
 		WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
 
-		for (j = 1; j <= MAXCUBES; j++) {
-			I++
-			if (I > MAXCUBES) I=1;
+		for (I = 1; I <= MAXCUBES; I++) {
 			var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-			WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ",-1800," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" n")
+			WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ",-1800," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" ns")
 
-			PZ[j]-=ACCSPEED
+			PZ[I]-=ACCSPEED
 			if (PZ[I] < 1000) {
 				PZ[I]=30000
 				PX[I]=Math.floor(Math.random() * 8000) - 4000
-				STARTINDEX-=1; if (STARTINDEX < 1) STARTINDEX=MAXCUBES
 			}
 		}
 		
@@ -116,57 +110,41 @@ do {
 		RY+=8
 	}
 
-
+	var deadcnt=0, DEADSKIP=""
 	if (stop <= 1) {
 		stop=0, death=0
-		shell.Exec("cmd /c echo W15>inputflags.dat"); 
+		shell.Exec("cmd /c title input:W15"); 
 		var ACTIVE_KEY=0
 		
 		while (stop == 0) {
-			I=STARTINDEX-1
 			WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
 			
-			for (j = 1; j <= MAXCUBES; j++) {
+			for (I = 1; I <= MAXCUBES; I++) {
 			
-				if (PY[j] > -15000 && PZ[j] < 4000 && PZ[j] > 3500 && PX[j] > -300 && PX[j] < 300) death=1
+				if (PY[I] > -15000 && PZ[I] < 4000 && PZ[I] > 3500 && PX[I] > -300 && PX[I] < 300) death=1
 
-				I++
-				if (I > MAXCUBES) I=1;
 				var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-				WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + "," + PY[I] + "," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" n")
+				WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + "," + PY[I] + "," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" ns")
 
-				PZ[j]-=ACCSPEED
+				PZ[I]-=ACCSPEED
 				if (PZ[I] < 1000) {
 					PZ[I]=30000
 					PX[I]=Math.floor(Math.random() * 8000) - 4000 - TILT*50
 					if (ACTIVECUBES <= NOFCUBES && PY[I] < -1800 && Math.random() < 0.3333) { PY[I]=-1800; ACTIVECUBES+=1; }
-					STARTINDEX-=1; if (STARTINDEX < 1) STARTINDEX=MAXCUBES
 				}
 			}
 
-			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " f " + GROUNDCOL + " " + PLYCHAR + " 7 " + GROUNDCOL + " " + PLYCHAR + " & 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 0 " + GROUNDCOL + " b2 0 " + GROUNDCOL + " b2 & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1  \"")
+			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " f " + GROUNDCOL + " " + PLYCHAR + " 7 " + GROUNDCOL + " " + PLYCHAR + " & " + DEADSKIP + "3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 0 " + GROUNDCOL + " b2 0 " + GROUNDCOL + " b2 & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1  \" -s")
 
 			if (death==1) {
-				stop = 1
-				for (k = 1; k <= 40; k++) {
-					WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
-					I=STARTINDEX-1
-					for (j = 1; j <= MAXCUBES; j++) {
-						I++
-						if (I > MAXCUBES) I=1;
-						var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
-						WScript.Echo("\"cmdgfx: 3d cube.ply " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + "," + PY[I] + "," + PZ[I] + "  -250,-250,-250,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + cubecols[COLD][CPAL[I]] + "\" n")
-					}
-					TILT+=40
-					WScript.Echo("\"cmdgfx: 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " f " + GROUNDCOL + " " + PLYCHAR + " 7 " + GROUNDCOL + " " + PLYCHAR + " & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1  \"")
-					var input = WScript.StdIn.ReadLine()
-				}
+				deadcnt++; if (deadcnt==40) stop = 1
+				ACCSPEED=0, TILT+=40, DEADSKIP="skip "
 			}
 
 			var input = WScript.StdIn.ReadLine()
 			var ti = input.split(" ")
 			var key = ti[5]
-			if (ti[3] == "1")
+			if (ti[3] == "1" && death==0)
 			{
 				if (key == "27") stop=1
 				if (key == "331") ACTIVE_KEY=331
@@ -174,20 +152,22 @@ do {
 			} else {
 				if (key == "331" || key == "333") ACTIVE_KEY=0
 			}
-			
-			NOFCUBES = 15 + Math.floor(SCORE/250)
-			if (NOFCUBES > MAXCUBES) NOFCUBES=MAXCUBES
-			
-			if (TILT > 0) TILT-=1
-			if (TILT < 0) TILT+=1
 
-			if (ACTIVE_KEY==331) TILT+=4; if (TILT > 55) TILT=55
-			if (ACTIVE_KEY==333) TILT-=4; if (TILT <-55) TILT=-55
+			if (death==0) {
+				NOFCUBES = 15 + Math.floor(SCORE/250)
+				if (NOFCUBES > MAXCUBES) NOFCUBES=MAXCUBES
+				
+				if (TILT > 0) TILT-=1
+				if (TILT < 0) TILT+=1
 
-			if (TILT != 0) for (j = 1; j <= MAXCUBES; j++) PX[j]+=TILT
-			
-			RY+=8, SCORE+=1
-			if (SCORE > HISCORE) HISCORE = SCORE			
+				if (ACTIVE_KEY==331) TILT+=4; if (TILT > 55) TILT=55
+				if (ACTIVE_KEY==333) TILT-=4; if (TILT <-55) TILT=-55
+
+				if (TILT != 0) for (j = 1; j <= MAXCUBES; j++) PX[j]+=TILT
+				
+				RY+=8, SCORE+=1
+				if (SCORE > HISCORE) HISCORE = SCORE
+			}
 		}
 
 		f1 = fs.OpenTextFile(inputfile, 2, true)  // 2=ForWriting
