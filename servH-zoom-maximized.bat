@@ -4,13 +4,15 @@ cmdwiz setfont 6 & cls
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0
-cmdwiz getconsoledim sw
-set /a W=%errorlevel% * 2 + 4
-cmdwiz getconsoledim sh
-set /a H=%errorlevel% * 2 + 8
+
+cmdwiz getdisplaydim w
+set /a W=%errorlevel%/4+1
+cmdwiz getdisplaydim h
+set /a H=%errorlevel%/6+1
+
 set /a "SCALE=150+((%W%-220)*2)/4"
 set __=.
-cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" TSf0:0,0,%W%,%H%
+cmdgfx_input.exe knW12x | call %0 %* | cmdgfx_gdi "" %TOP%TSf0:0,0,%W%,%H%
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50 & cmdwiz showmousecursor 1

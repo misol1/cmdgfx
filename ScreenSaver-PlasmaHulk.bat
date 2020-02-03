@@ -8,12 +8,12 @@ cls & cmdwiz setfont 8
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
-cmdwiz getconsoledim sw
-set /a W6=%errorlevel% + 1
-cmdwiz getconsoledim sh
-set /a H6=%errorlevel% + 3
-if "%~2"=="U" set /a H6 += 4
-set /a W=W6*2, H=H6*2
+
+cmdwiz getdisplaydim w
+set /a W=%errorlevel%/6+1
+cmdwiz getdisplaydim h
+set /a H=%errorlevel%/8+1
+
 cls & cmdwiz showcursor 0
 
 set __=.

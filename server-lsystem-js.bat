@@ -106,7 +106,7 @@ function DrawSystem() {
 		}
 	}
 
-	bez = ""; if (drawBezier) bez = " 800,450"
+	bez = ""; if (drawBezier) bez = " "+Math.floor(W/2)+","+Math.floor(H/2)
 	drawStates = []
 	swap = 1
 

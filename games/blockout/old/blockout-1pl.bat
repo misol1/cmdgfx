@@ -1,8 +1,6 @@
-:: Blockout Server version / 2 Player Support: Mikael Sollenborn 2017-2020
+:: Blockout Server version: Mikael Sollenborn 2017
 
 @echo off
-if "%~1"=="_GET2P" call :GET2P & goto :eof
-if "%~1"=="_NETSEND" call :network_send %2 & goto :eof
 cls & cmdwiz showcursor 0 & title Blockout
 if defined __ goto :START
 set __=.
@@ -23,7 +21,7 @@ mode %F6W%,%F6H% & cls
 cmdwiz showcursor 0
 cmdwiz setwindowstyle clear standard 0x00010000L
 cmdwiz setwindowstyle clear standard 0x00040000L
-for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not "%%v"=="PATH" if /I not "%%v"=="SystemRoot" set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 cmdwiz getdisplaydim w & set SW=!errorlevel!
 cmdwiz getdisplaydim h & set SH=!errorlevel!
@@ -71,19 +69,7 @@ set /a NT=%NOFBLOCKS%-1&for /L %%a in (0,1,!NT!) do cmdwiz stringlen !P%%a!&set 
 
 set /A PDIMM=4
 
-set /a UID=1
-
-set /a LASTUID=99999
-if exist lastUid set /p LASTUID=<lastUid
-set /a LASTUID=%LASTUID%
-del /Q capture-1.gxy piece-1.obj lastUid >nul 2>nul
-for %%a in (capture-*.gxy) do if not %%a==capture-%LASTUID%.gxy del /q %%a >nul 2>nul
-for %%a in (piece-*.obj) do if not %%a==piece-%LASTUID%.obj del /q %%a >nul 2>nul
-for %%a in ($ptnio_ttt_*) do if not %%a==$ptnio_ttt_%LASTUID% del /q %%a >nul 2>nul
-
-set /a ALLOW2PL=0, IPCHANGED=0
-
-set FN=piece-%UID%.obj
+set FN=piece.obj
 set FL=bl-logo.obj
 
 set /a Vx0=-1, Vy0=-1, Vz0=-1
@@ -155,19 +141,17 @@ for /L %%a in (0,1,4) do set logo%%a=
 
 set /a GAMEOVER=0, SCORE=0, ADDVAL=10, ZD=0, CNT=0
 set /a RX=0,RY=0,RZ=0
-set /a RUN2PL=0
 
 set STOP=&set ESCKEY=
  
-copy /Y background.gxy capture-%UID%.gxy >nul 2>nul
+copy /Y background.gxy capture-1.gxy >nul 2>nul
 
-echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-%UID%.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1" f0
-echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & box 2 0 fa 0,0,28,21 & & text e 0 0 Press_SPACE_to_play\n\n\702_for_2_Player_Game\n\n\c0\-Press_ESC_to_quit 6,2 & text 9 0 0 \a0\-\-\-INGAME_KEYS:\r\n\n\70Cursor_Keys\r_-_Move\n\n\70Z/z_\r_-_Rotate_Z\n\n\70X/x_\r_-_Rotate_X\n\n\70C/c_\r_-_Rotate_Y\n\n\70SPACE\r_-_Drop 6,9" f6:40,28,29,22
+echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-1.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1" f0
+echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & box 2 0 fa 0,0,28,19 & & text e 0 0 Press_SPACE_to_play\n\n\c0\-Press_ESC_to_quit 6,2 & text 9 0 0 \a0\-\-\-INGAME_KEYS:\r\n\n\70Cursor_Keys\r_-_Move\n\n\70Z/z_\r_-_Rotate_Z\n\n\70X/x_\r_-_Rotate_X\n\n\70C/c_\r_-_Rotate_Y\n\n\70SPACE\r_-_Drop 6,7" f6:40,29,29,20
 
-set t1=!time: =0!
 :IDLELOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-!UID!.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1" Ff0:0,0,%W%,50
+	echo "cmdgfx: fbox 2 0 20 0,0,%W%,%H% & image capture-1.gxy 2 0 0 -1 0,0 & 3d %FL% 3,-1 !RX!,!RY!,!RZ! -60,1520,0 1,2,1,0,0,0 0,0,0,0 %XMID%,!YMID!,20000,%ASPECT% a 0 b1 2 0 b1" Ff0:0,0,%W%,50
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
@@ -175,17 +159,8 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !K_DOWN! == 1 (
 		if !KEY! == 32 set STOP=1
 		if !KEY! == 27 set STOP=1&set ESCKEY=1
-		if !KEY! == 50 if !ALLOW2PL!==1 set /a RUN2PL=1, STOP=1 & start "" /B cmd /C blockout.bat _NETSEND s>nul 2>nul & call :NOP
-		if !KEY! == 50 if !ALLOW2PL!==0 call :INIT_PTNIO & call :TCPSETUP & if !RUN2PL!==1 set STOP=1
 	)
-
-	if !ALLOW2PL!==1 (
-		set NREC=
-		for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
-		if !a! geq 500 set t1=!time: =0!&for /f "tokens=*" %%A in ('ptnio -id:%ptnio_id% -c recv s false 1') do set NREC=%%A
-		if "!NREC!"=="s" set /a RUN2PL=1, STOP=1
-	)
-	
+		
 	if !CNT! lss 480 set /A RX+=12
 	if !CNT! gtr 480 set /A RY+=12
 	if !CNT! gtr 840 set /A CNT=-1&set RX=0&set RY=0
@@ -210,9 +185,6 @@ echo W16>inputflags.dat
 call :MKBLOCKS
 
 set STOP=
-set WIN=0
-set t1=!time: =0!
-set TXTSKIP=&if !RUN2PL!==1 set TXTSKIP=skip
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP for %%p in (!P_I!) do (
 
@@ -223,7 +195,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%p in (!P_I!) do (
 	set /a "DD=(!ZD!-450) %% (%ZMUL2%)" & if !DD! lss 100 if !DD! geq 0 for %%a in (!BI!) do if !CL%%a!==0 set CL%%a=1&call :ISCOLLIDE 0 0 0 %%a
 	set ERR=&if !VALID!==0 set ERR=box f 0 db 0,0,219,109
 
-	echo "cmdgfx: image capture-!UID!.gxy 2 0 0 -1 0,0 & 3d %FN% 3,-1 !RX!,!RY!,!RZ! !X!,!Y!,0 1,1,1,0,0,!ZD! 0,800,0,0 %XMID%,!YMID!,!DIST!,%ASPECT% !COL! 0 fe & !TXTSKIP! text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1 & !ERR!" FDf0:0,0,%W%,%H%
+	echo "cmdgfx: image capture-1.gxy 2 0 0 -1 0,0 & 3d %FN% 3,-1 !RX!,!RY!,!RZ! !X!,!Y!,0 1,1,1,0,0,!ZD! 0,800,0,0 %XMID%,!YMID!,!DIST!,%ASPECT% !COL! 0 fe & text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1 & !ERR!" FDf0:0,0,%W%,%H%
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D 2>nul ) 
@@ -241,27 +213,14 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%p in (!P_I!) do (
 		if !KEY! == 90 call :ROT Z -1&if !VALID!==1 call :MKBLOCKS
 		if !KEY! == 32 set ADDVAL=90
 
-		rem if !KEY! == 48 call :ADDLAYERS 1
-		rem if !KEY! == 49 start "" /B cmd /C blockout.bat _NETSEND a>nul 2>nul & call :NOP
-		
 		if !KEY! == 331 set /A B=!MINX!+!XP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 -1 0 %%a&if !VALID!==1 set /A XP-=1
 		if !KEY! == 333 set /A B=!MAXX!+!XP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 1 0 %%a&if !VALID!==1 set /A XP+=1
 		if !KEY! == 328 set /A B=!MINY!+!YP!&if !B! gtr 0 for %%a in (!BI!) do call :ISCOLLIDE 2 0 -1 %%a&if !VALID!==1 set /A YP-=1
 		if !KEY! == 336 set /A B=!MAXY!+!YP!&if !B! lss !PDIMM! for %%a in (!BI!) do call :ISCOLLIDE 2 0 1 %%a&if !VALID!==1 set /A YP+=1
-		
+
 		if !KEY! == 115 call :DEBUG
 		if !KEY! == 112 cmdwiz getch
 		if !KEY! == 27 set STOP=1
-	)
-
-	if !RUN2PL!==1 (
-		set NREC=
-		for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
-		if !a! geq 500 set t1=!time: =0!&for /f "tokens=*" %%A in ('ptnio -id:%ptnio_id% -c recv s false 1') do set NREC=%%A
-		rem if not "!NREC!"=="" echo !NREC!&cmdwiz delay 100
-		if "!NREC!"=="x" set STOP=1
-		if "!NREC!"=="w" set /a STOP=1,WIN=1,GAMEOVER=1
-		if "!NREC!"=="a" call :ADDLAYERS 1
 	)
 	
 	set /a KEY=0
@@ -270,29 +229,20 @@ if not defined STOP goto LOOP
 
 echo W12>inputflags.dat
 
-set GOMSG=x&if !GAMEOVER!==1 set GOMSG=w
-if !RUN2PL!==1 start "" /B cmd /C blockout.bat _NETSEND %GOMSG%>nul 2>nul & call :NOP
 if !GAMEOVER!==0 goto OUTERLOOP
-set KEYMSG=PRESS_A_KEY
-if !RUN2PL!==1 set KEYMSG=ENDING_GAME
-if !WIN!==0 for /l %%a in (1,1,50) do echo "cmdgfx: text f 0 0 G_A_M_E___O_V_E_R\n\n\n\n\c0\-\-\-!KEYMSG! 6,4" f2:41,34,29,14
-if !WIN!==1 for /l %%a in (1,1,50) do echo "cmdgfx: text f 0 0 :_V_I_C_T_O_R_Y_:\n\n\n\n\c0\-\-\-!KEYMSG! 6,4" f2:41,34,29,14
-if !RUN2PL!==0 cmdwiz getch
-if !RUN2PL!==1 cmdwiz delay 2000 
+for /l %%a in (1,1,50) do echo "cmdgfx: text f 0 0 G_A_M_E___O_V_E_R\n\n\n\n\c0\-\-\-PRESS_A_KEY 6,4" f2:41,34,29,14
+cmdwiz getch
 echo "cmdgfx: " f0:0,0,%W%,%H%
 goto OUTERLOOP
 
 :OUTOF
-if not "%ptnio_id%"=="" (
-	ptnio -id:%ptnio_id% -c exit
-	del /Q $ptnio_ttt_%UID%>nul 2>nul
-)
 echo "cmdgfx: quit"
 title input:Q
 echo %HISCORE%>hiscore.dat
 del /Q %FN%>nul 2>nul
 del /Q %FBG%>nul 2>nul
-del /Q capture-%UID%.gxy>nul 2>nul
+del /Q capture-1.gxy>nul 2>nul
+del /Q lay?.obj>nul 2>nul
 endlocal
 cmdwiz showcursor 1
 cmdwiz setfont 6
@@ -370,7 +320,7 @@ echo "cmdgfx: image background.gxy 2 0 0 -1 0,0" n
 
 for /L %%a in (%WD%,-1,0) do for /L %%t in (1,1,2) do set BC=!PAL:~%%a,1!&for /L %%b in (0,1,%WH%) do for /L %%c in (0,1,%WW%) do set S=!LINE%%a_%%b:~%%c,1!&if not !S!==- set /a "movx=(-2+%%c)*200, movy=(2-%%b)*200, movz=10900-(%WD%-%%a)*1600" & echo "cmdgfx: 3d cube%%t.obj 0,-1 0,0,0 !movx!,!movy!,!movz! 1,1,1,0,0,0 1,800,0,100 %XMID%,!YMID!,!DIST!,%ASPECT% !BC! 0 db !BC! 0 db !BC! 0 b1 !BC! 0 b1 !BC! 0 b1 !BC! 0 b1" n
 
-echo "cmdgfx: text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1" Dec:0,0,%W%,%H%,1,%UID%
+echo "cmdgfx: text e 0 0 Score:_!SCORE!_\e0(!HISCORE!) 2,1" Dec:0,0,%W%,%H%,1,1
 goto :eof
 
 
@@ -420,8 +370,8 @@ set ZD=0&(for /L %%a in (0,1,%WDB%) do set CL%%a=0)&set /a ADDVAL=10+!SCORE!/200
 
 set SCOREPLUS=0
 :CHKLOOP
-for /L %%a in (%WD%,-1,0) do set /a ISFULL=1 & for /L %%b in (0,1,%WH%) do (if not !LINE%%a_%%b!==!LINEF! set ISFULL=0) & if !ISFULL!==1 if %%b==%WH% set /A SCORE+=100+!SCOREPLUS!&set /a SCOREPLUS+=400&call :REMOVE %%a& (if !RUN2PL!==1 start "" /B cmd /C blockout.bat _NETSEND a>nul 2>nul & call :NOP) & goto CHKLOOP
-if !SCORE! gtr !HISCORE! if !RUN2PL!==0 set HISCORE=!SCORE!
+for /L %%a in (%WD%,-1,0) do set /a ISFULL=1 & for /L %%b in (0,1,%WH%) do (if not !LINE%%a_%%b!==!LINEF! set ISFULL=0) & if !ISFULL!==1 if %%b==%WH% set /A SCORE+=100+!SCOREPLUS!&set /a SCOREPLUS+=400&call :REMOVE %%a& goto CHKLOOP
+if !SCORE! gtr !HISCORE! set HISCORE=!SCORE!
 
 if !SCOREPLUS! gtr 0 call :RENDERFILLED
 call :ISCOLLIDE 1 0 0 0
@@ -441,140 +391,3 @@ cmdwiz setcursorpos 0 0
 for /L %%a in (%WD%,-1,0) do for /L %%b in (0,1,%WH%) do echo z%%a,y%%b !LINE%%a_%%b!&if %%b == %WH% echo.
 echo.
 cmdwiz getch
-goto :eof
-
-:ADDLAYERS
-for /L %%_ in (1,1,%1) do for /L %%a in (0,1,%WD%) do set /a NL=%%a-1 & for /L %%b in (0,1,%WH%) do for %%c in (!NL!) do set LINE%%c_%%b=!LINE%%a_%%b!
-set /a SD=WD-%1+1 & for /L %%a in (!SD!,1,%WD%) do for /L %%b in (0,1,%WH%) do (
-	set RLINE=
-	for /L %%f in (0,1,%WW%) do set /a RNDL=!RANDOM! %% 100 & set AOL=1&(if !RNDL! lss 25 set AOL=-)&set RLINE=!RLINE!!AOL!
-	set LINE%%a_%%b=!RLINE!
-)
-call :RENDERFILLED
-call :ISCOLLIDE 1 0 0 0
-goto :eof
-
-
-
-:: == 2 PLAYER SETUP ==
-
-:INIT_PTNIO
-if !ALLOW2PL!==1 goto :eof
-
-set /a OLDUID=%UID%
-call :GET_UID
-set FN=piece-%UID%.obj
-if exist capture-%OLDUID%.gxy ren capture-%OLDUID%.gxy capture-%UID%.gxy>nul 2>nul
-
-set ptnio_id=ttt_%UID%
-set ipc=6
-set ipfc=e
-
-ptnio -id:%ptnio_id% -n -t:16
-
-set IP=127.0.0.1
-set Port=50
-goto :eof
-
-:TCPSETUP
-if !ALLOW2PL!==1 set /a RUN2PL=1&goto :eof
-start "2 Player Setup" /WAIT cmd /C blockout.bat _GET2P 170 >nul 2>nul & call :NOP
-if exist answer-%UID%.dat set /a RUN2PL=1,ALLOW2PL=1&del /Q answer-%UID%.dat >nul 2>nul
-goto :eof
-
-:GET2P
-cmdwiz setfont 6
-mode 90,40
-del /Q answer-%UID%.dat>nul 2>nul
-echo Current IP: %IP%  Port: %Port%
-echo Press 0 to set IP/port, 1 to host game, 2 to connect to a host, ESC to cancel.
-:KEYLOOP
-	cmdwiz getch
-	set /a KEY=%errorlevel%
-	if %KEY%==27 ptnio -id:%ptnio_id% -c exit & del /Q $ptnio*>nul 2>nul & exit & goto :eof
-if not %KEY%==48 if not %KEY%==49 if not %KEY%==50 goto :KEYLOOP 
-
-if %KEY%==48 echo 0 & call :SETIP & goto :GET2P
-if %KEY%==49 echo 1 & call :HOST & goto :eof
-if %KEY%==50 echo 2 & call :JOINSERVER & goto :eof
-exit
-goto :eof
-
-:HOST
-echo.
-echo Waiting for connection...
-for %%A in (
-  "new listner"
-  "bind listner %IP% %Port%"
-  "listen listner 1"
-  "accept listner s"
-) do (ptnio -id:%ptnio_id% -c %%~A >nul || goto :HOSTERROR)
-goto :CONNECT
-
-cmdwiz getch
-goto :eof
-
-:SETIP
-echo.
-set IP=
-set /p IP=IP address of host (xxx.xxx.xxx.xxx, Enter for localhost): 
-if "%IP%"=="" set IP=127.0.0.1
-set Port=
-set /p Port=Port (Enter for 50): 
-if "%Port%"=="" set Port=50
-set /a IPCHANGED=1
-goto :eof
-
-:JOINSERVER
-set serverType=client
-set engine=network
-echo Waiting for response...
-
-for %%A in (
-  "new s"
-  "connect s %IP% %Port%"
-) do (ptnio -id:%ptnio_id% -c %%~A >nul || goto :JOINERROR)
-goto :CONNECT
-
-:CONNECT
-echo Connection done.
-echo Start game...
-echo OK>answer-%UID%.dat
-::cmdwiz getch
-goto :eof
-
-:HOSTERROR
-echo Unable to host game, back to menu.
-call :stopNetwork
-cmdwiz delay 2000
-goto :menu
-
-:JOINERROR
-echo Unable to join game, back to menu.
-call :stopNetwork
-cmdwiz delay 2000
-goto :eof
-
-:stopNetwork
-ptnio -id:%ptnio_id% -c free s
-ptnio -id:%ptnio_id% -c free listner
-goto :eof
-
-
-:network_send
-echo %1|ptnio -id:%ptnio_id% -c send s
-goto :eof
-
-:network_get
-set NREC=
-:: recv s [blocking nofRead] : if none set, read as much as possible
-for /f "tokens=*" %%A in ('ptnio -id:%ptnio_id% -c recv s false 1') do set NREC=%%A
-rem echo Got: %NREC% & cmdwiz getch
-goto :eof
-
-:GET_UID
-set /a UID=%random%+2
-echo %UID% >lastUid
-goto :eof
-
-:NOP

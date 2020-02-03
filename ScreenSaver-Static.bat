@@ -7,11 +7,11 @@ cls & cmdwiz setfont 6
 mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
-cmdwiz getconsoledim sw
-set /a W6=%errorlevel% + 1
-cmdwiz getconsoledim sh
-set /a H6=%errorlevel% + 2
-set /a W=W6*2, H=H6*2
+
+cmdwiz getdisplaydim w
+set /a W=%errorlevel%/4+1
+cmdwiz getdisplaydim h
+set /a H=%errorlevel%/6+1
 
 set __=.
 call %0 %* | cmdgfx_gdi "" %TOP%m0OSf0:0,0,%W%,%H%W30 000000,555555

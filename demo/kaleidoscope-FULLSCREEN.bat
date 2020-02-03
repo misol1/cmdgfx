@@ -4,11 +4,12 @@ if defined __ goto :START
 
 cls & cmdwiz setfont 6
 mode 80,50 & cmdwiz fullscreen 1 & cmdwiz showmousecursor 0
-cmdwiz getconsoledim sw
-set /a W6=%errorlevel% + 1
-cmdwiz getconsoledim sh
-set /a H6=%errorlevel% + 3
-if "%~2"=="U" set /a H6 += 4
+
+cmdwiz getdisplaydim w
+set /a W6=%errorlevel%/8+1
+cmdwiz getdisplaydim h
+set /a H6=%errorlevel%/12+1
+
 set /a W=W6*2, H=H6*2
 cls & cmdwiz showcursor 0
 

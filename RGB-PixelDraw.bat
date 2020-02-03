@@ -4,13 +4,16 @@ cd /D "%~dp0"
 if defined __ goto :START
 
 pixelfnt.exe 1 & cls
-cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0
-cmdwiz getconsoledim sw
+
+cmdwiz getdisplaydim w
 set /a W=%errorlevel%
-cmdwiz getconsoledim sh
-set /a H=%errorlevel%, HH=H*2
+cmdwiz getdisplaydim h
+set /a H=%errorlevel%
+
+set /a HH=H*2
 set __=.
 cmdgfx_input.exe mW8x | call %0 %* | cmdgfx_RGB "fbox 0 0 db" %TOP%eSfa:0,0,%W%,%HH%,%W%,%H%v
 set __=
@@ -228,7 +231,7 @@ set /a TSTX=GUIP7+24 & if !M_X! gtr !GUIP7! if !M_X! lss !TSTX! (
 	set /a IGNORE_M=3
 )
 set /a TSTX=GUIP8+24 & if !M_X! gtr !GUIP8! if !M_X! lss !TSTX! echo "cmdgfx: !REMOVEGUI!" c:0,0,!W!,!H!,2,0& goto :EOF
-set /a TSTX=GUIP9+24 & if !M_X! gtr !GUIP9! if !M_X! lss !TSTX! echo "cmdgfx: fbox 0 0 db"& goto :EOF
+set /a TSTX=GUIP9+24 & if !M_X! gtr !GUIP9! if !M_X! lss !TSTX! echo "cmdgfx: fbox !CURRCOL1! 0 db"& goto :EOF
 
 set /a TSTX=GUIP10+24 & if !M_X! gtr !GUIP10! if !M_X! lss !TSTX! echo "cmdgfx: !REMOVEGUI! & block 0 0,0,!W!,!H! 0,0 -1 0 0 - store(fgcol(x,y),0)+store((fgr(s0)*0.2126+fgg(s0)*0.7152+fgb(s0)*0.0722),1)+makecol(s1,s1,s1) & !SAVEFORGUI!"& goto :EOF
 set /a TSTX=GUIP11+24 & if !M_X! gtr !GUIP11! if !M_X! lss !TSTX! echo "cmdgfx: !REMOVEGUI! & block 0 0,0,!W!,!H! 0,0 -1 0 0 - store(fgcol(x,y),0)+makecol(255-fgr(s0),255-fgg(s0),255-fgb(s0)) & !SAVEFORGUI!"& goto :EOF

@@ -46,6 +46,11 @@ var USENIGHT=true
 var fs = new ActiveXObject("Scripting.FileSystemObject")
 var shell = new ActiveXObject("WScript.Shell")
 
+var TOP=""
+var SCRW=Execute('cmdwiz getdisplaydim w');
+var SCRH=Execute('cmdwiz getdisplaydim h');
+var FONTW=1, FONTH=1
+
 var HISCORE=0
 var inputfile = "hiscore.dat";
 if (fs.FileExists(inputfile))
@@ -106,7 +111,7 @@ do {
 			}
 		}
 		
-		WScript.Echo("\"cmdgfx: image CR2.gxy 0 0 0 20 "+LOGOX+",2 & text f 1 0 _Press_SPACE_to_play_ "+TEXTX+",15 0 & skip text e 1 0 [FRAMECOUNT] 5,5 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
+		WScript.Echo("\"cmdgfx: image CR2.gxy 0 0 0 20 "+LOGOX+",2 & text f 1 0 _Press_SPACE_to_play_ "+TEXTX+",15 0 & skip text e 1 0 [FRAMECOUNT] 5,5 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H+TOP)
 
 		var input = WScript.StdIn.ReadLine()
 		var ti = input.split(/\s+/) // input.split(" ") splits "a  a" into 3 tokens (one empty middle). Using regexp for "consume n spaces between each token", because cmdgfx_input uses double spaces to separate data sections
@@ -116,7 +121,7 @@ do {
 			var key=ti[5]
 			if (key == "27") { stop=2 }
 			if (key == "32") { stop=1 }
-			if (key == "10") { exec = shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) shell.Exec('cmdwiz fullscreen 1'); else shell.Exec('cmdwiz fullscreen 0') }
+			if (key == "10") { ForceLegacyFullscreen(); }
 		}
 		
 		if (ti[23] == "1") {
@@ -168,7 +173,7 @@ do {
 			}
 
 			PLS1=" f ",PLS2=" 7 "; if (NIGHT) PLS1=" a ",PLS2=" 2 ";
-			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + DEADSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 003535 0 . & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H)
+			WScript.Echo("\"cmdgfx: 3d tetramod.ply " + 0 + ",-1 0,180," + TILT + " 0,-1800,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + PLS1 + GROUNDCOL + " " + PLYCHAR + PLS2 + GROUNDCOL + " " + PLYCHAR + " & " + NIGHTSKIP + DEADSKIP + " 3d tetramod.ply " + DRAWMODE + ",-1 0,180," + TILT + " 0,-1900,4000 -50,-50,-50,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " 003535 0 . & text 7 1 0 SCORE:_" + SCORE + "_(" + HISCORE + ") 2,1 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H+TOP)
 
 			if (death==1) {
 				deadcnt++; if (deadcnt==40) stop = 1
@@ -181,7 +186,7 @@ do {
 			if (ti[3] == "1" && death==0)
 			{
 				if (key == "27") stop=1
-				if (key == "10") { exec = shell.Exec('cmdwiz getfullscreen'); exec.StdOut.ReadAll(); if (exec.exitCode==0) shell.Exec('cmdwiz fullscreen 1'); else shell.Exec('cmdwiz fullscreen 0') }
+				if (key == "10") { ForceLegacyFullscreen(); }
 				if (key == "331") ACTIVE_KEY=331
 				if (key == "333") ACTIVE_KEY=333
 			} else {
@@ -222,15 +227,33 @@ shell.Exec("cmd /c taskkill.exe /F /IM dlc.exe>nul")
 function Resize(XRes, YRes) {
 	shell.Exec('cmdwiz showcursor 0')
 	W=(Number(XRes)+1)*2*4, H=(Number(YRes)+1)*2*6+1
+	if (TOP=="U") { W=Math.floor(SCRW/FONTW); if (FONTW>1) W+=1; H=Math.floor(SCRH/FONTH); if (FONTH>1) H+=1; }
 	YMDIV=2.1; if (H<110*4) YMDIV=2
 	XMID=Math.floor(W/2), YMID=Math.floor(H/2)-52-Math.floor((H-110)/YMDIV)
 	ZMUL=2.7; if (H<110*4) ZMUL=2.3
 	ZVAL=500+Math.floor((H-110)*ZMUL)
-	//BGH=110; if (H<BGH-1) BGH=H-1; BKSTR="image bgshade-RGB.bmp 0 0 0 -1 0,0 & block 0 0,0,1,"+BGH+" 0,0,"+(W+2)+","+(H+2) + " " //block is buggy when src block bigger than screen
-	BKSTR="image bgshade-RGB.bmp 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+2)+" "
-	//BKSTR="image bgshade-pixel.gxy 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+2)+" "
+	BKSTR="image bgshade-RGB.bmp 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+10)+" "
+	//BKSTR="image bgshade-pixel.gxy 0 0 0 -1 0,0 0 0 "+(W+2)+","+(H+10)+" "
 	//BKSTR="fbox 0 0 ."
 	LOGOX=Math.floor(W/2)-62
 	TEXTX=Math.floor(W/2)-10*4
 	NIGHTY=Math.floor(H*0.2)
+}
+
+function Execute(cmd) {
+	var exec = shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+
+function ForceLegacyFullscreen() {
+	exitCode=Execute('cmdwiz getfullscreen');
+	if (exitCode==0) {
+		cmdwo=Execute('cmdwiz getconsoledim sw'); cmdho=Execute('cmdwiz getconsoledim sh'); cmdxo=Execute('cmdwiz getwindowbounds x'); cmdyo=Execute('cmdwiz getwindowbounds y');
+		res=Execute('cmdwiz fullscreen 1');
+		if (res < 0) TOP="U"; // had to use legacy mode
+	} else {
+		shell.Exec('cmdwiz fullscreen 0')
+		if (TOP=="U") { shell.Exec('cmd /c mode ' + cmdwo + ',' + cmdho); shell.Exec('cmdwiz setwindowpos ' + cmdxo + ' ' + cmdyo); TOP="-U" }
+	}
 }

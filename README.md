@@ -1,5 +1,5 @@
 # cmdgfx / cmdgfx_gdi / cmdgfx_RGB / cmdgfx_VT / cmdgfx_input
-Windows command line graphic primitives and 3d, for text based games/demos by Mikael Sollenborn (2016-2019)
+Windows command line graphic primitives and 3d, for text based games/demos by Mikael Sollenborn (2016-2020)
 
 Initially, cmdgfx was made to be used with Batch scripts. There is, however, nothing that stops using other scripting languages as well, such as Jscript or Python. In fact, doing so will increase speed drastically. In several provided examples in the archive (marked with the postfix '-js'), a hybrid solution is used for increased speed, where Batch does the initial setup, and the rest of the script uses Jscript.
 
@@ -14,7 +14,7 @@ The cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is emb
 Use cmdgfx:
   1. For single output, not animating in a loop (speed is not crucial)
   2. When the resulting characters actually need to be put into the text buffer
-  3. When needing to use another font than the 9 raster fonts or pixel fonts
+  3. When needing to use another font than the 10 raster fonts or pixel fonts
   4. If output is monochrome/single color (speed will be same or better)
 
 Use cmdgfx_gdi:
@@ -42,7 +42,7 @@ There are many example scripts in the archive which shows this usage, as it is t
 cmdgfx.exe
 ----------
 ```
-CmdGfx v1.3 : Mikael Sollenborn 2016-2019
+CmdGfx v1.5 : Mikael Sollenborn 2016-2020
 
 Usage: cmdgfx [operations] [flags] [fgpalette] [bgpalette]
 
@@ -52,7 +52,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -209,7 +209,7 @@ Gpoly - draw a goraud-shaded polygon of characters
 
 Syntax: gpoly palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 
-The 'palette' should be a number of fcol+bgcol+char combinations (all in hexadecimal notation), typically gradually going from one color to the next, separated by '.' An example of a 5 step palette fading from black to light blue would be 10b0.10b1.10db.19b1.1920
+The 'palette' should be a number of fgcol+bgcol+char combinations (all in hexadecimal notation), typically gradually going from one color to the next, separated by '.' An example of a 5 step palette fading from black to light blue would be 10b0.10b1.10db.19b1.1920
 
 A minimum of 3 coordinates (max 24) must be specified to draw a polygon. The third argument per coordinate (cn), is an index number into the palette used, where 0 denotes the first index, and n+1 denotes the last. Thus, a full use of the above palette for a triangle polygon could look like: gpoly 10b0.10b1.10db.19b1.1920 2,2,0, 60,2,2, 2,30,5
 
@@ -235,7 +235,7 @@ The tpoly operation cannot draw self-intersecting polygons.
 
 Image - draw an image or text file of characters
 
-Syntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]
+Syntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
 
 'filename' should point to a gxy file, a 16 color pcx file, or any other (preferably text) file.
 
@@ -251,7 +251,7 @@ X and y are column and row coordinates with 0,0 as top left.
 
 Both 'xflip' and 'yflip' are normally 0. Set 'xflip' to 1 to flip the image horizontally, and set 'yflip' to 1 to flip the image vertically.
 
-Specify 'w' and 'h' (width and height) to scale the image to the given width and height. Negative values are not allowed.
+Specify 'w' and 'h' (width and height) to scale the image to the given width and height, or specify p to scale based on percentage. Negative values are not allowed.
 
 ### Box
 
@@ -416,7 +416,7 @@ Syntax: 3d objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_s
 
 [objectfile] These file formats are supported: ply, plg, and obj. Only the obj file format supports texture mapping, and all normals are discarded. The obj format has a number of non-default extensions added for cmdgfx (while ignoring all other info than v, vt, and f). The extensions are all for 'usemtl': 1. Usemtl does not support mtl files, instead it supports pcx,gxy and txt files. It is possible to follow the file name with a (hex value) color (for pcx files) or character (for gxy and txt) that is used for transparency. 2. cmdblock extension, to use a rectangular block of the current buffer as texture. Syntax usemtl cmdblock x y w h [transpchar]. There is also cmdcolblock, which copies only colors, not characters, with syntax: cmdcolblock x y w h [transpcol]  3. cmdpalette extension, use this to change the palette used to draw the object from this point on. The syntax is: usemtl cmdpalette followed by a palette of the same format as used at the end of the 3d operation (see below)
 
-drawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 3=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture
+drawmode: 0=affine texture mapping if texture available, else flat shading, 1=flat shaded with z-sourced lighting, 2=goraud shaded z-sourced lighting, 3=wireframe lines, 4=forced flat shading, 5=perspective correct texture mapping if texture available, else flat shading, 6=affine char/perspective color texture
 
 drawoption: In hexadecimal! For mode 0,5,6 with texture, drawoption is transpchar(for gxy/txt) and transpcol(for pcx); set to -1 if no transparency wanted. For mode 0,5,6 without texture and mode 4, drawoption is bitwise operator (see ipoly for values). For mode 1 and 2, set to 0 for static and 1 for even light distribution (L flag to set light range). For mode 1, a bitwise operator can also be set in the high nibble (bitop*16) of drawoption.
 
@@ -466,7 +466,7 @@ Use rem to ignore all operations on the line following rem.
 cmdgfx_gdi.exe
 --------------
 ```
-CmdGfx_gdi v1.3 : Mikael Sollenborn 2016-2019
+CmdGfx_gdi v1.5 : Mikael Sollenborn 2016-2019
 
 Usage: cmdgfx_gdi [operations] [flags] [fgpalette] [bgpalette]
 
@@ -476,7 +476,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -550,7 +550,7 @@ If running as server, default palette can be restored by using - as palette.
 cmdgfx_RGB.exe
 --------------
 ```
-CmdGfx_RGB v1.3 : Mikael Sollenborn 2016-2019
+CmdGfx_RGB v1.5 : Mikael Sollenborn 2016-2019
 
 Usage: cmdgfx_rgb [operations] [flags] [fgpalette] [bgpalette]
 
@@ -560,7 +560,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -700,7 +700,7 @@ followed by one or more flags.
 cmdwiz.exe
 ----------
 ```
-CmdWiz (Unicode) v1.4 : Mikael Sollenborn 2015-2018
+CmdWiz (Unicode) v1.5 : Mikael Sollenborn 2015-2018
 With contributions from Steffen Ilhardt and Carlos Montiers Aguilera
 
 Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate

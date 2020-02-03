@@ -16,7 +16,7 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=200, H=80
-for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=2300
 set /a DRAWMODE=5, NOF=7
@@ -55,6 +55,10 @@ set colsk=skip
 set /a noise=0&set NS=&if !noise!==0 set NS=skip
 set /a bkclear=1&set BS=&if !bkclear!==0 set BS=skip
 
+set /a FONTW=8,FONTH=12
+cmdwiz getdisplaydim w & set /a LFSW=!errorlevel!/FONTW & if !FONTW! gtr 1 set /a LFSW+=1
+cmdwiz getdisplaydim h & set /a LFSH=!errorlevel!/FONTH & if !FONTH! gtr 1 set /a LFSH+=1
+
 ::0,0,3000
 set CONV16=color16 0 2
 set /a C16=1 & set XF=skip& if !C16!==1 set XF=
@@ -82,14 +86,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	:: no manual sorting, use Z-Buffer
 	for /L %%a in (1,1,!NOF!) do set CRSTR="!CRSTR:~1,-1!&3d objects/plane-RGB-ball.obj !DRAWMODE!,101010 0,0,0 !XPP2%%a!,!YPP2%%a!,!ZPP2%%a! 10,10,10,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% 0 0 b1"
 	
-	if !CLR!==0 echo "cmdgfx: !BS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !NS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - shade(fgcol(x,y),random()*40-20,random()*40-20,random()*40-20) &  !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
-	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 0,0,!W!,!H!& !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
-	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!
+	if !CLR!==0 echo "cmdgfx: !BS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - makecol(0,0,min((x/2+y*4)/4,62)+random()*20) & !CRSTR:~1,-1! & !NS! block 0 0,0,!W!,!H! 0,0 -1 0 0 - shade(fgcol(x,y),random()*40-20,random()*40-20,random()*40-20) &  !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!!TOP!
+	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 0,0,!W!,!H!& !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!!TOP!
+	if !CLR!==2 echo "cmdgfx: image img/flame.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !colsk! ipoly !COLSTR!!COLBASE! 0 ? 20 0,0,!W!,0,!W!,!H!,0,!H! & !XF! %CONV16% & !HS! !MSG:~1,-1!,!HLPY!" f6:0,0,400,500,!W!,!H!!TOP!
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+2, XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & call :DRAWBALLS
+	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+3 & (if "!TOP!"=="U" set /a W=LFSW, H=LFSH) & set /a XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & call :DRAWBALLS
 	
 	set /a XROT-=2, YROT+=1, ZROT+=1
 
@@ -100,7 +104,15 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !col!==2 set HXV=0123456789abcdef&set /a coli-=1&(if !coli! leq 0 set /a col=0,coli=0&set colsk=)&for %%c in (!coli!) do set COLSTR=!HXV:~%%c,1!!HXV:~%%c,1!&set HXV=
 	if !col!==1 set HXV=0123456789abcdef&set /a coli+=1&(if !coli! geq 15 set /a col=2,coli=15)&for %%c in (!coli!) do set COLSTR=!HXV:~%%c,1!!HXV:~%%c,1!&set HXV=
 	
-	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	rem Experimental: Creates a "real" fullscreen even for legacy console + restores pos/size after exiting fullscreen (uses mode.com, thus PATH variable must be intact)
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz getconsoledim sw&set CMDWO=!errorlevel!&cmdwiz getconsoledim sh&set CMDHO=!errorlevel!&cmdwiz getwindowbounds x&set CMDXO=!errorlevel!&&cmdwiz getwindowbounds y&set CMDYO=!errorlevel!&cmdwiz fullscreen 1&if !errorlevel! lss 0 set TOP=U) & (if !ISFS! gtr 0 cmdwiz fullscreen 0&if "!TOP!"=="U" mode !CMDWO!,!CMDHO!&cmdwiz setwindowpos !CMDXO! !CMDYO!&set TOP=-U)
+
+	rem Restores pos/size after exit legacy fullscreen (uses mode.com, thus PATH variable must be intact)
+	rem if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz getconsoledim sw&set CMDWO=!errorlevel!&cmdwiz getconsoledim sh&set CMDHO=!errorlevel!&cmdwiz getwindowbounds x&set CMDXO=!errorlevel!&&cmdwiz getwindowbounds y&set CMDYO=!errorlevel!&cmdwiz fullscreen 1&if !errorlevel! lss 0 set LEG=1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0&if "!LEG!"=="1" mode !CMDWO!,!CMDHO!&cmdwiz setwindowpos !CMDXO! !CMDYO!)
+
+	rem Standard: makes no attempt at restoring pos/size after exit legacy fullscreen
+	rem if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	
 	if !KEY! == 331 set /A NOF-=1&if !NOF! lss 2 set NOF=2
 	if !KEY! == 333 set /A NOF+=1&if !NOF! gtr 7 set NOF=7
 	if !KEY! == 68 set /A DIST-=120

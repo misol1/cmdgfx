@@ -5,8 +5,8 @@
 
 // Compilation: gcc -o cmdgfx_input.exe -O2 cmdgfx_input.c
 // TODO:	1. Check for CLICKS/RCLICKS?
-//			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel?
-//			3. Mouse wheel reporting not working on Win10. Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
+//			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel, wheel click?
+//			3. Mouse wheel reporting not working on Win10 (actually on some machines it does). Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;

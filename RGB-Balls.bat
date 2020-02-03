@@ -16,7 +16,7 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
-for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=2500
 set /a DRAWMODE=0, NOF=6
@@ -25,7 +25,7 @@ set ASPECT=0.75
 call centerwindow.bat 0 -20
 call sindef.bat
 
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, CHMODE=1, CLR=0
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, CHMODE=1, CLR=0, XTRW=0,XTRH=0
 
 set OW=16
 set /A CNT=360/%OW%
@@ -82,18 +82,23 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 
 	for /L %%a in (1,1,!NOF!) do set /a ZI=1,ZV=!ZPP21!&for /L %%b in (2,1,!NOF!) do (if !ZPP2%%b! gtr !ZV! set ZI=%%b&set ZV=!ZPP2%%b!)&if %%b==!NOF! for %%c in (!ZI!) do for %%d in (!DRAWMODE!) do set CRSTR="!CRSTR:~1,-1!&3d %WNAME% !DRAWMODE!,!BITOP0! 0,0,0 !XPP2%%c!,!YPP2%%c!,!ZPP2%%c! 1,1,1,0,0,0 0,0,0,10 !XMID!,!YMID!,!DIST!,%ASPECT% !COL%%c!"&set ZPP2%%c=-999999
 
-	if !CLR!==0 echo "cmdgfx: ipoly !TA!!TA!!TA! 0 ? 18 0,0,!W!,0,!W!,!H!,0,!H! & !CRSTR:~1,-1! & !MSG:~1,-1!" Ff1:0,0,!W!,!H!
+	if !CLR!==0 echo "cmdgfx: ipoly !TA!!TA!!TA! 0 ? 18 0,0,!W!,0,!W!,!H!,0,!H! & !CRSTR:~1,-1! & !MSG:~1,-1!" Ff1:0,0,!W!,!H!!TOP!
 	if !CLR!==1 echo "cmdgfx: fbox 0 0 20 & !CRSTR:~1,-1! & !MSG:~1,-1!" Ff1:0,0,!W!,!H!
-	if !CLR!==2 echo "cmdgfx: image img/6hld.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !MSG:~1,-1!" Ff1:0,0,!W!,!H!
+	if !CLR!==2 echo "cmdgfx: image img/6hld.bmp 0 0 b1 -1 0,0 0 0 !W!,!H! & !CRSTR:~1,-1! & !MSG:~1,-1!" Ff1:0,0,!W!,!H!!TOP!
 	
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2+2+XTRW, H=SCRH*2+2+XTRH, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	set /a XROT-=3, YROT+=2, ZROT+=1
 
-	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	rem Restores pos/size after exit legacy fullscreen (uses mode.com, thus PATH variable must be intact)
+	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz getconsoledim sw&set CMDWO=!errorlevel!&cmdwiz getconsoledim sh&set CMDHO=!errorlevel!&cmdwiz getwindowbounds x&set CMDXO=!errorlevel!&&cmdwiz getwindowbounds y&set CMDYO=!errorlevel!&cmdwiz fullscreen 1&if !errorlevel! lss 0 set LEG=1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0&if "!LEG!"=="1" mode !CMDWO!,!CMDHO!&cmdwiz setwindowpos !CMDXO! !CMDYO!)
+
+	rem Standard: makes no attempt at restoring pos/size after exit legacy fullscreen
+	rem if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
+	
 	if !KEY! == 98 set /a BITOP+=1&(if !BITOP! gtr 4 set BITOP=0) & call :SETCOLS
 	if !KEY! == 331 set /A NOF-=1&if !NOF! lss 2 set NOF=2
 	if !KEY! == 333 set /A NOF+=1&if !NOF! gtr 6 set NOF=6

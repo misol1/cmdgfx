@@ -18,7 +18,7 @@ set XTRA=""
 for /F "tokens=2,4" %%a in ('cmdwiz gxyinfo %fName%') do set /a W=%%a,H=%%b,WW=%%a*2,HH=%%b*2
 set fName=%fName: =~%
 
-cmdgfx_RGB "image %fName:~1,-1% 0 0 0 -1 0,0" fa:0,0,%W%,%H%
+rem cmdgfx_RGB "image %fName:~1,-1% 0 0 0 -1 0,0" fa:0,0,%W%,%H%
 
 set OP="NOP"
 if %2==contrast set OP="store(fgcol(x,y),0)+shade(s0,(fgr(s0)-128)*%V1%,(fgg(s0)-128)*%V1%,(fgb(s0)-128)*%V1%)"
@@ -43,7 +43,7 @@ if %2==custom set OP=""& set XTRA="& %~3"
 
 if %OP%=="NOP" echo Error: No such operation & goto :eof
 
-cmdgfx_RGB "image %fName:~1,-1% 0 0 0 -1 0,0 & block 0 0,0,%W%,%H% 0,0 -1 %XF% %YF% - %OP:~1,-1% %XTRA:~1,-1%" fa:%W%,0,%WW%,%H%,%W%,%H%c:0,0,%W%,%H%,2
+cmdgfx_RGB "image %fName:~1,-1% 0 0 0 -1 %W%,0 & block 0 %W%,0,%W%,%H% 0,0 -1 %XF% %YF% - %OP:~1,-1% %XTRA:~1,-1% & image %fName:~1,-1% 0 0 0 -1 %W%,0" Kfa:0,0,%WW%,%H%,%WW%,%H%c:0,0,%W%,%H%,2
 
 move /Y capture-0.bmp "%~dpn1-2%~x1" > nul
 echo.
