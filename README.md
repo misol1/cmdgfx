@@ -700,7 +700,7 @@ followed by one or more flags.
 cmdwiz.exe
 ----------
 ```
-CmdWiz (Unicode) v1.5 : Mikael Sollenborn 2015-2018
+CmdWiz (Unicode) v1.4 : Mikael Sollenborn 2015-2020
 With contributions from Steffen Ilhardt and Carlos Montiers Aguilera
 
 Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate
@@ -712,7 +712,9 @@ Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate
                setwindowsize getdisplaydim getmousecursorpos setmousecursorpos
                showmousecursor insertbmp savefont setfont gettitle getwindowstyle
                setwindowstyle gxyinfo getpalette setpalette fullscreen getfullscreen
-               showwindow sendkey windowlist] [params]
+               showwindow sendkey windowlist gettaskbarinfo] [params]
 
 Use "cmdwiz operation /?" for info on arguments and return values
+
+See https://www.dostips.com/forum/viewtopic.php?t=7402 for full documentation
 ```
