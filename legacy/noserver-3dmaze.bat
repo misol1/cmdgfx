@@ -2,9 +2,10 @@
 @echo off
 cd ..
 setlocal ENABLEDELAYEDEXPANSION
-cls & cmdwiz setfont 0
+cls & cmdwiz setfont 6
 set /a W=180, H=80
-mode %W%,%H%
+set /a W6=W/2, H6=H/2
+mode %W6%,%H6%
 mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==W if not %%v==H set "%%v="
 
@@ -14,7 +15,7 @@ cmdwiz getdisplaydim h & set SH=!errorlevel!
 set /a SW=%SW%/2, SH=%SH%/2
 set /a WPX=%SW%-%W%/2, WPY=%SH%-%H%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
-cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
+rem cmdgfx.exe "text 8 0 0 Generating_world... 82,36"
 
 set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"
@@ -102,7 +103,7 @@ set /a MPY=%SH%-%H%/3 & cmdwiz setmousecursorpos %SW% !MPY!
 cmdwiz gettime & set ORGT=!errorlevel!
 
 :LOOP
-for /l %%1 in (1,1,300) do if not defined STOP (
+for /l %%1 in (1,1,100) do if not defined STOP for /l %%1 in (1,1,100) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+680, ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
 	start "" /B /high cmdgfx_gdi "!BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,1,25000,300 %XMID%,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 %XMID%,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" fa:0,0,%W%,%H%Z600
@@ -136,13 +137,33 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 		if !KEY! == 333 set /a RY-=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 106 set /a RY+=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
 		if !KEY! == 107 set /a RY-=12&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)
-		if !KEY! == 97 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&call :MOVE 1 2&set RY=!ORY!
-		if !KEY! == 100 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&call :MOVE -1 2&set RY=!ORY!
 
-		if !KEY! == 328 call :MOVE 1 2
-		if !KEY! == 336 call :MOVE -1 2
-		if !KEY! == 119 call :MOVE 1 2
-		if !KEY! == 115 call :MOVE -1 2
+		set /a MVD=0, MVDIV=0, ORY=99999
+		
+		if !KEY! == 328 set /a MVD=1, MVDIV=2
+		if !KEY! == 336 set /a MVD=-1, MVDIV=2
+		if !KEY! == 119 set /a MVD=1, MVDIV=2
+		if !KEY! == 115 set /a MVD=-1, MVDIV=2
+
+		if !KEY! == 97 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&set /a MVD=1, MVDIV=2
+		if !KEY! == 100 set ORY=!RY!&set /a RY+=360&(if !RY! gtr 1440 set /a RY=!RY!-1440)&(if !RY! lss 0 set /a RY=1440+!RY!)&set /a MVD=-1, MVDIV=2
+
+		if !MVD! neq 0 (
+			if !RY! lss 360 set /a "AZ=-(360-!RY!), AX=360-(-AZ)"
+			if !RY! geq 360 if !RY! lss 720 set /a "AZ=360-(720-!RY!), AX=360-!AZ!"
+			if !RY! geq 720 if !RY! lss 1080 set /a "AZ=360-(!RY!-720), AX=-(360-!AZ!)"
+			if !RY! geq 1080 set /a "AZ=360-(!RY!-720), AX=-(360-(-!AZ!))"
+
+			set /a TTZ=!TZ!, TTX=!TX!, MKMOV=1
+			set /a ZMOD=!MULVAL! & if !TTZ! lss 0 set /a ZMOD=-!MULVAL!
+			set /a XMOD=!MULVAL! & if !TTX! lss 0 set /a XMOD=-!MULVAL!
+			if !BOUNDSCHECK! == 1 for /l %%a in (1,1,3) do set /a TTZ+=AZ*MVD/MVDIV,TTX+=AX*MVD/MVDIV & set /a "XP=(TTX+XMOD)/(MULVAL*2)+SLOTS/2, ZP=(YSLOTS)/2-(TTZ+ZMOD)/(MULVAL*2)" & if !ZP! geq 0 if !XP! geq 0 if !ZP! lss !YSLOTS! if !XP! lss !SLOTS! for %%x in (!XP!) do for %%z in (!ZP!) do set SS=!WRLD%%z! & set S=!SS:~%%x,1!& if not "!S!"=="-" if not "!S!"=="0" if not "!S!"=="o" set /a MKMOV=0
+
+			if !MKMOV!==1 set /a "TZ+=AZ*MVD/MVDIV,TX+=AX*MVD/MVDIV"
+		)
+		
+		set /a MVX=0, MVDIV=0
+		if !ORY! neq 99999 set RY=!ORY!
 
 		if !KEY! == 337 set /a TY-=30&set BOUNDSCHECK=0
 		if !KEY! == 329 set /a TY+=30&set BOUNDSCHECK=0
@@ -158,17 +179,3 @@ endlocal
 mode 80,50
 mode con rate=31 delay=0
 cls & cmdwiz setfont 6
-goto :eof
-
-:MOVE <direction> <div>
-if !RY! lss 360 set /a AZ=-(360-!RY!)&set /a AX=360-(-!AZ!)
-if !RY! geq 360 if !RY! lss 720 set /a AZ=360-(720-!RY!)&set /a AX=360-!AZ!
-if !RY! geq 720 if !RY! lss 1080 set /a AZ=360-(!RY!-720)&set /a AX=-(360-!AZ!)
-if !RY! geq 1080 set /a AZ=360-(!RY!-720)&set /a AX=-(360-(-!AZ!))
-
-set /a TTZ=%TZ%, TTX=%TX%
-set /a ZMOD=%MULVAL% & if !TTZ! lss 0 set /a ZMOD=-%MULVAL%
-set /a XMOD=%MULVAL% & if !TTX! lss 0 set /a XMOD=-%MULVAL%
-if %BOUNDSCHECK% == 1 for /l %%a in (1,1,3) do set /a TTZ+=%AZ%*%1/%2,TTX+=%AX%*%1/%2 & set /a XP=(!TTX!+%XMOD%)/(%MULVAL%*2)+%SLOTS%/2, ZP=(%YSLOTS%)/2-(!TTZ!+%ZMOD%)/(%MULVAL%*2) & if !ZP! geq 0 if !XP! geq 0 if !ZP! lss %YSLOTS% if !XP! lss %SLOTS% for %%x in (!XP!) do for %%z in (!ZP!) do set SS=!WRLD%%z! & set S=!SS:~%%x,1!& if not "!S!"=="-" if not "!S!"=="0" if not "!S!"=="o" goto :eof
-
-set /a TZ+=%AZ%*%1/%2,TX+=%AX%*%1/%2

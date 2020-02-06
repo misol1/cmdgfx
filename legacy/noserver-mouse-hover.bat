@@ -6,6 +6,7 @@ cmdwiz setfont 2
 set /a SCRW=120 & set /a SCRWW=!SCRW!*2
 mode %SCRW%,70
 cmdwiz setbuffersize %SCRWW% k
+call centerwindow.bat 0 -15
 color 07
 cls
 

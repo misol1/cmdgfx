@@ -5,6 +5,7 @@ cmdwiz setfont 2 & cls & cmdwiz showcursor 0
 set /a W=120, H=80
 mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+call centerwindow.bat 0 -15
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=7000, DRAWMODE=0
 set /a CRX=0,CRY=0,CRZ=0
@@ -30,26 +31,31 @@ set /a XMUL=360, YMUL=240, RANDPIX=3, A1=155, A2=0
 
 call sindef.bat
 
-set STOP=
+set t1=!time: =0!
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
-	set /a A1+=1, A2-=2, TRZ=!CRZ!
-	set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
-	
-	set OUTP="fbox 7 0 20 0,0,%W%,%H% & block 0 0,0,70,70 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/9.5)/35)*(x/3)"
-   for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 10,10,10,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
-	
-	start /B /High cmdgfx_gdi !OUTP! f2:0,0,%W%,%H%
-	cmdgfx "" knW12
-	set KEY=!ERRORLEVEL!
+	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d),a+=(a>>31)&8640000"
+	if !a! geq 1 (
+		set /a A1+=1, A2-=2, TRZ=!CRZ!
+		set /a "COLCNT=(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), COLCNT2=(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
+		
+		set OUTP="fbox 7 0 20 0,0,%W%,%H% & block 0 0,0,70,70 0,0 -1 0 0 !STREAM! random()*!RANDPIX!/2+sin((x-!COLCNT!/4)/80)*(y/2)+cos((y+!COLCNT2!/9.5)/35)*(x/3)"
+		for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d %FN% %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 10,10,10,0,0,0 0,0,0,10 %XMID%,%YMID%,!DIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
+		
+		start /B /High cmdgfx_gdi !OUTP! kOf2:0,0,%W%,%H%
+		
+		if exist EL.dat set /p KEY=<EL.dat 2>nul & del /Q EL.dat >nul 2>nul & if "!KEY!" == "" set KEY=0
 
-	set /a CRZ+=3
+		set /a CRZ+=3
 
-	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 32 set STREAM=?
-	if !KEY! == 27 set STOP=1
-	if !KEY! == 13 cmdwiz stringfind "!STREAM!" "04," & (if !errorlevel! gtr -1 set STREAM=!STREAM:04,=b1,!) & (if !errorlevel! equ -1 set STREAM=!STREAM:b1,=04,!)
+		if !KEY! == 112 cmdwiz getch
+		if !KEY! == 32 set STREAM=?
+		if !KEY! == 27 set STOP=1
+		if !KEY! == 13 cmdwiz stringfind "!STREAM!" "04," & (if !errorlevel! gtr -1 set STREAM=!STREAM:04,=b1,!) & (if !errorlevel! equ -1 set STREAM=!STREAM:b1,=04,!)
+		set /a KEY=0
+		set t1=!time: =0!
+	)	
 )
 if not defined STOP goto LOOP
 
