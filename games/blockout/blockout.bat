@@ -484,7 +484,7 @@ goto :eof
 
 :GET2P
 cmdwiz setfont 6
-mode 90,40
+mode 90,11
 del /Q answer-%UID%.dat>nul 2>nul
 echo Current IP: %IP%  Port: %Port%
 echo Press 0 to set IP/port, 1 to host game, 2 to connect to a host, ESC to cancel.
