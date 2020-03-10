@@ -63,7 +63,7 @@ void ellipse(int xc, int yc, int rx, int ry, uchar col);
 void filled_ellipse(int xc, int yc, int rx, int ry, uchar col);
 void filled_circle(int xc, int yc, int radius, uchar col);
 void box (int x, int y, int xrange, int yrange, uchar col);
-void fbox(int x, int y, int xrange, int yrange, uchar col);
+void fbox(uchar *inVid, int x, int y, int xrange, int yrange, uchar col);
 void line(int x1, int y1, int x2, int y2, uchar col, int clip); 
 void vline(int x, int y1, int y2, uchar col); 
 void hline(int x1, int x2, int y, uchar col); 

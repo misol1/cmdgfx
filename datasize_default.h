@@ -12,5 +12,6 @@
 #define TRANSPVAL 255
 #define SAFE_AND 
 #define PLUSVAL_OP +
+#define XPRSIZE int
 
 #endif

@@ -350,7 +350,7 @@ skip:
 	return 1;
 }
 
-void fbox(int x, int y, int xrange, int yrange, uchar col) {
+void fbox(uchar *inVid, int x, int y, int xrange, int yrange, uchar col) {
 	register uchar *vid;
 	register int i;
 
@@ -361,7 +361,7 @@ void fbox(int x, int y, int xrange, int yrange, uchar col) {
 	if (y+yrange>=YRES) { yrange-=(y+yrange)-(YRES-1); }
 	if (xrange<0 || yrange<0) return;
 
-	vid=video+y*XRES+x;
+	vid=inVid+y*XRES+x;
 	for (i=0; i<=yrange; i++) {
 		MYMEMSET(vid, col, xrange+1);
 		vid+=XRES;

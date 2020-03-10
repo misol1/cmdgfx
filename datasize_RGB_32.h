@@ -4,9 +4,9 @@
 
 #define _RGB32
 
-#define uchar unsigned long long
-#define PREPCOL unsigned long long 
-#define XPRSIZE long long
+#define uchar unsigned long
+#define PREPCOL unsigned long
+#define XPRSIZE long
 
 #define BITSHL 32
 #define AND_MASK 0xffffff

@@ -7,6 +7,7 @@
 // TODO:	1. Check for CLICKS/RCLICKS?
 //			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel, wheel click?
 //			3. Mouse wheel reporting not working on Win10 (actually on some machines it does). Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
+//			4. Bug: does not restore title after input:Q !!
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
@@ -122,8 +123,12 @@ void process_waiting(int bWait, int waitTime, int bSleepingWait) {
 			if (milliseconds_now() >= lastTime) {
 			if (bSleepingWait) {
 				int sleepTime = lastTime + waitTime - milliseconds_now();
+				if (bSleepingWait < 100)
+					sleepTime = (int)((float)sleepTime * ((float)bSleepingWait / 100.0));
 				if (sleepTime > 0)
 					millisleep(sleepTime);
+				if (bSleepingWait < 100)
+					while (milliseconds_now() < lastTime + waitTime) ;
 			} else
 				while (milliseconds_now() < lastTime + waitTime) ;
 			}
@@ -201,7 +206,7 @@ int main(int argc, char *argv[]) {
 	HANDLE h_stdin, h_stdout;
 
 	if (argc < 2 || (argc > 1 && strcmp(argv[1], "/?") == 0)) {
-		printf("\nCmdGfx_input v1.0 : Mikael Sollenborn 2017-2019\n\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead of busy wait, 'u' enable forwarding key-up events for M/m flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
+		printf("\nCmdGfx_input v1.1 : Mikael Sollenborn 2017-2020\n\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z[p]' sleep instead of busy wait with optional percentage sleeping 1-100, 'u' enable forwarding key-up events for M/m flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
 		return 0;
 	}
 
@@ -238,7 +243,16 @@ int main(int argc, char *argv[]) {
 					if (j) waitTime = atoi(wTime);
 					break;
 				}
-				case 'z': bSleepingWait = 1; break;
+				case 'z': {
+					char wTime[64];
+					bSleepingWait = 100; j=0; i++;
+					while (argv[1][i] >= '0' && argv[1][i] <= '9') wTime[j++] = argv[1][i++];
+					i--; wTime[j] = 0;
+					if (j) bSleepingWait = atoi(wTime);
+					if (bSleepingWait > 100) bSleepingWait=100;
+					if (bSleepingWait < 0) bSleepingWait=0;
+					break;
+				}
 			}
 		}
 	}
@@ -454,7 +468,20 @@ int main(int argc, char *argv[]) {
 							}
 							break;
 						}
-						case 'z': bSleepingWait = neg? 0 : 1; break;				
+						case 'z': {
+							if (neg)
+								bSleepingWait=0;
+							else {
+								char wTime[64];
+								bSleepingWait = 100; j=0; i++;
+								while (pch[i] >= '0' && pch[i] <= '9') wTime[j++] = pch[i++];
+								i--; wTime[j] = 0;
+								if (j) bSleepingWait = atoi(wTime);
+								if (bSleepingWait > 100) bSleepingWait=100;
+								if (bSleepingWait < 0) bSleepingWait=0;
+							}
+							break;
+						}
 					}
 				}
 			}

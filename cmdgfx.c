@@ -14,6 +14,7 @@
 #include <string.h>
 #include <conio.h>
 #include <windows.h>
+#include <process.h>
 #include "gfxlib.h"
 #include "tinyexpr.h"
 
@@ -27,9 +28,20 @@
 // 3. Major: Port to Linux
 // 4. RGB: long double for colexpr to support/keep bgcol?
 // 5, brush op from dwself?
-// 6. RGB: Make specified 3d colors work better with textures (they should not overflow the colors, should be safe to do e.g 555555 and not e.g overflow green. Should also be correct for - . And work for bgcol too...)
+// 6. RGB: Make specified 3d colors work better with textures (should not overflow the colors, should be safe to do e.g 555555 and not overflow. Should also be correct for - . And work for bgcol too...)
 // 7. Allow set texture(s) for 3d obj from 3d op, to avoid having to use loads of dupl objects just to change texture
 // 8. RGB: Allow bgy files with alpha, to use by various ops?
+// 9. Sending command with title to cmdgfx does not seem reliable... (misses sometimes)
+
+// New for v1.6:
+// 1. Threading for block, fbox, bitblit, pixelprep
+// 2. Expr: Added perlin, fix of neg, added mod
+// 3. New scripts like plasmalab, RGB-SS-Fire, RGB-SS-Kaleidoscope-Transp.bat, RGB-Kaleidoscope-Blended-Pixel-fake.bat, ScreenSaver-ObjHollow1-IPoly, etc
+// 4. Cmdwiz 1.5: sendkey repeat
+// 5. Transform for RGB now allows checking for (various) kinds of color too(Max,Avg,R,G,B (both fg and/or bg)). Cannot SET color though. So what it is is: search for color and/or char, replace char
+// 6. RGB colexpr has new functions(makebgcol, makefgbgcol, keepbgcol, keepfgcol, safeor, bgr, bgg, bgb) and can now also create bgcolor as well as preserve bgcol (or fgcol)
+// 7. Cmdgfx_input: zn flag
+
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -70,6 +82,55 @@ HANDLE GetInputHandle() {
 HANDLE GetOutputHandle() {
 	return CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 }
+
+
+// if USE_THREAD_POOL not defined, create new threads each frame for block if threading enabled
+// NOTE: seriously seems like using thread pool (i.e. using waiting and/or suspend/resumethread) causes Windows antimalware service to go active, BOTH when compiling/linking (takes very long), AND first time running the exe!
+// NOTE2: DON'T use ResumeThread/SuspendThread for thread pool. Got deadlocks. Use WaitForSingleObject+auto-reset events instead
+
+#define USE_THREAD_POOL
+
+#define MAXTHREADS 8
+
+#ifdef USE_THREAD_POOL	
+HANDLE ghDoneEvents[MAXTHREADS];
+HANDLE ghAwaitWorkEvents[MAXTHREADS];
+
+HANDLE ghDoneBlitEvent;
+HANDLE ghAwaitWorkBlitEvent;
+
+int gbThreadsCreated = 0;
+#endif
+
+unsigned __stdcall process_op(void *arg);
+
+enum { THREAD_OP_BLOCK, THREAD_OP_FBOX, THREAD_OP_PIXELPREP };
+
+typedef struct {
+	int op;
+	
+	//block (and partly reusedby other ops)
+	char *s_mode; int x; int y; int w; int h; int nx; int ny; int nw; int nh; int rz; char *transf; char *colorExpr; char *xExpr; char *yExpr; int XRES; int YRES; uchar *videoCol; uchar *videoChar; int transpchar; int bFlipX; int bFlipY; int bTo; int mvx;int mvy; int mvw; int mvh;
+
+	//fbox
+	int fgcol, bgcol, bWriteChars, bWriteCols, dchar;
+
+	//prepPix
+	int fw, fh, fontIndex, *data;
+	unsigned int *palFg, *palBg;
+
+	//shared
+	int blockThreadIndex; int threadYp;
+	int bExit;
+} BlockData;
+
+
+typedef struct  {
+	int x; int y; int w; int h;
+	int bExit;
+} BlitData;
+
+
 
 int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
@@ -707,14 +768,103 @@ HDC g_hDc = NULL, g_hDcBmp = NULL;
 unsigned char* g_lpBitmapBits;
 HBITMAP g_bitmap;
 
-void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode) {
+int g_blitX, g_blitY, g_blitW, g_blitH;
+
+
+void prepPixels(int fw, int fh, uchar *videoCol, uchar *videoChar, int fontIndex, int outw, int outh, int *data, int yp, unsigned int *palFg, unsigned int *palBg) {
+	int i,j,ccol,cchar,l,m, index;
+	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol, rgbfgcol, rgbbgcol;
+	unsigned long long rgbcoltemp;
+	int val;
+	
+	outdata = (unsigned int *)g_lpBitmapBits;
+	
+	if (fontIndex < 10) {
+		for (i = yp; i < outh+yp; i++) {
+			for (j = 0; j < outw; j++) {
+				cchar = videoChar[j+i*XRES] SAFE_AND;
+#ifndef _RGB32
+				ccol = videoCol[j+i*XRES];
+				fgcol = &palFg[(ccol&0xf)];
+				bgcol = &palBg[(ccol>>4)];
+#else
+				rgbcoltemp = videoCol[j+i*XRES];
+				rgbfgcol = rgbcoltemp&0xffffffff;
+				rgbbgcol = rgbcoltemp>>BITSHL;
+#endif
+				for (l = 0; l < fh; l++) {
+					index = (j*fw + (i*fh+l)*outw*fw);
+					val = data[cchar*fh+l];
+					outt = &outdata[index];
+					for (m = 0; m < fw; m++) {
+#ifndef _RGB32
+						*outt++ = (val & 1) ? *fgcol : *bgcol;
+#else
+						*outt++ = (val & 1) ? rgbfgcol : rgbbgcol;
+#endif
+						val >>= 1;
+					}
+				}
+			}
+		}
+	} else { // pixelfont
+		if (fw == 1) {
+			for (i = yp; i < outh+yp; i++) {
+				for (j = 0; j < outw; j++) {
+					cchar = videoChar[j+i*XRES] SAFE_AND;
+#ifndef _RGB32
+					ccol = videoCol[j+i*XRES];
+					fgcol = &palFg[(ccol&0xf)];
+					bgcol = &palBg[(ccol>>4)];
+
+					pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+					outdata[j + i*outw] = *pcol;
+#else
+					rgbcoltemp = videoCol[j+i*XRES];
+					if (cchar == 0 || cchar == 32 || cchar == 255) rgbfgcol = rgbcoltemp>>BITSHL; else rgbfgcol = rgbcoltemp&0xffffffff;
+					outdata[j + i*outw] = rgbfgcol;
+#endif
+					
+				}
+			}
+		} else {
+			for (i = yp; i < outh+yp; i++) {
+				for (j = 0; j < outw; j++) {
+					cchar = videoChar[j+i*XRES] SAFE_AND;
+#ifndef _RGB32
+					ccol = videoCol[j+i*XRES];
+					fgcol = &palFg[(ccol&0xf)];
+					bgcol = &palBg[(ccol>>4)];
+					pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
+#else
+					rgbcoltemp = videoCol[j+i*XRES];
+					if (cchar == 0 || cchar == 32 || cchar == 255) rgbfgcol = rgbcoltemp>>BITSHL; else rgbfgcol = rgbcoltemp&0xffffffff;
+#endif
+
+					for (l = 0; l < fh; l++) {
+						index = (j*fw + (i*fh+l)*outw*fw);
+						outt = &outdata[index];
+						for (m = 0; m < fw; m++) {
+#ifndef _RGB32
+							*outt++ = *pcol;
+#else
+							*outt++ = rgbfgcol;
+#endif
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode, int allowedThreads, HANDLE *threadhandles, BlockData *bds) {
 	HBITMAP hBmp1 = NULL;
 	HGDIOBJ hGdiObj = NULL;
 	BITMAP bmp = {0};
 	LONG w = 0, h = 0;
 	int iRet = EXIT_FAILURE;
-	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol, rgbfgcol, rgbbgcol;
-	int i,j,ccol,cchar,l,m, index;
 	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
 	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
@@ -722,7 +872,7 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	int fw, fh, *data, val, bpp = 4;
 	unsigned int *palFg, *palBg;
 	static int oldw=-1, oldh=-1, oldFontIndex = -1, oldbWindowedMode = -1;
-	unsigned long long rgbcoltemp;
+	int i,j;
 	
 	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
 	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
@@ -741,6 +891,8 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	w = outw * fw;
 	h = outh * fh;
 
+	g_blitX=x, g_blitY=y, g_blitW=w, g_blitH=h;
+	
 	if (g_hDc == NULL || w != oldw || h != oldh || fontIndex != oldFontIndex || bWindowedMode != oldbWindowedMode) {
 		if (g_hDc != NULL) {
 			if (g_hDc) ReleaseDC(g_hWnd, g_hDc);
@@ -771,94 +923,42 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 
 	if (g_hDcBmp)
 	{
-		outdata = (unsigned int *)g_lpBitmapBits;
 		
-		if (fontIndex < 10) {
-			for (i = 0; i < outh; i++) {
-				for (j = 0; j < outw; j++) {
-					cchar = videoChar[j+i*XRES] SAFE_AND;
-#ifndef _RGB32
-					ccol = videoCol[j+i*XRES];
-					fgcol = &palFg[(ccol&0xf)];
-					bgcol = &palBg[(ccol>>4)];
-#else
-					rgbcoltemp = videoCol[j+i*XRES];
-					rgbfgcol = rgbcoltemp&0xffffffff;
-					rgbbgcol = rgbcoltemp>>BITSHL;
-#endif
-					for (l = 0; l < fh; l++) {
-						index = (j*fw + (i*fh+l)*outw*fw);
-						val = data[cchar*fh+l];
-						outt = &outdata[index];
-						for (m = 0; m < fw; m++) {
-#ifndef _RGB32
-							*outt++ = (val & 1) ? *fgcol : *bgcol;
-#else
-							*outt++ = (val & 1) ? rgbfgcol : rgbbgcol;
-#endif
-							val >>= 1;
-						}
-					}
-				}
-			}
-		} else { // pixelfont
-			if (fw == 1) {
-				for (i = 0; i < outh; i++) {
-					for (j = 0; j < outw; j++) {
-						cchar = videoChar[j+i*XRES] SAFE_AND;
-#ifndef _RGB32
-						ccol = videoCol[j+i*XRES];
-						fgcol = &palFg[(ccol&0xf)];
-						bgcol = &palBg[(ccol>>4)];
+		if (allowedThreads <= 1) {
+			prepPixels(fw, fh, videoCol, videoChar, fontIndex, outw, outh, data, 0, palFg, palBg);
+		} else {
+			int hs, hmod, hso, y1=0;
+			
+			hs = hso = outh/allowedThreads;
+			hmod = outh%allowedThreads; 
 
-						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
-						outdata[j + i*outw] = *pcol;
+			for (j = 0; j < allowedThreads; j++) {
+				BlockData *bd = &bds[j];
+				bd->op=THREAD_OP_PIXELPREP, bd->fw=fw, bd->fh=fh, bd->w=outw, bd->h=hs, bd->fontIndex=fontIndex, bd->data=fontData[fontIndex], bd->XRES=XRES, bd->YRES=YRES, bd->videoCol=videoCol, bd->videoChar=videoChar, bd->blockThreadIndex=j, bd->threadYp = j*hso; bd->palFg=palFg, bd->palBg=palBg, bd->bExit=0;
+#ifdef USE_THREAD_POOL	
+				SetEvent(ghAwaitWorkEvents[j]);
 #else
-						rgbcoltemp = videoCol[j+i*XRES];
-						if (cchar == 0 || cchar == 32 || cchar == 255) rgbfgcol = rgbcoltemp>>BITSHL; else rgbfgcol = rgbcoltemp&0xffffffff;
-						outdata[j + i*outw] = rgbfgcol;
+				threadhandles[j] = (HANDLE)_beginthreadex(NULL, 0, process_op, &bds[j], 0, NULL);
 #endif
-						
-					}
-				}
-			} else {
-				for (i = 0; i < outh; i++) {
-					for (j = 0; j < outw; j++) {
-						cchar = videoChar[j+i*XRES] SAFE_AND;
-#ifndef _RGB32
-						ccol = videoCol[j+i*XRES];
-						fgcol = &palFg[(ccol&0xf)];
-						bgcol = &palBg[(ccol>>4)];
-						pcol = fgcol; if (cchar == 0 || cchar == 32 || cchar == 255) pcol = bgcol; 
-#else
-						rgbcoltemp = videoCol[j+i*XRES];
-						if (cchar == 0 || cchar == 32 || cchar == 255) rgbfgcol = rgbcoltemp>>BITSHL; else rgbfgcol = rgbcoltemp&0xffffffff;
-#endif
-
-						for (l = 0; l < fh; l++) {
-							index = (j*fw + (i*fh+l)*outw*fw);
-							outt = &outdata[index];
-							for (m = 0; m < fw; m++) {
-#ifndef _RGB32
-								*outt++ = *pcol;
-#else
-								*outt++ = rgbfgcol;
-#endif
-							}
-						}
-					}
-				}
+				y1+=hs; if (j==allowedThreads-2) hs+=hmod;
 			}
+#ifdef USE_THREAD_POOL	
+			WaitForMultipleObjects(allowedThreads, ghDoneEvents, TRUE, INFINITE);
+#else							
+			WaitForMultipleObjects(allowedThreads, threadhandles, TRUE, INFINITE);
+			for (j = 0; i < allowedThreads; j++)
+				CloseHandle(threadhandles[i]);
+#endif
 		}
 
-		if (BitBlt(g_hDc, (int)x, (int)y, (int)w, (int)h, g_hDcBmp, 0, 0, SRCCOPY)) {
-			iRet = EXIT_SUCCESS;
-		}
+//		if (BitBlt(g_hDc, (int)x, (int)y, (int)w, (int)h, g_hDcBmp, 0, 0, SRCCOPY)) {
+//			iRet = EXIT_SUCCESS;
+//		}
 	}
 
-	GdiFlush();
+	//GdiFlush();
 	
-	if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
+	//if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 }
 
 
@@ -1250,7 +1350,7 @@ void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int 
 	
 	transpval &= AND_MASK;
 	//printf("%llx\n",plusVal);getch();
-	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
+	fbox(videoTransp, minx, miny, maxx-minx, maxy-miny, transpval);
 	ok = scanConvex_tmap(vv, points, NULL, bild, plusVal, bPerspectiveCorrected);
 	if (ok) processFromTranspBuffer(videoTransp, videoCol, videoChar, transpval, dchar, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny, zBufBackup, zw);
 	
@@ -1320,7 +1420,7 @@ void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *vi
 	}
 	
 	video = videoTranspChar;
-	fbox(minx, miny, maxx-minx, maxy-miny, transpval);
+	fbox(videoTranspChar, minx, miny, maxx-minx, maxy-miny, transpval);
 	ok = scanConvex_tmap(vv, points, NULL, bild2, 0, bPerspectiveCorrected);
 	if (ok)
 		processFromDoubleTranspBuffer(videoTransp, videoTranspChar, videoCol, videoChar, transpval, bWriteChars, bWriteCols, minx, miny, maxx-minx, maxy-miny, zBufBackup, zw);
@@ -1423,10 +1523,37 @@ void reportArgError(ErrorHandler *errHandler, OperationType opType, int index, c
 	reportError(errHandler, opType, ERR_NOF_ARGS, index, NULL, op);
 }
 
+
+int rand_r (unsigned int *seed)
+{
+  unsigned int next = *seed;
+  int result;
+  next *= 1103515245;
+  next += 12345;
+  result = (unsigned int) (next / 65536) % 2048;
+  next *= 1103515245;
+  next += 12345;
+  result <<= 10;
+  result ^= (unsigned int) (next / 65536) % 1024;
+  next *= 1103515245;
+  next += 12345;
+  result <<= 10;
+  result ^= (unsigned int) (next / 65536) % 1024;
+  *seed = next;
+  return result;
+}
+
+static int randSeed[MAXTHREADS];
+/*
 double my_random(void) {
-	static int setSeed = 1;
-	if (setSeed) { setSeed = 0; srand(GetTickCount()); }
+//	static int setSeed = 1;
+//	if (setSeed) { setSeed = 0; srand(GetTickCount()); }
 	return (double)(rand() % 32768) / 32768.0;
+}
+*/
+double my_random(double ig) {
+	int indexG=(int)ig;
+	return (double)(rand_r(&randSeed[indexG]) % 32768) / 32768.0;
 }
 
 double my_eq(double n, double comp) {
@@ -1454,59 +1581,70 @@ double my_leq(double n, double comp) {
 }
 
 
-static uchar *activeChars;
-static uchar *activeCols;
-static int sw, sh;
-static double store[5];
+static double store[MAXTHREADS][5];
+
+static uchar *g_th_blockCol;
+static uchar *g_th_blockChar;
+static int g_th_w, g_th_h;
+
 
 double my_char(double x, double y) {
-	if (x < 0 || y < 0 || x >= sw || y >= sh)
+	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
-	return activeChars[(int)y * sw + (int)x];
+	return (g_th_blockChar[(int)y * g_th_w + (int)x]);
 }
 
 double my_col(double x, double y) {
-	if (x < 0 || y < 0 || x >= sw || y >= sh)
+	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
-	return activeCols[(int)y * sw + (int)x];
+	return (g_th_blockCol[(int)y * g_th_w + (int)x]);
 }
 
 double my_fgcol(double x, double y) {
-	if (x < 0 || y < 0 || x >= sw || y >= sh)
+	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
-	return (activeCols[(int)y * sw + (int)x]) & AND_MASK;
+	return (g_th_blockCol[(int)y * g_th_w + (int)x]) & AND_MASK;
 }
 
 double my_bgcol(double x, double y) {
-	if (x < 0 || y < 0 || x >= sw || y >= sh)
+	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
-	return (activeCols[(int)y * sw + (int)x]) >> BITSHL;
+	return (g_th_blockCol[(int)y * g_th_w + (int)x]) >> BITSHL;
 }
 
-double my_store(double val, double index) {
+
+double my_store(double ig, double val, double index) {
+	int indexG=(int)ig;
 	int i = (int)index;
 	if (i >= 0 && i < 5)
-		store[i] = val;
+		store[indexG][i] = val;
+	return 0;
+}
+
+double my_store2(double val, double index) {
+	int i = (int)index;
+	if (i >= 0 && i < 5)
+		store[0][i] = val;
 	return 0;
 }
 
 double my_or(double v1, double v2) {
-	return ((int)v1) | ((int)v2);
+	return ((XPRSIZE)v1) | ((XPRSIZE)v2);
 }
 double my_and(double v1, double v2) {
-	return ((int)v1) & ((int)v2);
+	return ((XPRSIZE)v1) & ((XPRSIZE)v2);
 }
 double my_xor(double v1, double v2) {
-	return ((int)v1) ^ ((int)v2);
+	return ((XPRSIZE)v1) ^ ((XPRSIZE)v2);
 }
 double my_neg(double v1) {
-	return ~((int)v1);
+	return ~((XPRSIZE)v1);
 }
 double my_shl(double v1, double v2) {
-	return ((int)v1) << ((int)v2);
+	return ((XPRSIZE)v1) << ((XPRSIZE)v2);
 }
 double my_shr(double v1, double v2) {
-	return ((int)v1) >> ((int)v2);
+	return ((XPRSIZE)v1) >> ((XPRSIZE)v2);
 }
 
 double my_min(double in1, double in2) {
@@ -1515,8 +1653,131 @@ double my_min(double in1, double in2) {
 double my_max(double in1, double in2) {
 	return in1 > in2? in1 : in2;
 }
+double my_modulo(double v1, double v2) {
+	if ((XPRSIZE)v2 == 0) return 0;
+	return ((XPRSIZE)v1) % ((XPRSIZE)v2);
+}
+
+double my_clamp255(double v) {
+	if (v < 0) return 0;
+	if (v > 255) return 255;
+	return v;
+}
+
+double my_clamp(double v, double min, double max) {
+	if (v < min) return min;
+	if (v > max) return max;
+	return v;
+}
+
+double my_frac(double v) {
+	return v - (XPRSIZE)v;
+}
+
+double my_length(double v1, double v2) {
+	return sqrt(v1*v1+v2*v2);
+}
+
+// Perlin noise code straight from Wikipedia, with minor mods like easing
+
+#define easeInOutSine(t) (0.5 * (1 + sin( 3.1415926 * (t - 0.5) ) ))
+
+//double easeInOutSine( double t ) {
+//	return 0.5 * (1 + sin( 3.1415926 * (t - 0.5) ) );
+//}
+
+#define lerp(a0, a1, w) ((a0) + (w)*((a1) - (a0))) 
+
+/* Function to linearly interpolate between a0 and a1
+ * Weight w should be in the range [0.0, 1.0] */
+//double lerp(double a0, double a1, double w) {
+//    return (1.0f - w)*a0 + w*a1;
+//}
+
+#define IPMAX 64
+double Gradient[IPMAX][IPMAX][2];
+
+void initGradient(void) {
+	int i,j;
+	srand(666);
+
+	for (i=0; i < IPMAX; i++) {
+		for (j=0; j < IPMAX; j++) {
+			double x = (double)(rand() % 32768) / 32768.0 - 0.4999;
+			double y = (double)(rand() % 32768) / 32768.0 - 0.4999;
+
+			//x=rand()%3-1; y=rand()%3-1; if ((int)x==0 && (int)y==0) y=(rand()%2)*2-1;
+			
+			double magn=sqrt(x*x+y*y);
+			x=x/magn; y=y/magn;
+			Gradient[i][j][0]=x;
+			Gradient[i][j][1]=y;
+		}
+	}
+	srand(GetTickCount());
+}
+
+// Computes the dot product of the distance and gradient vectors.
+double dotGridGradient(int ix, int iy, double x, double y) {
+
+    // Precomputed (or otherwise) gradient vectors at each grid node
+    extern double Gradient[IPMAX][IPMAX][2];
+
+    // Compute the distance vector
+    double dx = x - (double)ix;
+    double dy = y - (double)iy;
+
+    // Compute the dot-product
+    return (dx*Gradient[iy][ix][0] + dy*Gradient[iy][ix][1]);
+}
+
+int bPerlinInited = 0;
+// Compute Perlin noise at coordinates x, y
+double my_perlin(double x, double y) {
+	
+	if (!bPerlinInited) {
+		initGradient();
+		bPerlinInited=1;
+	}
+
+	x=fabs(x);
+	y=fabs(y);
+	
+	double xF=x-(int)x;
+	double yF=y-(int)y;
+	x = (double) (((int)x) % (IPMAX-1)) + xF;
+	y = (double) (((int)y) % (IPMAX-1)) + yF;
+	
+    // Determine grid cell coordinates
+    int x0 = (int)x;
+    int x1 = x0 + 1;
+    int y0 = (int)y;
+    int y1 = y0 + 1;
+
+    // Determine interpolation weights
+    // Could also use higher order polynomial/s-curve here
+    double sx = x - (double)x0;
+    double sy = y - (double)y0;
+
+    // Interpolate between grid point gradients
+    double n0, n1, ix0, ix1, value;
+
+    n0 = dotGridGradient(x0, y0, x, y);
+    n1 = dotGridGradient(x1, y0, x, y);
+    ix0 = lerp(n0, n1, easeInOutSine(sx));
+
+    n0 = dotGridGradient(x0, y1, x, y);
+    n1 = dotGridGradient(x1, y1, x, y);
+    ix1 = lerp(n0, n1, easeInOutSine(sx));
+
+    value = lerp(ix0, ix1, easeInOutSine(sy));
+    return value;
+}
+
+
 
 #ifdef _RGB32
+// shade and blend ONLY for fgcol (and will destroy bgcol)
 double my_shade(double inColor, double or, double og, double ob) {
 	long long inCol=inColor, rp=or, gp=og, bp=ob, r,g,b;
 	inCol &= 0xffffff;
@@ -1555,15 +1816,74 @@ double my_fgb(double inColor) {
 	return inCol & 0xff;
 }
 
+double my_bgr(double inColor) {
+	long long inCol=inColor;
+	return (inCol>>48) & 0xff;
+}
+double my_bgg(double inColor) {
+	long long inCol=inColor;
+	return (inCol>>40) & 0xff;
+}
+double my_bgb(double inColor) {
+	long long inCol=inColor;
+	return (inCol>>32) & 0xff;
+}
+
 double my_makecol(double or, double og, double ob) {
 	long long r=or, g=og, b=ob;
-	return (b&0xff) | ((g&0xff)<<8) | ((r&0xff)<<16); // | (col & 0xffffff00000000);
+	return (b&0xff) | ((g&0xff)<<8) | ((r&0xff)<<16);
+}
+
+double my_makebgcol(double or, double og, double ob) {
+	long long r=or, g=og, b=ob;
+	return ((b&0xff)<<32) | ((g&0xff)<<40) | ((r&0xff)<<48);
+}
+
+double my_makefgbgcol(double or, double og, double ob,  double bor, double bog, double bob) {
+	long long r=or, g=og, b=ob;
+	long long br=bor, bg=bog, bb=bob;
+	if (b>0xfb && bor>0xf) b = 0xfb;
+	return ((b&0xff)) | ((g&0xff)<<8) | ((r&0xff)<<16) | ((bb&0xff)<<32) | ((bg&0xff)<<40) | ((br&0xff)<<48);
+}
+
+// Weirdness: IF red value of bgcol has last bit set, i.e >= 0x80, THEN end result fucks up if blue fgcol is >= 0xB (!?) ...quick fix, allow MAX fgcol blue of 251 (i.e bit 2 not set)
+// Pretty convinced this is somehow caused by the double conversion to long long and back
+
+double my_keepBgCol(double x, double y, double inColor) {
+	XPRSIZE in = (XPRSIZE)inColor;
+	XPRSIZE bg = g_th_blockCol[(int)y * g_th_w + (int)x] & BG_AND_MASK;
+	if ((in & 0xff) > 0xfb && (bg & 0xf0000000000000))
+		return bg | ((in&0xffff00) | 0xfb);
+	else
+		return bg | (in&AND_MASK);
+}
+
+double my_keepFgCol(double x, double y, double inColor) {
+	XPRSIZE in = (XPRSIZE)inColor & BG_AND_MASK;
+	XPRSIZE fg=g_th_blockCol[(int)y * g_th_w + (int)x];
+	if ((fg & 0xff) > 0xfb && (in & 0xf0000000000000))
+		return ((fg&0xffff00) | 0xfb) | in;
+	else
+		return (fg&AND_MASK) | in;
+}
+
+double my_safeOr(double v1, double v2) {
+	XPRSIZE x1=(XPRSIZE)v1;
+	XPRSIZE x2=(XPRSIZE)v2;
+	if ((x1 & 0xff) > 0xfb && (x2 & 0xf0000000000000))
+		x1=(x1&0xffffffffffff00) | 0xfb;
+	if ((x2 & 0xff) > 0xfb && (x1 & 0xf0000000000000))
+		x2=(x2&0xffffffffffff00) | 0xfb;
+
+	return x1 | x2;
 }
 
 #endif
 
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, uchar *videoCol, uchar *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh) {
+enum {RGB_TCHECK_MAX, RGB_TCHECK_AVG, RGB_TCHECK_R, RGB_TCHECK_G, RGB_TCHECK_B, RGB_TCHECK_BGMAX, RGB_TCHECK_BGAVG, RGB_TCHECK_BGR, RGB_TCHECK_BGG, RGB_TCHECK_BGB, RGB_TCHECK_FGBGAVG, RGB_TCHECK_FGBGMAX };
+
+int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, uchar *videoCol, uchar *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh, int blockThreadIndex, int threadYp, int bModString) {
 	uchar *blockCol, *blockChar;
 	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	uchar moveFg = 7, moveBg = 0, moveCol=7;
@@ -1571,15 +1891,24 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 	int outFg, outBg, outChar;
 	int *m_inFg = NULL, *m_inBg = NULL, *m_inChar = NULL;
 	int *m_outFg = NULL, *m_outBg = NULL, *m_outChar = NULL;
+	
+	char sStore[]="store";
+	int typeStore=TE_FUNCTION2;
+	void *funcStore=my_store2;
+	
 #ifdef _RGB32
 	uchar vc, bc;
 	int bBlend=0, blendVal = -1, blendValBg = -1;
 	int blNew, blOrg, bl2New, bl2Org;
 	int _r,_g,_b;
 	long long _r2,_g2,_b2;
+	int tcheckType = RGB_TCHECK_MAX;
 #endif
+	double tIndex=blockThreadIndex;
+
+	if (bModString) { strcpy(sStore, "sto"); typeStore=TE_FUNCTION3; funcStore=my_store; }
 	
-	for (i=0; i < 5; i++) store[i] = 0;
+	for (i=0; i < 5; i++) store[blockThreadIndex][i] = 0;
 	
 	if (s_mode) {
 		char *smp;
@@ -1633,8 +1962,6 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 #endif
 	}
 
-	sw = w, sh = h;
-		
 	if (x >= XRES || nx >= XRES) return 0;
 	if (y >= YRES || ny >= YRES) return 0;
 
@@ -1656,6 +1983,25 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 	if (!blockCol || !blockChar) { if (blockCol) free(blockCol); if (blockChar) free(blockChar); return 0; }
 
 	if (strlen(transf) >= 9) {
+#ifdef _RGB32
+		if (transf[1]==':') {
+			switch(transf[0]) {
+				case 'r': tcheckType = RGB_TCHECK_R; break;
+				case 'R': tcheckType = RGB_TCHECK_BGR; break;
+				case 'g': tcheckType = RGB_TCHECK_G; break;
+				case 'G': tcheckType = RGB_TCHECK_BGG; break;
+				case 'b': tcheckType = RGB_TCHECK_B; break;
+				case 'B': tcheckType = RGB_TCHECK_BGB; break;
+				case 'm': tcheckType = RGB_TCHECK_MAX; break;
+				case 'M': tcheckType = RGB_TCHECK_BGMAX; break;
+				case 'a': tcheckType = RGB_TCHECK_AVG; break;
+				case 'A': tcheckType = RGB_TCHECK_BGAVG; break;
+				case 'V': tcheckType = RGB_TCHECK_FGBGAVG; break;
+				case 'X': tcheckType = RGB_TCHECK_FGBGMAX; break;
+			}
+			transf=transf+2;
+		}
+#endif
 		nofT = (strlen(transf)+1)/10;
 		if (nofT > 0) {
 			m_inFg = (int *)malloc(nofT*sizeof(int));
@@ -1690,10 +2036,8 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 	}
 
 	if (mode == 1 || mode == 3) {
-		video = videoCol;
-		fbox(x, y, w-1, h-1, moveCol);
-		video = videoChar;
-		fbox(x, y, w-1, h-1, moveChar);
+		fbox(videoCol, x, y, w-1, h-1, moveCol);
+		fbox(videoChar, x, y, w-1, h-1, moveChar);
 	}
 
 	if (mvx < 0 || mvy < 0 || mvw < 0 || mvh < 0) { mvx=mvy=0; mvw=w; mvh=h; }
@@ -1704,48 +2048,55 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 			
 	
 	if (strlen(colorExpr) > 1) {
-		int err, r;
+		int err;
+		XPRSIZE r;
 		double ex, ey;
 		uchar *blockCol2, *blockChar2;
-	 
-		activeChars = blockChar;
-		activeCols = blockCol;
-			
-		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"random", my_random, TE_FUNCTION0}
+
+		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"rando", my_random, TE_FUNCTION1}
 		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
 		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
-		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
-		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
-#ifndef _RGB32
+		, {sStore, funcStore, typeStore}, {"s0", &store[blockThreadIndex][0]}, {"s1", &store[blockThreadIndex][1]}, {"s2", &store[blockThreadIndex][2]}, {"s3", &store[blockThreadIndex][3]}, {"s4", &store[blockThreadIndex][4]}
+		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neg, TE_FUNCTION1}
 		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
-		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}
+		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"perlin", my_perlin, TE_FUNCTION2}, {"t", &tIndex}
+		, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}
+#ifndef _RGB32
 		};
-		te_expr *n = te_compile(colorExpr, vars, 27, &err);
+		te_expr *n = te_compile(colorExpr, vars, 34, &err);
 #else
-		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2},  {"shade", my_shade, TE_FUNCTION4},  {"blend", my_blend, TE_FUNCTION5}
-		, {"makecol", my_makecol, TE_FUNCTION3},  {"fgr", my_fgr, TE_FUNCTION1},  {"fgg", my_fgg, TE_FUNCTION1},  {"fgb", my_fgb, TE_FUNCTION1}
-		, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
-		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}
+		, {"makecol", my_makecol, TE_FUNCTION3}, {"makebgcol", my_makebgcol, TE_FUNCTION3}, {"makefgbgcol", my_makefgbgcol, TE_FUNCTION6}
+		, {"fgr", my_fgr, TE_FUNCTION1},  {"fgg", my_fgg, TE_FUNCTION1},  {"fgb", my_fgb, TE_FUNCTION1}
+		, {"bgr", my_bgr, TE_FUNCTION1},  {"bgg", my_bgg, TE_FUNCTION1},  {"bgb", my_bgb, TE_FUNCTION1}
+		, {"shade", my_shade, TE_FUNCTION4},  {"blend", my_blend, TE_FUNCTION5}
+		, {"keepb", my_keepBgCol, TE_FUNCTION3}, {"keepf", my_keepFgCol, TE_FUNCTION3}, {"safeor", my_safeOr, TE_FUNCTION2}
 		};
-		te_expr *n = te_compile(colorExpr, vars, 33, &err);
+		te_expr *n = te_compile(colorExpr, vars, 48, &err);
 #endif
 		
 		if (n) {
 			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
 			blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
-			activeChars = blockChar2;
-			activeCols = blockCol2;
+
+			if (!bModString) {
+				g_th_blockCol = blockCol2;
+				g_th_blockChar = blockChar2;
+				g_th_w=w;
+				g_th_h=h;
+			}
 
 			if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); return 0; }
 			MYMEMCPY(blockCol2, blockCol, w*h);
 			MYMEMCPY(blockChar2, blockChar, w*h);
 			
-			for (i = mvy; i < mvh; i++) {
-				k = i*w;
-				for (j = mvx; j < mvw; j++) {
-					ex = j; ey = i;
-					r = (int) te_eval(n);
+			for (i = 0; i < h; i++) {
+				k = i*w; ey=i+threadYp;
+				for (j = 0; j < w; j++) {
+					ex = j;
+					
+					r = (XPRSIZE) te_eval(n);
 					// printf("Result:\n\t%f\n", r);
+					
 					blockCol[k+j] = r;
 				}
 			}
@@ -1763,23 +2114,22 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		double ex, ey;
 		uchar *blockCol2, *blockChar2;
 		
-		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"random", my_random, TE_FUNCTION0}
+		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"rando", my_random, TE_FUNCTION1}
 		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
 		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
-		, {"store", my_store, TE_FUNCTION2}, {"s0", &store[0]}, {"s1", &store[1]}, {"s2", &store[2]}, {"s3", &store[3]}, {"s4", &store[4]}
-		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neq, TE_FUNCTION1}
+		, {sStore, funcStore, typeStore}, {"s0", &store[blockThreadIndex][0]}, {"s1", &store[blockThreadIndex][1]}, {"s2", &store[blockThreadIndex][2]}, {"s3", &store[blockThreadIndex][3]}, {"s4", &store[blockThreadIndex][4]}
+		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neg, TE_FUNCTION1}
 		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
-		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}
+		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"t", &tIndex}
+		, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}
 		};
 		te_expr *n, *n2;
-		n = te_compile(xExpr, vars, 27, &err); errX = err;
-		n2 = te_compile(yExpr, vars, 27, &err);
+		n = te_compile(xExpr, vars, 33, &err); errX = err;
+		n2 = te_compile(yExpr, vars, 33, &err);
 		
 		if (n && n2) {
 			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
 			blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
-			activeChars = blockChar2;
-			activeCols = blockCol2;
 
 			if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); te_free(n2); return 0; }
 			MYMEMCPY(blockCol2, blockCol, w*h);
@@ -1788,22 +2138,29 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 				MYMEMSET(blockCol, moveCol, w*h);
 				MYMEMSET(blockChar, moveChar, w*h);
 			}
+
+			if (!bModString) {
+				g_th_blockCol = blockCol2;
+				g_th_blockChar = blockChar2;
+				g_th_w=w;
+				g_th_h=h;
+			}
 			
 			for (i = mvy; i < mvh; i++) {
 				k = i*w;
+				ey=i + threadYp;
 				for (j = mvx; j < mvw; j++) {
-					ex = j; ey = i;
+					ex = j;
 					nx = (int) te_eval(n);
 					ny = (int) te_eval(n2);
-					// printf("Result:\n\t%f\n", r);
-//					if (nx >= 0 && nx < w && ny >=0 && ny < h && blockChar2[k+j] != 0) {
-					if (nx >= 0 && nx < w && ny >=0 && ny < h) {
+					
+					if (nx >= 0 && nx < g_th_w && ny >=0 && ny < g_th_h) {
 						if (bTo) {
 							blockCol[ny*w+nx] = blockCol2[k+j];
 							blockChar[ny*w+nx] = blockChar2[k+j];
 						} else {
-							blockCol[k+j] = blockCol2[ny*w+nx];
-							blockChar[k+j] = blockChar2[ny*w+nx]; 
+							blockCol[k+j] = g_th_blockCol[ny*w+nx];
+							blockChar[k+j] = g_th_blockChar[ny*w+nx]; 
 						}
 					}
 				}
@@ -1960,7 +2317,29 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 				for (j = 0; j < w; j++) {
 					j2 = j; if (bFlipX) j2 = w-1-j;
 					if (nx+j >= 0 && nx+j < XRES) {
+#ifdef _RGB32
+						uchar orgCol=blockCol[k+j2];
+						switch(tcheckType) {
+							case RGB_TCHECK_MAX: inBg = max(orgCol&0xff, max((orgCol&0xff00)>>8, (orgCol&0xff0000)>>16 )); break;
+							case RGB_TCHECK_R: inBg = (orgCol&0xff0000)>>16; break;
+							case RGB_TCHECK_G: inBg = (orgCol&0xff00)>>8; break;
+							case RGB_TCHECK_B: inBg = orgCol&0xff; break;
+							case RGB_TCHECK_AVG: inBg = ((orgCol&0xff) + ((orgCol&0xff00)>>8) + ((orgCol&0xff0000)>>16))/3; break;
+							
+							case RGB_TCHECK_BGMAX: inBg = max((orgCol&0xff)>>32, max((orgCol&0xff00)>>40, (orgCol&0xff0000)>>48 )); break;
+							case RGB_TCHECK_BGR: inBg = (orgCol&0xff0000)>>48; break;
+							case RGB_TCHECK_BGG: inBg = (orgCol&0xff00)>>40; break;
+							case RGB_TCHECK_BGB: inBg = (orgCol&0xff00)>>32; break;
+							case RGB_TCHECK_BGAVG: inBg = (((orgCol&0xff)>>32) + ((orgCol&0xff00)>>40) + ((orgCol&0xff0000)>>48))/3; break;
+							
+							case RGB_TCHECK_FGBGMAX: inBg = max((orgCol&0xff)>>32, max((orgCol&0xff00)>>40, (orgCol&0xff0000)>>48 )); inBg = max(inBg, max(orgCol&0xff, max((orgCol&0xff00)>>8, (orgCol&0xff0000)>>16 ))); break;
+							case RGB_TCHECK_FGBGAVG: inBg = (((orgCol&0xff)>>32) + ((orgCol&0xff00)>>40) + ((orgCol&0xff0000)>>48) + (orgCol&0xff) + ((orgCol&0xff00)>>8) + ((orgCol&0xff0000)>>16))/6; break;
+						}
+						inFg = outFg = inBg>>4; inBg &= 0xf; outBg = inBg;
+#else
 						inFg = blockCol[k+j2]; inBg = outBg = inFg>>4; inFg &= AND_MASK; outFg = inFg;
+#endif						
+						
 						inChar = outChar = blockChar[k+j2];
 
 						for (n = 0; n < nofT; n++) {
@@ -1978,8 +2357,12 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 #ifndef _RGB32 
 							videoCol[k2+j] = (outBg << 4) | outFg;
 #else
+	
+							videoCol[k2+j] = orgCol; // just write back color, since using col only for matching for RGB versions 
+/*
 							if (!bBlend)
-								videoCol[k2+j] = (outBg << 4) | outFg;
+								videoCol[k2+j] = orgCol; // just write back color, since using col only for matching
+								//videoCol[k2+j] = (outBg << 4) | outFg;
 							else {
 								vc = videoCol[k2+j]; bc = blockCol[k+j2];
 								blNew=blendVal; blOrg=255-blNew;
@@ -1991,6 +2374,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 								} else
 									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (vc & 0xffffff00000000);
 							}
+*/							
 #endif
 							
 							videoChar[k2+j] = outChar;
@@ -2005,8 +2389,90 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 	if (m_inFg) free(m_inFg); if (m_inBg) free(m_inBg); if (m_inChar) free(m_inChar);
 	if (m_outFg) free(m_outFg); if (m_outBg) free(m_outBg); if (m_outChar) free(m_outChar);
 	
-	return 1;
+	return 1; 
 }
+	
+
+	
+unsigned __stdcall process_op(void *arg)
+{
+	BlockData *bd = (BlockData *)arg;
+	HANDLE myAwaitWorkEvent = ghAwaitWorkEvents[bd->blockThreadIndex];
+	HANDLE myDoneEvent = ghDoneEvents[bd->blockThreadIndex];
+	// srand(GetTickCount()+(bd->blockThreadIndex+2)*(bd->blockThreadIndex+2)); // rand/srand is not thread safe and should be replaced
+	randSeed[bd->blockThreadIndex] = GetTickCount()+(bd->blockThreadIndex+2)*(bd->blockThreadIndex+2);
+	
+	//std::default_random_engine generator;
+	//std::uniform_int_distribution<int> distribution(1,6);
+	//int dice_roll = distribution(generator);  // generates number in the range 1..6
+
+#ifdef USE_THREAD_POOL	
+	while(bd->bExit == 0) {
+		
+		WaitForSingleObject(myAwaitWorkEvent, INFINITE);
+		
+		if (bd->bExit == 0) {
+			switch(bd->op) {
+				case THREAD_OP_BLOCK: transformBlock(bd->s_mode, bd->x, bd->y, bd->w, bd->h, bd->nx, bd->ny, bd->nw, bd->nh, bd->rz, bd->transf, bd->colorExpr, bd->xExpr, bd->yExpr, bd->XRES, bd->YRES, bd->videoCol, bd->videoChar, bd->transpchar, bd->bFlipX, bd->bFlipY, bd->bTo, bd->mvx, bd->mvy, bd->mvw, bd->mvh, bd->blockThreadIndex, bd->threadYp, 1); break;
+
+				case THREAD_OP_FBOX:
+				if (bd->bWriteCols) fbox(bd->videoCol, bd->x, bd->y, bd->w, bd->h, ((PREPCOL)bd->bgcol << BITSHL) | bd->fgcol);
+				if (bd->bWriteChars) fbox(bd->videoChar, bd->x, bd->y, bd->w, bd->h, bd->dchar);
+				break;
+
+#ifdef GDI_OUTPUT
+				case THREAD_OP_PIXELPREP:
+				prepPixels(bd->fw, bd->fh, bd->videoCol, bd->videoChar, bd->fontIndex, bd->w, bd->h, bd->data, bd->threadYp, bd->palFg, bd->palBg);
+				break;
+#endif				
+			}
+			SetEvent(myDoneEvent);
+		}
+	}
+#else
+	switch(bd->op) {
+		case THREAD_OP_BLOCK: transformBlock(bd->s_mode, bd->x, bd->y, bd->w, bd->h, bd->nx, bd->ny, bd->nw, bd->nh, bd->rz, bd->transf, bd->colorExpr, bd->xExpr, bd->yExpr, bd->XRES, bd->YRES, bd->videoCol, bd->videoChar, bd->transpchar, bd->bFlipX, bd->bFlipY, bd->bTo, bd->mvx, bd->mvy, bd->mvw, bd->mvh, bd->blockThreadIndex, bd->threadYp, 1); break;
+
+		case THREAD_OP_FBOX:
+		if (bd->bWriteCols) fbox(bd->videoCol, bd->x, bd->y, bd->w, bd->h, ((PREPCOL)bd->bgcol << BITSHL) | bd->fgcol);
+		if (bd->bWriteChars) fbox(bd->videoChar, bd->x, bd->y, bd->w, bd->h, bd->dchar);
+		break;
+		
+#ifdef GDI_OUTPUT
+		case THREAD_OP_PIXELPREP:
+		prepPixels(bd->fw, bd->fh, bd->videoCol, bd->videoChar, bd->fontIndex, bd->w, bd->h, bd->data, bd->threadYp, bd->palFg, bd->palBg);
+		break;
+#endif				
+	}
+#endif
+	
+	_endthreadex(0);
+	return 0;
+}
+
+#ifdef GDI_OUTPUT
+unsigned __stdcall process_blit(void *arg)
+{
+	BlitData *bd = (BlitData *)arg;
+	HANDLE myAwaitWorkEvent = ghAwaitWorkBlitEvent;
+	HANDLE myDoneEvent = ghDoneBlitEvent;
+	srand(GetTickCount());
+
+	while(bd->bExit == 0) {
+		
+		WaitForSingleObject(myAwaitWorkEvent, INFINITE);
+		
+		if (bd->bExit == 0) {
+			BitBlt(g_hDc, bd->x, bd->y, bd->w, bd->h, g_hDcBmp, 0, 0, SRCCOPY);
+			GdiFlush();
+			SetEvent(myDoneEvent);
+		}
+	}
+	_endthreadex(0);
+	return 0;
+}
+#endif
+
 
 void writeErrorLevelToFile(int bWriteReturnToFile, int value, int bMouse) {
 	FILE *ofp;
@@ -2414,6 +2880,77 @@ void RemoveGxyCodes(char *tstring, int bRemoveNewLineCode) {
 	tstring[o] = 0;
 }
 
+#ifdef USE_THREAD_POOL
+void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, BlitData *blitD) {
+	int j;
+	
+	if (gbThreadsCreated)
+		return;
+	
+	for (j=0; j<MAXTHREADS; j++) {
+        ghDoneEvents[j] = CreateEvent(
+            NULL,   // default security attributes
+            FALSE,  // auto-reset event object
+            FALSE,  // initial state is nonsignaled
+            NULL);  // unnamed object
+        ghAwaitWorkEvents[j] = CreateEvent(
+            NULL,   // default security attributes
+            FALSE,  // auto-reset event object
+            FALSE,  // initial state is nonsignaled
+            NULL);  // unnamed object
+	}
+
+	for (j=0; j<MAXTHREADS; j++) {
+		bds[j].blockThreadIndex=j; bds[j].bExit=0;
+		threadhandles[j] = (HANDLE)_beginthreadex(NULL, 0, process_op, &bds[j], 0, NULL);
+	}
+
+#ifdef GDI_OUTPUT	
+	ghAwaitWorkBlitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	ghDoneBlitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	blitD->bExit=0;
+	blitThread = (HANDLE)_beginthreadex(NULL, 0, process_blit, blitD, 0, NULL);
+#endif
+	
+	gbThreadsCreated = 1;
+}
+
+#endif
+
+
+void prepExpr(char *inExpr) {
+	if (strlen(inExpr) > 1) {
+		char *inS=inExpr;
+		do {
+			inS=strstr(inS, "store");
+			if (inS) {
+				inS = inS + 3;
+				inS[0]='('; inS[1]='t'; inS[2]=',';
+			}
+		} while (inS);
+
+		inS=inExpr;
+		do {
+			inS=strstr(inS, "random");
+			if (inS) {
+				inS = inS + 5;
+				inS[0]='('; inS[1]='t';
+			}
+		} while (inS);
+		
+#ifdef _RGB32
+		inS=inExpr;
+		do {
+			inS=strstr(inS, "keep"); // keepbgcol OR keepfgcol
+			if (inS) {
+				inS = inS + 5;
+				inS[0]='('; inS[1]='x'; inS[2]=','; inS[3]='y'; inS[4]=',';
+			}
+		} while (inS);
+#endif
+	}
+}
+
 	
 #define MAX_OBJECTS_IN_MEM 64
 
@@ -2518,12 +3055,21 @@ int main(int argc, char *argv[]) {
 	Bitmap singleColBitmap = { 0 };
 	
 	int showHelp=0;
+
+	int allowedThreads = 1;
+
+	HANDLE threadhandles[MAXTHREADS];
+	BlockData bds[MAXTHREADS];
+	
+	HANDLE blitThread;
+	BlitData blitD;
 	
 	singleColBitmap.xSize = 1;
 	singleColBitmap.ySize = 1;
 	singleColBitmap.transpVal = -1;
 	singleColBitmap.data = singleColData;
 	
+	srand(GetTickCount());
 	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
@@ -2604,7 +3150,7 @@ int main(int argc, char *argv[]) {
 		char charFF[]="gxy/bxy/txt";
 #endif	
 
-		char ver[] = "v1.5";
+		char ver[] = "v1.6";
 		
 #ifdef GDI_OUTPUT
 #ifndef _RGB32
@@ -2698,13 +3244,15 @@ int main(int argc, char *argv[]) {
 			else if (strcmp(argv[2], "block") == 0) {
 				#ifndef _RGB32
 					char blockExtra[] = "";
+					char blockTransf[] = "[transform]: The block operation allows per-character search and replace functionality. A transform string follows the format 1233=1233, where 1 is fgcol, 2 is bgcol, and 33 is a character in hex. The values that can be used for each are 0-f, ?=any, +=add 1, -=minus 1. Examples: To take all blank spaces (hex 20) with color 5 and bgcolor 1, and replace with A(hex 41) with color 9 and 0, the transform string would look like: 2051=4190. To also change all B's(42) to C's(43), regardless of color, ? would be used to disregard color(s), and get the string: 2051=4190,42??=43??. Finally, to take all characters from 40-4f(@ and A-O) and keep it, BUT increase the color and decrease the bgcolor, the string would be: 2051=4190,42??=43??,4???=??+-. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining characters to black spaces(20), use: 2051=4190,42??=43??,4???=??+-,????=2000. Note that + and - can also be used for characters (++ or --), and that ? can be used for color AND/OR bgcolor.";
 					char blockExtraFuncs[] = "";
 				#else
 					char blockExtra[] = "*RGB* : ,fgblend[,bgblend]: For cmdgfx_RGB, the block operation can set an opacity for the final block output between 0-255. This is always added to the end of the mode setting, preceded with a ',' character. If only fgblend is set, only the foreground color is blended. If bgblend is set, both fgcol and bgcol are blended separately. E.g. to copy with alpha blend 128 for fgcol only: block 0,128 5,5,40,40 20,20. To move (and set specific move char) and use separate blend for fgcol and bgcol: block 1:a021,128,64 5,5,40,40 20,20\n\n";
-					char blockExtraFuncs[] = "\n\n*RGB* : There are several new helper functions for colExpr to deal with 24 bit color values. Please note that currently, due to lack of precision, ONLY fgcol values can be changed and even *preserved* in colExpr! The bgcol for values set in colExpr will ALWAYS be (re)set to 0.  New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct a color from r,g,b values in range 0-255.  4. fgr(col),fgg(col),fgb(col) to get a color's red,green or blue value (0-255).";
+					char blockTransf[] = "*RGB* [transform]: The block operation allows per-character search and (char)replace functionality. A transform string follows the format 1122=1122, where 11 is a color 0-255 in hex, and 22 is a character in hex. Values that can be used for both 11 and 22 are 0-f, and ?=any. For char(22), +=add 1, and -=minus 1 can also be used for replace. Note that currently, the replace 11(color) is completely ignored for cmdgfx RGB versions. The default search color(11) is by default the MAX of fgcol R,G, and B values. However, this can be changed by preceding the expression with n:, where n can be: m or M or X for fgcol/bgcol/fgbgcol max, a/A/V for average, r/R for red only, g/G for green only, b/B for blue only. Example: To take the average of fgcol, and search for all blank spaces (hex 20) with high nibble f and any low nibble, and replace the character with A(hex 41), the transform string would look like: a:f?20=??41. To also change all other characters than space with high nibble f to an exclamation point(hex 21), we get the string: f?20=??41,f???=??21. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining positions where the high nibble is not f to a K(hex 4b) character, use: f?20=??41,f???=??21,????=??4b.";
+					char blockExtraFuncs[] = "\n\n*RGB* : There are several new helper functions for colExpr to deal with 64 bit color values. Please note that neither fgcol or bgcol is automatically preserved; in order to preserve e.g. bgcol while setting fgcol, surround the whole expression with keepbgcol(). New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct fgcol from r,g,b values in range 0-255, makebgcol same for bgcol, makefgbgcol sets both fgcol and bgcol.  4. fgr(col),fgg(col),fgb(col) to get fgcolor's red,green or blue value (0-255), and bgr, bgg, bgb same for bgcol.  5. keepbgcol(col) to preserve previous bgcol while keeping col as fgcol, and keepfgcol(col) to preserve fgcol while setting bgcol with col.  6. Use safeor to safely construct a final value composed of both an fgcol(made with makecol) and a bgcol(made with makebgcol)";
 				#endif
 				
-				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\n%sx,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.\n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n[transform]: The block operation allows per-character search and replace functionality. A transform string follows the format 1233=1233,... and the characters used are 0-f, ?=any, +=add 1, -=minus 1. To take all blank spaces (hex 20) with color 5 and bgcolor 1, and replace with A(hex 41) with color 9 and 0, the transform string would look like: 2051=4190. To also change all B's(42) to C's(43), regardless of color, ? would be used to disregard color(s), and get the string: 2051=4190,42??=43??. Finally, to take all characters from 40-4f(@ and A-O) and keep it, BUT increase the color and decrease the bgcolor, the string would be: 2051=4190,42??=43??,4???=??+-. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining characters to black spaces(20), use: 2051=4190,42??=43??,4???=??+-,????=2000. Note that + and - can also be used for characters (++ or --), and that ? can be used for color AND/OR bgcolor.\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.%s\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n", blockMode, blockExtra, blockExtraFuncs);
+				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\n%sx,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.\n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n%s\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.%s\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n", blockMode, blockExtra, blockTransf, blockExtraFuncs);
 			}
 			
 			else if (strcmp(argv[2], "flags") == 0) {
@@ -2724,7 +3272,7 @@ int main(int argc, char *argv[]) {
 				char cFlag[] = "Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp format, 3 for gxy(legacy). Last param can force i\n";
 #endif
 
-				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n  v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)\n  V  Enable origo mode for all box operations\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
+				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n  tn Enable using up to n threads (max 8) for increased block operation speed\n  v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)\n  V  Enable origo mode for all box operations\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
 			}
 			else if (strcmp(argv[2], "palette") == 0) {
 #ifdef GDI_OUTPUT
@@ -2756,7 +3304,7 @@ int main(int argc, char *argv[]) {
 #else
 			char color16op[] = "";
 #endif
-			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2019\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y%s\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, bigFont, blockMode, color16op, name, name, name, name, name, name);
+			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2020\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y%s\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, bigFont, blockMode, color16op, name, name, name, name, name, name);
 		}
 		
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
@@ -2889,6 +3437,17 @@ int main(int argc, char *argv[]) {
 					break;
 				}
 
+				case 't': 
+				{
+					sscanf(&argv[2][i+1], "%d", &allowedThreads);
+					if (allowedThreads > MAXTHREADS) allowedThreads=MAXTHREADS;
+					if (allowedThreads < 1) allowedThreads = 1;
+					#ifdef USE_THREAD_POOL	
+					CreateThreads(threadhandles, bds, blitThread, &blitD);
+					#endif
+					break;
+				}
+
 				case 'N': 
 				{
 					bAutoCenter3d = 1; autoScale3dScale = -1;
@@ -2902,7 +3461,7 @@ int main(int argc, char *argv[]) {
 					int GXM=256, GYM=256;
 					i++;
 					nof = sscanf(&argv[2][i], "%d,%d", &GXM, &GYM);
-					if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+					if (nof == 2) { GXY_MAX_X = GXM; if (GXY_MAX_X < 16) GXY_MAX_X=16; GXY_MAX_Y = GYM; if (GXY_MAX_Y < 16) GXY_MAX_Y=16; }
 					break;
 				}
 				case 'Z': {
@@ -3629,13 +4188,39 @@ int main(int argc, char *argv[]) {
 
 			if (nof == 7 || nof == 3) {
 				parseInput(s_fgcol, s_bgcol, s_dchar, &fgcol, &bgcol, &dchar, &bWriteChars, &bWriteCols);
-				video = videoCol;
 				
 				if (nof == 3) { x1=y1=0; w=txres; h=tyres; } else { if (bUseOrigoBox){ x1-=w/2; y1-=h/2; } }
+
+				if (allowedThreads <= 1) {
+					if (bWriteCols) fbox(videoCol, x1, y1, w, h, ((PREPCOL)bgcol << BITSHL) | fgcol);
+					if (bWriteChars) fbox(videoChar, x1, y1, w, h, dchar);
+				} else {
+
+					int hs, hmod, hso;
+					
+					hs = hso = h/allowedThreads;
+					hmod = h%allowedThreads; 
+						
+					for (j = 0; j < allowedThreads; j++) {
+						BlockData *bd = &bds[j];
+						bd->op=THREAD_OP_FBOX, bd->x=x1, bd->y=y1, bd->w=w, bd->h=hs, bd->XRES=XRES, bd->YRES=YRES, bd->videoCol=videoCol, bd->videoChar=videoChar, bd->blockThreadIndex=j, bd->bWriteChars=bWriteChars, bd->bWriteCols=bWriteCols, bd->fgcol=fgcol, bd->bgcol=bgcol, bd->dchar=dchar, bd->threadYp = j*hso; bd->bExit=0;
+#ifdef USE_THREAD_POOL	
+						SetEvent(ghAwaitWorkEvents[j]);
+#else
+						threadhandles[j] = (HANDLE)_beginthreadex(NULL, 0, process_op, &bds[j], 0, NULL);
+#endif
+						y1+=hs; if (j==allowedThreads-2) hs+=hmod;
+					}
+#ifdef USE_THREAD_POOL	
+					WaitForMultipleObjects(allowedThreads, ghDoneEvents, TRUE, INFINITE);
+#else							
+					WaitForMultipleObjects(allowedThreads, threadhandles, TRUE, INFINITE);
+					for (j = 0; i < allowedThreads; j++)
+						CloseHandle(threadhandles[i]);
+#endif
+				}
+
 				
-				if (bWriteCols) fbox(x1, y1, w, h, ((PREPCOL)bgcol << BITSHL) | fgcol);
-				video = videoChar;
-				if (bWriteChars) fbox(x1, y1, w, h, dchar);
 			} else
 				reportArgError(&errH, OP_FBOX, opCount, pch, nof);
 		 }
@@ -3644,11 +4229,14 @@ int main(int argc, char *argv[]) {
 			int mvx=-1, mvy=-1, mvw=-1, mvh=-1;
 			char transf[2510]= {0}, mode[16], colorExpr[8024] = {0}, xExpr[8024] = {0}, yExpr[8024] = {0}, xyExprToCh[16] = {0}, nys[64] = {0};
 
+			g_th_blockCol = g_th_blockChar = NULL;
+
 			pch = pch + 6;
 			nof = sscanf(pch, "%14s %d,%d,%d,%d %d,%60s %13s %d %d %2500s %8022s %8022s %8022s %10s %d,%d,%d,%d", mode, &x1, &y1, &w, &h, &nx, &nys, s_transpval, &xFlip, &yFlip, transf, colorExpr, xExpr, yExpr, xyExprToCh, &mvx, &mvy, &mvw, &mvh);
 			
 			transpval = -1;
 			if (nof >= 7) {
+				int bUseThreads = 0;
 				g_errH = &errH; g_opCount = opCount;
 				nof=sscanf(nys, "%d,%d,%d,%d", &ny, &nw, &nh, &rz);
 				if (nof > 0) {
@@ -3656,7 +4244,83 @@ int main(int argc, char *argv[]) {
 						parseInput(s_transpval, "0", "0", &transpval, &fgcol, &bgcol, NULL, NULL);
 					else
 						parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
-					transformBlock(mode, x1, y1, w, h, nx, ny, nw, nh, rz, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh);
+
+					// if wants to use threads for block, allow unless: target nw/nh is set, OR rz is set, OR yFlip is set, OR we're using xExpr/yExpr and 'to' 
+					if (allowedThreads > 1) {
+						if (nw == -1 && nh == -1 && rz==0 && yFlip==0)
+							bUseThreads = 1;
+						if ((strlen(xExpr) > 1 || strlen(yExpr) > 1) && xyExprToCh[0] != 'f') 
+							bUseThreads = 0;
+					}
+					
+					if (bUseThreads == 0) {
+						transformBlock(mode, x1, y1, w, h, nx, ny, nw, nh, rz, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh,  0,0,0);
+					} else {
+
+						int hs, hmod, hso, bDo=1, crReadBlock=0;
+						
+						hs = hso = h/allowedThreads;
+						hmod = h%allowedThreads; 
+
+						prepExpr(colorExpr); // random->rando, store->sto, keepfgcol->keepf, keepbgcol->keepb
+						prepExpr(xExpr);
+						prepExpr(yExpr);
+												
+						if (strlen(xExpr)>1 || strlen(yExpr)>1 || strstr(colorExpr, "col(") || strstr(colorExpr, "char(") || strstr(xExpr, "col(") || strstr(xExpr, "char(") || strstr(yExpr, "col(") || strstr(yExpr, "char(") )
+							crReadBlock=1;
+						
+						if (crReadBlock) {
+							if (x1 >= XRES || nx >= XRES) bDo=0;
+							if (y1 >= YRES || ny >= YRES) bDo=0;
+							if (x1 < 0) { w+=x1; x1=0; }
+							if (y1 < 0) { h+=y1; y1=0; }
+							if (h < 0 || w < 0) bDo=0;
+							if (x1+w >= XRES) { w-=(x1+w)-XRES; }
+							if (y1+h >= YRES) { h-=(y1+h)-YRES; }
+							if (h < 0 || w < 0) bDo=0;
+						}
+						
+						if (bDo) {
+
+							if (crReadBlock) {
+								
+								g_th_blockCol = (uchar *)malloc(w*h*sizeof(uchar));
+								g_th_blockChar = (uchar *)malloc(w*h*sizeof(uchar));
+								g_th_w=w;
+								g_th_h=h;
+								
+								for (i = 0; i < h; i++) {
+									k = i*w; int k2=y1*XRES+i*XRES+x1;
+									for (j = 0; j < w; j++) {
+										g_th_blockCol[k+j] = videoCol[k2+j];
+										g_th_blockChar[k+j] = videoChar[k2+j];
+									}
+								}
+							}
+							
+							for (j = 0; j < allowedThreads; j++) {
+								BlockData *bd = &bds[j];
+								bd->op=THREAD_OP_BLOCK, bd->s_mode=mode, bd->x=x1, bd->y=y1, bd->w=w, bd->h=hs, bd->nx=nx, bd->ny=ny, bd->nw=nw, bd->nh=nh, bd->rz=rz, bd->transf=transf, bd->colorExpr=colorExpr, bd->xExpr=xExpr, bd->yExpr=yExpr, bd->XRES=XRES, bd->YRES=YRES, bd->videoCol=videoCol, bd->videoChar=videoChar, bd->transpchar=transpval, bd->bFlipX=xFlip, bd->bFlipY=yFlip, bd->bTo=xyExprToCh[0] != 'f', bd->mvx=mvx, bd->mvy=mvy, bd->mvw=mvw, bd->mvh=mvh, bd->blockThreadIndex=j, bd->threadYp = j*hso; bd->bExit=0;
+#ifdef USE_THREAD_POOL	
+								SetEvent(ghAwaitWorkEvents[j]);
+#else
+								threadhandles[j] = (HANDLE)_beginthreadex(NULL, 0, process_op, &bds[j], 0, NULL);
+#endif
+								y1+=hs; ny+=hs; if (j==allowedThreads-2) hs+=hmod;
+							}
+#ifdef USE_THREAD_POOL	
+							WaitForMultipleObjects(allowedThreads, ghDoneEvents, TRUE, INFINITE);
+#else							
+							WaitForMultipleObjects(allowedThreads, threadhandles, TRUE, INFINITE);
+						    for (j = 0; i < allowedThreads; j++)
+								CloseHandle(threadhandles[i]);
+#endif
+							if (crReadBlock) {
+								free(g_th_blockCol); free(g_th_blockChar);
+							}
+						}
+					}
+					
 				} else
 					reportArgError(&errH, OP_BLOCK, opCount, pch, 7);
 			} else
@@ -4185,8 +4849,19 @@ int main(int argc, char *argv[]) {
 		if (!bDoNothing) {
 				
 	#ifdef GDI_OUTPUT
-			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode);
-	
+			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode,  allowedThreads,threadhandles,bds);
+
+			if(gbThreadsCreated) {
+				WaitForSingleObject(ghDoneBlitEvent, INFINITE);
+				blitD.x=g_blitX, blitD.y=g_blitY, blitD.w=g_blitW, blitD.h=g_blitH;
+				SetEvent(ghAwaitWorkBlitEvent);
+				
+			} else {
+				if (!BitBlt(g_hDc, g_blitX, g_blitY, g_blitW, g_blitH, g_hDcBmp, 0, 0, SRCCOPY))
+					printf("#ERR: Failure processing output bitmap\n");
+				GdiFlush();
+			}
+			
 			if (bWriteGdiToFile) {
 					FILE *fp = fopen("GDIbuf.dat", "wb");
 					if (fp != NULL) {
@@ -4476,7 +5151,7 @@ int main(int argc, char *argv[]) {
 								int GXM=256, GYM=256;
 								i++;
 								nof = sscanf(&pch[i], "%d,%d", &GXM, &GYM);
-								if (nof == 2 && GXM >= 16 && GYM >= 16) { GXY_MAX_X = GXM; GXY_MAX_Y = GYM; }
+								if (nof == 2) { GXY_MAX_X = GXM; if (GXY_MAX_X < 16) GXY_MAX_X=16; GXY_MAX_Y = GYM; if (GXY_MAX_Y < 16) GXY_MAX_Y=16; }
 								break;
 							}
 							case 'R': {
@@ -4518,6 +5193,17 @@ int main(int argc, char *argv[]) {
 							case 'L': 
 							{
 								nof = sscanf(&pch[i+1], "%d,%d", &lightSource0Div, &lightSource0Plus);
+								break;
+							}
+
+							case 't': 
+							{
+								sscanf(&pch[i+1], "%d", &allowedThreads);
+								if (allowedThreads > MAXTHREADS) allowedThreads=MAXTHREADS;
+								if (allowedThreads < 1) allowedThreads = 1;
+								#ifdef USE_THREAD_POOL	
+								CreateThreads(threadhandles, bds, blitThread, &blitD);
+								#endif
 								break;
 							}
 							
@@ -4634,6 +5320,27 @@ int main(int argc, char *argv[]) {
 
 	} while (bServer);
 
+
+#ifdef USE_THREAD_POOL	
+	if (gbThreadsCreated) {
+		for (j = 0; j < MAXTHREADS; j++) {
+			BlockData *bd = &bds[j];
+			bd->bExit=1;
+			SetEvent(ghAwaitWorkEvents[j]);
+		}
+		WaitForMultipleObjects(MAXTHREADS, threadhandles, TRUE, INFINITE);
+		//for (j = 0; i < MAXTHREADS; j++) // freezes for some reason
+		//	CloseHandle(threadhandles[i]);
+
+#ifdef GDI_OUTPUT
+		WaitForSingleObject(ghDoneBlitEvent, INFINITE);
+		blitD.bExit=1;
+		SetEvent(ghAwaitWorkBlitEvent);
+		WaitForSingleObject(blitThread, INFINITE);
+#endif
+		
+	}
+#endif
 
 	if(bInserted)
 		free(insertedArgs);
