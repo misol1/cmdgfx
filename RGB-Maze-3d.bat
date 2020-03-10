@@ -5,7 +5,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600B
+cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600Bt4
 set __=
 mode 80,50
 cls & cmdwiz setfont 6
