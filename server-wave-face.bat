@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Wave expression
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,320,160,147,80
+cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,320,160,147,80t5
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

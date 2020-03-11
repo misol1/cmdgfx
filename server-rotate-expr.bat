@@ -2,7 +2,7 @@
 cmdwiz showcursor 0 & cmdwiz setfont 8 & title Expression rotation
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW18xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,330,130,110,65
+cmdgfx_input.exe knW18xR | call %0 %* | cmdgfx_gdi "" Sf1:0,0,330,130,110,65t4
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

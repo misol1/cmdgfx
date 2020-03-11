@@ -2,7 +2,7 @@
 cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title Plasma
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW35xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102
+cmdgfx_input.exe knW35xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,238,102t6
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

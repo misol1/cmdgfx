@@ -4,7 +4,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Checkerbox transitions
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,110
+cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" Sf0:0,0,200,110t4
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

@@ -14,7 +14,7 @@ cmdwiz getdisplaydim h
 set /a H=%errorlevel%/8+1
 
 set __=.
-call %0 %* | cmdgfx_gdi "" %TOP%Sf2:0,0,!WW!,!HH!,!W!,!H!m0O
+call %0 %* | cmdgfx_gdi "" %TOP%Sf2:0,0,!WW!,!HH!,!W!,!H!m0Ot4
 set __=
 cls & cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & goto :eof
 

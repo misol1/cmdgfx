@@ -4,7 +4,7 @@ cmdwiz setfont 6 & mode %F6W%,%F6H% & cls & title Star Wars scroller (s/S m/M Cu
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW10xR | call %0 %* | cmdgfx_gdi "" TSfa:0,0,700,480Z300 000000,202000,505000,c0c000
+cmdgfx_input.exe m0unW10xR | call %0 %* | cmdgfx_gdi "" t4TSfa:0,0,700,480Z300 000000,202000,505000,c0c000
 set __=
 cls
 cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

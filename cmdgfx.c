@@ -2456,7 +2456,6 @@ unsigned __stdcall process_blit(void *arg)
 	BlitData *bd = (BlitData *)arg;
 	HANDLE myAwaitWorkEvent = ghAwaitWorkBlitEvent;
 	HANDLE myDoneEvent = ghDoneBlitEvent;
-	srand(GetTickCount());
 
 	while(bd->bExit == 0) {
 		
@@ -2918,17 +2917,22 @@ void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, Bl
 #endif
 
 
-void prepExpr(char *inExpr) {
+void prepExpr(char *inExpr, int bChangeStore) {
+	char *inS;
+	
 	if (strlen(inExpr) > 1) {
-		char *inS=inExpr;
-		do {
-			inS=strstr(inS, "store");
-			if (inS) {
-				inS = inS + 3;
-				inS[0]='('; inS[1]='t'; inS[2]=',';
-			}
-		} while (inS);
-
+		
+		if (bChangeStore) {
+			inS=inExpr;
+			do {
+				inS=strstr(inS, "store");
+				if (inS) {
+					inS = inS + 3;
+					inS[0]='('; inS[1]='t'; inS[2]=',';
+				}
+			} while (inS);
+		}
+			
 		inS=inExpr;
 		do {
 			inS=strstr(inS, "random");
@@ -3070,6 +3074,7 @@ int main(int argc, char *argv[]) {
 	singleColBitmap.data = singleColData;
 	
 	srand(GetTickCount());
+	randSeed[0] = GetTickCount();
 	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
@@ -4254,6 +4259,9 @@ int main(int argc, char *argv[]) {
 					}
 					
 					if (bUseThreads == 0) {
+						prepExpr(colorExpr,0); // random->rando, keepfgcol->keepf, keepbgcol->keepb
+						prepExpr(xExpr,0);
+						prepExpr(yExpr,0);
 						transformBlock(mode, x1, y1, w, h, nx, ny, nw, nh, rz, transf, colorExpr, xExpr, yExpr, XRES, YRES, videoCol, videoChar, transpval, xFlip, yFlip, xyExprToCh[0] != 'f', mvx, mvy, mvw, mvh,  0,0,0);
 					} else {
 
@@ -4262,9 +4270,9 @@ int main(int argc, char *argv[]) {
 						hs = hso = h/allowedThreads;
 						hmod = h%allowedThreads; 
 
-						prepExpr(colorExpr); // random->rando, store->sto, keepfgcol->keepf, keepbgcol->keepb
-						prepExpr(xExpr);
-						prepExpr(yExpr);
+						prepExpr(colorExpr,1); // random->rando, store->sto, keepfgcol->keepf, keepbgcol->keepb
+						prepExpr(xExpr,1);
+						prepExpr(yExpr,1);
 												
 						if (strlen(xExpr)>1 || strlen(yExpr)>1 || strstr(colorExpr, "col(") || strstr(colorExpr, "char(") || strstr(xExpr, "col(") || strstr(xExpr, "char(") || strstr(yExpr, "col(") || strstr(yExpr, "char(") )
 							crReadBlock=1;

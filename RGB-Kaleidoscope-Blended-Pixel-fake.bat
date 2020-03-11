@@ -5,6 +5,8 @@ cmdwiz setwindowstyle clear standard 0x00010000L
 cmdwiz setwindowstyle clear standard 0x00040000L
 if defined __ goto :START
 set __=.
+start cmd /c %0 BKGWIN
+if "%~1"=="BKGWIN" goto :START
 cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,660,110,130,72Et4
 set __=
 cls
@@ -15,7 +17,6 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-rem start "" /B dlc.exe -p "Cari Lekebusch_ - Obscurus Sanctus.mp3">nul
 set /a W=65*2, H=36*2
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
@@ -24,53 +25,23 @@ call centerwindow.bat 0 -16
 
 set /a WW=W*2, WWW=W*3
 
+set /a OW=W*4,OH=H*6
+if "%~1"=="BKGWIN" cmdgfx_RGB "image img/6hld.bmp 0 0 db -1 0,0 0 0 !OW!,!OH!" fa:0,0,!OW!,!OH!K & goto :eof
+
+cmdwiz setwindowtransparency 39
+title 
+
 set /a XMID=W/2, YMID=H/2, DIST=2100, TRIDIST=7000, DRAWMODE=0, MODE=0, XMID2=WW+XMID
 set /a CRX=0,CRY=0,CRZ=0
 set ASPECT=0.6665
 
 set /a S1=66, S2=12, S3=30, TRINUM=0
-if "%~1" == "1" set /a S1=33, S2=24, S3=15, TRINUM=1
-if "%~1" == "2" set /a S1=100, S2=8, S3=45, TRINUM=2
-if "%~1" == "3" set /a S1=25, S2=30, S3=12, TRINUM=3
 
 set FN0=objects\tri%TRINUM%.obj
 set FN1=objects\tri-FS-%TRINUM%.obj
 set FN2=objects\tri-FS2-%TRINUM%.obj
 set FN=%FN0%
 
-if exist %FN0% if exist %FN1% if exist %FN2% goto SKIPGEN
-
-set FN=%FN2%
-echo usemtl cmdblock 0 0 170 170 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
-
-set FN=%FN1%
-echo usemtl cmdblock 0 0 110 110 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
-
-set FN=%FN0%
-echo usemtl cmdblock 0 0 70 70 >%FN%
-echo v  0 0 0 >>%FN%
-echo v  0 100 0 >>%FN%
-echo v  %S1% 100 0 >>%FN%
-echo vt 0 0 >>%FN%
-echo vt 0 1 >>%FN%
-echo vt 1 1 >>%FN%
-echo f 1/1/ 2/2/ 3/3/ >>%FN%
-
-:SKIPGEN
 set /a A1=155, A2=0, A3=0, CNT=0
 set /a TRANSP=0, TV=-1
 set /a MONO=0 & set MONS=
@@ -90,6 +61,9 @@ echo "cmdgfx: image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H!"
 set CONV16=color16 0 \g20.-+jR 3000
 set /a C16=0 & set XF=skip& if !C16!==1 set XF=
 
+cmdwiz delay 200
+cmdwiz showwindow top
+
 set STOP=
 :LOOP
 for /L %%_ in (1,1,300) do if not defined STOP (
@@ -103,7 +77,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	for /L %%1 in (1,1,%S2%) do set OUTP="!OUTP:~1,-1! & 3d !FN! %DRAWMODE%,-1 0,0,!TRZ! 0,0,0 20,20,20,0,0,0 0,0,0,10 !XMID!,!YMID!,!TRIDIST!,%ASPECT% 0 0 db"&set /A TRZ+=%S3%*4
 	
-	echo "cmdgfx: !OUTP:~1,-1! & skip image img/6hld.bmp 0 0 db -1 !WW!,0 0 0 !W!,!H! & block 0,100 !WW!,0,!W!,!H! 0,0 -1 & !MONS! & !FADE! & !XF! %CONV16% & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" fa:0,0,!WWW!,!H!,!W!,!H!
+	echo "cmdgfx: !OUTP:~1,-1! & !MONS! & !FADE! & !XF! %CONV16% & skip text 7 0 0 [FRAMECOUNT] 103,108 & !MSG!" fa:0,0,!WWW!,!H!,!W!,!H!
 	set OUTP=
 
 	set /p INPUT=
@@ -140,6 +114,6 @@ if not defined STOP goto LOOP
 
 endlocal
 cmdwiz delay 100
-taskkill.exe /F /IM dlc.exe>nul
 echo "cmdgfx: quit"
 title input:Q
+cmdwiz showwindow close /w:Kaleidoscope
