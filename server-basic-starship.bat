@@ -2,7 +2,7 @@
 if defined __ goto :START
 cmdwiz setfont 6 & cls & mode 80,50 & cmdwiz showcursor 0 & title Starship
 set __=.
-cmdgfx_input.exe knW4xR | call %0 %* | cmdgfx_gdi "" Sf6:0,0,80,50
+cmdgfx_input.exe knW16xR | call %0 %* | cmdgfx_gdi "" Sf6:0,0,80,50
 set __=
 cls & cmdwiz showcursor 1
 goto :eof
@@ -32,10 +32,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
   
 	if !KEY! == 27 if !END!==0 set END=1
 	if !END! == 1 set /a "CHK=(!RY! %% 1440)*-1, DIST+=5" & if !CHK! geq 720 if !CHK! lss 730 set END=2
-	if !END! == 2 set /a DIST+=120,RZ-=3 & if !DIST! gtr 25000 set STOP=1
+	if !END! == 2 set /a DIST+=120*3,RZ-=3*3 & if !DIST! gtr 25000 set STOP=1
 	set /a KEY=0
   
-	if !END! lss 2 set /a RY-=6
+	if !END! lss 2 set /a RY-=6*3
 )
 if not defined STOP goto REP
 

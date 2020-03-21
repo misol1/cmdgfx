@@ -15,7 +15,7 @@ set /a H=%errorlevel%/8+1
 set /a HH=H*2
 
 set __=.
-call %0 %* | cmdgfx_RGB "" m0O%TOP%Sf2:0,0,%W%,%HH%,%W%,%H%t5
+call %0 %* | cmdgfx_RGB_32 "" m0O%TOP%Sf2:0,0,%W%,%HH%,%W%,%H%t5
 set __=
 cmdwiz fullscreen 0 & cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 set TOP=

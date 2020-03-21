@@ -1,5 +1,6 @@
 @if (true == false) @end /*
 @rem Use with "Screen Launcher": http://www.softpedia.com/get/Desktop-Enhancements/Screensavers/Screen-Launcher.shtml
+@rem if not defined __ cmdwiz sendkey 0x5b d & cmdwiz sendkey 0x44 p & cmdwiz sendkey 0x5b u & cmdwiz delay 200 & cmdwiz sendkey 0x12 d & cmdwiz sendkey 0x09 p & cmdwiz sendkey 0x12 u & rem Run over desktop
 @echo off
 cd /D "%~dp0"
 if defined __ goto :START
@@ -65,9 +66,10 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 
 	if !CNT! gtr 1307 set /a A3+=1
 	if !CNT! gtr 1400 set /a CNT=0
-	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 32 set /A MODE+=1&if !MODE! gtr 2 set MODE=0
-	if !KEY! == 27 set STOP=1
+	if !KEY! == 112 cmdwiz getch & set /a KEY=0
+	if !KEY! == 100 set /a KEY=0 & cmdwiz sendkey 0x5b d & cmdwiz sendkey 0x44 p & cmdwiz sendkey 0x5b u & cmdwiz delay 300 & cmdwiz sendkey 0x12 d & cmdwiz sendkey 0x09 p & cmdwiz sendkey 0x12 u 
+	if !KEY! == 32 set /A MODE+=1, KEY=0&if !MODE! gtr 2 set MODE=0
+	if !KEY! gtr 0 set STOP=1
 	if !MOUSE_EVENT! neq 0 set STOP=1	
 	set /a KEY=0
 )

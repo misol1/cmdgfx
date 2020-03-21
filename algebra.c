@@ -4,6 +4,8 @@
 
 /* Diverse funktioner från Grafik gk. */
 
+// Not actually used in the project, keeping for reference
+
 Matrix Scale(Vector v) {            /* get scalematrix */
 	Matrix m = { v.x,   0,   0,   0,
 						0, v.y,   0,   0,

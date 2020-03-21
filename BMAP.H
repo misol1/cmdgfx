@@ -3,8 +3,11 @@
 #ifndef BMAPH
 #define BMAPH
 
-#include "RGBcol.h"
 #include "datasize.h"
+
+typedef struct RGBcol {
+	unsigned char R, G, B;
+} RGBcol;
 
 struct PCXheader {     // Header för filer av typen PCX
 	char mfacturer;      // ID-byte, 0A (10) betyder PCX

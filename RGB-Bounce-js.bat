@@ -2,7 +2,7 @@
 @echo off
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_RGB "" Sf0:0,0,420,420,240,100G24,16
+cmdgfx_input.exe knW13xR | call %0 %* | cmdgfx_RGB_32 "" Sf0:0,0,420,420,240,100G24,16t8
 set __=
 cmdwiz showcursor 1 & goto :eof
 

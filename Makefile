@@ -1,6 +1,6 @@
 # Makefile for cmdgfx / small gfx lib
 
-OBJECTS = gfx.o r3d.o rgbcol.o bmap.o testlib.o outputText.o algebra.o tinyexpr.o
+OBJECTS = gfx.o r3d.o bmap.o testlib.o outputText.o algebra.o tinyexpr.o
 TARGET  = testlib.exe
 OBJECTSLIB = gfx.o r3d.o bmap.o tinyexpr.o cmdgfx.o
 TARGETLIB  = cmdgfx.exe
@@ -39,27 +39,24 @@ cmdgfx_input.exe : $(INPUTLIB)
 cmdgfx_input.o : cmdgfx_input.c datasize.h
 	$(CC) $(CCFLAG) -c cmdgfx_input.c
 
-testlib.o : testlib.c gfx.h bmap.h rgbcol.h r3d.h datasize.h
+testlib.o : testlib.c gfx.h bmap.h r3d.h datasize.h
 	$(CC) $(CCFLAG) -c testlib.c
 
-cmdgfx.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
+cmdgfx.o : cmdgfx.c gfx.h bmap.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -c cmdgfx.c
 
-cmdgfx_gdi.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
+cmdgfx_gdi.o : cmdgfx.c gfx.h bmap.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -o cmdgfx_gdi.o -D GDI_OUTPUT -c cmdgfx.c
 
-cmdgfx_rgb.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
+cmdgfx_rgb.o : cmdgfx.c gfx.h bmap.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -o cmdgfx_rgb.o -D GDI_OUTPUT -c cmdgfx.c
 
-cmdgfx_VT.o : cmdgfx.c gfx.h bmap.h rgbcol.h r3d.h  datasize.h
+cmdgfx_VT.o : cmdgfx.c gfx.h bmap.h r3d.h  datasize.h
 	$(CC) $(CCFLAG) -o cmdgfx_VT.o -c cmdgfx.c
 
 
-bmap.o : bmap.c bmap.h rgbcol.h gfx.h datasize.h
+bmap.o : bmap.c bmap.h gfx.h datasize.h
 	$(CC) $(CCFLAG) -c bmap.c
-
-rgbcol.o : rgbcol.c rgbcol.h datasize.h
-	$(CC) $(CCFLAG) -c rgbcol.c
 
 r3d.o : r3d.c r3d.h datasize.h
 	$(CC) $(CCFLAG) -c r3d.c

@@ -6,7 +6,6 @@
 #include <conio.h>
 #include <windows.h>
 #include "gfxlib.h"
-#include "outputText.h"
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -593,6 +592,7 @@ return 1;
 			if (ch==17) { xg=XRES/2; yg=YRES/2; }
 			if (ch=='.') culling = 1 - culling;
 			if (ch==',') depthSort = 1 - depthSort;
+			/*
 			if (ch=='k') {
 				sprintf(fname, "%s-%d", "capture", captureCnt); 
 				result = saveScreenBlock(fname, 0, 0, XRES/2, YRES/2, 1, -1, -1, -1); 
@@ -601,7 +601,7 @@ return 1;
 			}
 			if (ch=='K') {
 				contCapture = 1 - contCapture;
-			}
+			}*/	
 			
 			if (bChangePalette) {
 				setTextPalette(palette1, 0, p_first8pip, 9);

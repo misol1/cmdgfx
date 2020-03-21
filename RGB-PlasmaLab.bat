@@ -20,14 +20,15 @@ call centerwindow.bat 0 -12
 call sindef.bat
 
 set /a MODE=0, MSET=0, XMUL=300, YMUL=280, A1=155, A2=0, HLPY=100, DBGY=98, MCNT=0, USEDLAB=0, TRANSF=0&set TS=-
-set HELP="text 7 0 0 ENTER=LAB,_RIGHT/LEFT,_M,_T,_P,_H"
+set HELP="text 7 0 0 ENTER=LAB,_RIGHT/LEFT,_M,_T,_C,_D,_P,_H"
 set /a SHOWHELP=1 & set HS=& if !SHOWHELP!==0 set HS=skip
 set /a DBG=0 & set DS=rem& if !DBG!==1 set DS=
 
 set EXPR="store(x+C1,1)+makecol(s1,s1,s1)"
 del /Q explab.dat>nul 2>nul
-set /a MM0=20, MM1=6, CLRCNT=5
+set /a MM0=20, MM1=8, CLRCNT=5
 for %%a in (!MSET!) do set /a MAXMODE=!MM%%a!
+set C16S=skip&set /a C16=0&if !C16!==1 set C16S=
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -95,6 +96,11 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 			if !MODE! == 5 set EXPRP="store(sin(0.1),0)+store(cos(0.1),1)+store(x-SCRW/2,2)+store(y-SCRH/2,3)+shade(col((s2*s1-s3*s0+SCRW/2)/0.98-SCRH/(64+C1/10),(s2*s0+s3*s1+SCRH/2)/0.98+C2/100),-4,-4,-4)+makecol(sin(A1/100)*120+120,cos(A2/190)*40+40,sin(A1/70)*90+90)*lss(random(),0.8)*geq(gtr(y,SCRH-6)+lss(y,6)+lss(x,6)+gtr(x,SCRW-6),1)"
 
 			if !MODE! == 6 set EXPRP="store(((C1/2+180)+80)/10000,4)+store((x-(SCRW/2+20)+20)*s4,0)+store((y-SCRH/2)*s4,1)+store(0,2)+store((C1/2+180)/200,4)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+store(s0*s0-s1*s1-0.7,3)+store(min(2*s0*s1+s4,4),1)+store(min(s3,4),0)+store(lss(s0*s0+s1*s1,4)+s2,2)+makecol(0,s2*15,s2*31)"
+
+			rem "store(((x/SCRW)*2-1)*(SCRW/SCRH*0.66),0)+store((y/SCRH)*2-1,1)+store(length(s0,s1),2)+store(1-sqrt(abs(1-s2))/(C2/190+2.6)+0.3,3)+makecol(clamp255(s3*205),clamp255(s3*25),sin(x/66)+cos(A2/80+y/99)*50+50)"
+			if !MODE! == 7 set EXPRP="store(((x/SCRW)*2-1)*(SCRW/SCRH*0.66),0)+store((y/SCRH)*2-1,1)+store(length(s0,s1),2)+store(1-sqrt(abs((0.9+C2/1390+C1/1180)-s2)/(C1/190+2.6)),3)+makecol(clamp255(s3*205),clamp255(s3*25),sin(x/66)+cos(A2/80+y/99)*50+50)"
+
+			if !MODE! == 8 set EXPRP="store(((x/SCRW)*2-1)*(SCRW/SCRH*0.66),0)+store((y/SCRH)*2-1,1)+store(length(s0,s1),2)+store(1-sqrt(abs(1-s2))/(C2/1400-0.6)-0.3,3)+store(s3+perlin((x+s2*A1/2)/(s2*6),(y+s2*A1/2)/(s2*4))*pow(s2,1)*0.8,3)+makecol(clamp255(s3*205),clamp255(s3*25),0)"
 		)
 
 		for %%c in (!COLCNT!) do set EXPRP=!EXPRP:C1=%%c!
@@ -109,7 +115,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	set CLRSKIP=skip&set /a CLRCNT-=1&if !CLRCNT! gtr 0 set CLRSKIP=
 	
-	echo "cmdgfx: !CLRSKIP! fbox 0 0 db & block 0 0,0,!W!,!H! 0,0 -1 0 0 !TS! !EXPRP:~1,-1! & !HS! !HELP:~1,-1!__(!MODE!) 1,!HLPY! & !DS! line ? ? db 1,!DBGY!,500,!DBGY! & text f 0 0 !EXPRP:~1,-1! 1,!DBGY!" Ff0:0,0,!W!,!H!
+	echo "cmdgfx: !CLRSKIP! fbox 0 0 db & block 0 0,0,!W!,!H! 0,0 -1 0 0 !TS! !EXPRP:~1,-1! & !C16S! color16 0 3 & !HS! !HELP:~1,-1!__(!MODE!) 1,!HLPY! & !DS! line ? ? db 1,!DBGY!,500,!DBGY! & text f 0 0 !EXPRP:~1,-1! 1,!DBGY!" Ff0:0,0,!W!,!H!
 
 	if exist explab.dat set /a MODE=-1 & set /P EXPR=<explab.dat & set /a CLRCNT=15 & del /Q explab.dat >nul 2>nul
 	
@@ -129,9 +135,10 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	
 	if !KEY! == 100 set /a CLRCNT=15 & set /a DBG=1-DBG & set DS=&if !DBG!==0 set DS=rem
 	if !KEY! == 112 cmdwiz getch
-	if !KEY! == 116 set TS=-& set /a TRANSF=1-TRANSF, CLRCNT=10 & if !TRANSF!==1 set TS=a:f???=??db,e???=??db,d???=??db,c???=??db,b???=??b2,a???=??b2,9???=??b2,8???=??b2,7???=??b1,6???=??b1,5???=??b1,4???=??b1,3???=??b0,2???=??b0,1???=??b0,0???=?0b1
+	if !KEY! == 116 set TS=-& set /a TRANSF+=1, CLRCNT=10 & (if !TRANSF! gtr 2 set /a TRANSF=0) & (if !TRANSF!==1 set TS=a:f???=??db,e???=??db,d???=??db,c???=??db,b???=??b2,a???=??b2,9???=??b2,8???=??b2,7???=??b1,6???=??b1,5???=??b1,4???=??b1,3???=??b0,2???=??b0,1???=??b0,0???=?0b1) & (if !TRANSF!==2 set TS=a:f???=??02,e???=??02,d???=??40,c???=??57,b???=??4d,a???=??4e,9???=??2a,8???=??6a,7???=??2b,6???=??7a,5???=??3d,4???=??3d,3???=??2d,2???=??2d,1???=??2e,0???=?02e)
 	if !KEY! == 104 set /a CLRCNT=15 & set /a SHOWHELP=1-!SHOWHELP!&(if !SHOWHELP!==0 set HS=skip)& if !SHOWHELP!==1 set HS=
-
+	if !KEY! == 99 set C16S=skip&set /a C16=1-C16&if !C16!==1 set C16S=
+	
 	if !KEY! == 13 set /a MODE=-1,USEDLAB+=1 & start "Expression Lab" cmd /C %0 _EXPLAB >nul 2>nul & call :NOP
 	if !KEY! == 27 set STOP=1
 	
@@ -176,7 +183,7 @@ setlocal EnableDelayedExpansion
 cmdwiz getcursorpos x
 if %errorlevel% neq 0 set /a CPX=%errorlevel%
 
-cmdwiz delay 200
+cmdwiz delay 250
 if exist setCp.dat if %CPX% neq 0 (
 	cmdwiz delay 500
 	cmdwiz getcursorpos x
