@@ -1,0 +1,226 @@
+set /a stay=3885,born=8,density=15,liveCol=1,slowDeath=0,NH=1,opType=2,orgPal=1 & echo "cmdgfx: " - 8f49bd, & echo "cmdgfx: fbox 0 0 db" nV
+
+set /a stay=23,born=78,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,458,458" n
+
+set /a stay=905,born=126,density=50,liveCol=7,slowDeath=1,NH=11,opType=0 
+
+set /a stay=10233,born=596,density=50,liveCol=3,slowDeath=1,NH=3
+set /a stay=10179,born=604,density=50,liveCol=3,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000003 0 db 960,540,476,468" n
+set /a stay=10179,born=620,density=50,liveCol=3,slowDeath=1,NH=3
+set /a stay=10179,born=636,density=50,liveCol=3,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000003 0 db 960,540,570,450" n
+set /a stay=10179,born=668,density=50,liveCol=5,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,412,412" nV
+set /a stay=10179,born=668,density=50,liveCol=5,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,464,330" n
+set /a stay=10179,born=668,density=50,liveCol=6,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,454,454" n
+set /a stay=10179,born=668,density=50,liveCol=6,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000006 0 db 960,540,511,464" nV
+
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,357,357" nV
+
+set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3,opType=2 
+set /a stay=844,born=16440,density=60,liveCol=9,slowDeath=0,NH=13,opType=0 
+
+set /a stay=23,born=86,density=100,liveCol=7,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000007 0 db 960,540,451,451" nV
+set /a stay=23,born=86,density=100,liveCol=9,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,799,338" nV
+
+
+set /a stay=3447,born=2916,density=10,liveCol=3,slowDeath=1,NH=2,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000003 0 db 960,540,449,449" n
+set /a stay=1377,born=2177,density=60,liveCol=1,slowDeath=1,NH=2,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000001 0 db 960,540,433,433" nV
+
+
+set /a stay=10233,born=596,density=50,liveCol=3,slowDeath=1,NH=3,opType=2
+
+
+set /a stay=55,born=86,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,438,324" nV
+set /a stay=55,born=86,density=100,liveCol=15,slowDeath=0,NH=0,opType=2
+set /a stay=55,born=86,density=100,liveCol=8,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000008 0 db 960,540,466,492" nV
+set /a stay=55,born=86,density=100,liveCol=6,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,313,313" n
+set /a stay=55,born=86,density=100,liveCol=15,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 00000f 0 db 960,540,464,464" nV
+
+
+set /a stay=23,born=86,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,569,453" n
+
+
+set /a stay=187,born=110,density=84,liveCol=15,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 00000f 0 db 960,540,313,313" nV
+set /a stay=3,born=134,density=100,liveCol=9,slowDeath=0,NH=0,opType=2 
+set /a stay=143,born=214,density=100,liveCol=7,slowDeath=0,NH=0 & rem interesting lines
+set /a stay=27,born=46,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,309,309" nV
+set /a stay=13,born=190,density=100,liveCol=7,slowDeath=0,NH=0
+set /a stay=55,born=86,density=100,liveCol=5,slowDeath=0,NH=0
+
+set /a stay=23,born=86,density=100,liveCol=5,slowDeath=0,NH=0 & rem nice lines
+
+set /a stay=11,born=94,density=100,liveCol=9,slowDeath=0,NH=0 & rem here and below are just slightly diff diagonal sierpinskies
+set /a stay=19,born=222,density=100,liveCol=9,slowDeath=0,NH=0 & rem nice with .
+set /a stay=27,born=222,density=100,liveCol=9,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,719,457" nV
+
+set /a stay=19,born=222,density=100,liveCol=9,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,478,478" nV
+
+set /a stay=11,born=94,density=100,liveCol=9,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,437,437" nV
+
+set /a stay=158,born=127,density=5,liveCol=9,slowDeath=0,NH=2  & REM very cool (blue complex look on pause) for NH=2 but is setup faulty??  Yes...relies on state=py[x] ... have as setting?
+
+
+
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000004 0 db 960,540,396,396" nV
+
+set /a stay=19587,born=20284,density=62,liveCol=9,slowDeath=1,NH=3,opType=0 
+set /a stay=19587,born=20284,density=50,liveCol=9,slowDeath=1,NH=3,opType=0 
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3,opType=0 
+
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000004 0 db 960,540,421,421" n
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3,opType=2 
+
+
+
+set /a stay=130,born=580,density=31,liveCol=1,slowDeath=0,NH=1,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000001 0 db 960,540,475,475" nV
+set /a stay=3447,born=2916,density=10,liveCol=3,slowDeath=1,NH=2,opType=0 
+set /a stay=3148,born=2188,density=10,liveCol=2,slowDeath=0,NH=2,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000002 0 db 960,540,327,327" nV
+set /a stay=119,born=2438,density=40,liveCol=4,slowDeath=1,NH=2,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000004 0 db 960,540,305,305" nV
+set /a stay=10179,born=668,density=50,liveCol=7,slowDeath=1,NH=3,opType=0 
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,opType=0 
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,opType=0 
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000009 0 db 960,540,324,324" n
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,opType=1 
+set /a stay=59406,born=1524,density=40,liveCol=4,slowDeath=1,NH=13,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000004 0 db 960,540,426,426" n
+set /a stay=25168,born=46644,density=30,liveCol=4,slowDeath=1,NH=13,opType=0 
+set /a stay=62123,born=39678,density=80,liveCol=7,slowDeath=1,NH=13,opType=0 
+set /a stay=391,born=282,density=5,liveCol=4,slowDeath=1,NH=11,opType=0
+
+
+set /a stay=1188,born=562,density=4,liveCol=11,slowDeath=1,NH=10,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 0000011 0 db 960,540,684,313" nV
+set /a stay=16,born=480,density=53,liveCol=1,slowDeath=1,NH=9,opType=0 
+set /a stay=525,born=850,density=16,liveCol=9,slowDeath=1,NH=9,opType=0 
+set /a stay=560,born=526,density=50,liveCol=5,slowDeath=1,NH=9,opType=0 
+set /a stay=560,born=526,density=50,liveCol=5,slowDeath=1,NH=9,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,384,384" nV
+set /a stay=70,born=322,density=50,liveCol=5,slowDeath=1,NH=9,opType=0 
+set /a stay=132,born=86,density=50,liveCol=5,slowDeath=1,NH=9,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,376,376" n
+set /a stay=774,born=6,density=50,liveCol=7,slowDeath=1,NH=9,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,386,386" n
+set /a stay=627,born=20,density=80,liveCol=7,slowDeath=1,NH=8,opType=0 
+set /a stay=209,born=4,density=90,liveCol=1,slowDeath=0,NH=8,opType=0 
+
+set /a stay=28,born=2,density=90,liveCol=4,slowDeath=1,NH=8,opType=0 
+
+set /a stay=223,born=162,density=60,liveCol=7,slowDeath=1,NH=8,opType=0 
+set /a stay=82,born=2,density=50,liveCol=7,slowDeath=1,NH=8,opType=1 
+set /a stay=3691,born=1666,density=50,liveCol=4,slowDeath=1,NH=7,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000004 0 db 960,540,440,440" n
+set /a stay=1058,born=56292,density=4,liveCol=7,slowDeath=0,NH=6,opType=0 
+set /a stay=1058,born=56292,density=4,liveCol=7,slowDeath=0,NH=6,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,341,341" n
+set /a stay=31417,born=25980,density=60,liveCol=6,slowDeath=1,NH=6,opType=0 
+
+set /a stay=31417,born=25980,density=60,liveCol=6,slowDeath=1,NH=6,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,349,349" n
+
+set /a stay=31417,born=25980,density=60,liveCol=6,slowDeath=1,NH=6,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,312,312" n
+set /a stay=31417,born=25980,density=60,liveCol=9,slowDeath=1,NH=6,opType=0 
+set /a stay=54016,born=36162,density=60,liveCol=9,slowDeath=1,NH=6,opType=0 
+set /a stay=54016,born=36162,density=60,liveCol=9,slowDeath=1,NH=6,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,397,397" nV
+
+set /a stay=8453,born=45948,density=80,liveCol=10,slowDeath=1,NH=6,opType=0 
+
+set /a stay=8453,born=45948,density=80,liveCol=9,slowDeath=1,NH=6,opType=0 
+
+set /a stay=40047,born=9012,density=100,liveCol=9,slowDeath=1,NH=6,opType=0 
+set /a stay=40047,born=9012,density=100,liveCol=7,slowDeath=1,NH=6,opType=0 
+set /a stay=8472976,born=4861952,density=80,liveCol=1,slowDeath=1,NH=5,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000001 0 db 960,540,526,310" n
+set /a stay=8472976,born=4861952,density=70,liveCol=1,slowDeath=1,NH=5,opType=0 
+set /a stay=8472976,born=4861952,density=50,liveCol=1,slowDeath=1,NH=5,opType=0 
+set /a stay=6293504,born=77449,density=80,liveCol=1,slowDeath=0,NH=5,opType=0 
+set /a stay=6293504,born=77449,density=80,liveCol=1,slowDeath=0,NH=5,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000001 0 db 960,540,325,325" nV
+set /a stay=1,born=405512,density=40,liveCol=2,slowDeath=0,NH=5,opType=0 
+set /a stay=8650856,born=405512,density=40,liveCol=2,slowDeath=0,NH=5,opType=0 
+set /a stay=10176048,born=1179656,density=40,liveCol=6,slowDeath=0,NH=5,opType=0 
+set /a stay=10176048,born=1179656,density=50,liveCol=6,slowDeath=0,NH=5,opType=0 
+set /a stay=1441760,born=262664,density=40,liveCol=6,slowDeath=0,NH=5,opType=0 
+set /a stay=8808,born=11369020,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=1114510,born=8320868,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=163976,born=4464696,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=3158049,born=12596356,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=15552768,born=11458516,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=12934361,born=163992,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=2564,born=9566532,density=60,liveCol=9,slowDeath=1,NH=5,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000009 0 db 960,540,674,435" n
+
+
+set /a stay=10179,born=604,density=50,liveCol=4,slowDeath=1,NH=3,opType=0 
+set /a stay=10179,born=604,density=50,liveCol=5,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,398,398" n
+set /a stay=10179,born=604,density=50,liveCol=5,slowDeath=1,NH=3,opType=0 
+set /a stay=10179,born=604,density=50,liveCol=21,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 0000021 0 db 960,540,578,408" n
+
+
+set /a stay=2562,born=9566532,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 
+
+set /a stay=2511619,born=7344648,density=100,liveCol=9,slowDeath=1,NH=5,opType=0 
+set /a stay=6630722,born=1459364,density=50,liveCol=7,slowDeath=1,NH=5,opType=0 
+set /a stay=1175552,born=1910552,density=50,liveCol=7,slowDeath=1,NH=5,opType=0 
+
+set /a stay=40600,born=394500,density=50,liveCol=7,slowDeath=1,NH=4,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000007 0 db 960,540,597,306" nV
+
+set /a stay=40600,born=394500,density=50,liveCol=7,slowDeath=1,NH=4,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,456,456" n
+set /a stay=16389,born=28854,density=50,liveCol=7,slowDeath=1,NH=3,opType=0 
+set /a stay=17675,born=33164,density=50,liveCol=7,slowDeath=1,NH=3,opType=0 
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3,opType=0 
+
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,300,300" n
+
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000007 0 db 960,540,406,406" nV
+set /a stay=8960,born=31004,density=100,liveCol=7,slowDeath=1,NH=3,opType=0 
+set /a stay=8960,born=31004,density=100,liveCol=7,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,795,336" n
+set /a stay=56214,born=524,density=60,liveCol=4,slowDeath=1,NH=3,opType=0 
+set /a stay=56214,born=524,density=60,liveCol=4,slowDeath=1,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000004 0 db 960,540,389,389" nV
+set /a stay=10780,born=48548,density=10,liveCol=9,slowDeath=0,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,744,495" nV
+set /a stay=10780,born=48548,density=10,liveCol=9,slowDeath=0,NH=3,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000009 0 db 960,540,449,381" n
+
+
+set /a stay=10226,born=596,density=50,liveCol=3,slowDeath=1,NH=3,opType=2 & rem "Explosions" 
+set /a stay=10224,born=596,density=50,liveCol=3,slowDeath=1,NH=3,opType=2, orgPal=1 
+
+set /a stay=1175552,born=1910552,density=100,liveCol=7,slowDeath=1,NH=5,wrap=1,opType=0,  redP=13, greenP=4, blueP=8, colChange=0, redNeg=3, greenNeg=4, blueNeg=7, redAnd=1, greenAnd=3, blueAnd=7, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=0,  redP=18, greenP=16, blueP=13, colChange=2, redNeg=4, greenNeg=4, blueNeg=3, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=0,  redP=18, greenP=16, blueP=13, colChange=2, redNeg=7, greenNeg=14, blueNeg=14, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=16389,born=28854,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=0,  redP=18, greenP=16, blueP=13, colChange=2, redNeg=24, greenNeg=25, blueNeg=27, redAnd=1, greenAnd=1, blueAnd=7, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=40600,born=394500,density=50,liveCol=7,slowDeath=1,NH=4,wrap=1,opType=3,  redP=18, greenP=16, blueP=13, colChange=0, redNeg=24, greenNeg=25, blueNeg=27, redAnd=1, greenAnd=1, blueAnd=7, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=40600,born=394500,density=50,liveCol=7,slowDeath=1,NH=4,wrap=1,opType=3,  redP=18, greenP=16, blueP=13, colChange=0, redNeg=24, greenNeg=25, blueNeg=27, redAnd=1, greenAnd=1, blueAnd=7, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 
+
+
+
+set /a stay=1175552,born=1910552,density=100,liveCol=7,slowDeath=1,NH=5,wrap=1,opType=0,  redP=16, greenP=6, blueP=6, colChange=0, redNeg=2, greenNeg=2, blueNeg=1, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1
+
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,wrap=0,opType=4,initPrep=0,  redP=6, greenP=6, blueP=6, colChange=2, redNeg=2, greenNeg=2, blueNeg=2, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: ipoly 000009 0 db 0 960,876,1158,267,639,644,1280,644,761,267," n-v
+
+set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3,wrap=1,opType=4,initPrep=0,  redP=6, greenP=6, blueP=6, colChange=2, redNeg=2, greenNeg=2, blueNeg=2, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: ipoly 000005 0 db 0 960,1078,1144,34,613,952,1426,270,429,633,1490,633,493,270,1305,952,775,34," n-v
+
+set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3,wrap=1,opType=4,  redP=6, greenP=6, blueP=6, colChange=2, redNeg=2, greenNeg=2, blueNeg=2, redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: ipoly 000005 0 db 0 717,849,1269,782,1202,230,650,297," n-v
+
+
+
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1,WVAL=10,updateRate=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,351,351" n
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=2,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1,WVAL=10,updateRate=3 
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=4,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1,WVAL=10,updateRate=3 & set /a initPrep=0 & echo "cmdgfx: ipoly 000007 0 db 0 1105,645,1089,415,859,391,796,612,1003,714,1138,527,978,361,787,490,881,701," n-v
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=4,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1,WVAL=10,updateRate=3 & set /a initPrep=0 & echo "cmdgfx: ipoly 000007 0 db 0 960,914,1224,275,585,540,1224,804,960,165,695,804,1334,540,695,275," n-v
+
+set /a stay=23,born=78,density=100,liveCol=5,slowDeath=0,NH=0,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 &  echo "cmdgfx: fellipse 000005 0 db 960,540,458,458" n
+set /a stay=23,born=78,density=100,liveCol=5,slowDeath=0,NH=0,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1  & set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,458,458" n
+
+set /a stay=10179,born=604,density=50,liveCol=3,slowDeath=1,NH=3,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=10179,born=668,density=50,liveCol=5,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,484,484" nV
+set /a stay=10179,born=668,density=50,liveCol=6,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=5, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,392,392" n
+set /a stay=10179,born=668,density=50,liveCol=6,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000006 0 db 960,540,341,341" nV
+set /a stay=10179,born=604,density=50,liveCol=3,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=23, greenNeg=43, blueNeg=18, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000003 0 db 960,540,474,474" nV
+
+set /a stay=844,born=16440,density=60,liveCol=9,slowDeath=0,NH=13,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=0, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=23,born=86,density=100,liveCol=7,slowDeath=0,NH=0,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000007 0 db 960,540,334,334" nV
+set /a stay=55,born=86,density=100,liveCol=6,slowDeath=0,NH=0,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1   & set /a initPrep=0 & echo "cmdgfx: fellipse 000006 0 db 960,540,458,458" n
+set /a stay=23,born=86,density=100,liveCol=5,slowDeath=0,NH=0,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,443,443" nV
+set /a stay=158,born=127,density=5,liveCol=9,slowDeath=0,NH=2,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=2, stayVal=1, topClamp=1, bottomClamp=1
+set /a stay=19587,born=20284,density=40,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=2,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=19587,born=20284,density=40,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000007 0 db 960,540,334,334" nV
+set /a stay=19587,born=20284,density=40,liveCol=5,slowDeath=1,NH=3,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=5, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000005 0 db 960,540,458,458" nV
+set /a stay=19587,born=20284,density=62,liveCol=9,slowDeath=1,NH=3,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3,wrap=1,opType=0,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=59406,born=1524,density=40,liveCol=4,slowDeath=1,NH=13,wrap=0,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=59406,born=1524,density=40,liveCol=4,slowDeath=1,NH=13,wrap=0,opType=0,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=25168,born=46644,density=30,liveCol=4,slowDeath=1,NH=13,wrap=1,opType=3,  redP=10, greenP=7, blueP=6, colChange=1, redNeg=49, greenNeg=54, blueNeg=33, redAnd=2, greenAnd=3, blueAnd=1, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fellipse 000004 0 db 960,540,315,315" n
+set /a stay=54016,born=36162,density=60,liveCol=9,slowDeath=1,NH=6,wrap=1,opType=3,  redP=10, greenP=6, blueP=6, colChange=3, redNeg=57, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,345,345" nV
+set /a stay=8650856,born=405512,density=40,liveCol=2,slowDeath=0,NH=5,wrap=1,opType=0,  redP=6, greenP=3, blueP=5, colChange=0, redNeg=36, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=10176048,born=1179656,density=40,liveCol=6,slowDeath=0,NH=5,wrap=1,opType=0,  redP=6, greenP=3, blueP=5, colChange=0, redNeg=36, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=33037,born=28844,density=50,liveCol=9,slowDeath=1,NH=3,wrap=1,opType=3,  redP=6, greenP=3, blueP=5, colChange=0, redNeg=36, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fbox 000009 0 db 960,540,402,402" nV
+set /a stay=8960,born=31004,density=100,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=0,  redP=6, greenP=3, blueP=5, colChange=0, redNeg=36, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 
+set /a stay=8960,born=31004,density=100,liveCol=7,slowDeath=1,NH=3,wrap=1,opType=3,  redP=6, greenP=3, blueP=5, colChange=0, redNeg=36, greenNeg=116, blueNeg=30, redAnd=7, greenAnd=5, blueAnd=2, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 & set /a initPrep=0 & echo "cmdgfx: fellipse 000007 0 db 960,540,395,395" n

@@ -18,13 +18,14 @@ set /a W=240, H=90
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 call centerwindow.bat 0 -15
+call preparescale.bat 0
 
 set /a "XMID=%W%/2, YMID=%H%/2"
-set /a DIST=2500, DIST2=2500, DRAWMODE=5, ROTMODE=0, SHOWHELP=1
+set /a DIST=2500, DIST2=2500, DRAWMODE=5, ROTMODE=0, SHOWHELP=1, HLPY=H-3
 set ASPECT=0.675
 set /A RX=0,RY=0,RZ=0
 
-set HELPMSG="text 3 0 0 SPACE\-n\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,88"
+set HELPMSG="text 3 0 0 SPACE\-n\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"
 set MSG=%HELPMSG%
 
 set /a OBJINDEX=2, NOFOBJECTS=5
@@ -44,7 +45,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 3 0 0 SPACE\-n\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+1, H=SCRH*2*rH/100+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text 3 0 0 SPACE\-n\-D/d\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

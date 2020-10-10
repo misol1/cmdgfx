@@ -16,11 +16,13 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180, H=90
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -18
+call prepareScale.bat 0
 
 set /a RX=0, RY=0, RZ=0
 set /a XMID=!W!/2, YMID=!H!/2
-set /a DRAWMODE=5, ROTMODE=0, DIST=1500, COLP=0, OBJ=2, CLEAR=1, SHOWHELP=1, ACTIVE_KEY=0
+set /a DRAWMODE=5, ROTMODE=0, DIST=1500, COLP=0, OBJ=2, CLEAR=1, SHOWHELP=1, ACTIVE_KEY=0, HLPY=H-2
 set ASPECT=0.665 &set CLS=
 
 set FNAME=sidecube.obj
@@ -31,7 +33,7 @@ set PAL3=f 0 db  f e b2  e 0 db  7 7 b2  7 7 b1  7 7 b2  a 7 b1  a 7 b2  a 0 db 
 
 set STREAM="01??=00db,11??=60b1,21??=60db,31??=e6b1,41??=e6db,51??=e6db,61??=efb1,71??=feb1,81??=fedb,91??=feb1,a1??=efb1,b1??=e6db,c1??=e6b1,d1??=60db,e1??=60b1,f1??=00db,08??=00db,18??=20b1,28??=20db,38??=a2b1,48??=a2db,58??=a2db,68??=afb1,78??=afb1,88??=fadb,98??=fadb,a8??=afb1,b8??=a2db,c8??=a2b1,d8??=20db,e8??=20b1,f8??=00db,05??=00db,15??=40b1,25??=40db,35??=c4b1,45??=c4db,55??=c4db,65??=c7b1,75??=7cdb,85??=7fb1,95??=7cdb,a5??=c7b1,b5??=c4db,c5??=c4b1,d5??=40db,e5??=40b1,f5??=00db,0???=00db,1???=10b1,2???=10db,3???=91b1,4???=91db,5???=9bb2,6???=9bb1,7???=b9db,8???=bfb1,9???=9bb0,a???=9bb2,b???=91db,c???=91b1,d???=10db,e???=10b1,f???=00db"
 
-set HELPMSG=text 3 0 0 SPACE\-D/d\-b\-c\-ENTER\-\g1e\g1f\g11\g10\-h 2,88
+set HELPMSG=text 3 0 0 SPACE\-D/d\-b\-c\-ENTER\-\g1e\g1f\g11\g10\-h 2,%HLPY%
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 :REP
@@ -61,7 +63,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 		
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-76/2, ZVAL=500+(SCRH-40)*4" & cmdwiz showcursor 0 & set HELPMSG=text 3 0 0 SPACE\-D/d\-b\-c\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!&if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-76/2, ZVAL=500+(SCRH-40)*4" & cmdwiz showcursor 0 & set HELPMSG=text 3 0 0 SPACE\-D/d\-b\-c\-ENTER\-\g1e\g1f\g11\g10\-h 2,!HLPY!&if !SHOWHELP!==1 set MSG=!HELPMSG!
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

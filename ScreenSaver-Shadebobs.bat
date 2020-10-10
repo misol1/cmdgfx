@@ -17,7 +17,7 @@ set /a H=%errorlevel%/8+1
 set /a WWW=W*3
 
 set __=.
-cmdgfx_input.exe m0nW8xR | call %0 %* | cmdgfx_gdi "" %TOP%Sf2:0,0,%WWW%,%H%,%W%,%H%
+cmdgfx_input.exe m0nW16xR | call %0 %* | cmdgfx_gdi "" %TOP%Sf2:0,0,%WWW%,%H%,%W%,%H%
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
@@ -61,8 +61,6 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch
 	if !KEY! neq 0 set STOP=1
 	if !MOUSE_EVENT! neq 0 set STOP=1
-	
-	set DRAW=""
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t1!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000"
 	if !a! geq !TIMEOUT! (
@@ -74,22 +72,25 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COL!) do (
 		set t1=!time: =0!
 	)
 
-	set /a "SC+=!P1!, CC+=!P2!, SC2+=!P3!, CC2+=!P4!, RAND=!RANDOM! %% 1000"
-	if !RAND! lss 100 set /a SC2+=1
-	if !RAND! gtr 900 set /a CC-=1
-	if !RAND! gtr 500 if !RAND! lss 600 set /a SC+=1
-	
-	for %%a in (!SC!) do for %%b in (!CC!) do for %%d in (!SC2!) do for %%e in (!CC2!) do set /a A1=%%a,A2=%%b,A3=%%d,A4=%%e & set /a "XPOS=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!)+(%SINE(x):x=!A4!*31416/180%*!XMUL2!>>!SHR!), YPOS=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)+(%SINE(x):x=!A3!*31416/180%*!YMUL2!>>!SHR!)"
+	set DRAW=""
+	for /l %%c in (1,1,2) do (
+		set /a "SC+=!P1!, CC+=!P2!, SC2+=!P3!, CC2+=!P4!, RAND=!RANDOM! %% 1000"
+		if !RAND! lss 100 set /a SC2+=1
+		if !RAND! gtr 900 set /a CC-=1
+		if !RAND! gtr 500 if !RAND! lss 600 set /a SC+=1
+		
+		for %%a in (!SC!) do for %%b in (!CC!) do for %%d in (!SC2!) do for %%e in (!CC2!) do set /a A1=%%a,A2=%%b,A3=%%d,A4=%%e & set /a "XPOS=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!)+(%SINE(x):x=!A4!*31416/180%*!XMUL2!>>!SHR!), YPOS=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)+(%SINE(x):x=!A3!*31416/180%*!YMUL2!>>!SHR!)"
 
-	for %%a in (!SC!) do for %%b in (!CC!) do for %%d in (!SC2!) do for %%e in (!CC2!) do set /a A1=%%a,A2=%%b,A3=%%d,A4=%%e & set /a "XPOS2=!XMID!+(%SINE(x):x=!A3!*31416/180%*!YMUL!>>!SHR!)+(%SINE(x):x=!A2!*31416/180%*!XMUL2!>>!SHR!), YPOS2=!YMID!+(%SINE(x):x=!A4!*31416/180%*!XMUL!>>!SHR!)+(%SINE(x):x=!A1!*31416/180%*!YMUL2!>>!SHR!)"
-	
-	for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS!"&set OUTP=!OUTP!!MXP!,!MYP!,
-	set SS2=skip&set SS3=skip
-	if !NOFSB! geq 2 set SS2=&for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS2!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS2!"&set OUTP2=!OUTP2!!MXP!,!MYP!,
-	if !NOFSB! geq 3 set SS3=& for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS2!"&set OUTP3=!OUTP3!!MXP!,!MYP!,
-	set DRAW="ipoly 1 0 ? !DRWMODE! !OUTP:~0,-1! & !SS2! ipoly 1 0 ? !DRWMODE! !OUTP2:~0,-1!& !SS3! ipoly 1 0 ? !DRWMODE! !OUTP3:~0,-1!"
-	set OUTP=&set OUTP2=&set OUTP3=
-
+		for %%a in (!SC!) do for %%b in (!CC!) do for %%d in (!SC2!) do for %%e in (!CC2!) do set /a A1=%%a,A2=%%b,A3=%%d,A4=%%e & set /a "XPOS2=!XMID!+(%SINE(x):x=!A3!*31416/180%*!YMUL!>>!SHR!)+(%SINE(x):x=!A2!*31416/180%*!XMUL2!>>!SHR!), YPOS2=!YMID!+(%SINE(x):x=!A4!*31416/180%*!XMUL!>>!SHR!)+(%SINE(x):x=!A1!*31416/180%*!YMUL2!>>!SHR!)"
+		
+		for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS!"&set OUTP=!OUTP!!MXP!,!MYP!,
+		set SS2=skip&set SS3=skip
+		if !NOFSB! geq 2 set SS2=&for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS2!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS2!"&set OUTP2=!OUTP2!!MXP!,!MYP!,
+		if !NOFSB! geq 3 set SS3=& for /L %%a in (0,1,14) do set /a "MXP=!MX%%a!*!SIZE!+!XPOS!+!W200!, MYP=!MY%%a!*!SIZE!+!YPOS2!"&set OUTP3=!OUTP3!!MXP!,!MYP!,
+		set DRAW="!DRAW:~1,-1!&ipoly 1 0 ? !DRWMODE! !OUTP:~0,-1! & !SS2! ipoly 1 0 ? !DRWMODE! !OUTP2:~0,-1!& !SS3! ipoly 1 0 ? !DRWMODE! !OUTP3:~0,-1!"
+		set OUTP=&set OUTP2=&set OUTP3=
+	)
+		
 	set /a KEY=0
 )
 if not defined STOP goto LOOP

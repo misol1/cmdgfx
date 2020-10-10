@@ -11,7 +11,8 @@ goto :eof
 
 :START
 setlocal EnableDelayedExpansion
-set /a F6W=180/2, F6H=110/2
+set /a W=180, H=110
+set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 
 cmdwiz getdisplaydim w & set SW=!errorlevel!
@@ -20,6 +21,8 @@ cmdwiz getwindowbounds w & set WINW=!errorlevel!
 cmdwiz getwindowbounds h & set WINH=!errorlevel!
 set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
+
+call prepareScale.bat 0
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -31,7 +34,20 @@ endlocal
 exit /b 0 */
 
 
-var W=180, H=110, RY=0
+var fs = new ActiveXObject("Scripting.FileSystemObject")
+var shell = new ActiveXObject("WScript.Shell")
+
+function Execute(cmd) {
+	var exec = shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
+var W=GetCmdVar("W")+1, H=GetCmdVar("H")+1, rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+var RY=0, XMID=W/2, YMID=H/2-53
 var XMID=W/2, YMID=H/2-53
 var DIST=2500, ASPECT=0.6925
 var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="db"
@@ -42,9 +58,6 @@ var SHADOW="" // "skip "
 var NIGHTSKIP=""
 var NIGHT=false
 var USENIGHT=true
-
-var fs = new ActiveXObject("Scripting.FileSystemObject")
-var shell = new ActiveXObject("WScript.Shell")
 
 var TOP=""
 var SCRW=Execute('cmdwiz getdisplaydim w');
@@ -202,7 +215,7 @@ shell.Exec("cmd /c taskkill.exe /F /IM dlc.exe>nul")
 
 function Resize(XRes, YRes) {
 	shell.Exec('cmdwiz showcursor 0')
-	W=Number(XRes)*2+1, H=Number(YRes)*2+1
+	W=Math.floor(Number(XRes)*2*rW/100)+1, H=Math.floor(Number(YRes)*2*rH/100)+1
 	if (TOP=="U") { W=Math.floor(SCRW/FONTW); if (FONTW>1) W+=1; H=Math.floor(SCRH/FONTH); if (FONTH>1) H+=1; }
 	YMDIV=2.1; if (H<110) YMDIV=2
 	XMID=Math.floor(W/2), YMID=Math.floor(H/2)-52-Math.floor((H-110)/YMDIV)

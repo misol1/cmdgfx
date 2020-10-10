@@ -18,10 +18,11 @@ setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 call centerwindow.bat 0 -16
+call prepareScale.bat 0
 
 set /a RX=0, RY=0, RZ=0
 set /a XMID=%W%/2, YMID=%H%/2
-set /a DIST=2500, DRAWMODE=1, ROTMODE=0, SHOWHELP=1
+set /a DIST=2500, DRAWMODE=1, ROTMODE=0, SHOWHELP=1, HLPY=H-2
 set ASPECT=0.7083
 
 set PAL0=f 0 db  f b b1  b 0 db  b 7 b1  7 0 db  9 7 b1  9 0 db  9 1 b1  1 0 db  1 0 b1
@@ -31,7 +32,7 @@ set PAL3=b 0 db
 set /A O0=-1,O1=0,O2=0,O3=-1,O1T=0
 set YPAL=f e b2  f e b2  f e b1  f e b0  e 0 db  e c b2  e c b1  c 0 db  c 4 b1  c 4 b2  4 0 db  4 0 b1 4 0 b0 4 0 db  4 0 b2  4 0 b1  0 0 db  0 0 db
 set PAL=!PAL%DRAWMODE%!
-set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,98"
+set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,!HLPY!"
 set MSG=""& if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set OBJINDEX=2
@@ -47,7 +48,7 @@ for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+1, H=SCRH*2*rH/100+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	if !ROTMODE! == 0 set /a RX+=2, RY+=4, RZ-=3, XMID=!W!/2, YMID=!H!/2
 	

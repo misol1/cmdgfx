@@ -18,8 +18,8 @@ for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H"
 set /a W*=4, H*=6
 
 call sindef.bat
-
 call centerwindow.bat 0 -15
+call prepareScale.bat 10
 
 set /a DIV=2 & set /a XMID=%W%/2/!DIV!,YMID=%H%/2/!DIV!, XMUL=%W%/2/!DIV!, YMUL=%H%/2/!DIV!, SXMID=%W%/2,SYMID=%H%/2, SHR=13, DELAY=0, KEY=0
 set /a LINEGAP=15, NOFBEZ=11, LNCNT=1, DCNT=0, REP=80, COL=10, STARTLINE=1, REALCOL=4, CHANGE=1, CHANGESTEPS=200 & set /a NOFLINES=!NOFBEZ!*!LINEGAP!& set /a CHANGECOUNT=!CHANGESTEPS!,STARTCNT=0
@@ -66,7 +66,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2*4+2, H=SCRH*2*6+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV" & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*4*rW/100+2, H=SCRH*2*6*rH/100+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV" & cmdwiz showcursor 0
 	
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 32 set /a CHANGECOUNT=!CHANGESTEPS!& (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 4 - 1") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a= 

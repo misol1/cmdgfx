@@ -5,13 +5,14 @@ cmdwiz showcursor 0
 
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_RGB_32 "" Sfa:0,0,180,110
+cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_RGB_32 "" Sfa:0,0,180,110t4
 set __=
 goto :eof
 
 :START
 setlocal EnableDelayedExpansion
-set /a F6W=180/2, F6H=110/2
+set /a W=180, H=110
+set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 
 cmdwiz getdisplaydim w & set SW=!errorlevel!
@@ -20,6 +21,8 @@ cmdwiz getwindowbounds w & set WINW=!errorlevel!
 cmdwiz getwindowbounds h & set WINH=!errorlevel!
 set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
+
+call prepareScale.bat 0
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -30,9 +33,20 @@ title input:Q
 endlocal
 exit /b 0 */
 
+var fs = new ActiveXObject("Scripting.FileSystemObject")
+var shell = new ActiveXObject("WScript.Shell")
 
-var W=180*4+1, H=110*6+1, RY=0
-var XMID=W/2, YMID=H/2-53
+function Execute(cmd) {
+	var exec = shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
+var W=GetCmdVar("W")+1, H=GetCmdVar("H")+1, rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+var RY=0, XMID=W/2, YMID=H/2-53
 var DIST=2500, ASPECT=1
 var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="."
 var ZVAL=500, LOGOX=28, TEXTX=80, NIGHTY=22
@@ -42,9 +56,6 @@ var SHADOW=true
 var NIGHTSKIP=""
 var NIGHT=false
 var USENIGHT=true
-
-var fs = new ActiveXObject("Scripting.FileSystemObject")
-var shell = new ActiveXObject("WScript.Shell")
 
 var TOP=""
 var SCRW=Execute('cmdwiz getdisplaydim w');
@@ -83,11 +94,12 @@ do {
 	}
 
 	var STARTINDEX=1
-	shell.Exec("cmd /c title input:W14"); 
+	shell.Exec("cmd /c title input:W14");
 
 	var stop=0, death=0
 	
 	while (stop == 0) {
+		//BKSTR = "fbox 0 0 db" // // 86 vs 58 FPS fullscreen (101 fps if no fbox at all). (315 FPS with no bg no 3d, 100 FPS with NO 3d objects just stretched image)
 		WScript.Echo("\"cmdgfx: " + BKSTR + "\" n")
 
 		if (!NIGHT && SHADOW)
@@ -95,7 +107,7 @@ do {
 				var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
 				WScript.Echo("\"cmdgfx: 3d RGB/obj/" + shadowcols[COLD] + ".obj " + DRAWMODE + ",-1 0," + (RY) + ",0 " + PX[I] + "," + (PY[I]-HGHT[I]-20) + "," + PZ[I] + "  -450,-10,-450,0,0,0 0,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." +"\" n'")
 			}
-		
+
 		I=STARTINDEX-1
 		for (j = 1; j <= MAXCUBES; j++) {
 			I++
@@ -103,6 +115,9 @@ do {
 			var COLD=Math.floor((PZ[I]-5000)/10500); if (COLD < 0) COLD=0
 			WScript.Echo("\"cmdgfx: 3d RGB/obj/" + cubecols[COLD][CPAL[I]] + ".obj " + DRAWMODE + ",-1 0," + RY + ",0 " + PX[I] + ","+PY[I]+"," + PZ[I] + "  250,"+(-HGHT[I])+",-250,0,0,0 1,0,0,10 " + XMID + "," + YMID + "," + DIST + "," + ASPECT + " " + "0 0 ." +"\" n")
 
+			// fog attempt
+			//if (j==Math.floor(MAXCUBES/5) || j==Math.floor(MAXCUBES/5)*2) WScript.Echo("\"cmdgfx: ipoly 60222266 0 db 20 0,0,"+W+",0,"+W+","+H+",0,"+H+"\" n")
+			
 			PZ[j]-=ACCSPEED
 			if (PZ[I] < 1000) {
 				PZ[I]=30000
@@ -110,7 +125,7 @@ do {
 				STARTINDEX-=1; if (STARTINDEX < 1) STARTINDEX=MAXCUBES
 			}
 		}
-		
+
 		WScript.Echo("\"cmdgfx: image CR2.gxy 0 0 0 20 "+LOGOX+",2 & text f 1 0 _Press_SPACE_to_play_ "+TEXTX+",15 0 & skip text e 1 0 [FRAMECOUNT] 5,5 0 \" Z"+ZVAL+"fa:0,0,"+W+","+H+TOP)
 
 		var input = WScript.StdIn.ReadLine()
@@ -226,7 +241,7 @@ shell.Exec("cmd /c taskkill.exe /F /IM dlc.exe>nul")
 
 function Resize(XRes, YRes) {
 	shell.Exec('cmdwiz showcursor 0')
-	W=(Number(XRes)+1)*2*4, H=(Number(YRes)+1)*2*6+1
+	W=Math.floor((Number(XRes)+1)*2*4*rW/100), H=Math.floor((Number(YRes)+1)*2*6*rH/100)+1
 	if (TOP=="U") { W=Math.floor(SCRW/FONTW); if (FONTW>1) W+=1; H=Math.floor(SCRH/FONTH); if (FONTH>1) H+=1; }
 	YMDIV=2.1; if (H<110*4) YMDIV=2
 	XMID=Math.floor(W/2), YMID=Math.floor(H/2)-52-Math.floor((H-110)/YMDIV)

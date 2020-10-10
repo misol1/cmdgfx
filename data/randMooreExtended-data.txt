@@ -1,0 +1,513 @@
+
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=1,opType=0 & set PAL=dfa9e5,c5a23e,53b21c,f7e474,733c45,d5e228,aa8429,6ff5d5,481a94,f50639,0164d8,3c15d7,6c1b48,40b676,85ccbe,9c8ea1
+
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=1,opType=0 & set PAL=ffffff,4c4cd8,dbc43f,ef42d7,461bf1,5f6597,3aad71,5fedea,21b88e,24b8b6,1d5a68,d9c879,8118f4,1cc2c0,55587c,7e71ae
+
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=2,opType=0 & set PAL=ffffff,3b3b56,1c85ea,201d75,ab6524,ea6724,140d08,ef946b,953ed6,7847e4,a41ba3,44c63e,68acd9,057abd,3d5cb5,e171b7
+
+set /a stay=36936,born=17666,density=60,liveCol=1,slowDeath=1,NH=6,opType=0 & set PAL=ffffff,953b57,5290f7,e8baf8,6fc14b,8912bf,95dcd3,25bbc8,b294fb,8fc072,1c6cb5,3c3fdf,093ef4,c6ed75,14b732,699060
+
+set /a stay=3828,born=8,density=20,liveCol=1,slowDeath=0,NH=1,opType=0 
+
+set /a stay=58460,born=4611,density=20,liveCol=1,slowDeath=1,NH=3,opType=0 & set PAL=c6f6ae,ca4dc0,ad25f6,b1c64a,4be373,846f67,9fb31f,fc9e9a,3c5c24,a62ad8,c96864,63ef0c,82a6f2,e95094,b5a896,41b0c2
+
+set /a stay=36936,born=17666,density=60,liveCol=1,slowDeath=1,NH=3,opType=0 & set PAL=000000,3222d3,fddaa6,b32c93,ad2051,037c63,f5929c,8a5de3,76cc34,415ee7,a6ef35,3ad2f8,4e1fb2,154ed1,0a0531,8c2fe3
+
+set /a stay=1175552,born=1910552,density=50,liveCol=7,slowDeath=1,NH=5,opType=0
+
+set /a stay=2511649,born=7344648,density=60,liveCol=4,slowDeath=1,NH=5,opType=0
+
+set /a stay=40047,born=9012,density=10,liveCol=4,slowDeath=1,NH=6,opType=0,updateRate=3 & set PAL=000000,0e006e,8079cd,dfad84,031ce4,51ab0e,99f7fb,3fe8bf,99890e,9917ff,ac5810,e12d6a,4e6b67,b0e752,51d06e,2f4239
+
+set /a stay=36936,born=17666,density=60,liveCol=1,slowDeath=1,NH=3,opType=0 & set PAL=ffffff,953b57,5290f7,e8baf8,6fc14b,8912bf,95dcd3,25bbc8,b294fb,8fc072,1c6cb5,3c3fdf,093ef4,c6ed75,14b732,699060
+
+set /a stay=12934361,born=163992,density=60,liveCol=9,slowDeath=1,NH=5,opType=0 & set PAL=000000,03f7b3,796340,f29327,35fa9f,426fb2,9d2f35,ea26fd,ba6a50,a5099a,990461,719b7b,c9cb7f,111679,e182e2,8ce4cf
+
+set /a stay=1441760,born=262664,density=50,liveCol=6,slowDeath=0,NH=5,opType=0 & set PAL=000000,cfcb8e,6543b6,8f89d6,89b92f,b48045,e725da,09c61c,e0e51e,242385,d84a84,da910a,b81c39,c5c31b,6c1490,c59b8b
+
+set /a stay=1441806,born=262664,density=60,liveCol=4,slowDeath=0,NH=5,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 4 0 db 960,540,631,332" n& set PAL=000000,f3e00c,d5de65,84cede,9ab4f7,a6afe8,c637d8,78a351,adeef1,1fba62,e5958c,447c08,c99dd8,946156,f7aa6b,405a01
+
+set /a stay=37687,born=48892,density=40,liveCol=9,slowDeath=0,NH=13,opType=0,updateRate=4 & set PAL=033753,566885,7f26d9,4c5ba5,e0ed48,a8e4bc,90cb6b,765844,de4f0d,e8a3fb,80de80,d5c464,0c3317,354e46,7edbac,a6e82b
+set /a stay=43296,born=1562,density=60,liveCol=9,slowDeath=1,NH=6,opType=0 & set PAL=bfd9eb,89840e,eb7820,2a37b1,62bed5,77adc0,4da793,3cfc76,be85e7,6bd051,287de1,9be895,e20996,8498c7,a7749e,844533
+set /a stay=1899,born=540,density=80,liveCol=7,slowDeath=1,NH=10,opType=1 & set PAL=000000,7159eb,2b0595,3d0b10,321862,607cad,1b8b04,28437d,742f87,068a7e,33a87d,119274,2ef17a,812d64,a0d596,344219
+
+set /a stay=1441760,born=262664,density=50,liveCol=6,slowDeath=0,NH=5,opType=0
+
+set /a stay=10176048,born=1179656,density=40,liveCol=6,slowDeath=0,NH=5,opType=0 & set PAL=000000,6b5439,63a4e6,27b0f9,913a40,f694d4,5906ef,df70fd,8330f6,0b46ea,3bb6de,482ed6,90e933,87d33f,f5ee07,5ff469
+
+set /a stay=11276059,born=9556992,density=80,liveCol=1,slowDeath=1,NH=5,opType=0
+
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=2,opType=0 & set PAL=ffffff,27370b,cf78dc,3397df,c4912d,89a029,136012,b230d4,e9db24,2078cb,998e42,a57c80,181810,fa9766,7fad73,39f477
+
+set /a stay=40047,born=9012,density=100,liveCol=4,slowDeath=1,NH=6,opType=0 & set PAL=000000,804335,c026e8,5756b4,dba479,d11281,718762,aac725,66a1a7,0f6b40,52aba3,231705,01c082,7b8abc,f3dfc5,a2a43f
+
+set /a stay=10460767,born=3277066,density=80,liveCol=1,slowDeath=1,NH=5,opType=0 & set PAL=c3b424,36b165,3c6826,e9eb40,0042ac,660c98,d669ba,d518e5,e9ddda,062660,49ed97,e9e089,6ac002,1307a2,a3cd30,40ec31
+set /a stay=1024,born=2,density=90,liveCol=11,slowDeath=1,NH=7,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 11 0 db 960,540,340,340" n
+
+set /a stay=34564,born=49156,density=3,liveCol=7,slowDeath=0,NH=6,opType=0 
+
+set /a stay=40047,born=9012,density=100,liveCol=7,slowDeath=1,NH=6,opType=0 & set PAL=000000,5f2fc1,b3c87b,53adbc,5add9d,c3b905,daadc1,f012d6,535315,7e4ff1,8cff8e,f3591a,6e7460,3bec9a,878887,271abe
+
+set /a stay=930674,born=15365591,density=90,liveCol=1,slowDeath=1,NH=5,opType=0 & set PAL=8a79ab,55c211,38fbfa,ba6340,90a46b,b6a06c,bf6d8f,6a9eab,75c59b,b636f2,670deb,c2729f,ce1b7b,7813f0,e5ba6c,070e8a
+
+set /a stay=35,born=236,density=97,liveCol=4,slowDeath=1,NH=8,opType=0 & set PAL=000000,bee98f,3efce3,aecd45,06ca84,b3f999,8c2338,0738a5,adefc9,cbad85,6ba846,824cda,6bde82,945f48,78b392,cd02f8
+
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=13,opType=0,updateRate=4 & set PAL=ffffff,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=10,opType=0 & set PAL=82b5e6,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=8,opType=0 & set PAL=82b5e6,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=7,opType=0 & set PAL=82b5e6,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=1,opType=0 & set PAL=82b5e6,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+
+
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=10,opType=0 & set PAL=dfa9e5,c5a23e,53b21c,f7e474,733c45,d5e228,aa8429,6ff5d5,481a94,f50639,0164d8,3c15d7,6c1b48,40b676,85ccbe,9c8ea1
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=2,opType=0 & set PAL=dfa9e5,c5a23e,53b21c,f7e474,733c45,d5e228,aa8429,6ff5d5,481a94,f50639,0164d8,3c15d7,6c1b48,40b676,85ccbe,9c8ea1
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=11,opType=0 & set PAL=ffffff,4c4cd8,dbc43f,ef42d7,461bf1,5f6597,3aad71,5fedea,21b88e,24b8b6,1d5a68,d9c879,8118f4,1cc2c0,55587c,7e71ae
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=10,opType=0 & set PAL=ffffff,4c4cd8,dbc43f,ef42d7,461bf1,5f6597,3aad71,5fedea,21b88e,24b8b6,1d5a68,d9c879,8118f4,1cc2c0,55587c,7e71ae
+set /a stay=33145,born=8244,density=90,liveCol=5,slowDeath=1,NH=8,opType=0 & set PAL=000000,8a09c6,0bb285,aadb3b,32f328,05a1e8,b208a1,ca4a81,f04a68,30b7e1,924657,ee3e86,013a2f,c12a10,ee9c13,ea3ac6,
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=1,opType=0 & set PAL=ffffff,3b3b56,1c85ea,201d75,ab6524,ea6724,140d08,ef946b,953ed6,7847e4,a41ba3,44c63e,68acd9,057abd,3d5cb5,e171b7
+set /a stay=40047,born=9012,density=10,liveCol=4,slowDeath=1,NH=3,opType=0 & set PAL=000000,0e006e,8079cd,dfad84,031ce4,51ab0e,99f7fb,3fe8bf,99890e,9917ff,ac5810,e12d6a,4e6b67,b0e752,51d06e,2f4239
+set /a stay=40047,born=9012,density=10,liveCol=4,slowDeath=1,NH=10,opType=0 & set PAL=000000,0e006e,8079cd,dfad84,031ce4,51ab0e,99f7fb,3fe8bf,99890e,9917ff,ac5810,e12d6a,4e6b67,b0e752,51d06e,2f4239
+set /a stay=40047,born=9012,density=10,liveCol=4,slowDeath=1,NH=8,opType=0 & set PAL=000000,0e006e,8079cd,dfad84,031ce4,51ab0e,99f7fb,3fe8bf,99890e,9917ff,ac5810,e12d6a,4e6b67,b0e752,51d06e,2f4239
+set /a stay=37687,born=48892,density=40,liveCol=9,slowDeath=0,NH=8,opType=0 & set PAL=033753,566885,7f26d9,4c5ba5,e0ed48,a8e4bc,90cb6b,765844,de4f0d,e8a3fb,80de80,d5c464,0c3317,354e46,7edbac,a6e82b
+set /a stay=1899,born=540,density=80,liveCol=7,slowDeath=1,NH=6,opType=0 & set PAL=000000,7159eb,2b0595,3d0b10,321862,607cad,1b8b04,28437d,742f87,068a7e,33a87d,119274,2ef17a,812d64,a0d596,344219
+set /a stay=11276059,born=9556992,density=70,liveCol=1,slowDeath=1,NH=3,opType=0 
+set /a stay=1899,born=540,density=80,liveCol=7,slowDeath=1,NH=10,opType=0 & set PAL=000000,7159eb,2b0595,3d0b10,321862,607cad,1b8b04,28437d,742f87,068a7e,33a87d,119274,2ef17a,812d64,a0d596,344219
+set /a stay=3023,born=1932,density=10,liveCol=1,slowDeath=1,NH=7,opType=0 & set PAL=e88714,042b80,d9023f,f66a00,2e01c0,f77348,1090f7,67a2c1,39fd78,7bd74a,795a8c,bdf8b6,32ffae,896d49,dc050f,91a23e,
+
+
+set /a stay=85,born=32,density=80,liveCol=1,slowDeath=1,NH=8,opType=0 & set PAL=000000,6b51af,3f546a,6ebd89,9d72ea,ae98aa,d95adf,fee58a,39b7c7,b81a47,c9eb00,37a023,d78a4f,5e5604,75da5a,100ff3
+set /a stay=85,born=32,density=75,liveCol=1,slowDeath=1,NH=8,opType=0 & set PAL=000000,7da16f,1fe177,608e5e,0f0a8f,11792b,afc8fe,34edb1,b87041,372ab0,e64dfa,c6a44a,791c6e,558488,b79107,9925d6,
+
+set /a stay=220,born=16,density=22,liveCol=1,slowDeath=1,NH=8,opType=0
+
+set /a stay=38,born=2,density=65,liveCol=9,slowDeath=0,NH=8,opType=0 
+set /a stay=16,born=480,density=53,liveCol=1,slowDeath=1,NH=9,opType=0 
+
+set /a stay=1899,born=540,density=80,liveCol=7,slowDeath=1,NH=10,opType=0 & set PAL=000000,7159eb,2b0595,3d0b10,321862,607cad,1b8b04,28437d,742f87,068a7e,33a87d,119274,2ef17a,812d64,a0d596,344219
+set /a stay=1257,born=1620,density=10,liveCol=4,slowDeath=1,NH=10,opType=0 
+set /a stay=3023,born=1932,density=10,liveCol=1,slowDeath=1,NH=10,opType=0 & set PAL=e88714,042b80,d9023f,f66a00,2e01c0,f77348,1090f7,67a2c1,39fd78,7bd74a,795a8c,bdf8b6,32ffae,896d49,dc050f,91a23e,
+set /a stay=1188,born=562,density=4,liveCol=11,slowDeath=1,NH=10,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 11 0 db 960,540,468,468" n
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=13,opType=0,updateRate=3 & set PAL=82b5e6,486127,48b18b,6b366d,034fbf,ba4da0,c8d431,6a84a5,8fd998,d450a2,b2cc2b,f63781,726c27,f35571,73504d,8fd864
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=13,opType=0 & set PAL=266d09,cfbd6e,3ff95c,a69a32,f0f1cf,a5759d,0d5ccf,9768e6,7b047a,9f8f37,b8f826,b18b2d,500ada,17005c,6852d2,ed17c9
+set /a stay=10250,born=596,density=50,liveCol=3,slowDeath=1,NH=3,opType=2 & set PAL=000000,38e93e,c74b25,abdcf8,5c4492,28a94b,d4c8c1,8644d9,e33d00,7425b7,4ecf4e,f2c9ef,72ecdf,d53101,bdc79c,47625d,
+set /a stay=10233,born=596,density=50,liveCol=3,slowDeath=1,NH=3,opType=2 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+
+set /a stay=3050,born=578,density=31,liveCol=1,slowDeath=0,NH=2,opType=0 & set PAL=265ad9,02ab78,82a45d,158b0c,e866bd,abb44a,995a4c,b2e081,4bdd72,c9b052,aa7128,c52831,d23c7f,2c2ee7,d6861a,bc0e12
+
+set /a stay=55,born=86,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 5 0 db 960,540,438,324" nV
+set /a stay=55,born=86,density=100,liveCol=15,slowDeath=0,NH=0,opType=2
+set /a stay=55,born=86,density=100,liveCol=8,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 8 0 db 960,540,466,492" nV
+set /a stay=55,born=86,density=100,liveCol=6,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 6 0 db 960,540,313,313" n
+set /a stay=55,born=86,density=100,liveCol=15,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 15 0 db 960,540,464,464" nV
+
+set /a stay=3885,born=8,density=15,liveCol=1,slowDeath=0,NH=1,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,647,498" nV& set PAL=8f49bd,67c57b,5483ed,60b78c,e69db4,495dfa,e531c0,46c907,98ef84,5f67f5,6919b5,00728e,6407cf,787b9f,bba391,7ae979
+
+set /a stay=23,born=86,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 5 0 db 960,540,569,453" n
+set /a stay=187,born=110,density=84,liveCol=15,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 15 0 db 960,540,313,313" nV
+set /a stay=3,born=134,density=100,liveCol=9,slowDeath=0,NH=0,opType=2 
+set /a stay=143,born=214,density=100,liveCol=7,slowDeath=0,NH=0 & rem interesting lines
+set /a stay=27,born=46,density=100,liveCol=5,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 5 0 db 960,540,309,309" nV
+set /a stay=13,born=70,density=100,liveCol=5,slowDeath=0,NH=0
+set /a stay=13,born=190,density=100,liveCol=7,slowDeath=0,NH=0
+set /a stay=13,born=194,density=100,liveCol=7,slowDeath=0,NH=0
+set /a stay=13,born=254,density=100,liveCol=11,slowDeath=0,NH=0
+set /a stay=55,born=86,density=100,liveCol=5,slowDeath=0,NH=0
+set /a stay=23,born=86,density=100,liveCol=5,slowDeath=0,NH=0 & rem nice lines
+set /a stay=11,born=94,density=100,liveCol=9,slowDeath=0,NH=0 & rem here and below are just slightly diff diagonal sierpinskies
+set /a stay=19,born=222,density=100,liveCol=9,slowDeath=0,NH=0 & rem nice with .
+set /a stay=27,born=222,density=100,liveCol=9,slowDeath=0,NH=0 & rem nice with .
+
+set /a stay=19,born=222,density=100,liveCol=9,slowDeath=0,NH=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 9 0 db 960,540,478,478" nV
+
+
+set /a stay=158,born=127,density=5,liveCol=9,slowDeath=0,NH=2  & REM very cool (blue complex look on pause) for NH=2 but is setup faulty??  Yes...relies on state=py[x] ... have as setting?
+
+
+set /a stay=254,born=2943,density=31,liveCol=1,slowDeath=0,NH=2 & rem Extreme flash but nice patterns on pause. NH=1 for smaller patterns
+set /a stay=250,born=2035,density=67,liveCol=1,slowDeath=0 & rem VERY flashy, but also NICE patterns on pause!!
+
+
+set /a stay=1071,born=3615,density=48,liveCol=1,slowDeath=0,NH=2 & rem Flash like crazy, but pause=MAP!!
+
+
+set /a stay=65,born=1060,density=93,liveCol=1,slowDeath=0,NH=1 & rem Nice organic growth (e.g for . circle)
+
+
+set /a stay=2042,born=2056,density=100,liveCol=1,slowDeath=0,NH=2 & rem static cracks !
+
+set /a stay=130,born=580,density=31,liveCol=1,slowDeath=0,NH=1 & rem GameOfLife version typ, but dies rather quick
+
+set /a stay=3050,born=578,density=31,liveCol=1,slowDeath=0,NH=2 & rem bit odd colors/growth
+
+set /a stay=3829,born=8,density=15,liveCol=1,slowDeath=0,NH=1 & rem Tab=Pulse mandalas and (after a while) rockets
+
+set /a stay=3885,born=8,density=15,liveCol=1,slowDeath=0,NH=1 & rem Stay-alive mandalas. Other palette!
+
+
+set /a stay=3447,born=2916,density=10,liveCol=3,slowDeath=1, NH=2 & rem Try ./tab key
+
+
+set /a stay=3148,born=2188,density=10,liveCol=2,slowDeath=0, NH=2 & rem Tab is more interesting
+
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=2 & rem Jumping little circles in lines
+set /a stay=2080,born=1289,density=10,liveCol=1,slowDeath=1,NH=1 & rem Disintegrating squares,but rotated!!!
+
+set /a stay=1220,born=260,density=40,liveCol=1,slowDeath=1,NH=1 & rem try other palettes too, and . key
+
+set /a stay=1377,born=2177,density=60,liveCol=1,slowDeath=1,NH=2 & rem Glowing little pools. NH=1 for other feel
+set /a stay=1368,born=641,density=57,liveCol=1,slowDeath=1,NH=1 & rem glowpools 2
+
+set /a stay=119,born=2438,density=40,liveCol=4,slowDeath=1,NH=2 & rem also NH=1
+
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=1
+set /a stay=2630,born=2405,density=15,liveCol=1,slowDeath=1,NH=2 & rem as above but NH=2. Jumping little circles. Change palette
+set /a stay=3759,born=2064,density=10,liveCol=1,slowDeath=1,NH=1 & rem or 2
+
+set /a stay=3828,born=8,density=40,liveCol=1,slowDeath=0, NH=1 & rem rocket pattern but before discovering them (need lower density)
+set /a stay=3828,born=8,density=20,liveCol=1,slowDeath=0,NH=1 & rem rockets among stars! :)
+set /a stay=3828,born=8,density=30,liveCol=1,slowDeath=0,NH=1 & rem rockets in caves
+set /a stay=3828,born=8,density=25,liveCol=1,slowDeath=0,NH=1
+
+
+set /a stay=3379,born=2686,density=70,liveCol=1,slowDeath=1,NH=1 & rem very slow little balls... change palette!
+
+
+set /a stay=56034,born=21136,density=90,liveCol=1,slowDeath=1,NH=3 & rem circs
+set /a stay=58460,born=4611,density=20,liveCol=1,slowDeath=1,NH=3 & rem growing static circs
+set /a stay=55972,born=50408,density=40,liveCol=1,slowDeath=1,NH=3 & rem circs, omly a few remain
+set /a stay=19587,born=20284,density=40,liveCol=4,slowDeath=1,NH=3 & rem spirals
+set /a stay=19587,born=20284,density=90,liveCol=11,slowDeath=1,NH=3 
+set /a stay=19587,born=20284,density=62,liveCol=9,slowDeath=1,NH=3 & rem as below but smaller
+set /a stay=19587,born=20284,density=50,liveCol=9,slowDeath=1,NH=3 & rem Very "clean" spirals
+set /a stay=23176,born=29922,density=50,liveCol=9,slowDeath=1,NH=3 & rem flash but interesting pattern on slow
+set /a stay=7143,born=20029,density=50,liveCol=9,slowDeath=1,NH=3 & rem flash but interesting
+set /a stay=32779,born=38510,density=50,liveCol=9,slowDeath=1,NH=3 & rem blue cheese doodles
+set /a stay=8192,born=53766,density=20,liveCol=9,slowDeath=1,NH=3 & rem mushroomy spirals
+set /a stay=8192,born=53766,density=10,liveCol=14,slowDeath=1,NH=3 & rem Octagon spirals
+set /a stay=35457,born=24580,density=20,liveCol=9,slowDeath=0,NH=3 & rem blue grower
+set /a stay=608,born=2564,density=10,liveCol=9,slowDeath=0,NH=3 & rem as below but more shiny
+set /a stay=10780,born=48548,density=10,liveCol=9,slowDeath=0,NH=3 & rem blue grower, also try density 80
+set /a stay=42292,born=53388,density=60,liveCol=1,slowDeath=1,NH=3 & rem leave a few wobbling circs
+set /a stay=36936,born=17666,density=60,liveCol=1,slowDeath=1,NH=3 & rem wobbling circles disappear slowly (like a "zoomed" GameOfLife!)
+set /a stay=63547,born=49848,density=60,liveCol=1,slowDeath=1,NH=3 & rem static small circs
+set /a stay=56214,born=524,density=60,liveCol=4,slowDeath=1,NH=3
+set /a stay=56214,born=524,density=10,liveCol=4,slowDeath=1,NH=3 & rem cheese doodles
+set /a stay=13319,born=38574,density=10,liveCol=4,slowDeath=1,NH=3
+set /a stay=23449,born=25855,density=80,liveCol=12,slowDeath=1,NH=3 & rem as below
+set /a stay=17922,born=50282,density=90,liveCol=7,slowDeath=1,NH=3 & rem Flashy but interesting structure on pause
+set /a stay=53596,born=764,density=90,liveCol=7,slowDeath=1,NH=3 & rem Sparse spirals=cool
+set /a stay=8960,born=31004,density=100,liveCol=7,slowDeath=1,NH=3
+
+
+set /a stay=38431,born=56454,density=90,liveCol=7,slowDeath=1,NH=3 & rem More goodies!
+set /a stay=37000,born=1046,density=90,liveCol=7,slowDeath=1,NH=3
+set /a stay=43636,born=25308,density=90,liveCol=7,slowDeath=1,NH=3
+set /a stay=24,born=19871,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=33037,born=28844,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3 & rem Super cool pattern on pause!!
+set /a stay=64568,born=12887,density=50,liveCol=7,slowDeath=1,NH=3
+
+
+set /a stay=39940,born=3110,density=50,liveCol=7,slowDeath=1,NH=3 & rem Variations
+set /a stay=4064,born=406,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=2160,born=111,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=24944,born=49630,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=17675,born=33164,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=670,born=52238,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=29984,born=19062,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=21522,born=39294,density=50,liveCol=7,slowDeath=1,NH=3
+set /a stay=16389,born=28854,density=50,liveCol=7,slowDeath=1,NH=3
+
+
+set /a stay=40600,born=394500,density=50,liveCol=7,slowDeath=1,NH=4
+set /a stay=856643,born=755608,density=50,liveCol=7,slowDeath=1,NH=4
+set /a stay=856643,born=755608,density=50,liveCol=7,slowDeath=1,NH=4
+set /a stay=270654,born=360024,density=50,liveCol=7,slowDeath=1,NH=4
+set /a stay=270647,born=360056,density=50,liveCol=7,slowDeath=1,NH=4
+set /a stay=270647,born=360088,density=100,liveCol=7,slowDeath=1,NH=4
+set /a stay=270647,born=360108,density=80,liveCol=7,slowDeath=1,NH=4
+set /a stay=270647,born=360120,density=80,liveCol=7,slowDeath=1,NH=4
+set /a stay=270649,born=360152,density=80,liveCol=7,slowDeath=1,NH=4
+
+
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=49183,born=12475692,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=8391104,born=8009586,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=1175552,born=1910552,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=6630722,born=1459364,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=1292417,born=2097588,density=50,liveCol=7,slowDeath=1,NH=5
+set /a stay=2511649,born=7344648,density=60,liveCol=4,slowDeath=1,NH=5
+set /a stay=2511649,born=7344648,density=60,liveCol=5,slowDeath=1,NH=5
+set /a stay=2511619,born=7344648,density=100,liveCol=9,slowDeath=1,NH=5
+set /a stay=2511601,born=7344664,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=2511591,born=7344664,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=8967117,born=1052932,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=4920645,born=2924692,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=7690013,born=59176,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=2562,born=9566532,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=2564,born=9566532,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=2662674,born=3816020,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=12934361,born=163992,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=15552768,born=11458516,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=3158049,born=12596356,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=11325797,born=89228,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=5969476,born=793876,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=163976,born=4464696,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=13168986,born=8405528,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=4755457,born=5671692,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=1114510,born=8320868,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=8808,born=11369020,density=60,liveCol=9,slowDeath=1,NH=5
+set /a stay=8016664,born=20552,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=6837776,born=12747080,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=2025456,born=264545,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=655480,born=4488,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262664,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262680,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262686,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262687,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262695,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262699,density=60,liveCol=4,slowDeath=0,NH=5
+set /a stay=1441806,born=262664,density=60,liveCol=5,slowDeath=0,NH=5
+set /a stay=1441760,born=262664,density=40,liveCol=6,slowDeath=0,NH=5
+set /a stay=1441760,born=262664,density=50,liveCol=6,slowDeath=0,NH=5
+set /a stay=10176048,born=1179656,density=50,liveCol=6,slowDeath=0,NH=5
+set /a stay=10176048,born=1179656,density=40,liveCol=6,slowDeath=0,NH=5
+set /a stay=8650856,born=405512,density=40,liveCol=2,slowDeath=0,NH=5
+set /a stay=1,born=405512,density=40,liveCol=2,slowDeath=0,NH=5
+set /a stay=0,born=405512,density=40,liveCol=2,slowDeath=0,NH=5
+set /a stay=2,born=405512,density=40,liveCol=2,slowDeath=0,NH=5
+set /a stay=5,born=405512,density=40,liveCol=2,slowDeath=0,NH=5
+
+set /a stay=4264480,born=3334090,density=50,liveCol=15,slowDeath=1,NH=5
+set /a stay=6455392,born=720962,density=50,liveCol=15,slowDeath=1,NH=5
+set /a stay=11459589,born=4810780,density=50,liveCol=15,slowDeath=1,NH=5
+set /a stay=2127046,born=10033674,density=50,liveCol=1,slowDeath=0,NH=5
+set /a stay=8568618,born=6389895,density=50,liveCol=1,slowDeath=0,NH=5
+set /a stay=6110245,born=546912,density=50,liveCol=1,slowDeath=0,NH=5
+set /a stay=4477687,born=8462715,density=50,liveCol=1,slowDeath=0,NH=5
+set /a stay=6293504,born=77449,density=80,liveCol=1,slowDeath=0,NH=5
+set /a stay=13246450,born=115713,density=80,liveCol=1,slowDeath=0,NH=5
+set /a stay=6818304,born=5746812,density=80,liveCol=1,slowDeath=1,NH=5
+set /a stay=13840518,born=13418988,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=12327936,born=9152127,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=9971209,born=7370040,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=930674,born=15365591,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=8586385,born=10044890,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=10460767,born=3277066,density=90,liveCol=1,slowDeath=1,NH=5
+set /a stay=10460767,born=3277066,density=80,liveCol=1,slowDeath=1,NH=5
+set /a stay=8472976,born=4861952,density=50,liveCol=1,slowDeath=1,NH=5
+set /a stay=8472976,born=4861952,density=70,liveCol=1,slowDeath=1,NH=5
+set /a stay=8472976,born=4861952,density=80,liveCol=1,slowDeath=1,NH=5
+set /a stay=1765728,born=7270220,density=80,liveCol=1,slowDeath=1,NH=5
+set /a stay=11276059,born=9556992,density=80,liveCol=1,slowDeath=1,NH=5
+set /a stay=9662246,born=4914616,density=50,liveCol=1,slowDeath=1,NH=5
+
+
+set /a stay=608,born=60238,density=50,liveCol=7,slowDeath=1,NH=6
+set /a stay=23552,born=4372,density=100,liveCol=7,slowDeath=1,NH=6
+set /a stay=386,born=62778,density=60,liveCol=7,slowDeath=1,NH=6
+set /a stay=10703,born=276,density=60,liveCol=7,slowDeath=1,NH=6
+set /a stay=40047,born=9012,density=60,liveCol=7,slowDeath=1,NH=6
+set /a stay=40047,born=9012,density=100,liveCol=7,slowDeath=1,NH=6
+set /a stay=40047,born=9012,density=100,liveCol=7,slowDeath=1,NH=6
+set /a stay=40047,born=9012,density=100,liveCol=4,slowDeath=1,NH=6
+set /a stay=40047,born=9012,density=100,liveCol=9,slowDeath=1,NH=6
+set /a stay=8453,born=45948,density=80,liveCol=9,slowDeath=1,NH=6
+set /a stay=8453,born=45948,density=80,liveCol=9,slowDeath=1,NH=6
+set /a stay=8453,born=45948,density=80,liveCol=9,slowDeath=1,NH=6
+set /a stay=8453,born=45948,density=80,liveCol=10,slowDeath=1,NH=6
+set /a stay=384,born=45177,density=80,liveCol=9,slowDeath=1,NH=6
+set /a stay=54016,born=36162,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=2352,born=23069,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=8719,born=53006,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=8500,born=35842,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=43296,born=1562,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=7149,born=33582,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=26017,born=39726,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=6219,born=16718,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=51230,born=64794,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=31417,born=25980,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=31417,born=25980,density=60,liveCol=6,slowDeath=1,NH=6
+set /a stay=8230,born=17082,density=60,liveCol=9,slowDeath=1,NH=6
+set /a stay=1664,born=32452,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=1664,born=32452,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=5282,born=14596,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=36864,born=36,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=4864,born=33796,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=1058,born=56292,density=4,liveCol=7,slowDeath=0,NH=6
+set /a stay=34564,born=49156,density=3,liveCol=7,slowDeath=0,NH=6
+set /a stay=34112,born=24702,density=3,liveCol=7,slowDeath=1,NH=6
+set /a stay=41208,born=5499,density=3,liveCol=7,slowDeath=1,NH=6
+
+set /a stay=1024,born=2,density=90,liveCol=11,slowDeath=1,NH=7
+set /a stay=1992,born=2780,density=70,liveCol=4,slowDeath=0,NH=7
+set /a stay=3033,born=2594,density=60,liveCol=5,slowDeath=1,NH=7
+set /a stay=1938,born=3234,density=60,liveCol=5,slowDeath=1,NH=7
+set /a stay=1102,born=2407,density=60,liveCol=5,slowDeath=1,NH=7
+set /a stay=1102,born=2407,density=60,liveCol=5,slowDeath=1,NH=7
+set /a stay=2717,born=386,density=80,liveCol=5,slowDeath=1,NH=7
+
+set /a stay=3691,born=1666,density=50,liveCol=4,slowDeath=1,NH=7 & set PAL=1b4d95,b1f3b1,566286,f9a28b,e69c99,dfdaa0,6f8f99,7bd7bb,1a3ff2,a7888d,14a836,801228,0c379c,eb4d84,b94f7c,0e45fe,
+
+
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=8
+set /a stay=82,born=2,density=50,liveCol=7,slowDeath=1,NH=8
+set /a stay=82,born=2,density=60,liveCol=7,slowDeath=1,NH=8
+set /a stay=136,born=62,density=60,liveCol=7,slowDeath=1,NH=8
+set /a stay=162,born=118,density=60,liveCol=7,slowDeath=1,NH=8
+set /a stay=223,born=162,density=60,liveCol=7,slowDeath=1,NH=8
+set /a stay=0,born=83,density=90,liveCol=7,slowDeath=1,NH=8
+set /a stay=109,born=66,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=28,born=2,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=28,born=2,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=132,born=140,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=135,born=148,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=34,born=74,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=35,born=236,density=90,liveCol=4,slowDeath=1,NH=8
+set /a stay=35,born=236,density=97,liveCol=4,slowDeath=1,NH=8
+set /a stay=128,born=38,density=97,liveCol=4,slowDeath=1,NH=8
+set /a stay=92,born=82,density=97,liveCol=4,slowDeath=1,NH=8
+set /a stay=85,born=32,density=97,liveCol=1,slowDeath=1,NH=8
+set /a stay=85,born=32,density=80,liveCol=1,slowDeath=1,NH=8
+set /a stay=85,born=32,density=70,liveCol=1,slowDeath=1,NH=8
+set /a stay=85,born=32,density=75,liveCol=1,slowDeath=1,NH=8
+set /a stay=85,born=32,density=75,liveCol=1,slowDeath=1,NH=8 & set PAL=aa6adc,7da16f,1fe177,608e5e,0f0a8f,11792b,afc8fe,34edb1,b87041,372ab0,e64dfa,c6a44a,791c6e,558488,b79107,9925d6,
+set /a stay=230,born=2,density=75,liveCol=1,slowDeath=1,NH=8
+set /a stay=242,born=17,density=75,liveCol=1,slowDeath=1,NH=8
+set /a stay=80,born=96,density=23,liveCol=1,slowDeath=1,NH=8
+set /a stay=168,born=16,density=30,liveCol=1,slowDeath=1,NH=8
+set /a stay=220,born=16,density=22,liveCol=1,slowDeath=1,NH=8
+set /a stay=50,born=48,density=17,liveCol=1,slowDeath=1,NH=8
+set /a stay=137,born=112,density=13,liveCol=1,slowDeath=1,NH=8
+set /a stay=131,born=20,density=50,liveCol=4,slowDeath=0,NH=8
+set /a stay=161,born=20,density=50,liveCol=4,slowDeath=0,NH=8
+set /a stay=38,born=2,density=65,liveCol=9,slowDeath=0,NH=8
+set /a stay=235,born=204,density=65,liveCol=9,slowDeath=0,NH=8
+set /a stay=252,born=33,density=65,liveCol=1,slowDeath=0,NH=8
+set /a stay=1,born=68,density=65,liveCol=1,slowDeath=0,NH=8
+set /a stay=1,born=68,density=65,liveCol=1,slowDeath=0,NH=8 & set PAL=8107e5,2edc13,c67755,2ffbd3,f09c7c,8ca9f8,0fc9de,e68528,f306e4,e1202c,b59057,a68271,2f57e9,62a48a,7f7eac,c5f5ac,
+set /a stay=209,born=4,density=90,liveCol=1,slowDeath=0,NH=8 & set PAL=8107e5,2edc13,c67755,2ffbd3,f09c7c,8ca9f8,0fc9de,e68528,f306e4,e1202c,b59057,a68271,2f57e9,62a48a,7f7eac,c5f5ac,
+set /a stay=10,born=70,density=30,liveCol=15,slowDeath=1,NH=8
+set /a stay=192,born=1,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=87bc5e,625b37,887c5a,fca87e,d42c0a,3e1233,c14f65,c53ee5,564db4,25f7b6,cff213,62a9de,1eecf5,78e628,65509d,d4e572,
+set /a stay=192,born=1,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=4caae3,9c5740,ccc923,5c129e,9cce33,b711f3,ef9ee8,2a5ab1,ae006c,2915d9,f41fbb,981282,920b28,534059,8b37d6,a7371b,
+set /a stay=16,born=201,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=330a1c,da701b,f9bb84,8fffeb,77b7ac,8f5d30,1a386b,6376a9,a47a8b,25774c,a83e49,0554c1,1248d9,c543e3,9de1df,3d3f42,
+set /a stay=16,born=201,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=51bedc,129645,65020a,bbc6b0,5e0e84,9c02dd,289aa1,bdb40a,0464aa,b88bad,08ab5f,3df9ee,9cb470,8eb627,fe4904,033b6b,
+set /a stay=102,born=2,density=20,liveCol=15,slowDeath=1,NH=8
+set /a stay=9,born=138,density=30,liveCol=15,slowDeath=1,NH=8
+set /a stay=0,born=109,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=92a22a,a8910a,63f941,0ada65,fddc0a,90d836,199a15,48e6ed,b7b853,c2d0a0,996e9f,935b88,c62832,d4ba84,07072d,a11a94,
+set /a stay=128,born=239,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=a2f5e8,fff001,47e402,a912bb,a6c8d2,232870,bc2a3a,5ce583,0a0abf,06b13b,15580c,192846,e47b6e,4e9c31,85cd55,a58ff1,
+set /a stay=0,born=3,density=30,liveCol=15,slowDeath=1,NH=8 & set PAL=120554,ffc4c9,3f332f,549b42,eebe49,bc5d8f,82fd17,6ceb8c,a27e77,1c9cb5,b87f27,89b9ab,72764b,f402b5,458beb,a2273c,
+set /a stay=128,born=151,density=70,liveCol=15,slowDeath=1,NH=8 & set PAL=be58ea,974112,a4fd7a,fd4fa8,e28d6c,59aeae,19a569,a7eef8,bf6691,f55f0f,9cf4f4,e79aae,4ef819,33f946,c61f7b,261a7a,
+set /a stay=128,born=151,density=78,liveCol=15,slowDeath=1,NH=8 & set PAL=be58ea,974112,a4fd7a,fd4fa8,e28d6c,59aeae,19a569,a7eef8,bf6691,f55f0f,9cf4f4,e79aae,4ef819,33f946,c61f7b,261a7a,
+set /a stay=64,born=93,density=60,liveCol=15,slowDeath=1,NH=8
+set /a stay=192,born=131,density=74,liveCol=15,slowDeath=1,NH=8
+set /a stay=482,born=954,density=50,liveCol=7,slowDeath=1,NH=8
+set /a stay=627,born=20,density=80,liveCol=7,slowDeath=1,NH=8
+set /a stay=855,born=780,density=70,liveCol=7,slowDeath=1,NH=8
+
+set /a stay=44139,born=36798,density=5,liveCol=7,slowDeath=1,NH=9
+set /a stay=774,born=6,density=50,liveCol=7,slowDeath=1,NH=9
+set /a stay=44139,born=36798,density=50,liveCol=6,slowDeath=1,NH=9
+set /a stay=132,born=86,density=50,liveCol=5,slowDeath=1,NH=9
+set /a stay=70,born=322,density=50,liveCol=5,slowDeath=1,NH=9
+set /a stay=512,born=431,density=99,liveCol=5,slowDeath=1,NH=9 & set PAL=f52f3f,3e1f50,4e1b16,4cff15,e905a9,952ee2,f4e491,8bdda3,c042ae,0111ca,43c0a2,ae23cb,968f54,ae409e,78f86d,00e940,
+set /a stay=560,born=526,density=50,liveCol=5,slowDeath=1,NH=9
+set /a stay=525,born=850,density=40,liveCol=5,slowDeath=1,NH=9
+set /a stay=525,born=850,density=16,liveCol=9,slowDeath=1,NH=9
+set /a stay=505,born=466,density=16,liveCol=9,slowDeath=1,NH=9
+set /a stay=495,born=33,density=40,liveCol=1,slowDeath=0,NH=9
+set /a stay=490,born=147,density=40,liveCol=1,slowDeath=0,NH=9
+set /a stay=16,born=480,density=50,liveCol=1,slowDeath=1,NH=9
+set /a stay=16,born=480,density=55,liveCol=1,slowDeath=1,NH=9
+set /a stay=16,born=480,density=53,liveCol=1,slowDeath=1,NH=9
+
+set /a stay=1899,born=540,density=80,liveCol=7,slowDeath=1,NH=10 & rem tab or . box
+set /a stay=1257,born=1620,density=10,liveCol=4,slowDeath=1,NH=10
+set /a stay=524,born=260,density=10,liveCol=4,slowDeath=0,NH=10
+set /a stay=3023,born=1932,density=10,liveCol=1,slowDeath=1,NH=10 & set PAL=e88714,042b80,d9023f,f66a00,2e01c0,f77348,1090f7,67a2c1,39fd78,7bd74a,795a8c,bdf8b6,32ffae,896d49,dc050f,91a23e,
+set /a stay=1296,born=1402,density=20,liveCol=11,slowDeath=1,NH=10
+set /a stay=256,born=3814,density=20,liveCol=11,slowDeath=1,NH=10
+set /a stay=1188,born=562,density=4,liveCol=11,slowDeath=1,NH=10
+
+set /a stay=905,born=126,density=50,liveCol=7,slowDeath=1,NH=11
+set /a stay=391,born=282,density=5,liveCol=4,slowDeath=1,NH=11
+
+set /a stay=12212,born=11180,density=80,liveCol=7,slowDeath=1,NH=13 & set PAL=000000,c90f9e,3449bc,52327f,b3a2aa,d7b348,a92d48,49426b,0e7c60,ccf32d,52c3d0,37bd26,d75d0d,98fcc5,72479d,aef0cb,
+set /a stay=12212,born=11180,density=80,liveCol=7,slowDeath=1,NH=13 & set PAL=000000,aa9e5c,59ad19,4aba8f,3826ea,49101c,90ca7d,d68db4,9a6bdb,5686de,048024,e13272,71a10c,c32d1d,f60c58,fcf7e0,
+set /a stay=13137,born=29196,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=12880,born=22718,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=62123,born=39678,density=80,liveCol=7,slowDeath=1,NH=13 & set PAL=2464ab,5740fa,aa52e5,0e5492,760120,96c98a,eacacf,fbfc50,deab79,fd2ba3,1ac739,90fa1a,dce23f,5df19e,58e64e,3ffbeb,
+set /a stay=24656,born=24126,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=24656,born=24126,density=80,liveCol=7,slowDeath=1,NH=13 & set PAL=2464ab,5740fa,aa52e5,0e5492,760120,96c98a,eacacf,fbfc50,deab79,fd2ba3,1ac739,90fa1a,dce23f,5df19e,58e64e,3ffbeb,
+set /a stay=6688,born=30542,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=32069,born=49770,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=34080,born=57086,density=80,liveCol=7,slowDeath=1,NH=13
+set /a stay=34080,born=57086,density=80,liveCol=7,slowDeath=1,NH=13 & set PAL=8caddb,ecdaaf,882b8d,b3787c,d94f60,0f3c29,ee474a,a2bf6c,3e3664,52cd63,c0b26d,cbe60d,714446,fbbfcc,d2eb75,94bfea,
+set /a stay=4096,born=33116,density=80,liveCol=4,slowDeath=1,NH=13
+set /a stay=64863,born=21948,density=80,liveCol=4,slowDeath=1,NH=13
+set /a stay=25168,born=46644,density=80,liveCol=4,slowDeath=1,NH=13
+set /a stay=25168,born=46644,density=80,liveCol=4,slowDeath=1,NH=13
+set /a stay=25168,born=46644,density=80,liveCol=4,slowDeath=1,NH=13
+set /a stay=25168,born=46644,density=30,liveCol=4,slowDeath=1,NH=13
+set /a stay=25168,born=46644,density=15,liveCol=4,slowDeath=1,NH=13
+set /a stay=59406,born=1524,density=40,liveCol=4,slowDeath=1,NH=13
+set /a stay=37687,born=48892,density=40,liveCol=9,slowDeath=0,NH=13
+set /a stay=8267,born=24852,density=40,liveCol=9,slowDeath=0,NH=13
+set /a stay=844,born=16440,density=60,liveCol=9,slowDeath=0,NH=13
+set /a stay=34830,born=28820,density=10,liveCol=9,slowDeath=0,NH=13
+
+
+
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3 & set initPrep=0 & echo "cmdgfx: fellipse 7 0 db 960,540,465,307" n
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,updateRate=7
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,updateRate=7 & set PAL=000000,f68dd0,3d60a1,9b2401,d2206b,cd25b8,e1c48b,53beec,1abc33,e74028,63dc68,b7a20b,52db83,e6fcc7,b4d5b2,0a0ca5,
+set /a stay=44139,born=36798,density=50,liveCol=7,slowDeath=1,NH=3,updateRate=7 & set PAL=8d0862,d97564,df5b0d,f24fed,c9bc13,81d82d,e5d6f1,ee5ebb,863a77,9152c1,2eda4b,3aca7f,178e66,abffc9,ab9396,19d084,
+set /a stay=44139,born=36798,density=50,liveCol=3,slowDeath=1,NH=3,updateRate=9 & set /a initPrep=0 & echo "cmdgfx: fellipse 5 0 db 960,540,464,464" n& set PAL=000000,517ce3,567eec,688758,7ebe83,67cb46,69e9be,293c4f,ca66e8,595588,695e01,fa90fc,a0423d,e1ef28,de4484,367680,
+set /a stay=44139,born=36798,density=50,liveCol=3,slowDeath=1,NH=3,updateRate=9 & set PAL=000000,517ce3,567eec,688758,7ebe83,67cb46,69e9be,293c4f,ca66e8,595588,695e01,fa90fc,a0423d,e1ef28,de4484,367680,
+set /a stay=10250,born=596,density=50,liveCol=3,slowDeath=1,NH=3 & set PAL=000000,38e93e,c74b25,abdcf8,5c4492,28a94b,d4c8c1,8644d9,e33d00,7425b7,4ecf4e,f2c9ef,72ecdf,d53101,bdc79c,47625d,
+set /a stay=10250,born=596,density=50,liveCol=3,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 3 0 db 960,540,641,432" n& set PAL=000000,38e93e,c74b25,abdcf8,5c4492,28a94b,d4c8c1,8644d9,e33d00,7425b7,4ecf4e,f2c9ef,72ecdf,d53101,bdc79c,47625d,
+set /a stay=10233,born=596,density=50,liveCol=3,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=604,density=50,liveCol=3,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 3 0 db 960,540,476,468" n& set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=620,density=50,liveCol=3,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=636,density=50,liveCol=3,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 3 0 db 960,540,570,450" n& set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=668,density=50,liveCol=5,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 3 0 db 960,540,456,456" n& set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=668,density=50,liveCol=6,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=10179,born=668,density=50,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=18461,born=41020,density=50,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=18461,born=41020,density=49,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=4136,born=57998,density=49,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=4136,born=57998,density=49,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=4136,born=57998,density=49,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=4136,born=57998,density=49,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=8606,born=26878,density=50,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,11c109,6ae83d,d6a34d,bad563,372651,519fd4,51741a,672083,94b7a5,c77892,47a25d,508ada,01e9a6,767a67,31c555,
+set /a stay=32872,born=30262,density=60,liveCol=7,slowDeath=1,NH=3 & set PAL=a0bca2,f35656,319fb6,79448d,940075,90b59d,aabbca,72779c,293013,6e1f51,1ac5a2,6882b9,59623d,563a84,17f49e,c52795,
+set /a stay=32872,born=30262,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set PAL=5eabd5,47c258,bc04f3,c85bb9,b7f9e4,33eb19,adf1ed,ff8da7,4f5a47,369fc8,2124a3,f84494,fe44a0,f9e357,923257,fea611,
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set PAL=03f9d6,b31e0f,35bff4,08f38f,400b41,cfc61c,04c48d,513d3e,51f33a,096553,6f46c1,282d0b,968e2b,12e9ed,764198,dfd0d0,
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set PAL=b1f9bb,db7e63,5cf35b,0673a6,8191d4,94916e,a0d994,6da2e5,29f39f,aed007,04af0c,272b27,0afc85,db2768,8972cb,841b45,
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set PAL=000000,0e1127,f70d4b,ad2a7c,c72dbd,fb8904,9bd3e2,607665,67a83e,799c1f,8ff967,958c01,6f3989,3a38b1,d47ee4,9e7829,
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set PAL=038492,c72cff,98a12a,65a70f,b341fd,e1dbf7,b1c95b,04f0c1,e5c326,c9724a,155d56,e1cfc2,fce976,30dc2f,c75c25,4d51eb,
+set /a stay=4096,born=5622,density=60,liveCol=7,slowDeath=1,NH=3,updateRate=2 & set /a initPrep=0 & echo "cmdgfx: fbox 7 0 db 960,540,380,380" nV& set PAL=8daad9,5fc70a,5371b1,c03974,1266c7,112f57,662da9,5a0ffe,e2907b,d9a686,8cfc73,7ba360,5e055d,671ad1,c7de19,730271,
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3 & set PAL=000000,619db2,6a0148,2505df,babf87,5a2d92,806ef5,7632f1,1c70f2,e557b7,2286b3,837fb3,da59c2,23b649,c2f57b,0ba9f0,
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 9 0 db 960,540,866,340" n& set PAL=000000,619db2,6a0148,2505df,babf87,5a2d92,806ef5,7632f1,1c70f2,e557b7,2286b3,837fb3,da59c2,23b649,c2f57b,0ba9f0,
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fbox 9 0 db 960,540,380,380" nV& set PAL=000000,619db2,6a0148,2505df,babf87,5a2d92,806ef5,7632f1,1c70f2,e557b7,2286b3,837fb3,da59c2,23b649,c2f57b,0ba9f0,
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fbox 9 0 db 960,540,563,354" nV& set PAL=000000,619db2,6a0148,2505df,babf87,5a2d92,806ef5,7632f1,1c70f2,e557b7,2286b3,837fb3,da59c2,23b649,c2f57b,0ba9f0,
+set /a stay=52029,born=48604,density=80,liveCol=9,slowDeath=1,NH=3,updateRate=3 & set /a initPrep=0 & echo "cmdgfx: fbox 9 0 db 960,540,867,479" nV& set PAL=000000,39485a,f746f6,de4ced,e9fea0,2baf69,58d436,87b877,36713b,8f1295,ea2245,924d94,cc5a80,155d19,ac2e2b,50191d,
+set /a stay=40463,born=40370,density=80,liveCol=9,slowDeath=1,NH=3,updateRate=7 & set PAL=832648,39485a,f746f6,de4ced,e9fea0,2baf69,58d436,87b877,36713b,8f1295,ea2245,924d94,cc5a80,155d19,ac2e2b,50191d,
+set /a stay=32768,born=6845,density=80,liveCol=12,slowDeath=1,NH=3,updateRate=3 & set PAL=332a63,056fa4,32ef4e,d175cd,57b6d7,b8e1a9,cf7794,005db9,1c3011,84d8b0,92604a,3404f6,da8c32,93d927,72be2f,371195,
+set /a stay=32768,born=6845,density=80,liveCol=12,slowDeath=1,NH=3 & set /a initPrep=0 & echo "cmdgfx: fellipse 12 0 db 960,540,479,479" n& set PAL=332a63,056fa4,32ef4e,d175cd,57b6d7,b8e1a9,cf7794,005db9,1c3011,84d8b0,92604a,3404f6,da8c32,93d927,72be2f,371195,
+set /a stay=32768,born=6845,density=80,liveCol=15,slowDeath=1,NH=3,updateRate=3 & set PAL=a5b6aa,1df43d,920ccf,e7a385,89c73c,5a1d1d,ee3c71,fa54b6,0913f2,71c947,86cac8,0d148b,f431ff,405f80,46ef29,1eebea,
+set /a stay=8192,born=56813,density=80,liveCol=14,slowDeath=1,NH=3 & set PAL=709ed2,941cdd,1937cf,0a1e2a,151923,3c70f9,ce8986,965014,52db71,674f46,d2fda4,62d1e0,24eda1,1f9137,423e2e,9b1b23,
+set /a stay=8192,born=3,density=80,liveCol=14,slowDeath=1,NH=3 & set PAL=709ed2,941cdd,1937cf,0a1e2a,151923,3c70f9,ce8986,965014,52db71,674f46,d2fda4,62d1e0,24eda1,1f9137,423e2e,9b1b23,
+set /a stay=8192,born=3,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=2 & set PAL=000000,27c52b,e6862d,8928e3,c0ad1b,678e3a,ad4e7f,75558c,fcfc22,bce52c,918dff,1b24e0,639cc6,c10062,fd075d,b4e9e1,
+set /a stay=8192,born=3,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=3 & set PAL=000000,4b7ba7,50b943,74299e,99325b,11eff3,bfcafb,784ca6,af338a,52c5a7,ef65a5,1b645d,14199b,a53422,4a4ff1,95c6c5,
+set /a stay=8192,born=5,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=3 & set PAL=000000,4b7ba7,50b943,74299e,99325b,11eff3,bfcafb,784ca6,af338a,52c5a7,ef65a5,1b645d,14199b,a53422,4a4ff1,95c6c5,
+set /a stay=8192,born=7,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=5 & set PAL=ffffff,e6a6e0,e7bc96,65f31d,fe4121,d80618,354b76,484720,482824,c210a7,335d1f,d62dc2,bb213d,1962aa,e5e2bc,a3e53d,
+set /a stay=8192,born=11,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=4 & set PAL=ffffff,e6a6e0,e7bc96,65f31d,fe4121,d80618,354b76,484720,482824,c210a7,335d1f,d62dc2,bb213d,1962aa,e5e2bc,a3e53d,
+set /a stay=8192,born=13,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=4 & set PAL=ffffff,e6a6e0,e7bc96,65f31d,fe4121,d80618,354b76,484720,482824,c210a7,335d1f,d62dc2,bb213d,1962aa,e5e2bc,a3e53d,
+set /a stay=8192,born=15,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=4 & set PAL=000000,2f652f,ab3ffd,2eb1f2,b41df3,742d17,5772b9,af4bcb,26096c,f450bd,56c0f1,3bd5a4,400c6e,de48b7,e273cd,1e6833,
+set /a stay=8192,born=19,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=4 & set PAL=000000,2f652f,ab3ffd,2eb1f2,b41df3,742d17,5772b9,af4bcb,26096c,f450bd,56c0f1,3bd5a4,400c6e,de48b7,e273cd,1e6833,
+set /a stay=8192,born=23,density=80,liveCol=14,slowDeath=1,NH=3,updateRate=4 & set PAL=000000,2f652f,ab3ffd,2eb1f2,b41df3,742d17,5772b9,af4bcb,26096c,f450bd,56c0f1,3bd5a4,400c6e,de48b7,e273cd,1e6833,
+set /a stay=35634,born=9212,density=50,liveCol=7,slowDeath=1,NH=3 & set PAL=000000,95fabc,e3ddef,d7a5e6,e5ccc8,967f99,23e969,42b4cb,40cd89,506896,234544,b831b7,76cf9a,789810,2821ee,0f9c27,
+set /a stay=35634,born=9212,density=80,liveCol=7,slowDeath=1,NH=3,updateRate=4 & set PAL=000000,8a09c6,0bb285,aadb3b,32f328,05a1e8,b208a1,ca4a81,f04a68,30b7e1,924657,ee3e86,013a2f,c12a10,ee9c13,ea3ac6,
+set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3 & set PAL=000000,8a09c6,0bb285,aadb3b,32f328,05a1e8,b208a1,ca4a81,f04a68,30b7e1,924657,ee3e86,013a2f,c12a10,ee9c13,ea3ac6,

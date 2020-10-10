@@ -18,11 +18,13 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
-set /a XMID=%W%/2, YMID=%H%/2, DIST=2500
+call centerwindow.bat 0 -20
+call prepareScale.bat 1
+
+set /a XMID=%W%/2, YMID=%H%/2, DIST=2500, HLPY=H-2
 set /a DRAWMODE=0, NOF=6
 set ASPECT=0.75
 
-call centerwindow.bat 0 -20
 call sindef.bat
 
 set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, CHMODE=1, CLR=0, XTRW=0,XTRH=0
@@ -49,7 +51,7 @@ set /A XP6=0,YP6=250,ZP6=0
 set MUL=&set OW=&set CNT=&set CNTV=&set COS=&set STOP=
 
 set /a SHOWHELP=1
-set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,78"
+set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,%HLPY%"
 set MSG=""&if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set /a CNT=0 & for %%a in (14 10 7 1 3) do set BO!CNT!=%%a& set /a CNT+=1
@@ -89,7 +91,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2+2+XTRW, H=SCRH*2+2+XTRH, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0 & set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+2+XTRW, H=SCRH*2*rH/100+2+XTRH, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text 8 0 0 ENTER\-SPACE\-\g11\g10\-\g1f\g1e\-b\-d/D\-p\-h 1,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	set /a XROT-=3, YROT+=2, ZROT+=1
 

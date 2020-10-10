@@ -34,7 +34,7 @@ set PCOL7=f 7 b1
 set PCOL8=f 0 db
 
 set BGIMG=_.png
-set MENUFILE=3dGUI.dat
+set MENUFILE=data\3dGUI.dat
 if not "%~1"=="" set MENUFILE=%~1
 if not exist %MENUFILE% cls & echo Error: could not load %MENUFILE%. & cmdwiz getch & goto :ESCAPE
 

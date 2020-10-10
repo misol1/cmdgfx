@@ -10,9 +10,14 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
-set /a XMID=80/2, YMID=50/2-1, DIST=4000, DRAWMODE=1, END=0, RX=700, RY=0, RZ=0, SHOWHELP=1, HLPY=48
-set ASPECT=0.9375 & set STOP=
+
+set /a W=80, H=50
+
 call centerwindow.bat 0 -20
+call prepareScale.bat 6
+
+set /a XMID=W/2, YMID=H/2-1, DIST=4000, DRAWMODE=1, END=0, RX=700, RY=0, RZ=0, SHOWHELP=1, HLPY=H-2
+set ASPECT=0.9375 & set STOP=
 set HELPSKIP=& if !SHOWHELP!==0 set HELPSKIP=skip
 
 :REP
@@ -23,7 +28,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a "W=SCRW, H=SCRH, XMID=W/2, YMID=H/2, HLPY=H-2" & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a "W=SCRW*rW/100, H=SCRH*rH/100, XMID=W/2, YMID=H/2, HLPY=H-2" & cmdwiz showcursor 0
 	
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 112 cmdwiz getch

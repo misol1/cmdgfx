@@ -5,13 +5,14 @@ cmdwiz showcursor 0
 
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,180,110 - 000000,ff6666,550000,ffff66,555500,66ff66,005500,ff66ff,550055,00002f,000052,003333,004f4f,006666,1f1f1f,333333
+cmdgfx_input.exe m0unW14xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,180,110t4 - 000000,ff6666,550000,ffff66,555500,66ff66,005500,ff66ff,550055,00002f,000052,003333,004f4f,006666,1f1f1f,333333
 set __=
 goto :eof
 
 :START
 setlocal EnableDelayedExpansion
-set /a F6W=180/2, F6H=110/2
+set /a W=180, H=110
+set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 
 cmdwiz getdisplaydim w & set SW=!errorlevel!
@@ -20,6 +21,8 @@ cmdwiz getwindowbounds w & set WINW=!errorlevel!
 cmdwiz getwindowbounds h & set WINH=!errorlevel!
 set /a WPX=%SW%/2-%WINW%/2, WPY=%SH%/2-%WINH%/2-20
 cmdwiz setwindowpos %WPX% %WPY%
+
+call prepareScale.bat 0
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -31,7 +34,20 @@ endlocal
 exit /b 0 */
 
 
-var W=180*4+1, H=110*6+1, RY=0
+var fs = new ActiveXObject("Scripting.FileSystemObject")
+var shell = new ActiveXObject("WScript.Shell")
+
+function Execute(cmd) {
+	var exec = shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
+var W=GetCmdVar("W")+1, H=GetCmdVar("H")+1, rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+var RY=0, XMID=W/2, YMID=H/2-53
 var XMID=W/2, YMID=H/2-53
 var DIST=2500, ASPECT=1
 var DRAWMODE=0, GROUNDCOL=3, PLYCHAR="."
@@ -42,9 +58,6 @@ var SHADOW=true
 var NIGHTSKIP=""
 var NIGHT=false
 var USENIGHT=true
-
-var fs = new ActiveXObject("Scripting.FileSystemObject")
-var shell = new ActiveXObject("WScript.Shell")
 
 var TOP=""
 var SCRW=Execute('cmdwiz getdisplaydim w');
@@ -224,7 +237,7 @@ shell.Exec("cmd /c taskkill.exe /F /IM dlc.exe>nul")
 
 function Resize(XRes, YRes) {
 	shell.Exec('cmdwiz showcursor 0')
-	W=(Number(XRes)+1)*2*4, H=(Number(YRes)+1)*2*6+1
+	W=Math.floor((Number(XRes)+1)*2*4*rW/100), H=Math.floor((Number(YRes)+1)*2*6*rH/100)+1
 	if (TOP=="U") { W=Math.floor(SCRW/FONTW); if (FONTW>1) W+=1; H=Math.floor(SCRH/FONTH); if (FONTH>1) H+=1; }
 	YMDIV=2.1; if (H<110*4) YMDIV=2
 	XMID=Math.floor(W/2), YMID=Math.floor(H/2)-52-Math.floor((H-110)/YMDIV)

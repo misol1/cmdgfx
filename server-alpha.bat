@@ -13,8 +13,10 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=160, H=80
 set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
-call centerwindow.bat 0 -20
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
+call centerwindow.bat 0 -20
+call prepareScale.bat 1
  
 set /a NOF_STARS=60, SDIST=4500, BGCOL=0
 set /A TX=0,TX2=-2600
@@ -70,7 +72,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, TEXTX=W/2-12/2, SDIST=4500-(SCRW-80)*20" & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, XMID=W/2, YMID=H/2, TEXTX=W/2-12/2, SDIST=4500-(SCRW-80)*20" & cmdwiz showcursor 0
 	
 	if !EXIT! == 0 if !ROTMODE! == 0 set /a "CRX=(!CRX!+2) %% 1440,CRY=(!CRY!+5) %% 1440,CRZ=(!CRZ!+7) %% 1440"
 

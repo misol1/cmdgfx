@@ -2,7 +2,7 @@
 cmdwiz setfont 8 & cls & cmdwiz showcursor 0 & title Fractal (Space=Mandel/Julia, Enter=manual/auto, cursor keys=move, x/X=zoom in manual, i/I inc/decr iterations, l=color order, a=anim, m=op)
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW12xRz50 | call %0 %* | cmdgfx_RGB "" Sf1:0,0,160,80t6
+cmdgfx_input.exe knW12xR | call %0 %* | cmdgfx_RGB "" Sf1:0,0,160,80t6
 set __=
 cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof
@@ -13,6 +13,7 @@ set /a W=160, H=80, F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 call centerwindow.bat 0 -18
+call prepareScale.bat 1
  
 set /a WH=W/2+20, HH=H/2, zoom=300, manual=0, mandel=0, fps=0, light=0, anim=1, A=1, maxCount=10, mcMul1=255/maxCount/2, mcMul2=255/maxCount
 set /a imop=0 & set mop=+&set amop=+-*/
@@ -34,7 +35,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	if !light!==1 set STR="!STR:~1,-1!+makecol(0,(!maxCount!-s2)*!mcMul1!,(!maxCount!-s2)*!mcMul2!)"
 	echo "cmdgfx: fbox 0 0 b1 & block 0 0,0,!W!,!H! 0,0 -1 0 0 - !STR:~1,-1! & !fpskip! text a 0 0 [FRAMECOUNT] 1,1" Ff1:0,0,!W!,!H!
 	
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WH=W/2+20, HH=H/2" & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, WH=W/2+20, HH=H/2" & cmdwiz showcursor 0
 
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 331 set /a WH+=2

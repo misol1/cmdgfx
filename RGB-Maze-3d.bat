@@ -5,7 +5,7 @@ if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
 mode %F6W%,%F6H%
 set __=.
-cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB "" Sfa:0,0,720,480Z600Bt4
+cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_RGB_32 "" Sfa:0,0,720,480Z600Bt4
 set __=
 mode 80,50
 cls & cmdwiz setfont 6
@@ -20,12 +20,11 @@ set /a W=180, H=80
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==W if not %%v==H set "%%v="
 
 set /a W*=4, H*=6
-cmdwiz getdisplaydim w & set SW=!errorlevel!
-cmdwiz getdisplaydim h & set SH=!errorlevel!
-set /a SW=%SW%/2, SH=%SH%/2
-set /a WPX=%SW%-%W%/2, WPY=%SH%-%H%/2-20
-cmdwiz setwindowpos %WPX% %WPY%
-cmdgfx_gdi.exe "text 8 0 0 Generating_world... 82,36" f0:0,0,180,80
+call centerwindow.bat 0 -20
+call prepareScale.bat 10
+
+set /a GXT=82*rW/100, GYT=36*rH/100
+cmdgfx_gdi.exe "text 8 0 0 Generating_world... %GXT%,%GYT%" f0:0,0,380,280
 
 set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"
@@ -35,7 +34,7 @@ set CUBECOLS=0 0 ? 0 0 ?  0 0 ?  0 0 ?  0 0 ? 0 0 ?
 set GROUNDCOLS=0 0 ?  0 0 ?
 
 set /a CNT=0, SLOTS=0
-set FWORLD=3dworld-maze.dat
+set FWORLD=data\3dworld-maze.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /a CNT+=1
 set /a YSLOTS=%CNT%
@@ -103,12 +102,13 @@ for /l %%a in (0,1,%CNT%) do set sx%%a=&set sy%%a=&set sz%%a=&set dx%%a=&set dy%
 
 set BKSTR="fbox 9 1 ?"
 set /a MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld-maze.dat 5 0 0 - 680,5
+set MAPTXT=image data/3dworld-maze.dat 5 0 0 - 680,5
 
 set /a "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /a XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 
-cmdwiz setwindowpos %WPX% %WPY%
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
 set /a MPY=%SH%-%H%/3 & cmdwiz setmousecursorpos %SW% !MPY!
 cmdwiz gettime & set ORGT=!errorlevel!
 set /a KEY=0
@@ -120,12 +120,12 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	if !MAP!==1 set /a "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+5" & set MAPP=pixel f 0 db !XP!,!ZP!
 
 	if !CLRBKG! gtr 0 set /a CLRBKG-=1 & echo "cmdgfx: fbox ? ? b1"
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-500,25000,300 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,100 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" Ffa:0,0,!W!,!H!Z!ZVAL!
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-500,25000,30 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d %FN% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-100,25000,30 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & skip text f 0 0 [FRAMECOUNT] 10,10 6" Ffa:0,0,!W!,!H!Z!ZVAL!
 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W="(SCRW*2+2)*4, H=(SCRH*2+2)*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5, CLRBKG=20" & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W="(SCRW*2+2)*4*rW/100, H=(SCRH*2+2)*6*rH/100, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5, CLRBKG=20" & cmdwiz showcursor 0 & set MAPTXT=image data/3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
 
 	if not "!EV_BASE:~0,1!" == "N" (
 	
@@ -138,7 +138,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 			if !K_DOWN!==0 (
 				set /a KEY=!K_KEY!
 				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-				if !KEY! == 109 set MAPP=&set /a XMAP=W-40 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5 & set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
+				if !KEY! == 109 set MAPP=&set /a XMAP=W-40 & set MAPTXT=image data/3dworld-maze.dat 5 0 0 - !XMAP!,5 & set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4, TY=0, BOUNDSCHECK=1
 				rem if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)

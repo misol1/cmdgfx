@@ -5,6 +5,7 @@
 #include <string.h>
 #include <conio.h>
 #include <windows.h>
+#include "outputText.h"
 #include "gfxlib.h"
 
 int XRES, YRES, FRAMESIZE;
@@ -112,7 +113,8 @@ void drawcurve (float cpoints[][2], int nof_points, uchar col, int xg, int yg, i
 			}
 			else {
 				fcol = (y + yg) / 6 + 20;
-				if (fcol < 24) fcol = 24; if (fcol > 31) fcol = 31;
+				if (fcol < 24) fcol = 24;
+				if (fcol > 31) fcol = 31;
 				vline(x + xg, y + yg, YRES, fcol);
 				if (outline) {
 					line(x + xg, y + yg, oldx + xg, oldy + yg, col, 1);
@@ -191,8 +193,7 @@ int main(int argc, char *argv[]) {
 	uchar usebg = 0, usebgchars = 0;
 	float cpoints[50][2], cc = 1.6, aa=0;
 	float add[50], accum[50], add2[50], accum2[50];
-	intVector vv[3];
-	int I[24], tx;
+	int I[24];
 	int clipedges[4]={2,2,0,0};
 	int txres, tyres;
 	Bitmap b_pcx, b_sides[6];
@@ -300,7 +301,6 @@ int main(int argc, char *argv[]) {
 	for(i=0; i<4; i++) { triangle[i+20].z=triangle[3-i].x; triangle[i+20].y=triangle[3-i].y; triangle[i+20].x=-250;
 		triangle[i+20].u=triangle[3-i].u; triangle[i+20].v=triangle[3-i].v; }
 	
-	vv[0].x=-40; vv[0].y=10; vv[1].x=30; vv[1].y=-30; vv[2].x=400; vv[2].y=220;
 	I[0]=8; I[1]=19; I[2]=18; I[3]=9;
 
 	if (!(PCXload (&b_pcx,"testlib\\TX\\rip45_2.pcx"))) return 0;
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
 	setResolution(txres*scale, tyres*scale+1);
 	xg = XRES/2, yg = YRES/2+1;
 	SCR_XRES = XRES; SCR_YRES = YRES;
-	tx = XRES;
+	
 	clipedges[2] = XRES - 2;
 	clipedges[3] = YRES - 2;
 

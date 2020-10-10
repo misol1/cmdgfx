@@ -1,6 +1,5 @@
 @echo off
 cls & cmdwiz setfont 6 & title 3d maze test2 (Mouse + left/right/j/k up/down/w/s a/d PgUp/PgDwn Home/End Space m)
-mode con rate=0 delay=10000
 cmdwiz showcursor 0
 if defined __ goto :START
 set /a F6W=180/2, F6H=80/2
@@ -9,7 +8,6 @@ set __=.
 cmdgfx_input.exe M0unW35xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,720,480Z600t4
 set __=
 mode 80,50
-mode con rate=31 delay=0
 cls & cmdwiz setfont 6
 set F6W=&set F6H=
 goto :eof
@@ -19,16 +17,14 @@ goto :eof
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 set /a W=180, H=80
-mode con rate=0 delay=10000
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==W if not %%v==H set "%%v="
-
 set /a W*=4, H*=6
-cmdwiz getdisplaydim w & set SW=!errorlevel!
-cmdwiz getdisplaydim h & set SH=!errorlevel!
-set /a SW=%SW%/2, SH=%SH%/2
-set /a WPX=%SW%-%W%/2, WPY=%SH%-%H%/2-20
-cmdwiz setwindowpos %WPX% %WPY%
-cmdgfx_gdi.exe "text 8 0 0 Generating_world... 82,36" f0:0,0,180,80
+
+call centerwindow.bat 0 -20
+call prepareScale.bat 10
+
+set /a TXTX=82*rW/100, TXTY=36*rH/100 
+cmdgfx_gdi.exe "text 8 0 0 Generating_world... %TXTX%,%TXTY%" f0:0,0,380,280
 
 set /a XMID=%W%/2, YMID=%H%/2-10, RX=0, RY=720, RZ=0
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=800, YMULVAL=125"
@@ -38,7 +34,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /a CNT=0, SLOTS=0
-set FWORLD=3dworld-maze.dat
+set FWORLD=data\3dworld-maze.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /a CNT+=1
 set /a YSLOTS=%CNT%
@@ -106,12 +102,13 @@ for /l %%a in (0,1,%CNT%) do set sx%%a=&set sy%%a=&set sz%%a=&set dx%%a=&set dy%
 
 set BKSTR="fbox 9 1 b1"
 set /a MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld-maze.dat 5 0 0 - 680,5
+set MAPTXT=image data/3dworld-maze.dat 5 0 0 - 680,5
 
 set /a "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /a XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
 
-cmdwiz setwindowpos %WPX% %WPY%
+cmdwiz getdisplaydim w & set SW=!errorlevel!
+cmdwiz getdisplaydim h & set SH=!errorlevel!
 set /a MPY=%SH%-%H%/3 & cmdwiz setmousecursorpos %SW% !MPY!
 cmdwiz gettime & set ORGT=!errorlevel!
 set /a KEY=0
@@ -127,7 +124,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5 & cmdwiz showcursor 0 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4*rW/100, H=SCRH*2*6*rH/100, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=456+W/5 & cmdwiz showcursor 0 & set MAPTXT=image data/3dworld-maze.dat 5 0 0 - !XMAP!,5& if !MAP!==1 set MAPT=!MAPTXT!
 
 	if not "!EV_BASE:~0,1!" == "N" (
 	
@@ -140,7 +137,7 @@ for /l %%1 in (1,1,300) do if not defined STOP (
 			if !K_DOWN!==0 (
 				set /a KEY=!K_KEY!
 				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-				if !KEY! == 109 set MAPP=&set /a XMAP=W-40 & set MAPTXT=image 3dworld-maze.dat 5 0 0 - !XMAP!,5 & set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
+				if !KEY! == 109 set MAPP=&set /a XMAP=W-40 & set MAPTXT=image data/3dworld-maze.dat 5 0 0 - !XMAP!,5 & set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4, TY=0, BOUNDSCHECK=1
 				rem if !KEY! == 13 set /a DRAWTMP=!DRAWMODE! & (if !DRAWTMP! == 0 set DRAWMODE=5) & (if !DRAWTMP! == 5 set DRAWMODE=0)
@@ -179,7 +176,6 @@ if not defined STOP goto LOOP
 endlocal
 cmdwiz delay 100
 cmdwiz showcursor 1
-mode con rate=31 delay=0
 echo "cmdgfx: quit"
 title input:Q
 goto :eof

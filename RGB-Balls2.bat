@@ -18,12 +18,13 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=200, H=80
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
 
+call centerwindow.bat 0 -20
+call prepareScale.bat 6 1
+call sindef.bat
+
 set /a XMID=%W%/2, YMID=%H%/2, DIST=2300
 set /a DRAWMODE=5, NOF=7
 set ASPECT=0.66
-
-call centerwindow.bat 0 -20
-call sindef.bat
 
 set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, CHMODE=1, CLR=0
 
@@ -93,7 +94,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW+2, H=SCRH+3 & (if "!TOP!"=="U" set /a W=LFSW, H=LFSH) & set /a XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & call :DRAWBALLS
+	if "!RESIZED!"=="1" set /a W=SCRW*rW/100+2, H=SCRH*rH/100+3 & (if "!TOP!"=="U" set /a W=LFSW, H=LFSH) & set /a XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & call :DRAWBALLS
 	
 	set /a XROT-=2, YROT+=1, ZROT+=1
 

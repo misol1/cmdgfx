@@ -25,6 +25,9 @@ if not defined __ (
 
 title BWin misol GUI 101
 if exist centerwindow.bat call centerwindow.bat 0 -20
+if exist prepareScale.bat call prepareScale.bat 2 1
+set /a WPAGES=3, WWW=W*WPAGES, HH=H*2
+
 set DIRCMD=
 ::cmdwiz setwindowpos k k topmost
 
@@ -122,6 +125,8 @@ var File = new ActiveXObject("Scripting.FileSystemObject");
 var FONT=GetCmdVar("FONT")
 var W=GetCmdVar("W")
 var H=GetCmdVar("H")
+var rW=GetCmdVar("rW")
+var rH=GetCmdVar("rH")
 var WPAGES=GetCmdVar("WPAGES")
 var MAXTW=GetCmdVar("MAXTW")
 var MAXTH=GetCmdVar("MAXTH")
@@ -159,6 +164,8 @@ for (i = 0; i < windows.length; i++) {
 }
 
 for (i = 0; i < windows.length; i++) { WindowStart(windows[i]); }
+
+WScript.Echo("\"cmdgfx: \" f" + FONT + ":0,0," + WWW + "," + HH + "," + W + "," + H)
 
 while(true) {
 	var winStr=""
@@ -234,16 +241,16 @@ while(true) {
 	
 	var KEY = Number(tokens[5])
 	var M_EVENT = Number(tokens[7])
-	var M_X = Number(tokens[9])
-	var M_Y = Number(tokens[11])
+	var M_X = Math.floor(Number(tokens[9])*rW/100);
+	var M_Y = Math.floor(Number(tokens[11])*rH/100);
 	var M_LB = Number(tokens[13])
 	var M_RB = Number(tokens[15])
 	var M_LB_DBL = Number(tokens[17])
 	var M_RB_DBL = Number(tokens[19])
 	var M_WHEEL = Number(tokens[21])
 	var SIZE_EVENT = Number(tokens[23])
-	var SIZE_W = Number(tokens[25])
-	var SIZE_H = Number(tokens[27])
+	var SIZE_W = Math.floor(Number(tokens[25])*rW/100)
+	var SIZE_H = Math.floor(Number(tokens[27])*rH/100)
 
 	if (M_EVENT==1 && windows.length > 0) {
 		if (M_LB==1) {

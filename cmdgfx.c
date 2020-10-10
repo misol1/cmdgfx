@@ -2,12 +2,14 @@
  * Cmdgfx (c) Mikael Sollenborn 2016-20 *
  ****************************************/
 
-//#define GDI_OUTPUT
-
-// needed for mingw to recognize GDI functions
-#ifdef GDI_OUTPUT
-#define _WIN32_WINNT 0x0500
+#ifndef WINVER
+#define WINVER 0x600
 #endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x600
+#endif
+
+//#define GDI_OUTPUT
 
 #include <stdio.h>
 #include <math.h>
@@ -25,23 +27,16 @@
 // Issues/ideas:
 // 1. Code optimization: Re-use images used several times, same way as for 3d objects (or possibly, use binary alternative to gxy to remove parsing, might be almost as fast)
 // 2. Force col for tpoly/3d? Free rotation for block?
-// 3. Major: Port to Linux
-// 4. RGB: long double for colexpr to support/keep bgcol?
-// 5, brush op from dwself?
-// 6. RGB: Make specified 3d colors work better with textures (should not overflow the colors, should be safe to do e.g 555555 and not overflow. Should also be correct for - . And work for bgcol too...)
-// 7. Allow set texture(s) for 3d obj from 3d op, to avoid having to use loads of dupl objects just to change texture
-// 8. RGB: Allow bgy files with alpha, to use by various ops?
-// 9. Sending command with title to cmdgfx does not seem reliable... (misses sometimes)
-
-// New for v1.6:
-// 1. Threading for block, fbox, bitblit, pixelprep
-// 2. Expr: Added perlin, fix of neg, added mod
-// 3. New scripts like plasmalab, RGB-SS-Fire, RGB-SS-Kaleidoscope-Transp.bat, RGB-Kaleidoscope-Blended-Pixel-fake.bat, ScreenSaver-ObjHollow1-IPoly, etc
-// 4. Cmdwiz 1.5: sendkey repeat
-// 5. Transform for RGB now allows checking for (various) kinds of color too(Max,Avg,R,G,B (both fg and/or bg)). Cannot SET color though. So what it is is: search for color and/or char, replace char
-// 6. RGB colexpr has new functions(makebgcol, makefgbgcol, keepbgcol, keepfgcol, safeor, bgr, bgg, bgb) and can now also create bgcolor as well as preserve bgcol (or fgcol)
-// 7. Cmdgfx_input: zn flag
-
+// 3. brush op from dwself?
+// 4. Allow set texture(s) for 3d obj from 3d op, to avoid having to use loads of dupl objects just to change texture
+// 5. RGB: Make specified 3d colors work better with textures (should not overflow the colors, should be safe to do e.g 555555 and not overflow. Should also be correct for - . And work for bgcol too...)
+// 6. RGB: Allow bgy files with alpha, to use by various ops
+// 7. Sending commands with title to cmdgfx does not seem reliable... (misses sometimes)
+// 8. 3d Z-lighting mode for textures ("fog")
+// 9. Wrap for text op
+// 10. GDI: Scale output image with flag (to support Windows scaling)
+// 11. Non-GDI: Add support for two more params to f flag for x,y of final output offset
+// 12. Major: Port to Linux
 
 int XRES, YRES, FRAMESIZE;
 uchar *video;
@@ -75,11 +70,11 @@ unsigned char colLookup[256];
 
 HANDLE g_conin, g_conout;
 
-HANDLE GetInputHandle() {
+static HANDLE GetInputHandle() {
 	return CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 }
 
-HANDLE GetOutputHandle() {
+static HANDLE GetOutputHandle() {
 	return CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 }
 
@@ -102,14 +97,14 @@ HANDLE ghAwaitWorkBlitEvent;
 int gbThreadsCreated = 0;
 #endif
 
-unsigned __stdcall process_op(void *arg);
+static unsigned __stdcall process_op(void *arg);
 
 enum { THREAD_OP_BLOCK, THREAD_OP_FBOX, THREAD_OP_PIXELPREP };
 
 typedef struct {
 	int op;
 	
-	//block (and partly reusedby other ops)
+	//block (and partly reused by other ops)
 	char *s_mode; int x; int y; int w; int h; int nx; int ny; int nw; int nh; int rz; char *transf; char *colorExpr; char *xExpr; char *yExpr; int XRES; int YRES; uchar *videoCol; uchar *videoChar; int transpchar; int bFlipX; int bFlipY; int bTo; int mvx;int mvy; int mvw; int mvh;
 
 	//fbox
@@ -131,8 +126,7 @@ typedef struct  {
 } BlitData;
 
 
-
-int MouseClicked(MOUSE_EVENT_RECORD mer) {
+static int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
 	int res = 0;
 
@@ -158,7 +152,7 @@ int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	return res;
 }
 
-int MouseEventProc(MOUSE_EVENT_RECORD mer) {
+static int MouseEventProc(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
 	
 	int res;
@@ -192,7 +186,7 @@ int MouseEventProc(MOUSE_EVENT_RECORD mer) {
 
 int consoleFgCol=-1, consoleBgCol=-1;
 
-void GetConsoleColor(){
+static void GetConsoleColor(){
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	int col = 0x7;
 	GetConsoleScreenBufferInfo(g_conout, &info);
@@ -204,7 +198,7 @@ void GetConsoleColor(){
 int GXY_MAX_X = 256, GXY_MAX_Y = 256;
 unsigned int *g_rgbFgPalette, *g_rgbBgPalette;
 
-int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, uchar color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor, int bIgnoreAllCodes) {
+static int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, uchar color, int transpchar,int bIsFile,int bIgnoreFgColor, int bIgnoreBgColor, int bIgnoreAllCodes) {
 	unsigned char *text, ch;
 	uchar *pbcol, *pbchar;
 	int fr, i, j, 	inlen;
@@ -354,7 +348,7 @@ int readGxy(char *fname, Bitmap *b_cols, Bitmap *b_chars, int *w1, int *h1, ucha
 
 
 
-int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgcol, int *dchar, int *bWriteChars, int *bWriteCols) {
+static int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgcol, int *dchar, int *bWriteChars, int *bWriteCols) {
 	int writeCols = 1, writeChars = 1, writeFgBg = 3, sLen;
 	
 	sLen = strlen(s_fgcol);
@@ -434,12 +428,12 @@ int parseInput(char *s_fgcol, char *s_bgcol, char *s_dchar, int *fgcol, int *bgc
 
 ErrorHandler *g_errH;
 int g_opCount;
-void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op);
+static void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op);
 uchar *g_videoCol, *g_videoChar;
 int g_bSleepingWait = 0;
 int g_bFlushAfterELwrite = 0;
 
-int readCmdGfxTexture(Bitmap *bmap, char *fname) {
+static int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 	char *orgFnameP = fname;
 	int res = 0;
 	if (!bmap || !fname) return res;
@@ -639,7 +633,7 @@ int readCmdGfxTexture(Bitmap *bmap, char *fname) {
 }
 
 
-CHAR_INFO * readScreenBlock() {
+static CHAR_INFO * readScreenBlock() {
 	COORD a = { 1, 1 };
 	COORD b = { 0, 0 };
 	SMALL_RECT r;
@@ -684,7 +678,7 @@ CHAR_INFO * readScreenBlock() {
 #ifndef GDI_OUTPUT
 
 #ifndef _RGB32
-void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y, int outw, int outh) {
+static void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *fgPalette, uchar *bgPalette, int x,int y, int outw, int outh) {
 	CHAR_INFO *str;
 	COORD a, b;
 	SMALL_RECT r;
@@ -728,7 +722,7 @@ void convertToText(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar 
 
 #else
 
-void convertToVT100(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int x, int y, int outw, int outh) {
+static void convertToVT100(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int x, int y, int outw, int outh) {
 	unsigned int i,j,fcol,bcol,cchar, oldfcol = -1, oldbcol = -1, k=0;
 	unsigned char *outS = malloc(40 * XRES + 10);
 
@@ -771,7 +765,7 @@ HBITMAP g_bitmap;
 int g_blitX, g_blitY, g_blitW, g_blitH;
 
 
-void prepPixels(int fw, int fh, uchar *videoCol, uchar *videoChar, int fontIndex, int outw, int outh, int *data, int yp, unsigned int *palFg, unsigned int *palBg) {
+static void prepPixels(int fw, int fh, uchar *videoCol, uchar *videoChar, int fontIndex, int outw, int outh, int *data, int yp, unsigned int *palFg, unsigned int *palBg) {
 	int i,j,ccol,cchar,l,m, index;
 	unsigned int *outdata = NULL, *pcol, *outt, *fgcol, *bgcol, rgbfgcol, rgbbgcol;
 	unsigned long long rgbcoltemp;
@@ -858,8 +852,7 @@ void prepPixels(int fw, int fh, uchar *videoCol, uchar *videoChar, int fontIndex
 	}
 }
 
-
-void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int bAbsBitmapPos, int bWindowedMode, int allowedThreads, HANDLE *threadhandles, BlockData *bds) {
+static void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg, int x, int y, int outw, int outh, int outx, int outy, int bAbsBitmapPos, int bWindowedMode, int allowedThreads, HANDLE *threadhandles, BlockData *bds) {
 	HBITMAP hBmp1 = NULL;
 	HGDIOBJ hGdiObj = NULL;
 	BITMAP bmp = {0};
@@ -867,8 +860,8 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	int iRet = EXIT_FAILURE;
 	static unsigned int cmdPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
 	static int *fontData[16] = { &cmd_font0_data[0][0], &cmd_font1_data[0][0], &cmd_font2_data[0][0], &cmd_font3_data[0][0], &cmd_font4_data[0][0], &cmd_font5_data[0][0], &cmd_font6_data[0][0], &cmd_font7_data[0][0], &cmd_font8_data[0][0], &cmd_font9_data[0][0], NULL, NULL, NULL };
-	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3 };
-	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3 };
+	int fontWidth[16] = { cmd_font0_w, cmd_font1_w, cmd_font2_w, cmd_font3_w, cmd_font4_w, cmd_font5_w, cmd_font6_w, cmd_font7_w, cmd_font8_w, cmd_font9_w, 1,2,3,4,5,6 };
+	int fontHeight[16] = { cmd_font0_h, cmd_font1_h, cmd_font3_h, cmd_font3_h, cmd_font4_h, cmd_font5_h, cmd_font6_h, cmd_font7_h, cmd_font8_h, cmd_font9_h, 1,2,3,4,5,6 };
 	int fw, fh, *data, val, bpp = 4;
 	unsigned int *palFg, *palBg;
 	static int oldw=-1, oldh=-1, oldFontIndex = -1, oldbWindowedMode = -1;
@@ -877,7 +870,7 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	if (cmdPaletteFg == NULL) palFg = &cmdPalette[0]; else palFg = cmdPaletteFg;
 	if (cmdPaletteBg == NULL) palBg = &cmdPalette[0]; else palBg = cmdPaletteBg;
 
-	if (fontIndex < 0 || fontIndex > 12)
+	if (fontIndex < 0 || fontIndex > 15)
 		return;
 
 	fw = fontWidth[fontIndex];
@@ -887,7 +880,7 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	if (!bAbsBitmapPos) {
 		x *= fw; y *= fh;
 	}
-
+	
 	w = outw * fw;
 	h = outh * fh;
 
@@ -923,6 +916,13 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 
 	if (g_hDcBmp)
 	{
+		if (outx < 0) outx = 0;
+		if (outy < 0) outy = 0;
+		if (outx + outw > XRES) outx = XRES - outw;
+		if (outy + outh > YRES) outy = YRES - outh;
+		
+		videoChar = videoChar + outx + outy * XRES;
+		videoCol = videoCol + outx + outy * XRES;
 		
 		if (allowedThreads <= 1) {
 			prepPixels(fw, fh, videoCol, videoChar, fontIndex, outw, outh, data, 0, palFg, palBg);
@@ -957,13 +957,12 @@ void convertToGdiBitmap(int XRES, int YRES, uchar *videoCol, uchar *videoChar, i
 	}
 
 	//GdiFlush();
-	
 	//if (iRet == EXIT_FAILURE) printf("#ERR: Failure processing output bitmap\n");
 }
 
 
 
-void writeGdiFontString(int XRES, int YRES, int x, int y, uchar *videoCol, uchar *videoChar, unsigned char *tstring, unsigned long fcol, unsigned long bcol, unsigned char dchar, int bIgnoreFgCol, int bIgnoreBgCol, int bWriteChars, int bIgnoreAllCodes, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg)
+static void writeGdiFontString(int XRES, int YRES, int x, int y, uchar *videoCol, uchar *videoChar, unsigned char *tstring, unsigned long fcol, unsigned long bcol, unsigned char dchar, int bIgnoreFgCol, int bIgnoreBgCol, int bWriteChars, int bIgnoreAllCodes, int fontIndex, unsigned int *cmdPaletteFg, unsigned int *cmdPaletteBg)
 {
 	unsigned int *outdata = NULL, *pcol, *fgcol, *bgcol, rgbfgcol, rgbbgcol;
 	int i,j,ccol,cchar,l,m, index;
@@ -1071,7 +1070,7 @@ void writeGdiFontString(int XRES, int YRES, int x, int y, uchar *videoCol, uchar
 
 #ifdef _RGB32
 
-void readOutChars(char *pch, unsigned char *outCh) {
+static void readOutChars(char *pch, unsigned char *outCh) {
 	int i, j = 0, v16, v, inlen = strlen(pch);
 	
 	for (i = 0; i < inlen; i++) {
@@ -1096,7 +1095,7 @@ void readOutChars(char *pch, unsigned char *outCh) {
 	outCh[j] = 0;
 }
 
-void parseConv16Flag(char *inVal, unsigned char *outCh, int *div, int *mode) {
+static void parseConv16Flag(char *inVal, unsigned char *outCh, int *div, int *mode) {
 	int tempMode, tempDiv, chIndex, nof, bCustomSet=0;
 	char tempOutCh[64];
 	*mode = 0;
@@ -1137,7 +1136,7 @@ void parseConv16Flag(char *inVal, unsigned char *outCh, int *div, int *mode) {
 	}
 }
 
-void convertFgRgbTo16Col(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *videoColOut, uchar *videoCharOut, unsigned int *cmdPaletteFg, unsigned char *outCh, int div, int mode, int outw, int outh) {
+static void convertFgRgbTo16Col(int XRES, int YRES, uchar *videoCol, uchar *videoChar, uchar *videoColOut, uchar *videoCharOut, unsigned int *cmdPaletteFg, unsigned char *outCh, int div, int mode, int outw, int outh) {
 	int i,j, k, l, m,n;
 	unsigned long inCol;
 	unsigned int r,g,b,rd,gd,bd, rp,gp,bp, ri,gi,bi, palcol;
@@ -1180,7 +1179,6 @@ void convertFgRgbTo16Col(int XRES, int YRES, uchar *videoCol, uchar *videoChar, 
 				closestI[m] = cci;
 				closest[m] = cc;
 				dist[cci] = 10000000;
-		//		printf("%d %d\n", cci, cc);
 			}
 			
 			videoColOut[k + i] = (cmdPaletteFg[closestI[1]] & 0xffffff) | ((PREPCOL)(cmdPaletteFg[closestI[0]] & 0xffffff) << BITSHL);
@@ -1203,7 +1201,7 @@ void convertFgRgbTo16Col(int XRES, int YRES, uchar *videoCol, uchar *videoChar, 
 #endif
 
 
-int getConsoleDim(int bH) {
+static int getConsoleDim(int bH) {
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 	HANDLE conout = GetOutputHandle();
 	GetConsoleScreenBufferInfo(conout, &screenBufferInfo);
@@ -1211,65 +1209,14 @@ int getConsoleDim(int bH) {
 	return bH? screenBufferInfo.dwSize.Y : screenBufferInfo.dwSize.X;
 }
 
-void setResolution(int resX, int resY) {
+static void setResolution(int resX, int resY) {
 	XRES=resX;
 	YRES=resY;
 	FRAMESIZE=XRES*YRES;
 }
 
-char *insertCgx(char *inp) {
-	char *nb = NULL, *nf = NULL, *fnd, *fnd2, fname[256], *currI, *currO, nofile[64] = " [FILE NOT FOUND] ";
-	FILE *ifp;
-	int fr;
 
-	fnd = strstr(inp, "insert ");
- 	if (!fnd) return NULL;
-
-	nb = (char *)malloc(MAX_OP_SIZE);
-	if (!nb) return NULL;
-	nf = (char *)malloc(MAX_OP_SIZE);
-	if (!nf) { free(nb); return NULL; }
-	currI = inp;
-	currO = nb;
-	
-	do {
-		int fstart = 7;
-		
-		while (fnd[fstart] == ' ')
-			fstart++;
-		fnd2 = strstr((char *)(fnd + fstart), "&");
-		if (!fnd2)
-			fnd2 = &inp[strlen(inp)];
-
-		memcpy(currO, currI, fnd - currI);
-		currO = currO + (fnd - currI);
-		
-		memcpy(fname, (char *)(fnd + fstart), (int)fnd2 - (int)fnd - (fstart - 1));
-		fname[(int)fnd2 - (int)fnd - fstart] = 0;
-		ifp=fopen(fname, "r");
-		if (ifp == NULL) {
-			memcpy(currO, nofile, strlen(nofile));
-			currO = currO + strlen(nofile);
-		} else {
-			fr = fread(nf, 1, MAX_OP_SIZE, ifp);
-			memcpy(currO, nf, fr);
-			currO = currO + fr;
-			fclose(ifp);
-		}
-		
-		currI = fnd2;
-		fnd = strstr(currI, "insert ");
-	} while(fnd);
-
-	memcpy(currO, currI, strlen(currI));
-	currO[strlen(currI)] = 0;
-
-	free(nf);
-	return nb;
-}
-
-
-void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
+static void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpcol, int dchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
 	int i,j,k,l, o;
 
 	if (x+w < XRES) w++;
@@ -1304,7 +1251,7 @@ void processFromTranspBuffer(uchar *videoTransp, uchar *videoCol, uchar *videoCh
 	}	
 }
 
-void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, int *_maxy) {
+static void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, int *_maxy) {
 	int i, minx=vv[0].x, maxx=vv[0].x, miny=vv[0].y, maxy=vv[0].y;
 	
 	for (i = 1; i < points; i++) {
@@ -1325,7 +1272,7 @@ void getBounds(intVector vv[], int points, int *_minx, int *_maxx, int *_miny, i
 	*_minx = minx; *_maxx = maxx; *_miny = miny; *_maxy = maxy;
 }
 
-void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpval, int dchar, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, PREPCOL plusVal, int bPerspectiveCorrected) {
+static void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int transpval, int dchar, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, PREPCOL plusVal, int bPerspectiveCorrected) {
 	int minx, maxx, miny, maxy, i, ok;
 	int j,i2,j2, zw=0;
 	float *zBufBackup = NULL;
@@ -1358,7 +1305,7 @@ void drawTranspTPoly(uchar *videoTransp, uchar *videoCol, uchar *videoChar, int 
 }
 
 
-void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
+static void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp, uchar *videoCol, uchar *videoChar, int transpchar, int bWriteChars, int bWriteCols, int x,int y, int w, int h, float *zBufBackup, int zw) {
 	int i,j,k,l, o;
 
 	if (x+w < XRES) w++;
@@ -1393,7 +1340,7 @@ void processFromDoubleTranspBuffer(uchar *videoColTransp, uchar *videoCharTransp
 	}
 }
 
-void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *videoCol, uchar *videoChar, int transpval, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, int plusVal, int bPerspectiveCorrected, Bitmap *bild2) {
+static void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *videoCol, uchar *videoChar, int transpval, int bWriteChars, int bWriteCols,intVector vv[], int points, Bitmap *bild, int plusVal, int bPerspectiveCorrected, Bitmap *bild2) {
 	int minx, maxx, miny, maxy, i,j,i2,j2, ok, zw=0;
 	float *zBufBackup = NULL;
 	
@@ -1429,7 +1376,7 @@ void drawTranspTDoublePoly(uchar *videoTransp, uchar *videoTranspChar, uchar *vi
 }
 
 
-void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *videoCol, uchar *videoChar) {
+static void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *videoCol, uchar *videoChar) {
 	int i;
 	
 	#ifdef GDI_OUTPUT
@@ -1449,7 +1396,7 @@ void displayMessage(char *text, int x, int y, int fgcol, int bgcol, uchar *video
 	}
 }
 
-void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
+static void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 	char opNames[20][16] = { "poly", "ipoly", "gpoly", "tpoly", "image", "box", "fbox", "line", "pixel", "circle", "fcircle", "ellipse", "fellipse", "text", "3d", "block", "insert", "play" };
 	char tstring[1028], *partstring;
 	int i, y = 1;
@@ -1494,8 +1441,45 @@ void displayErrors(ErrorHandler *errH, uchar *videoCol, uchar *videoChar) {
 	}
 }
 
+
+/* Windows ns high-precision sleep */
+static BOOLEAN nanosleep(LONGLONG ns){
+    HANDLE timer;
+    LARGE_INTEGER li;
+
+    if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
+        return FALSE;
+    li.QuadPart = -ns;
+    if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
+        CloseHandle(timer);
+        return FALSE;
+    }
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+    return TRUE;
+}
+
+static BOOLEAN millisleep(LONGLONG ms){
+	return nanosleep(ms * 10000);
+}
+
+static long long milliseconds_now(void) {
+	static LARGE_INTEGER s_frequency;
+	static BOOL s_use_qpc;
+
+	s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+	if (s_use_qpc) {
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
+		return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+	} else {
+		return GetTickCount();
+	}
+}
+
+
 int gTempArgNof = 0;
-void reportError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
+static void reportError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
 	int i = errHandler->errCnt;
 	errHandler->errType[i] = errType;
 	errHandler->opType[i] = opType;
@@ -1509,7 +1493,7 @@ void reportError(ErrorHandler *errHandler, OperationType opType, ErrorType errTy
 	if (errHandler->errCnt >= MAX_ERRS) errHandler->errCnt = MAX_ERRS-1;
 }
 
-void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
+static void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType errType, int index, char *extras, char *op) {
 	FILE *ifp;
 	if (extras) {
 		ifp = fopen(extras, "r");
@@ -1518,13 +1502,13 @@ void reportFileError(ErrorHandler *errHandler, OperationType opType, ErrorType e
 	reportError(errHandler, opType, errType, index, extras, op);
 }
 	
-void reportArgError(ErrorHandler *errHandler, OperationType opType, int index, char *op, int argNof) {
+static void reportArgError(ErrorHandler *errHandler, OperationType opType, int index, char *op, int argNof) {
 	gTempArgNof = argNof;
 	reportError(errHandler, opType, ERR_NOF_ARGS, index, NULL, op);
 }
 
 
-int rand_r (unsigned int *seed)
+static int rand_r (unsigned int *seed)
 {
   unsigned int next = *seed;
   int result;
@@ -1551,132 +1535,172 @@ double my_random(void) {
 	return (double)(rand() % 32768) / 32768.0;
 }
 */
-double my_random(double ig) {
+static double my_random(double ig) {
 	int indexG=(int)ig;
 	return (double)(rand_r(&randSeed[indexG]) % 32768) / 32768.0;
 }
 
-double my_eq(double n, double comp) {
+static double my_eq(double n, double comp) {
 	return (double)(n == comp);
 }
 
-double my_neq(double n, double comp) {
+static double my_neq(double n, double comp) {
 	return (double)(n != comp);
 }
 
-double my_gtr(double n, double comp) {
+static double my_gtr(double n, double comp) {
 	return (double)(n > comp);
 }
 
-double my_lss(double n, double comp) {
+static double my_lss(double n, double comp) {
 	return (double)(n < comp);
 }
 
-double my_geq(double n, double comp) {
+static double my_geq(double n, double comp) {
 	return (double)(n >= comp);
 }
 
-double my_leq(double n, double comp) {
+static double my_leq(double n, double comp) {
 	return (double)(n <= comp);
 }
 
 
-static double store[MAXTHREADS][5];
+static double store[MAXTHREADS][10];
+
+typedef enum { SKIP, CLAMP, WRAP } WrapMode;
 
 static uchar *g_th_blockCol;
 static uchar *g_th_blockChar;
 static int g_th_w, g_th_h;
+static WrapMode g_wrapMode = SKIP;
 
 
-double my_char(double x, double y) {
+static double my_char(double x, double y) {
+	if (g_wrapMode == CLAMP) { if(x<0) x=0; if(y<0) y=0; if(x>=g_th_w) x=g_th_w-1; if(y>=g_th_h) y=g_th_h-1; }
+	if (g_wrapMode == WRAP)  { if(x<0 || x>=g_th_w) x=abs((g_th_w+(int)x)%g_th_w); if(y<0 || y>=g_th_h) y=abs((g_th_h+(int)y)%g_th_h); }
+
 	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
 	return (g_th_blockChar[(int)y * g_th_w + (int)x]);
 }
 
-double my_col(double x, double y) {
+static double my_col(double x, double y) {
+	if (g_wrapMode == CLAMP) { if(x<0) x=0; if(y<0) y=0; if(x>=g_th_w) x=g_th_w-1; if(y>=g_th_h) y=g_th_h-1; }
+	if (g_wrapMode == WRAP)  { if(x<0 || x>=g_th_w) x=abs((g_th_w+(int)x)%g_th_w); if(y<0 || y>=g_th_h) y=abs((g_th_h+(int)y)%g_th_h); }
+	
 	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
 	return (g_th_blockCol[(int)y * g_th_w + (int)x]);
 }
 
-double my_fgcol(double x, double y) {
+static double my_fgcol(double x, double y) {
+	if (g_wrapMode == CLAMP) { if(x<0) x=0; if(y<0) y=0; if(x>=g_th_w) x=g_th_w-1; if(y>=g_th_h) y=g_th_h-1; }
+	if (g_wrapMode == WRAP)  { if(x<0 || x>=g_th_w) x=abs((g_th_w+(int)x)%g_th_w); if(y<0 || y>=g_th_h) y=abs((g_th_h+(int)y)%g_th_h); }
+	
 	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
 	return (g_th_blockCol[(int)y * g_th_w + (int)x]) & AND_MASK;
 }
 
-double my_bgcol(double x, double y) {
+static double my_bgcol(double x, double y) {
+	if (g_wrapMode == CLAMP) { if(x<0) x=0; if(y<0) y=0; if(x>=g_th_w) x=g_th_w-1; if(y>=g_th_h) y=g_th_h-1; }
+	if (g_wrapMode == WRAP)  { if(x<0 || x>=g_th_w) x=abs((g_th_w+(int)x)%g_th_w); if(y<0 || y>=g_th_h) y=abs((g_th_h+(int)y)%g_th_h); }
+	
 	if (x < 0 || y < 0 || x >= g_th_w || y >= g_th_h)
 		return 0;
 	return (g_th_blockCol[(int)y * g_th_w + (int)x]) >> BITSHL;
 }
 
 
-double my_store(double ig, double val, double index) {
+static double my_store(double ig, double val, double index) {
 	int indexG=(int)ig;
 	int i = (int)index;
-	if (i >= 0 && i < 5)
+	if (i >= 0 && i < 10)
 		store[indexG][i] = val;
 	return 0;
 }
 
-double my_store2(double val, double index) {
+static double my_store2(double val, double index) {
 	int i = (int)index;
-	if (i >= 0 && i < 5)
+	if (i >= 0 && i < 10)
 		store[0][i] = val;
 	return 0;
 }
 
-double my_or(double v1, double v2) {
+static double my_or(double v1, double v2) {
 	return ((XPRSIZE)v1) | ((XPRSIZE)v2);
 }
-double my_and(double v1, double v2) {
+static double my_and(double v1, double v2) {
 	return ((XPRSIZE)v1) & ((XPRSIZE)v2);
 }
-double my_xor(double v1, double v2) {
+static double my_xor(double v1, double v2) {
 	return ((XPRSIZE)v1) ^ ((XPRSIZE)v2);
 }
-double my_neg(double v1) {
+static double my_neg(double v1) {
 	return ~((XPRSIZE)v1);
 }
-double my_shl(double v1, double v2) {
+static double my_shl(double v1, double v2) {
 	return ((XPRSIZE)v1) << ((XPRSIZE)v2);
 }
-double my_shr(double v1, double v2) {
+static double my_shr(double v1, double v2) {
 	return ((XPRSIZE)v1) >> ((XPRSIZE)v2);
 }
 
-double my_min(double in1, double in2) {
+static double my_min(double in1, double in2) {
 	return in1 < in2? in1 : in2;
 }
-double my_max(double in1, double in2) {
+static double my_max(double in1, double in2) {
 	return in1 > in2? in1 : in2;
 }
-double my_modulo(double v1, double v2) {
-	if ((XPRSIZE)v2 == 0) return 0;
-	return ((XPRSIZE)v1) % ((XPRSIZE)v2);
+static double my_modulo(double v1, double v2) {
+	if (v2 == 0) return 0;
+	return fmod(v1, v2);
 }
 
-double my_clamp255(double v) {
+static double my_clamp255(double v) {
 	if (v < 0) return 0;
 	if (v > 255) return 255;
 	return v;
 }
 
-double my_clamp(double v, double min, double max) {
+static double my_clamp(double v, double min, double max) {
 	if (v < min) return min;
 	if (v > max) return max;
 	return v;
 }
 
-double my_frac(double v) {
+static double my_frac(double v) {
 	return v - (XPRSIZE)v;
 }
 
-double my_length(double v1, double v2) {
+static double my_sign(double v) {
+	return v < 0? -1 : v > 0? 1: 0;
+}
+
+static double my_length(double v1, double v2) {
 	return sqrt(v1*v1+v2*v2);
 }
+
+#ifndef PI
+#define PI  3.141592
+#endif
+#define PIHALF 1.570796
+#define TAU    6.2831853
+#define PI_SQ  9.869604
+
+// BhaskaraI sin approximation (including home-cooked fmod)
+static double fSin(double x) {
+	double neg = 1;
+	if (x < 0) { x=-x; neg=-1; }
+	int dv = x / TAU; x = x - dv * TAU; //= x=fmod(x, TAU);
+	if (x > PI) { neg=-neg; x = PI - (TAU - x); }
+	return (16.0*x*(PI-x))/(5.0*PI_SQ-4.0*x*(PI-x))*neg;
+}
+
+static double fCos(double x) {
+	return fSin(PIHALF - x);
+}
+
 
 // Perlin noise code straight from Wikipedia, with minor mods like easing
 
@@ -1695,9 +1719,9 @@ double my_length(double v1, double v2) {
 //}
 
 #define IPMAX 64
-double Gradient[IPMAX][IPMAX][2];
+static double Gradient[IPMAX][IPMAX][2];
 
-void initGradient(void) {
+static void initGradient(void) {
 	int i,j;
 	srand(666);
 
@@ -1718,7 +1742,7 @@ void initGradient(void) {
 }
 
 // Computes the dot product of the distance and gradient vectors.
-double dotGridGradient(int ix, int iy, double x, double y) {
+static double dotGridGradient(int ix, int iy, double x, double y) {
 
     // Precomputed (or otherwise) gradient vectors at each grid node
     extern double Gradient[IPMAX][IPMAX][2];
@@ -1731,15 +1755,15 @@ double dotGridGradient(int ix, int iy, double x, double y) {
     return (dx*Gradient[iy][ix][0] + dy*Gradient[iy][ix][1]);
 }
 
-int bPerlinInited = 0;
+//int bPerlinInited = 0;
 // Compute Perlin noise at coordinates x, y
-double my_perlin(double x, double y) {
-	
+static double my_perlin(double x, double y) {
+/*	
 	if (!bPerlinInited) {
 		initGradient();
 		bPerlinInited=1;
 	}
-
+*/
 	x=fabs(x);
 	y=fabs(y);
 	
@@ -1778,7 +1802,7 @@ double my_perlin(double x, double y) {
 
 #ifdef _RGB32
 // shade and blend ONLY for fgcol (and will destroy bgcol)
-double my_shade(double inColor, double or, double og, double ob) {
+static double my_shade(double inColor, double or, double og, double ob) {
 	long long inCol=inColor, rp=or, gp=og, bp=ob, r,g,b;
 	inCol &= 0xffffff;
 	
@@ -1788,10 +1812,10 @@ double my_shade(double inColor, double or, double og, double ob) {
 	if (b>255) b=255; if (b<0) b=0;
 	if (g>255) g=255; if (g<0) g=0;
 	if (r>255) r=255;  if (r<0) r=0;
-	return b | (g<<8) | (r<<16); // | (col & 0xffffff00000000);
+	return b | (g<<8) | (r<<16);
 }
 
-double my_blend(double inColor, double a, double or, double og, double ob) {
+static double my_blend(double inColor, double a, double or, double og, double ob) {
 	long long inCol=inColor, av=a, rv=or, gv=og, bv=ob, r,g,b;
 	int blNew, blOrg;
 	inCol &= 0xffffff;
@@ -1800,56 +1824,88 @@ double my_blend(double inColor, double a, double or, double og, double ob) {
 	 b=((((inCol & 0xff) * blOrg / 256) + ((bv & 0xff) * blNew / 256)));
 	 g=(((((inCol>>8) & 0xff) * blOrg / 256) + ((gv & 0xff) * blNew / 256)));
 	 r=(((((inCol>>16) & 0xff) * blOrg / 256) + ((rv & 0xff) * blNew / 256)));
-	 return b | (g<<8) | (r<<16); // | (col & 0xffffff00000000);
+	 return b | (g<<8) | (r<<16);
 }
 
-double my_fgr(double inColor) {
+static double my_fgr(double inColor) {
 	long long inCol=inColor;
 	return (inCol>>16) & 0xff;
 }
-double my_fgg(double inColor) {
+static double my_fgg(double inColor) {
 	long long inCol=inColor;
 	return (inCol>>8) & 0xff;
 }
-double my_fgb(double inColor) {
+static double my_fgb(double inColor) {
 	long long inCol=inColor;
 	return inCol & 0xff;
 }
 
-double my_bgr(double inColor) {
+static double my_bgr(double inColor) {
 	long long inCol=inColor;
 	return (inCol>>48) & 0xff;
 }
-double my_bgg(double inColor) {
+static double my_bgg(double inColor) {
 	long long inCol=inColor;
 	return (inCol>>40) & 0xff;
 }
-double my_bgb(double inColor) {
+static double my_bgb(double inColor) {
 	long long inCol=inColor;
 	return (inCol>>32) & 0xff;
 }
 
-double my_makecol(double or, double og, double ob) {
+static double my_makecol(double or, double og, double ob) {
 	long long r=or, g=og, b=ob;
 	return (b&0xff) | ((g&0xff)<<8) | ((r&0xff)<<16);
 }
 
-double my_makebgcol(double or, double og, double ob) {
+static double my_makebgcol(double or, double og, double ob) {
 	long long r=or, g=og, b=ob;
 	return ((b&0xff)<<32) | ((g&0xff)<<40) | ((r&0xff)<<48);
 }
 
-double my_makefgbgcol(double or, double og, double ob,  double bor, double bog, double bob) {
+static double my_makefgbgcol(double or, double og, double ob,  double bor, double bog, double bob) {
 	long long r=or, g=og, b=ob;
 	long long br=bor, bg=bog, bb=bob;
 	if (b>0xfb && bor>0xf) b = 0xfb;
 	return ((b&0xff)) | ((g&0xff)<<8) | ((r&0xff)<<16) | ((bb&0xff)<<32) | ((bg&0xff)<<40) | ((br&0xff)<<48);
 }
 
-// Weirdness: IF red value of bgcol has last bit set, i.e >= 0x80, THEN end result fucks up if blue fgcol is >= 0xB (!?) ...quick fix, allow MAX fgcol blue of 251 (i.e bit 2 not set)
+
+static double my_makecol_clamp(double or, double og, double ob) {
+	long long r=or, g=og, b=ob;
+	if (r<0) r=0; else if (r>255) r=255;
+	if (g<0) g=0; else if (g>255) g=255;
+	if (b<0) b=0; else if (b>255) b=255;
+	return (b&0xff) | ((g&0xff)<<8) | ((r&0xff)<<16);
+}
+
+static double my_makebgcol_clamp(double or, double og, double ob) {
+	long long r=or, g=og, b=ob;
+	if (r<0) r=0; else if (r>255) r=255;
+	if (g<0) g=0; else if (g>255) g=255;
+	if (b<0) b=0; else if (b>255) b=255;
+	return ((b&0xff)<<32) | ((g&0xff)<<40) | ((r&0xff)<<48);
+}
+
+static double my_makefgbgcol_clamp(double or, double og, double ob,  double bor, double bog, double bob) {
+	long long r=or, g=og, b=ob;
+	long long br=bor, bg=bog, bb=bob;
+	if (r<0) r=0; else if (r>255) r=255;
+	if (g<0) g=0; else if (g>255) g=255;
+	if (b<0) b=0; else if (b>255) b=255;
+	if (br<0) br=0; else if (br>255) br=255;
+	if (bg<0) bg=0; else if (bg>255) bg=255;
+	if (bb<0) bb=0; else if (bb>255) bb=255;
+	if (b>0xfb && bor>0xf) b = 0xfb;
+	return ((b&0xff)) | ((g&0xff)<<8) | ((r&0xff)<<16) | ((bb&0xff)<<32) | ((bg&0xff)<<40) | ((br&0xff)<<48);
+}
+
+
+
+// Weirdness: IF red value of bgcol has last bit set, i.e >= 0x80, THEN end result is messed up if blue fgcol is >= 0xB (!?) ...quick fix, allow MAX fgcol blue of 251 (i.e bit 2 not set)
 // Pretty convinced this is somehow caused by the double conversion to long long and back
 
-double my_keepBgCol(double x, double y, double inColor) {
+static double my_keepBgCol(double x, double y, double inColor) {
 	XPRSIZE in = (XPRSIZE)inColor;
 	XPRSIZE bg = g_th_blockCol[(int)y * g_th_w + (int)x] & BG_AND_MASK;
 	if ((in & 0xff) > 0xfb && (bg & 0xf0000000000000))
@@ -1858,7 +1914,7 @@ double my_keepBgCol(double x, double y, double inColor) {
 		return bg | (in&AND_MASK);
 }
 
-double my_keepFgCol(double x, double y, double inColor) {
+static double my_keepFgCol(double x, double y, double inColor) {
 	XPRSIZE in = (XPRSIZE)inColor & BG_AND_MASK;
 	XPRSIZE fg=g_th_blockCol[(int)y * g_th_w + (int)x];
 	if ((fg & 0xff) > 0xfb && (in & 0xf0000000000000))
@@ -1867,7 +1923,7 @@ double my_keepFgCol(double x, double y, double inColor) {
 		return (fg&AND_MASK) | in;
 }
 
-double my_safeOr(double v1, double v2) {
+static double my_safeOr(double v1, double v2) {
 	XPRSIZE x1=(XPRSIZE)v1;
 	XPRSIZE x2=(XPRSIZE)v2;
 	if ((x1 & 0xff) > 0xfb && (x2 & 0xf0000000000000))
@@ -1881,11 +1937,19 @@ double my_safeOr(double v1, double v2) {
 #endif
 
 
+typedef int (__cdecl *EXPR_COL_PROC)(int, int, int, int, DWORD,  int, int, int, int, int, uchar *, uchar *, int);
+
+DWORD g_moduleTick;
+HMODULE g_module = NULL;
+EXPR_COL_PROC g_procAdd;
+char g_oldDllName[64]="\0", g_oldProcName[64]="\0";
+BOOL g_fRunTimeLinkSuccess = FALSE;
+
 enum {RGB_TCHECK_MAX, RGB_TCHECK_AVG, RGB_TCHECK_R, RGB_TCHECK_G, RGB_TCHECK_B, RGB_TCHECK_BGMAX, RGB_TCHECK_BGAVG, RGB_TCHECK_BGR, RGB_TCHECK_BGG, RGB_TCHECK_BGB, RGB_TCHECK_FGBGAVG, RGB_TCHECK_FGBGMAX };
 
-int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, uchar *videoCol, uchar *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh, int blockThreadIndex, int threadYp, int bModString) {
+static int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int nw, int nh, int rz, char *transf, char *colorExpr, char *xExpr, char *yExpr, int XRES, int YRES, uchar *videoCol, uchar *videoChar, int transpchar, int bFlipX, int bFlipY, int bTo, int mvx,int mvy, int mvw, int mvh, int blockThreadIndex, int threadYp, int bModString) {
 	uchar *blockCol, *blockChar;
-	int i,j,k,k2,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
+	int i,j,k,k2,k3,i2,j2, mode = 0, moveChar = 32, nofT = 0, n;
 	uchar moveFg = 7, moveBg = 0, moveCol=7;
 	int inFg, inBg, inChar, compVal;
 	int outFg, outBg, outChar;
@@ -1908,7 +1972,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 
 	if (bModString) { strcpy(sStore, "sto"); typeStore=TE_FUNCTION3; funcStore=my_store; }
 	
-	for (i=0; i < 5; i++) store[blockThreadIndex][i] = 0;
+	//for (i=0; i < 10; i++) store[blockThreadIndex][i] = 0;
 	
 	if (s_mode) {
 		char *smp;
@@ -2026,14 +2090,35 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 			}
 		}
 	}
-		
-	for (i = 0; i < h; i++) {
-		k = i*w; k2=y*XRES+i*XRES+x;
-		for (j = 0; j < w; j++) {
-			blockCol[k+j] = videoCol[k2+j];
-			blockChar[k+j] = videoChar[k2+j];
+
+	if (g_th_blockCol == NULL) {
+		for (i = 0; i < h; i++) {
+			k = i*w; k2=y*XRES+i*XRES+x;
+			for (j = 0; j < w; j++) {
+				blockCol[k+j] = videoCol[k2+j];
+				blockChar[k+j] = videoChar[k2+j];
+			}
+		}
+	} else {
+		if (g_th_blockChar) {
+			for (i = 0; i < h; i++) {
+				k = i*w; k2=threadYp*g_th_w+i*g_th_w;
+				for (j = 0; j < w; j++) {
+					blockCol[k+j] = g_th_blockCol[k2+j];
+					blockChar[k+j] = g_th_blockChar[k2+j];
+				}
+			}
+		} else {
+			for (i = 0; i < h; i++) {
+				k = i*w; k2=threadYp*g_th_w+i*g_th_w; k3=y*XRES+i*XRES+x;
+				for (j = 0; j < w; j++) {
+					blockCol[k+j] = g_th_blockCol[k2+j];
+					blockChar[k+j] = videoChar[k3+j];
+				}
+			}
 		}
 	}
+
 
 	if (mode == 1 || mode == 3) {
 		fbox(videoCol, x, y, w-1, h-1, moveCol);
@@ -2048,64 +2133,92 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 			
 	
 	if (strlen(colorExpr) > 1) {
-		int err;
-		XPRSIZE r;
-		double ex, ey;
-		uchar *blockCol2, *blockChar2;
+		if (strncmp(colorExpr, "DLL:", 4) != 0) {
+			int err;
+			XPRSIZE r;
+			double ex, ey;
+			uchar *blockCol2, *blockChar2;
 
-		te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"rando", my_random, TE_FUNCTION1}
-		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
-		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
-		, {sStore, funcStore, typeStore}, {"s0", &store[blockThreadIndex][0]}, {"s1", &store[blockThreadIndex][1]}, {"s2", &store[blockThreadIndex][2]}, {"s3", &store[blockThreadIndex][3]}, {"s4", &store[blockThreadIndex][4]}
-		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neg, TE_FUNCTION1}
-		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
-		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"perlin", my_perlin, TE_FUNCTION2}, {"t", &tIndex}
-		, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}
-#ifndef _RGB32
-		};
-		te_expr *n = te_compile(colorExpr, vars, 34, &err);
-#else
-		, {"makecol", my_makecol, TE_FUNCTION3}, {"makebgcol", my_makebgcol, TE_FUNCTION3}, {"makefgbgcol", my_makefgbgcol, TE_FUNCTION6}
-		, {"fgr", my_fgr, TE_FUNCTION1},  {"fgg", my_fgg, TE_FUNCTION1},  {"fgb", my_fgb, TE_FUNCTION1}
-		, {"bgr", my_bgr, TE_FUNCTION1},  {"bgg", my_bgg, TE_FUNCTION1},  {"bgb", my_bgb, TE_FUNCTION1}
-		, {"shade", my_shade, TE_FUNCTION4},  {"blend", my_blend, TE_FUNCTION5}
-		, {"keepb", my_keepBgCol, TE_FUNCTION3}, {"keepf", my_keepFgCol, TE_FUNCTION3}, {"safeor", my_safeOr, TE_FUNCTION2}
-		};
-		te_expr *n = te_compile(colorExpr, vars, 48, &err);
-#endif
-		
-		if (n) {
-			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
-			blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
-
-			if (!bModString) {
-				g_th_blockCol = blockCol2;
-				g_th_blockChar = blockChar2;
-				g_th_w=w;
-				g_th_h=h;
-			}
-
-			if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); return 0; }
-			MYMEMCPY(blockCol2, blockCol, w*h);
-			MYMEMCPY(blockChar2, blockChar, w*h);
+			te_variable vars[] = {{"x", &ex}, {"y", &ey}, {"rando", my_random, TE_FUNCTION1}
+			, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
+			, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
+			, {sStore, funcStore, typeStore}, {"s0", &store[blockThreadIndex][0]}, {"s1", &store[blockThreadIndex][1]}, {"s2", &store[blockThreadIndex][2]}, {"s3", &store[blockThreadIndex][3]}, {"s4", &store[blockThreadIndex][4]}
+			, {"s5", &store[blockThreadIndex][5]}, {"s6", &store[blockThreadIndex][6]}, {"s7", &store[blockThreadIndex][7]}, {"s8", &store[blockThreadIndex][8]}, {"s9", &store[blockThreadIndex][9]}
+			, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neg, TE_FUNCTION1}
+			, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
+			, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"perlin", my_perlin, TE_FUNCTION2}, {"t", &tIndex}
+			, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}, {"sign", my_sign, TE_FUNCTION1}
+			, {"fsin", fSin, TE_FUNCTION1}, {"fcos", fCos, TE_FUNCTION1}
+	#ifndef _RGB32
+			};
+			te_expr *n = te_compile(colorExpr, vars, 42, &err);
+	#else
+			, {"makecol", my_makecol, TE_FUNCTION3}, {"makebgcol", my_makebgcol, TE_FUNCTION3}, {"makefgbgcol", my_makefgbgcol, TE_FUNCTION6}
+			, {"makecol255", my_makecol_clamp, TE_FUNCTION3}, {"makebgcol255", my_makebgcol_clamp, TE_FUNCTION3}, {"makefgbgcol255", my_makefgbgcol_clamp, TE_FUNCTION6}
+			, {"fgr", my_fgr, TE_FUNCTION1},  {"fgg", my_fgg, TE_FUNCTION1},  {"fgb", my_fgb, TE_FUNCTION1}
+			, {"bgr", my_bgr, TE_FUNCTION1},  {"bgg", my_bgg, TE_FUNCTION1},  {"bgb", my_bgb, TE_FUNCTION1}
+			, {"shade", my_shade, TE_FUNCTION4},  {"blend", my_blend, TE_FUNCTION5}
+			, {"keepb", my_keepBgCol, TE_FUNCTION3}, {"keepf", my_keepFgCol, TE_FUNCTION3}, {"safeor", my_safeOr, TE_FUNCTION2}
+			};
+			te_expr *n = te_compile(colorExpr, vars, 59, &err);
+	#endif
 			
-			for (i = 0; i < h; i++) {
-				k = i*w; ey=i+threadYp;
-				for (j = 0; j < w; j++) {
-					ex = j;
-					
-					r = (XPRSIZE) te_eval(n);
-					// printf("Result:\n\t%f\n", r);
-					
-					blockCol[k+j] = r;
+			if (n) {
+				blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
+				blockChar2 = (uchar *)malloc(w*h*sizeof(uchar));
+
+				if (!bModString) {
+					g_th_blockCol = blockCol2;
+					g_th_blockChar = blockChar2;
+					g_th_w=w;
+					g_th_h=h;
+				}
+
+				if (!blockCol2 || !blockChar2) { if (blockCol2) free(blockCol2); if (blockChar2) free(blockChar2); free(blockChar); free(blockCol); te_free(n); return 0; }
+				MYMEMCPY(blockCol2, blockCol, w*h);
+				MYMEMCPY(blockChar2, blockChar, w*h);
+				
+				for (i = 0; i < h; i++) {
+					k = i*w; ey=i+threadYp;
+					for (j = 0; j < w; j++) {
+						ex = j;
+						
+						r = (XPRSIZE) te_eval(n);
+						// printf("Result:\n\t%f\n", r);
+						
+						blockCol[k+j] = r;
+					}
+				}
+				te_free(n);
+				free(blockChar2); free(blockCol2);
+			} else {
+				if (blockThreadIndex == 0) {
+					char errS[64];
+					sprintf(errS, "colorExpr near character %d ", err);
+					reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
 				}
 			}
-			te_free(n);
-			free(blockChar2); free(blockCol2);
 		} else {
-			char errS[64];
-			sprintf(errS, "colorExpr near character %d", err);
-			reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
+			if (g_fRunTimeLinkSuccess) {
+				uchar *blockCol2;
+				char *extChP = colorExpr + 4;
+				int inArg1=0, inArg2=0, inArg3=0, inArg4=0, inArg5=0;
+				sscanf(extChP, "%d,%d,%d,%d,%d", &inArg1, &inArg2, &inArg3, &inArg4, &inArg5);
+
+				if (!bModString) {
+					blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
+					MYMEMCPY(blockCol2, blockCol, w*h);
+					g_th_blockCol = blockCol2;
+					//g_th_blockChar = blockChar2;
+					g_th_w=w;
+					g_th_h=h;
+				}
+				
+				(g_procAdd) (w, h, threadYp, g_th_h, g_moduleTick, inArg1,inArg2,inArg3,inArg4,inArg5, blockCol, g_th_blockCol, blockThreadIndex);
+				
+				if (!bModString)
+					free(blockCol2);
+			}
 		}
 	}
 
@@ -2118,14 +2231,16 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		, {"eq", my_eq, TE_FUNCTION2},  {"neq", my_neq, TE_FUNCTION2}, {"gtr", my_gtr, TE_FUNCTION2}, {"lss", my_lss, TE_FUNCTION2}
 		, {"char", my_char, TE_FUNCTION2},  {"col", my_col, TE_FUNCTION2}, {"fgcol", my_fgcol, TE_FUNCTION2}, {"bgcol", my_bgcol, TE_FUNCTION2}
 		, {sStore, funcStore, typeStore}, {"s0", &store[blockThreadIndex][0]}, {"s1", &store[blockThreadIndex][1]}, {"s2", &store[blockThreadIndex][2]}, {"s3", &store[blockThreadIndex][3]}, {"s4", &store[blockThreadIndex][4]}
+		, {"s5", &store[blockThreadIndex][5]}, {"s6", &store[blockThreadIndex][6]}, {"s7", &store[blockThreadIndex][7]}, {"s8", &store[blockThreadIndex][8]}, {"s9", &store[blockThreadIndex][9]}
 		, {"or", my_or, TE_FUNCTION2},  {"and", my_and, TE_FUNCTION2}, {"xor", my_xor, TE_FUNCTION2}, {"neg", my_neg, TE_FUNCTION1}
 		, {"shl", my_shl, TE_FUNCTION2},  {"shr", my_shr, TE_FUNCTION2}, {"max", my_max, TE_FUNCTION2},  {"min", my_min, TE_FUNCTION2}
-		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"t", &tIndex}
-		, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}
+		, {"geq", my_geq, TE_FUNCTION2}, {"leq", my_leq, TE_FUNCTION2}, {"mod", my_modulo, TE_FUNCTION2}, {"perlin", my_perlin, TE_FUNCTION2}, {"t", &tIndex}
+		, {"clamp255", my_clamp255, TE_FUNCTION1}, {"clamp", my_clamp, TE_FUNCTION3}, {"frac", my_frac, TE_FUNCTION1}, {"length", my_length, TE_FUNCTION2}, {"sign", my_sign, TE_FUNCTION1}
+		, {"fsin", fSin, TE_FUNCTION1}, {"fcos", fCos, TE_FUNCTION1}
 		};
 		te_expr *n, *n2;
-		n = te_compile(xExpr, vars, 33, &err); errX = err;
-		n2 = te_compile(yExpr, vars, 33, &err);
+		n = te_compile(xExpr, vars, 42, &err); errX = err;
+		n2 = te_compile(yExpr, vars, 42, &err);
 		
 		if (n && n2) {
 			blockCol2 = (uchar *)malloc(w*h*sizeof(uchar));
@@ -2153,6 +2268,9 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 					ex = j;
 					nx = (int) te_eval(n);
 					ny = (int) te_eval(n2);
+
+					if (g_wrapMode == CLAMP) { if(nx<0) nx=0; if(ny<0) ny=0; if(nx>=g_th_w) nx=g_th_w-1; if(ny>=g_th_h) ny=g_th_h-1; }
+					if (g_wrapMode == WRAP)  { if(nx<0 || nx>=g_th_w) nx=abs((g_th_w+nx)%g_th_w); if(ny<0 || ny>=g_th_h) ny=abs((g_th_h+ny)%g_th_h); }
 					
 					if (nx >= 0 && nx < g_th_w && ny >=0 && ny < g_th_h) {
 						if (bTo) {
@@ -2168,14 +2286,16 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 			free(blockChar2); free(blockCol2);
 
 		} else {
-			char errS[64];
-			if (!n) {
-				sprintf(errS, "xExpr near character %d", errX);
-				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
-			}
-			if (!n2) {
-				sprintf(errS, "yExpr near character %d", err);
-				reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
+			if (blockThreadIndex == 0) {
+				char errS[64];
+				if (!n) {
+					sprintf(errS, "xExpr near character %d ", errX);
+					reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
+				}
+				if (!n2) {
+					sprintf(errS, "yExpr near character %d ", err);
+					reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, errS, NULL);
+				}
 			}
 		}
 
@@ -2189,8 +2309,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		float dx, dy, ax=0, ay=0;
 		int ry, dry;
 		
-		/*
-		if (nh <= 0) {
+		/* if (nh <= 0) {
 			float change = (float)nw / (float)w;
 			nh = (int)((float)h * change);
 		}*/
@@ -2251,6 +2370,8 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 		blockChar = blockChar2;
 		blockCol = blockCol2;
 	}
+	
+	//nanosleep(100);
 	
 	if (nofT < 1) {
 		for (i = 0; i < h; i++) {
@@ -2358,23 +2479,7 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 							videoCol[k2+j] = (outBg << 4) | outFg;
 #else
 	
-							videoCol[k2+j] = orgCol; // just write back color, since using col only for matching for RGB versions 
-/*
-							if (!bBlend)
-								videoCol[k2+j] = orgCol; // just write back color, since using col only for matching
-								//videoCol[k2+j] = (outBg << 4) | outFg;
-							else {
-								vc = videoCol[k2+j]; bc = blockCol[k+j2];
-								blNew=blendVal; blOrg=255-blNew;
-								_b=((((vc & 0xff) * blOrg / 256) + ((bc & 0xff) * blNew / 256))); _g=(((((vc>>8) & 0xff) * blOrg / 256) + (((bc>>8) & 0xff) * blNew / 256))); _r=(((((vc>>16) & 0xff) * blOrg / 256) + (((bc>>16) & 0xff) * blNew / 256)));
-								if (bBlend ==2) {
-									bl2New=blendValBg; bl2Org=255-bl2New;
-									_b2=(((((vc>>32) & 0xff) * bl2Org / 256) + (((bc>>32) & 0xff) * bl2New / 256))); _g2=(((((vc>>40) & 0xff) * bl2Org / 256) + (((bc>>40) & 0xff) * bl2New / 256))); _r2=(((((vc>>48) & 0xff) * bl2Org / 256) + (((bc>>48) & 0xff) * bl2New / 256)));
-									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (_b2<<32)  | (_g2<<40)  | (_r2<<48);
-								} else
-									videoCol[k2+j] = _b | (_g<<8) | (_r<<16) | (vc & 0xffffff00000000);
-							}
-*/							
+							videoCol[k2+j] = orgCol; // just write back same color, since transform col is used only for matching in RGB versions 
 #endif
 							
 							videoChar[k2+j] = outChar;
@@ -2394,21 +2499,22 @@ int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int ny, int
 	
 
 	
-unsigned __stdcall process_op(void *arg)
+static unsigned __stdcall process_op(void *arg)
 {
+	int bFirst = 1;
 	BlockData *bd = (BlockData *)arg;
 	HANDLE myAwaitWorkEvent = ghAwaitWorkEvents[bd->blockThreadIndex];
 	HANDLE myDoneEvent = ghDoneEvents[bd->blockThreadIndex];
 	// srand(GetTickCount()+(bd->blockThreadIndex+2)*(bd->blockThreadIndex+2)); // rand/srand is not thread safe and should be replaced
-	randSeed[bd->blockThreadIndex] = GetTickCount()+(bd->blockThreadIndex+2)*(bd->blockThreadIndex+2);
+	//randSeed[bd->blockThreadIndex] = GetTickCount()+(bd->blockThreadIndex+2)*(bd->blockThreadIndex+2);
 	
-	//std::default_random_engine generator;
-	//std::uniform_int_distribution<int> distribution(1,6);
-	//int dice_roll = distribution(generator);  // generates number in the range 1..6
-
 #ifdef USE_THREAD_POOL	
 	while(bd->bExit == 0) {
 		
+		if (bFirst) {
+			bFirst = 0;
+			SetEvent(myDoneEvent);
+		}
 		WaitForSingleObject(myAwaitWorkEvent, INFINITE);
 		
 		if (bd->bExit == 0) {
@@ -2451,14 +2557,19 @@ unsigned __stdcall process_op(void *arg)
 }
 
 #ifdef GDI_OUTPUT
-unsigned __stdcall process_blit(void *arg)
+static unsigned __stdcall process_blit(void *arg)
 {
+	int bFirst = 1;
 	BlitData *bd = (BlitData *)arg;
 	HANDLE myAwaitWorkEvent = ghAwaitWorkBlitEvent;
 	HANDLE myDoneEvent = ghDoneBlitEvent;
 
 	while(bd->bExit == 0) {
-		
+
+		if (bFirst) {
+			bFirst = 0;
+			SetEvent(myDoneEvent);
+		}
 		WaitForSingleObject(myAwaitWorkEvent, INFINITE);
 		
 		if (bd->bExit == 0) {
@@ -2473,21 +2584,19 @@ unsigned __stdcall process_blit(void *arg)
 #endif
 
 
-void writeErrorLevelToFile(int bWriteReturnToFile, int value, int bMouse) {
+static void writeErrorLevelToFile(int bWriteReturnToFile, int value, int bMouse) {
 	FILE *ofp;
 	
 	if (!bWriteReturnToFile)
 		return;
 	
-	if (bWriteReturnToFile == 2) {
-		if (!bMouse && value == 0)
-			return;
-		if (bMouse && value < 0)
-			return;
+	if (!bMouse && value == 0)
+		return;
+	if (bMouse && value < 0)
+		return;
 
-		if (g_bFlushAfterELwrite)
-			fflush(stdin);
-	}
+	if (g_bFlushAfterELwrite)
+		fflush(stdin);
 	
 	ofp = fopen("EL.dat", "w"); // "a+" ?
 	if (ofp != NULL) {
@@ -2497,53 +2606,10 @@ void writeErrorLevelToFile(int bWriteReturnToFile, int value, int bMouse) {
 }
 
 
-/* Windows ns high-precision sleep */
-BOOLEAN nanosleep(LONGLONG ns){
-    HANDLE timer;
-    LARGE_INTEGER li;
-
-    if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
-        return FALSE;
-    li.QuadPart = -ns;
-    if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
-        CloseHandle(timer);
-        return FALSE;
-    }
-    WaitForSingleObject(timer, INFINITE);
-    CloseHandle(timer);
-    return TRUE;
-}
-
-BOOLEAN millisleep(LONGLONG ms){
-	return nanosleep(ms * 10000);
-}
-
-long long milliseconds_now(void) {
-	static LARGE_INTEGER s_frequency;
-	static BOOL s_use_qpc;
-
-	s_use_qpc = QueryPerformanceFrequency(&s_frequency);
-	if (s_use_qpc) {
-		LARGE_INTEGER now;
-		QueryPerformanceCounter(&now);
-		return (1000LL * now.QuadPart) / s_frequency.QuadPart;
-	} else {
-		return GetTickCount();
-	}
-}
-
-void process_waiting(int bWait, int waitTime, int bServer) { 
+static void process_waiting(int bWait, int waitTime, int bServer) { 
 	static long long lastTime = -1;
 
-	if (bWait==1 && waitTime > 0) {
-		long long sT = milliseconds_now();
-		if (g_bSleepingWait)
-			millisleep(waitTime);
-		else
-			while (milliseconds_now() < sT + waitTime) ;
-	}
-	
-	if (bWait==2 && waitTime > 0) {
+	if (bWait && waitTime > 0) {
 		long long sT;
 		
 		if (!bServer) {
@@ -2584,7 +2650,7 @@ void process_waiting(int bWait, int waitTime, int bServer) {
 }
 	
 
-char DecToHex(int i) {
+static char DecToHex(int i) {
 	switch(i) {
 	case 0:case 1:case 2:case 3:case 4:case 5:case 6:case 7:case 8:case 9: i=i+'0'; break;
 	case 10:case 11:case 12:case 13:case 14:case 15: i = 'A'+(i-10); break;
@@ -2594,7 +2660,7 @@ char DecToHex(int i) {
 }
 
 
-char *GetAttribs(WORD attributes, char *utp) {
+static char *GetAttribs(WORD attributes, char *utp) {
 	int i;
 	utp[0] = '\\';
 	utp[1] = DecToHex(attributes & 0xf);
@@ -2605,7 +2671,7 @@ char *GetAttribs(WORD attributes, char *utp) {
 
 #ifndef _RGB32
 
-int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
+static int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 	WORD oldAttrib = 6666;
 	FILE *ofp = NULL;
 	uchar ch;
@@ -2656,7 +2722,7 @@ int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 }
 #else
 
-int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
+static int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 	char fName[128];
 	FILE *ofp = NULL;
 	unsigned char ch;
@@ -2760,7 +2826,7 @@ int SaveBlock(int indexNr, int x, int y, int w, int h, int bEncode) {
 	
 	
 #ifdef GDI_OUTPUT
-void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
+static void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
 	if (argv3) {
 		int nofc, gr,gg,gb,i;
 		nofc = (strlen(argv3)+1) / 7;
@@ -2790,7 +2856,7 @@ void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int
 
 #ifndef _RGB32
 	
-void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, int *bPaletteSet) {	
+static void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, int *bPaletteSet) {	
 	if (argv3) {
 		int i, nofc = strlen(argv3);
 		if (nofc > 16) nofc = 16;
@@ -2807,7 +2873,7 @@ void readPalette(char *argv3, char *argv4, uchar *fgPalette, uchar *bgPalette, i
 	}
 }
 #else
-void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
+static void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int *bgPalette, int *bPaletteSet) {	
 	if (argv3) {
 		int nofc, gr,gg,gb,i;
 		nofc = (strlen(argv3)+1) / 7;
@@ -2837,14 +2903,14 @@ void readPalette(char *argv3, char *argv4, unsigned int *fgPalette, unsigned int
 
 #endif	
 
-void transformFilenameSpaces(char *inout) {
+static void transformFilenameSpaces(char *inout) {
 	while (*inout) {
 		if (*inout == '~') *inout=' ';
 		inout++;
 	}
 }
 
-void makeOrigoPoly(intVector vv[], int *nofp, int bUseTextures) {
+static void makeOrigoPoly(intVector vv[], int *nofp, int bUseTextures) {
 	int i, xo, yo;
 	
 	xo = vv[0].x; yo = vv[0].y; 
@@ -2859,7 +2925,7 @@ void makeOrigoPoly(intVector vv[], int *nofp, int bUseTextures) {
 	(*nofp)--;
 }
 
-void RemoveGxyCodes(char *tstring, int bRemoveNewLineCode) {
+static void RemoveGxyCodes(char *tstring, int bRemoveNewLineCode) {
 	int i = 0, o = 0, len = strlen(tstring);
 
 	for (i = 0; i < len; i++) {
@@ -2880,7 +2946,7 @@ void RemoveGxyCodes(char *tstring, int bRemoveNewLineCode) {
 }
 
 #ifdef USE_THREAD_POOL
-void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, BlitData *blitD) {
+static void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, BlitData *blitD) {
 	int j;
 	
 	if (gbThreadsCreated)
@@ -2901,14 +2967,17 @@ void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, Bl
 
 	for (j=0; j<MAXTHREADS; j++) {
 		bds[j].blockThreadIndex=j; bds[j].bExit=0;
+		
 		threadhandles[j] = (HANDLE)_beginthreadex(NULL, 0, process_op, &bds[j], 0, NULL);
 	}
+	WaitForMultipleObjects(MAXTHREADS, ghDoneEvents, TRUE, INFINITE);
 
 #ifdef GDI_OUTPUT	
 	ghAwaitWorkBlitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	ghDoneBlitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 	blitD->bExit=0;
 	blitThread = (HANDLE)_beginthreadex(NULL, 0, process_blit, blitD, 0, NULL);
+	WaitForSingleObject(ghDoneBlitEvent, INFINITE);
 #endif
 	
 	gbThreadsCreated = 1;
@@ -2917,7 +2986,7 @@ void CreateThreads(	HANDLE *threadhandles, BlockData *bds, HANDLE blitThread, Bl
 #endif
 
 
-void prepExpr(char *inExpr, int bChangeStore) {
+static void prepExpr(char *inExpr, int bChangeStore) {
 	char *inS;
 	
 	if (strlen(inExpr) > 1) {
@@ -2955,7 +3024,7 @@ void prepExpr(char *inExpr, int bChangeStore) {
 	}
 }
 
-	
+
 #define MAX_OBJECTS_IN_MEM 64
 
 int main(int argc, char *argv[]) {
@@ -2987,8 +3056,8 @@ int main(int argc, char *argv[]) {
 	int bUseOrigoPoly = 0, bUseOrigoBox = 0;
 	
 	int gx = 0, gy = 0;
-	int outw = 0, outh = 0;
-	
+	int outw = 0, outh = 0, outx = 0, outy = 0;
+
 #ifdef GDI_OUTPUT
 	int fontIndex = 6;
 	unsigned int fgPalette[16] = { 0xff000000, 0xff000080, 0xff008000, 0xff008080, 0xff800000, 0xff800080, 0xff808000, 0xffc0c0c0, 0xff808080, 0xff0000ff, 0xff00ff00, 0xff00ffff, 0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff };
@@ -3067,14 +3136,25 @@ int main(int argc, char *argv[]) {
 	
 	HANDLE blitThread;
 	BlitData blitD;
+
+	int doNothingCount = 0;
 	
 	singleColBitmap.xSize = 1;
 	singleColBitmap.ySize = 1;
 	singleColBitmap.transpVal = -1;
 	singleColBitmap.data = singleColData;
+
+	SetProcessDPIAware();
+
+	initGradient();
+		
+	DWORD ticks = GetTickCount();
+	srand(ticks);
+	for (j=0; j<MAXTHREADS; j++)
+		randSeed[j] = ticks+(j+2)*(j+2);
 	
-	srand(GetTickCount());
-	randSeed[0] = GetTickCount();
+	for (j=0; j < MAXTHREADS; j++)
+		for (i=0; i < 10; i++) store[j][i] = 0;
 	
 	cp = hexLookup; k = 0;
 	for (j = 0; j < 2; j++) {
@@ -3107,33 +3187,28 @@ int main(int argc, char *argv[]) {
 				case 'f': 
 #ifdef GDI_OUTPUT
 				i++; fontIndex = GetHex(argv[2][i]);
-				if (fontIndex < 0 || fontIndex > 12) fontIndex = 6;
+				if (fontIndex < 0 || fontIndex > 15) fontIndex = 6;
 				if (fontIndex > 9) g_bUsingPixelFont = 1;
 #endif
 				if (argv[2][i+1] == ':' && argv[2][i+2]) {
 					fnd = strchr(&argv[2][i+2], ';');
 					if (!fnd) strcpy(fin, &argv[2][i+2]); else { nof = fnd-&argv[2][i+2]; strncpy(fin, &argv[2][i+2], nof); fin[nof]=0; }
-					nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
+					nof = sscanf(fin, "%d,%d,%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh, &outx, &outy);
 					if (nof >= 3 && nof < 5) outw = txres;
 					if (nof >= 4 && nof < 6) outh = tyres;
 					if (outw > txres || outw < 0) outw = txres;
 					if (outh > tyres || outh < 0) outh = tyres;
 				}
 				break;
-				case 'o': bWriteReturnToFile = 1; break;
-				case 'O': bWriteReturnToFile = 2; break;
+				case 'O': bWriteReturnToFile = 1; break;
 			}
 		}
 	}
 
-	// { double d1=0xff008800ffffff; long double d2=0xff008800ffffff; uchar v1=d1, v2=d2; printf("%d %d %lx %llx\n", sizeof(double), sizeof(long double), v1, v2);	}
-	
 	setResolution(txres, tyres);
 
 	b_pcx.data = NULL;
 
-//	if (argc < 2 || (argc > 1 && strcmp(argv[1], "/?") == 0)) { // WTF? This slows down performance of entire program (320 bounce balls=62 fps instead of 500 balls=62)... why??
-//	if (argc < 2 || showHelp) { // It's messed up... this line causes same problem... but not below line, for now... could it be aligment related?
 	if (argc < 2 || (argc > 1 && strlen(argv[1]) == 2 && argv[1][0] == '/' && argv[1][1] == '?')) {
 		char boxhelp[] = "X and y are column and row coordinates with 0,0 as top left. A width and height of 0 still draws one single character.";
 		char coordhelp[] = "X and y are column and row coordinates with 0,0 as top left.";
@@ -3201,9 +3276,6 @@ int main(int argc, char *argv[]) {
 			else if (strcmp(argv[2], "fellipse") == 0) {
 				printf("\nFellipse - draw a filled ellipse of characters\n\nSyntax: fellipse fgcol bgcol char x,y,rx,ry\n\n%s\n\n%s The given position is used as the center of the ellipse. Rx and ry are the x and y radius. Negative radius values give the same result as positive ones.\n", colspec, coordhelp);
 			}
-			else if (strcmp(argv[2], "insert") == 0) {
-				printf("\nInsert - use the content of a file as operation input for cmdgfx\n\nSyntax: insert filename\n\nThe file content replaces the insert operation, but not remaining operations after that.\n");
-			}
 			else if (strcmp(argv[2], "skip") == 0) {
 				printf("\nSkip - ignore the following operation\n\nSyntax: skip anyoperation\n\nUse skip to ignore the operation following skip.\n");
 			}
@@ -3226,11 +3298,11 @@ int main(int argc, char *argv[]) {
 				printf("\nIpoly - draw a filled polygon of characters (supporting self-intersection)\n\nSyntax: ipoly fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\n\n%s\n\nExcept for the 3d operation, ipoly is the only operation that supports bit operations (bitop is only used for color, not char).\n\nPossible bitop values: 0=Normal, 1=Or, 2=And, 3=Xor, 4=Add, 5=Sub, 6=Sub-n, 7=regular\n\n%s\n\nNote that ipoly can be used to simulate other operations such as fbox if bitop is needed. Fcircle, fellipse, line, and pixel can also be simulated with ipoly, though it is slightly cumbersome.\n%s", colspec, polyhelp, ipolyExtra);
 			}
 			else if (strcmp(argv[2], "image") == 0) {
-				printf("\nImage - draw an image or text file of characters\n\nSyntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]\n\n'filename' should point to %sa gxy file, a 16 color pcx file, or any other (preferably text) file.\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the file.\n\nNote that fgcol will only have effect for a txt file, and bgcol will have no effect for a gxy%s file (unless forcing fgcol and/or bgcol with '-', or if using '?').\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position. For a %s file, the char argument has no effect unless '?' is used.\n\n'transpchar' or 'transpcol' can be used to make part of the image transparent. For a gxy file and text file, set 'transpchar' to either a char or a two-digit hexadecimal character to make that character transparent. For a pcx%s file, set 'transpcol' to make that color transparent.\n\nX and y are column and row coordinates with 0,0 as top left.\n\nBoth 'xflip' and 'yflip' are normally 0. Set 'xflip' to 1 to flip the image horizontally, and set 'yflip' to 1 to flip the image vertically.\n\nSpecify 'w' and 'h' (width and height) to scale the image to the given width and height, or specify p to scale based on percentage. Negative values are not allowed.\n", fileFormat,bxyPlus,charFF,filePlus);
+				printf("\nImage - draw an image or text file of characters\n\nSyntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]\n\n'filename' should point to %sa gxy file, a 16 color pcx file, or any other (preferably text) file.\n\nFgcol and bgcol values range from 0-15 and can be specified either as decimal or hex. Use 'u' and 'U' for current foreground or background color of the cmd window. Use '?' for fgcol to keep the foreground color in the buffer at each position, and use '?' for bgcol to keep the background color in the buffer at each position. Precede fgcol and/or bgcol with '-' to force the color used. Precede fgcol with '\\' to ignore/type out all gxy control codes inside the file.\n\nNote that fgcol will only have effect for a txt file, and bgcol will have no effect for a gxy%s file (unless forcing fgcol and/or bgcol with '-', or if using '?').\n\nChar can be specified either as a character, or as a hexadecimal ASCII value in the range 0-255. Use '?' to keep the character in the buffer at each position. For a %s file, the char argument has no effect unless '?' is used.\n\n'transpchar' or 'transpcol' can be used to make part of the image transparent. For a gxy file and text file, set 'transpchar' to either a char or a two-digit hexadecimal character to make that character transparent. For a pcx%s file, set 'transpcol' to make that color transparent.\n\nX and y are column and row coordinates with 0,0 as top left.\n\nBoth 'xflip' and 'yflip' are normally 0. Set 'xflip' to 1 to flip the image horizontally, and set 'yflip' to 1 to flip the image vertically.\n\nSpecify 'w' and 'h' (width and height) to scale the image to the given width and height, or specify p to scale based on percentage (also see last parameter). Negative values are not allowed.\n\nIf only the first of 'w' and 'h' was set, the value is used as percentage by default. Specify 'W' to mean height aspect ratio corrected by width(value means width), and 'H' to to mean width aspect ratio corrected by height(value means height).\n", fileFormat,bxyPlus,charFF,filePlus);
 			}
 			else if (strcmp(argv[2], "text") == 0) {
 #ifdef GDI_OUTPUT
-				char bigFontDesc[] = "\n[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a \"big font\". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.\n";
+				char bigFontDesc[] = "\n[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a \"big font\". This is especially useful in pixelfont modes a-f, as it is otherwise not possible to output readable text in those modes with the text operation.\n";
 #else
 				char bigFontDesc[] = "";
 #endif
@@ -3257,7 +3329,7 @@ int main(int argc, char *argv[]) {
 					char blockExtraFuncs[] = "\n\n*RGB* : There are several new helper functions for colExpr to deal with 64 bit color values. Please note that neither fgcol or bgcol is automatically preserved; in order to preserve e.g. bgcol while setting fgcol, surround the whole expression with keepbgcol(). New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r,g,b to the color col (typically col would be replaced by e.g. fgcol(x,y)).  2. blend(col, a,r,g,b) to alpha blend col with color r,g,b using opacity a (all values in range 0-255).  3. makecol(r,g,b) to construct fgcol from r,g,b values in range 0-255, makebgcol same for bgcol, makefgbgcol sets both fgcol and bgcol.  4. fgr(col),fgg(col),fgb(col) to get fgcolor's red,green or blue value (0-255), and bgr, bgg, bgb same for bgcol.  5. keepbgcol(col) to preserve previous bgcol while keeping col as fgcol, and keepfgcol(col) to preserve fgcol while setting bgcol with col.  6. Use safeor to safely construct a final value composed of both an fgcol(made with makecol) and a bgcol(made with makebgcol)";
 				#endif
 				
-				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\n%sx,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.\n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n%s\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.%s\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n", blockMode, blockExtra, blockTransf, blockExtraFuncs);
+				printf("\nBlock - copy, move, and transform a block of characters\n\nSyntax: block %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n\nIn its most simple form, the block operation is used to copy or move a rectangular block of characters from one place to another. For example, to copy a block of character from position 10,10 with width and height of 5,5 to position 0,0, use: block 0 10,10,5,5 0,0\n\nmode[:1233]  Essentially, there are two modes: 0=copy and 1=move, but also 2=copy and 3=move (see transparency below). If using move (mode 1 or 3), we can optionally specify the character to fill the empty area after the move (default is blank space with color 7 and background color 0). In order to make a block move and fill in with exclamation points (ASCII hex value 21), with color 15(f) and background color 4, use: block 1:f421 10,10,5,5 0,0\n\n%sx,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as top left. X2,y2 is destination. Negative coordinates are ok, but not negative width/height. Optionally, the block can be scaled by setting w2 and h2, as well as rotated with rz (only 90,180,270 degrees supported). Scaling is done before rotation.\n\n[transpchar/transpcol]: when making the copy or move, either a character (mode 0 and 1) or a foreground color (mode 2 and 3) can be transparent, i.e. not copied. If no transparency is needed, specify -1.\n\n[xflip] [yflip]: the copied block can be reversed(flipped) in x and/or y. Specify 1 instead of 0 for each to do so.\n\n%s\n\n[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-9]) returns 0 and stores the math expression expr in one of 10 variables called s0-s9 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.%s\n\n[xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4\n\n[from|to]: As mentioned above, to is default for xExpr and yExpr.\n\n[mvx,mvy,mvw,mvh]: Optimization setting for xExpr and yExpr, which can be used to limit the rectangular area (inside the entire block) for which the expressions are evaluated.\n", blockMode, blockExtra, blockTransf, blockExtraFuncs);
 			}
 			
 			else if (strcmp(argv[2], "flags") == 0) {
@@ -3265,7 +3337,7 @@ int main(int argc, char *argv[]) {
 				char gdiflag1[] = "\n- a  Absolute (pixel) output positioning (used by f flag)";
 				char gdiflag2[] = "\n- U  Draw straight on top of Windows desktop instead of current window";
 				char gdiflag3[] = "\n  P  Save buffer to 'GDIbuf.dat' at end of run, read back when start again";
-				char fFlag[] = "  fFont:x,y,w,h,outW,outH  Set buffer font(0-9,a-c), position, and size. 1-7 params. Force outW and outH to screen width/height for better performance\n";
+				char fFlag[] = "  fFont:x,y,w,h,outW,outH  Set buffer font(0-9,a-f), position, and size. 1-7 params. Force outW and outH to screen width/height for better performance\n";
 #else
 				char gdiflag1[] = "", gdiflag2[] = "", gdiflag3[] = "";
 				char fFlag[] = "  f:x,y,w,h,outW,outH  Set output buffer position and size. 0-6 params. Force outW and outH to screen width/height for better performance\n";
@@ -3277,11 +3349,11 @@ int main(int argc, char *argv[]) {
 				char cFlag[] = "Capture buffer to file, as capture-i.bxy (i starts at 0 and increases). 0-6 params. Format=0 for txt, 1 for bxy(default), 2 for bmp format, 3 for gxy(legacy). Last param can force i\n";
 #endif
 
-				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- wi  Wait i ms after each frame\n- Wi  Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx%s\n  tn Enable using up to n threads (max 8) for increased block operation speed\n  v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)\n  V  Enable origo mode for all box operations\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- o  Each frame, write return value (input events) to EL.dat\n- O  Same as o, but only write to El.dat if an event happened (usually better)\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
+				printf("\nFlags marked with - can be turned OFF in server by preceding it with -\n\nSet flags in 4 ways:\n1. If not using server, flags are the third argument after string of operations\n2. If running as server, flags are also put after the operations\n3. To force flag changes in server (skip queue), create file 'servercmd.dat' in start folder. Start file with operations within \"\", then blank space and flags\n4. If 'I' flag has been set, window title can be set to send operations/flags. Title must be prefixed with 'output:'. Example: title output: \"\" e\n\nDebug:\n- d  Print entire line causing the error if error happens\n- e  Ignore/hide all error messages\n- E  Wait for key press after error\n\nInput/timing (cmdgfx_input prefered):\n- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and O flag set)\n  K  As above, but not persistent, and will *wait* for key press\n- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and O flag set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)\n- M[i]  As above, but reports mouse move even if no mouse key pressed\n- u  Also send keyboard UP events for m and M flags\n- Wi Wait up to i ms after each frame (use for smooth frame rate)\n- z  Enable sleeping wait (for W flag). Uses less CPU but less smooth\n\nOutput:%s\n  c:x,y,w,h,format,i  %s%s  n  Produce no output. Used to create a frame in several steps%s\n\n3d:\n  b  Clear Z-buffer (only makes sense if n flag was just used)\n- B  Create Z-buffer (only 3d mode 5 supported if s flag not set)\n  D  Clear all 3d objects in memory\n  Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16\n- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i\n  Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4\n- s  Z-buffer support for flat shade in 3d modes 0,1,4. Also fixes edge bug for pcx textures\n- T  Support repeated texture coordinates (above 1.0)\n  Zi  Set projection depth i for all 3d operations. Default: 500\n\nOther:\n  C  Clear frame counter (print using [FRAMECOUNT] in string for text op)\n  Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256\n  p  Preserve the content of the cmd window text buffer when starting cmdgfx\n  Qn Set seed n for the random() function used by block expressions%s\n  rm Set wrapping mode for block operation, 0=skip(default), 1=clamp, 2=wrap\n  tn Enable using up to n threads (max 8) for increased block operation speed\n- v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)\n- V  Enable origo mode for all box operations\n\nServer:\n  F  Flush the pipe input buffer between script and server\n- i  If set, ignore the file 'servercmd.dat' even if present\n- I  If set, support setting title to supply commands to cmdgfx\n- J  When an input event happens, flush buffer between script and server\n- O  Write return value (input events) to EL.dat if an event happened\n  S  Enable server mode\n", gdiflag1, cFlag, fFlag, gdiflag2, gdiflag3);
 			}
 			else if (strcmp(argv[2], "palette") == 0) {
 #ifdef GDI_OUTPUT
-				printf("\nPalette - set new RGB values for the 16 color palette\n\nThe foreground palette is set as parameter 3, always following flags (use - to set no flags). The background palette can be set as parameter 4, but if omitted, background palette is the same as foreground.\n\nAll 16 colors can potentially be set, but does not have to be.\n\nThe palette follows the format RRGGBB,RRGGBB,... up to 16 colors, where RR is the red component 0-255 in hexadecimal, GG is the green component, and BB is the blue component. As an example, to keep index 0 black but set color 1 to orange and color 2 to lime green, use 000000,ff9900,99ff00 as palette.\n\nIf runninng as server, default palette can be restored by using - as palette.\n");
+				printf("\nPalette - set new RGB values for the 16 color palette\n\nThe foreground palette is set as parameter 3, always following flags (use - to set no flags). The background palette can be set as parameter 4, but if omitted, background palette is the same as foreground.\n\nAll 16 colors can potentially be set, but does not have to be.\n\nThe palette follows the format RRGGBB,RRGGBB,... up to 16 colors, where RR is the red component 0-255 in hexadecimal, GG is the green component, and BB is the blue component. As an example, to keep index 0 black but set color 1 to orange and color 2 to lime green, use 000000,ff9900,99ff00 as palette.\n\nIf running as server, default palette can be restored by using - as palette.\n");
 #else
 				printf("\nPalette - rearrange order of the 16 cmd colors\n\nUnlike cmdgfx_gdi, setting the palette for cmdgfx does not set new RGB colors. Instead, it rearranges the existing palette indices. To actually set RGB colors for cmdgfx, use the program 'cmdwiz' with the 'setpalette' operation.\n\nThe foreground palette for cmdgfx is set as parameter 3, always following flags (use - to set no flags). The background palette can also be set as parameter 4 (it is NOT copied from parameter 3 if omitted).\n\nAll 16 color indices can potentially be rearranged, but does not have to be.\n\nThe default palette looks like 0123456789abcdef, which means index 0 is color 0, index 10 is color 10(a) etc. As an example, to keep index 0 and 1 as black and dark blue, but set index 2 to light blue, index 3 to cyan, and index 4 to white, use 019bf as palette.\n\nIf running as server, default palette can be restored by using - as palette.\n");
 #endif
@@ -3290,7 +3362,7 @@ int main(int argc, char *argv[]) {
 				printf("\nRunning as server has several advantages, mostly regarding speed. The overhead of running an executable each frame disappears, and 3d objects are kept in memory and don't have to be re-read with each use. Server functionality also presents some problems, such as dealing with asynchronicity and input lag.\n\nIn order to run as server, the S flag must be set, and the program needs to be last in a pipe chain, such as: call program.bat | cmdgfx.exe "" S . For practical purposes, it is a better idea to have the script call itself this way than to have to type it manually each time. There are many example batch scripts included with this program that show how do to this.\n\nTo send operations from the script to the program, use the echo command with a prefix of 'cmdgfx:' within quotes (optionally followed by flags and palette(s)), e.g: echo \"cmdgfx: fbox 9 0 A\". If the string sent does not have the prefix, the server simply prints it to stdout and otherwise ignores it. It is also possible to send operations either by writing (without 'cmdgfx' prefix) to the file 'servercmd.dat', or (if I flag set) by setting the title of the window, prefixed with 'output:'. These two methods have the advantage that they bypass the frame queue over the pipe and are processed immediately.\n\nSetting flags: see the separate help section for flags. Note that flags can be disabled by preceding with -.\n\nDealing with input lag: because the batch script may execute faster than cmdgfx, a queue of frames to render may build up over the pipe, which can result in input lag. Actually, the best way to deal with this is to use the separate 'cmdgfx_input' program to handle input, because when put at the beginning of the pipe chain (like: cmdgfx_input.exe m0nW10 | call program.bat | cmdgfx "" S) it can control the speed of the batch script, preventing it from running faster than the server. Most of the example scripts included with the program use this approach. Without cmdgfx_input, the best approach is to set the O flag (see flag section), and send in extra data (~2000 characters) prefixed by 'skip' with each call to the server to fill up the pipe buffer to prevent the server from lagging behind.\n\nQuitting the server: To exit the server, use echo as usual but follow 'cmdgfx:' with 'quit'. Using servercmd.dat or setting the title is also supported.\n");
 			}
 			else if (strcmp(argv[2], "compare") == 0) {
-				printf("\nThe main difference between cmdgfx and cmdgfx_gdi is that while the former outputs actual text into the cmd window buffer, the output of cmdgfx_gdi is not text but a bitmap, simulating text output.\n\nProducing a bitmap instead of text may seem nonsensical, but there is a simple explanation: it is (usually) much faster! That is because the Windows API to output text to a console is very slow, as soon as there is more than one color in the output.\n\nThe cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-c which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and font c 3x3). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).\n\nUse cmdgfx:\n  1. For single output, not animating in a loop (speed is not crucial)\n  2. When the resulting characters actually need to be put into the text buffer\n  3. When needing to use another font than the 10 raster fonts or pixel fonts\n  4. If output is monochrome/single color (speed will be same or better)\n\nUse cmdgfx_gdi:\n  1. When speed is of the essence (when making animations)\n  2. When needing to write pixels instead of characters\n  3. When needing to write to desktop instead of current window (set flag U)\n  4. When needing to place the output with pixel precision instead of character precision (set a flag, then use f flag)\n  5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each\n  6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each\n\n\n*RGB* : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.\n\nOnly use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. \n\n\n*VT*: This is the RGB equivalent of standard cmdgfx, which means it can output actual text and use the current font of the console window. It only works on Windows 10 machines, as only Windows 10 supports VT-100 escape codes to set colors. It has significantly slower output than cmdgfx_RGB.\n");
+				printf("\nThe main difference between cmdgfx and cmdgfx_gdi is that while the former outputs actual text into the cmd window buffer, the output of cmdgfx_gdi is not text but a bitmap, simulating text output.\n\nProducing a bitmap instead of text may seem nonsensical, but there is a simple explanation: it is (usually) much faster! That is because the Windows API to output text to a console is very slow, as soon as there is more than one color in the output.\n\nThe cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-f which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and so on). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).\n\nUse cmdgfx:\n  1. For single output, not animating in a loop (speed is not crucial)\n  2. When the resulting characters actually need to be put into the text buffer\n  3. When needing to use another font than the 10 raster fonts or pixel fonts\n  4. If output is monochrome/single color (speed will be same or better)\n\nUse cmdgfx_gdi:\n  1. When speed is of the essence (when making animations)\n  2. When needing to write pixels instead of characters\n  3. When needing to write to desktop instead of current window (set flag U)\n  4. When needing to place the output with pixel precision instead of character precision (set a flag, then use f flag)\n  5. For advanced users, it is possible to get more than 16 color output by splitting the output into blocks and setting an individual palette for each\n  6. For adcanced users, it is possible to use more than one font on a single screen, by splitting the output into blocks and using a different font for each\n\n\n*RGB* : The main difference between cmdgfx_RGB and cmdgfx_gdi is that the former can read/write 24 bit RGB colors. It can also use 24 bit BMP files as input for images, textures etc. Colors are stored as 24-bit RRGGBB values, which is something that e.g. the block colExpr has to take into account to produce meaningful values.\n\nOnly use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower. \n\n\n*VT*: This is the RGB equivalent of standard cmdgfx, which means it can output actual text and use the current font of the console window. It only works on Windows 10 machines, as only Windows 10 supports VT-100 escape codes to set colors. It has significantly slower output than cmdgfx_RGB.\n");
 			}
 #ifdef _RGB32			
 			else if (strcmp(argv[2], "color16") == 0) {
@@ -3309,7 +3381,7 @@ int main(int argc, char *argv[]) {
 #else
 			char color16op[] = "";
 #endif
-			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2020\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y%s\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sinsert   file\nskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, bigFont, blockMode, color16op, name, name, name, name, name, name);
+			printf("\nCmdGfx%s %s : Mikael Sollenborn 2016-2020\n\nUsage: cmdgfx%s [\"operations\"] [flags] [fgpalette] [bgpalette]\n\nOperations (separated by &):\npoly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\nipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]\ngpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]\ntpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]\nimage    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]\nbox      fgcol bgcol char x,y,w,h\nfbox     fgcol bgcol char [x,y,w,h]\nline     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]\npixel    fgcol bgcol char x,y\ncircle   fgcol bgcol char x,y,r\nfcircle  fgcol bgcol char x,y,r\nellipse  fgcol bgcol char x,y,rx,ry\nfellipse fgcol bgcol char x,y,rx,ry\ntext     fgcol bgcol char string x,y%s\nblock    %s x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar/transpcol] [xflip] [yflip] [transform] [colExpr] [xExpr yExpr] [to|from] [mvx,mvy,mvw,mvh]\n3d       objectfile drawmode,drawoption[,tex_offset,tey_offset,tex_scale,tey_scale] rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]\n%sskip\nrem\n\nArguments within brackets are optional, but if used they must be written in the given order from left to right. For example, to set [xflip] for the block operation, [transpchar] must be specified first.\n\n'cmdgfx%s /? operation' to see operation info, e.g. 'cmdgfx%s /? fbox'\n\n'cmdgfx%s /? flags' for information about flags.\n\n'cmdgfx%s /? server' for info on running as server.\n\n'cmdgfx%s /? palette' for info on setting the color palette.\n\n'cmdgfx%s /? compare' for a comparison of cmdgfx, cmdgfx_gdi, cmdgfx_RGB, and cmdgfx_VT.\n", name, ver, name, bigFont, blockMode, color16op, name, name, name, name, name, name);
 		}
 		
 		writeErrorLevelToFile(bWriteReturnToFile, 0, 0);
@@ -3356,10 +3428,7 @@ int main(int argc, char *argv[]) {
 	argv1 = (char *) malloc(MAX_OP_SIZE*sizeof(char));
 	if (!argv1) { printf("Err: Couldn't allocate memory for string\n"); free(averageZ); free(videoCol); free(videoChar); writeErrorLevelToFile(bWriteReturnToFile, 0, 0); return 0; }
 
-	bInserted = 1;
-	insertedArgs = insertCgx(argv[1]);
-	//printf(insertedArgs); getch();
-	if (!insertedArgs) { insertedArgs = argv[1]; bInserted = 0; }
+	insertedArgs = argv[1];
 
 	if (argc > 2) {
 		for (i=0; i < strlen(argv[2]); i++) {
@@ -3485,12 +3554,37 @@ int main(int argc, char *argv[]) {
 					if (j) mouseWait = atoi(wTime);
 					break;
 				}
-				case 'W': case 'w': {
+				case 'W': {
 					char wTime[64];
-					bWait = 1; if (argv[2][i] == 'W') bWait = 2; j = 0; i++;
+					bWait = 1; j = 0; i++;
 					while (argv[2][i] >= '0' && argv[2][i] <= '9') wTime[j++] = argv[2][i++];
 					i--; wTime[j] = 0;
 					if (j) waitTime = atoi(wTime);
+					break;
+				}
+				case 'Q': {
+					char ssrand[64];
+					int isrand = -1;
+					j = 0; i++;
+					while (argv[2][i] >= '0' && argv[2][i] <= '9') ssrand[j++] = argv[2][i++];
+					i--; ssrand[j] = 0;
+					if (j) {
+						isrand = atoi(ssrand);
+						if (isrand > 0) {
+							srand(isrand);
+							for (int k=0; k<MAXTHREADS; k++) {
+								randSeed[k] = isrand+(k+2)*(k+2);
+							}
+						}
+					}
+					break;
+				}
+				case 'r': {
+					g_wrapMode = SKIP;
+					if (argv[2][i+1] >= '0' && argv[2][i+1] <= '9')
+						sscanf(&argv[2][i+1], "%d", &nof);
+					if(nof==1) g_wrapMode = CLAMP;
+					if(nof==2) g_wrapMode = WRAP;
 					break;
 				}
 				case 'R': {
@@ -3572,6 +3666,7 @@ int main(int argc, char *argv[]) {
 	do {
 		rem = 0;
 		retVal = 0;
+		g_moduleTick = GetTickCount();
 		pch = strtok(argv1, "&");
 
 		while (pch != NULL) {
@@ -4107,10 +4202,29 @@ int main(int argc, char *argv[]) {
 				}
 				
 				if (w2 > 0 && h2 == -1) {
-					float perc=w2;
-					perc = perc / 100.0;
-					w2 = (int)((float)w1 * perc); if (w2 < 1) w2=1;
-					h2 = (int)((float)h1 * perc); if (h2 < 1) h2=1;
+					
+					char *pch2 = pch + 16, lastCh=' ';
+					while(*pch2 != 0 && *pch2 != '&') {
+						if (*pch2 != ' ' && *pch2 != 9)
+							lastCh = *pch2;
+						pch2++;
+					}
+					
+					if (lastCh == 'w' || lastCh == 'W') {
+						float perc=(float)w2/(float)w1;
+						h2 = (int)((float)h1 * perc); if (h2 < 1) h2=1;
+					} 
+					else if (lastCh == 'h' || lastCh == 'H') {
+						h2 = w2;
+						float perc=(float)h2/(float)h1;
+						w2 = (int)((float)w1 * perc); if (w2 < 1) w2=1;
+					}
+					else {
+						float perc=w2;
+						perc = perc / 100.0;
+						w2 = (int)((float)w1 * perc); if (w2 < 1) w2=1;
+						h2 = (int)((float)h1 * perc); if (h2 < 1) h2=1;
+					}
 				}
 				
 				if (res) {
@@ -4233,6 +4347,7 @@ int main(int argc, char *argv[]) {
 			int x1,y1,w,h, nx,ny,nw=-1,nh=-1, rz=0, xFlip = 0, yFlip = 0;
 			int mvx=-1, mvy=-1, mvw=-1, mvh=-1;
 			char transf[2510]= {0}, mode[16], colorExpr[8024] = {0}, xExpr[8024] = {0}, yExpr[8024] = {0}, xyExprToCh[16] = {0}, nys[64] = {0};
+			int bUseDll = 0;
 
 			g_th_blockCol = g_th_blockChar = NULL;
 
@@ -4250,12 +4365,70 @@ int main(int argc, char *argv[]) {
 					else
 						parseInput("0", "0", s_transpval, &fgcol, &bgcol, &transpval, NULL, NULL);
 
-					// if wants to use threads for block, allow unless: target nw/nh is set, OR rz is set, OR yFlip is set, OR we're using xExpr/yExpr and 'to' 
+					// allow threading for block, UNLESS: target nw/nh is set, OR rz is set, OR yFlip is set, OR we're using xExpr/yExpr and 'to' 
 					if (allowedThreads > 1) {
 						if (nw == -1 && nh == -1 && rz==0 && yFlip==0)
 							bUseThreads = 1;
 						if ((strlen(xExpr) > 1 || strlen(yExpr) > 1) && xyExprToCh[0] != 'f') 
 							bUseThreads = 0;
+					}
+
+
+					if (strncmp(colorExpr, "DLL:", 4) == 0) {
+						int len;
+						BOOL fRunTimeParseSuccess = FALSE;
+						char *extChP = colorExpr + 4;
+						char dllName[64], procName[64];
+						int inArg1=0, inArg2=0, inArg3=0, inArg4=0, inArg5=0;
+
+						bUseDll = 1;
+
+						char *nextTok = strchr(extChP, ':');
+						if (nextTok) {
+							len = nextTok - extChP;
+							strncpy(dllName, extChP, len);
+							dllName[len] = 0;
+							extChP = nextTok + 1;
+							nextTok = strchr(extChP, ':');
+							if (nextTok) {
+								len = nextTok - extChP;
+								strncpy(procName, extChP, len);
+								procName[len] = 0;
+								extChP = nextTok + 1;
+								strcpy(colorExpr + 4, extChP);
+								fRunTimeParseSuccess = TRUE;
+							} else {
+								strcpy(procName, extChP);
+								fRunTimeParseSuccess = TRUE;
+							}
+						}
+
+						if (fRunTimeParseSuccess) {
+							if(strcmp(dllName, g_oldDllName) != 0) {
+								g_fRunTimeLinkSuccess = FALSE;
+								strcpy(g_oldDllName, dllName);
+								if (g_module != NULL)
+									FreeLibrary(g_module);
+								g_module = LoadLibrary(dllName);
+							}
+							
+							if (g_module != NULL) 
+							{ 
+								if(strcmp(procName, g_oldProcName) != 0 || g_fRunTimeLinkSuccess == FALSE) {
+									g_fRunTimeLinkSuccess = FALSE;
+									strcpy(g_oldProcName, procName);
+									g_procAdd = (EXPR_COL_PROC) GetProcAddress(g_module, procName); 
+							 
+									if (NULL != g_procAdd) {
+										g_fRunTimeLinkSuccess = TRUE;
+									}
+								}
+							}
+							
+							if (! g_fRunTimeLinkSuccess) 
+								reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, "colorExpr, external DLL link failed", NULL);
+						} else
+							reportError(g_errH, OP_BLOCK, ERR_EXPRESSION, g_opCount, "colorExpr, external DLL parse failed", NULL);
 					}
 					
 					if (bUseThreads == 0) {
@@ -4270,11 +4443,11 @@ int main(int argc, char *argv[]) {
 						hs = hso = h/allowedThreads;
 						hmod = h%allowedThreads; 
 
-						prepExpr(colorExpr,1); // random->rando, store->sto, keepfgcol->keepf, keepbgcol->keepb
+						prepExpr(colorExpr,1);
 						prepExpr(xExpr,1);
 						prepExpr(yExpr,1);
 												
-						if (strlen(xExpr)>1 || strlen(yExpr)>1 || strstr(colorExpr, "col(") || strstr(colorExpr, "char(") || strstr(xExpr, "col(") || strstr(xExpr, "char(") || strstr(yExpr, "col(") || strstr(yExpr, "char(") )
+						if (strlen(transf)>1 || strlen(xExpr)>1 || strlen(yExpr)>1 || strstr(colorExpr, "col(") || strstr(colorExpr, "char(") || bUseDll)
 							crReadBlock=1;
 						
 						if (crReadBlock) {
@@ -4293,7 +4466,7 @@ int main(int argc, char *argv[]) {
 							if (crReadBlock) {
 								
 								g_th_blockCol = (uchar *)malloc(w*h*sizeof(uchar));
-								g_th_blockChar = (uchar *)malloc(w*h*sizeof(uchar));
+								if(!bUseDll) g_th_blockChar = (uchar *)malloc(w*h*sizeof(uchar));
 								g_th_w=w;
 								g_th_h=h;
 								
@@ -4301,14 +4474,14 @@ int main(int argc, char *argv[]) {
 									k = i*w; int k2=y1*XRES+i*XRES+x1;
 									for (j = 0; j < w; j++) {
 										g_th_blockCol[k+j] = videoCol[k2+j];
-										g_th_blockChar[k+j] = videoChar[k2+j];
+										if(!bUseDll) g_th_blockChar[k+j] = videoChar[k2+j];
 									}
 								}
 							}
 							
 							for (j = 0; j < allowedThreads; j++) {
 								BlockData *bd = &bds[j];
-								bd->op=THREAD_OP_BLOCK, bd->s_mode=mode, bd->x=x1, bd->y=y1, bd->w=w, bd->h=hs, bd->nx=nx, bd->ny=ny, bd->nw=nw, bd->nh=nh, bd->rz=rz, bd->transf=transf, bd->colorExpr=colorExpr, bd->xExpr=xExpr, bd->yExpr=yExpr, bd->XRES=XRES, bd->YRES=YRES, bd->videoCol=videoCol, bd->videoChar=videoChar, bd->transpchar=transpval, bd->bFlipX=xFlip, bd->bFlipY=yFlip, bd->bTo=xyExprToCh[0] != 'f', bd->mvx=mvx, bd->mvy=mvy, bd->mvw=mvw, bd->mvh=mvh, bd->blockThreadIndex=j, bd->threadYp = j*hso; bd->bExit=0;
+								bd->op=THREAD_OP_BLOCK, bd->s_mode=mode, bd->x=x1, bd->y=y1, bd->w=w, bd->h=hs, bd->nx=nx, bd->ny=ny, bd->nw=nw, bd->nh=nh, bd->rz=rz, bd->transf=transf, bd->colorExpr=colorExpr, bd->xExpr=xExpr, bd->yExpr=yExpr, bd->XRES=XRES, bd->YRES=YRES, bd->videoCol=videoCol, bd->videoChar=videoChar, bd->transpchar=transpval, bd->bFlipX=xFlip, bd->bFlipY=yFlip, bd->bTo=xyExprToCh[0] != 'f', bd->mvx=mvx, bd->mvy=mvy, bd->mvw=mvw, bd->mvh=mvh, bd->blockThreadIndex=j, bd->threadYp = j*hso, bd->bExit=0;
 #ifdef USE_THREAD_POOL	
 								SetEvent(ghAwaitWorkEvents[j]);
 #else
@@ -4324,7 +4497,7 @@ int main(int argc, char *argv[]) {
 								CloseHandle(threadhandles[i]);
 #endif
 							if (crReadBlock) {
-								free(g_th_blockCol); free(g_th_blockChar);
+								free(g_th_blockCol); if(!bUseDll) free(g_th_blockChar);
 							}
 						}
 					}
@@ -4565,7 +4738,7 @@ int main(int argc, char *argv[]) {
 
 							nofFacePoints = obj3->faceData[j*R3D_MAX_V_PER_FACE];
 							
-							if (bmap && bmap->bCmdBlock && bmap->blockRefresh > 0 && obj3->nofBmaps > 0) {
+							if (bmap && bmap->bCmdBlock && bmap->blockRefresh > 0 && obj3->nofBmaps > 0 && doNothingCount < 2) {
 								int ok;
 								if (bmap->data)
 									freeBitmap(bmap, 0);	
@@ -4855,12 +5028,15 @@ int main(int argc, char *argv[]) {
 		
 		
 		if (!bDoNothing) {
+			
+			doNothingCount = 0;
 				
 	#ifdef GDI_OUTPUT
-			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, bAbsBitmapPos, bWindowedMode,  allowedThreads,threadhandles,bds);
+			convertToGdiBitmap(XRES, YRES, videoCol, videoChar, fontIndex, &fgPalette[0], &bgPalette[0], gx, gy, outw, outh, outx, outy, bAbsBitmapPos, bWindowedMode,  allowedThreads,threadhandles,bds);
 
 			if(gbThreadsCreated) {
 				WaitForSingleObject(ghDoneBlitEvent, INFINITE);
+				GdiFlush();
 				blitD.x=g_blitX, blitD.y=g_blitY, blitD.w=g_blitW, blitD.h=g_blitH;
 				SetEvent(ghAwaitWorkBlitEvent);
 				
@@ -4912,6 +5088,9 @@ int main(int argc, char *argv[]) {
 			errH.errCnt = 0;
 
 		}
+		else
+			doNothingCount++;
+		
 		bDoNothing = 0;
 		
 		if (!bMouse && ((bReadKey && kbhit()) || bWaitKey)) {
@@ -5055,6 +5234,7 @@ int main(int argc, char *argv[]) {
 						fndMe = strstr(input, "cmdgfx:");
 						if (!fndMe) {
 							puts(input);
+							fflush(stdout);
 						}
 					}
 
@@ -5065,8 +5245,9 @@ int main(int argc, char *argv[]) {
 				if ((strstr(input, "quit") != NULL || strstr(input, "exit") != NULL) && strlen(input) < 20) {
 					bServer = 0;
 				} else {
-					if (fndMe != NULL)
+					if (fndMe != NULL) {
 						memmove(argv1, (char *)fndMe + strlen("cmdgfx:"), strlen(input));
+					}
 				}
 			} else {
 				if (!bSuppressErrors) {
@@ -5075,7 +5256,7 @@ int main(int argc, char *argv[]) {
 				}
 				bServer = 0;
 			}
-			
+						
 			if (bServer){
 				int ast = 1;
 				for (i = 0; i < strlen(argv1); i++) {
@@ -5084,11 +5265,14 @@ int main(int argc, char *argv[]) {
 				}
 				
 				pch = strtok(argv1, " \n");
-				strcpy(argv1, pch);
-				for (i = 0; i < strlen(argv1); i++)
-					if (argv1[i] == 1) argv1[i] = ' ';
-				
-				pch = strtok (NULL, " \n");
+				if (pch) {
+					strcpy(argv1, pch);
+					for (i = 0; i < strlen(argv1); i++)
+						if (argv1[i] == 1) argv1[i] = ' ';
+					
+					pch = strtok (NULL, " \n");
+				} else
+					strcpy(argv1, " ");
 
 				if (pch) {
 					int neg = 0;
@@ -5096,7 +5280,7 @@ int main(int argc, char *argv[]) {
 						
 						neg = 0;
 						if (pch[i] == '-') { neg = 1; i++; }
-						
+
 						switch(pch[i]) {
 #ifdef GDI_OUTPUT
 							case 'P': bWriteGdiToFile = neg? 0 : 1; break;
@@ -5124,12 +5308,12 @@ int main(int argc, char *argv[]) {
 								}
 								break;
 							}
-							case 'W': case 'w': {
+							case 'W': {
 								if (neg)
 									bWait = 0;
 								else {
 									char wTime[64];
-									bWait = 1; if (pch[i] == 'W') bWait = 2; j = 0; i++;
+									bWait = 1; j = 0; i++;
 									while (pch[i] >= '0' && pch[i] <= '9') wTime[j++] = pch[i++];
 									i--; wTime[j] = 0;
 									if (j) waitTime = atoi(wTime);
@@ -5141,8 +5325,7 @@ int main(int argc, char *argv[]) {
 							case 'e': bSuppressErrors = neg? 0 : 1; break;
 							case 'E': bWaitAfterErrors = neg? 0 : 1; break;
 							case 's': bUsePerspectiveSingleCol = neg? 0 : 1; break;
-							case 'o': bWriteReturnToFile = neg? 0 : 1; break;
-							case 'O': bWriteReturnToFile = neg? 0 : 2; break;
+							case 'O': bWriteReturnToFile = neg? 0 : 1; break;
 							case 'C': frameCounter = 0; startT = milliseconds_now(); break;
 							case 'T': bAllowRepeated3dTextures = neg? 0 : 1; break;
 							case 'z': g_bSleepingWait = neg? 0 : 1; break;				
@@ -5162,6 +5345,14 @@ int main(int argc, char *argv[]) {
 								if (nof == 2) { GXY_MAX_X = GXM; if (GXY_MAX_X < 16) GXY_MAX_X=16; GXY_MAX_Y = GYM; if (GXY_MAX_Y < 16) GXY_MAX_Y=16; }
 								break;
 							}
+							case 'r': {
+								g_wrapMode = SKIP;
+								if (pch[i+1] >= '0' && pch[i+1] <= '9')
+									sscanf(&pch[i+1], "%d", &nof);
+								if(nof==1) g_wrapMode = CLAMP;
+								if(nof==2) g_wrapMode = WRAP;
+								break;
+							}
 							case 'R': {
 								char rotGran[64];
 								j = 0; i++;
@@ -5172,6 +5363,24 @@ int main(int argc, char *argv[]) {
 								break;
 							}
 							
+							case 'Q': {
+								char ssrand[64];
+								int isrand = -1;
+								j = 0; i++;
+								while (pch[i] >= '0' && pch[i] <= '9') ssrand[j++] = pch[i++];
+								i--; ssrand[j] = 0;
+								if (j) {
+									isrand = atoi(ssrand);
+									if (isrand > 0) {
+										srand(isrand);
+										for (int k=0; k<MAXTHREADS; k++) {
+											randSeed[k] = isrand+(k+2)*(k+2);
+										}
+									}
+								}
+								break;
+							}
+				
 							case 'N': {
 								bAutoCenter3d = neg? 0 : 1; autoScale3dScale = -1;
 								if (bAutoCenter3d && pch[i+1] >= '0' && pch[i+1] <= '9')
@@ -5222,13 +5431,13 @@ int main(int argc, char *argv[]) {
 								int nof;
 #ifdef GDI_OUTPUT
 								i++; fontIndex = GetHex(pch[i]);
-								if (fontIndex < 0 || fontIndex > 12) fontIndex = 6; 
+								if (fontIndex < 0 || fontIndex > 15) fontIndex = 6; 
 								if (fontIndex > 9) g_bUsingPixelFont = 1;
 #endif
 								if (pch[i+1] == ':' && pch[i+2]) {
 									fnd = strchr(&pch[i+2], ';');
 									if (!fnd) strcpy(fin, &pch[i+2]); else { nof = fnd-&pch[i+2]; strncpy(fin, &pch[i+2], nof); fin[nof]=0; }
-									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh);
+									nof = sscanf(fin, "%d,%d,%d,%d,%d,%d,%d,%d", &gx, &gy, &txres, &tyres, &outw, &outh, &outx, &outy);
 									if (nof >= 3 && nof < 5) outw = txres;
 									if (nof >= 4 && nof < 6) outh = tyres;
 									if (outw > txres || outw < 0) outw = txres;
@@ -5310,8 +5519,7 @@ int main(int argc, char *argv[]) {
 				free(insertedArgs);
 			
 			bInserted = 1;
-			insertedArgs = insertCgx(argv1);
-			if (!insertedArgs) { insertedArgs = (char *) malloc(strlen(argv1) + 10); strcpy(insertedArgs, argv1); }
+			insertedArgs = (char *) malloc(strlen(argv1) + 10); strcpy(insertedArgs, argv1);
 			opCount = 0;
 			if (bServer) {
 				for (i = 0; i < MAX_OBJECTS_IN_MEM; i++) {
@@ -5401,6 +5609,8 @@ int main(int argc, char *argv[]) {
 	if (conv16Col) free(conv16Col);
 	if (conv16Char) free(conv16Char);
 #endif
+
+	if (g_module != NULL) FreeLibrary(g_module);
 
 	CloseHandle(g_conin);
 	CloseHandle(g_conout);

@@ -14,7 +14,9 @@ set /a W=110, H=65
 set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+
 call centerwindow.bat 0 -10
+call preparescale.bat 1
 
 set /a WW=!W!*2, WWW=!W!*3, HH=!H!*2, WMID=!W!/2, HMID=!H!/2
 set /a WWX=!W!+!WMID!, CMX=!WMID!+3,CMY=!HMID!-3
@@ -58,7 +60,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 	
-	if "!RESIZED!"=="1" cmdwiz showcursor 0 & set /a "FINER=1, W=SCRW*2+2, H=SCRH*2+2, WW=W*2, WWW=W*3, HH=H*2, WMID=W/2, HMID=H/2" & set /a "WWX=!W!+!WMID!, CMX=!WMID!+3,CMY=!HMID!-3" & set /a "BX=!W!+40,BW=!WW!-40*2" & set /a "BM=!BW!/2" & for /L %%b in (1,1,20) do echo "cmdgfx: fbox 0 0 00"
+	if "!RESIZED!"=="1" cmdwiz showcursor 0 & set /a "FINER=1, W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, WW=W*2, WWW=W*3, HH=H*2, WMID=W/2, HMID=H/2" & set /a "WWX=!W!+!WMID!, CMX=!WMID!+3,CMY=!HMID!-3" & set /a "BX=!W!+40,BW=!WW!-40*2" & set /a "BM=!BW!/2" & for /L %%b in (1,1,20) do echo "cmdgfx: fbox 0 0 00"
 	
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 32 echo "cmdgfx: fbox 0 0 00 0,0,!WWW!,!HH!" & set /a MODE+=1&if !MODE! gtr 2 set MODE=0

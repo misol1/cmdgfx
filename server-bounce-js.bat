@@ -8,7 +8,9 @@ cmdwiz showcursor 1 & goto :eof
 
 :START
 cmdwiz setfont 6 & cls & mode 120,50 & cmdwiz showcursor 0 & title Bounce
+set /a W=240, H=100
 call centerwindow.bat 0 -15
+call prepareScale.bat 0
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
 mode 80,50
@@ -16,7 +18,19 @@ echo "cmdgfx: quit"
 title input:Q
 exit /b 0 */
 
-var maxBalls=500, nofShownBalls=50, w=240, h=100
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
+var Shell = new ActiveXObject("WScript.Shell");
+var w=GetCmdVar("W"), h=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+
+var maxBalls=2000, nofShownBalls=50
 var ballsX=[], ballsY=[], ballsSX=[], ballsI=[], ballsYC=[], ballsYH=[], ballsSXcale=[], ballsCol=[]
 var bI = ["ball4-t.gxy"], bIw = [13,11,9], bIh = [10,8,6]
 
@@ -40,15 +54,21 @@ for (i = 0; i < maxBalls; i++) {
 DrawBufferBalls()
 
 while(true) {
-	outString="fbox 1 0 b1 0,0," + w + "," + h + " & fbox 1 0 b0 0," + (h-8) + "," + w + ",8"
+	WScript.Echo("\"cmdgfx:" + "fbox 1 0 b1 0,0," + w + "," + h + " & fbox 1 0 b0 0," + (h-8) + "," + w + ",8" + "\" n")
+	outString = "";
+	
 	for (i = 0; i < nofShownBalls; i++) {
 		ballsX[i] = (ballsX[i] + ballsSX[i]);
 		if (ballsX[i] > w || ballsX[i] < 0) ballsSX[i] = -ballsSX[i];
 		ballsY[i] = Math.floor(Math.sin(ballsYC[i]) * ballsYH[i]) + (h-5);
 		ballsYC[i] += 0.025; if (ballsYC[i] > Math.PI*2) { ballsYC[i] = Math.PI; } // ballsYH[i]*=0.7;
 		outString += "& block 0 " + (bx + ballsSXcale[i]*20) + "," + (ballsCol[i] * 10 * multiCol) + ",13,10 " + Math.floor(ballsX[i]-bIw[ballsI[i]]/2) + "," + Math.floor(ballsY[i]-bIh[ballsI[i]]/2) + " 58"
+		if (i % 40 == 0 || i == nofShownBalls - 1) {
+			WScript.Echo("\"cmdgfx:" + outString + "\" n")
+			outString="";
+		}
 	}
-	if (shadow==1) outString += " & block 0 0,0," + w + "," + h + " 0," + h + " -1 0 0 10b1=1058" + " & block 0 0,0," + w + "," + h + " 8,-2 -1 0 0 10b?=10b1,????=10b0" + " & block 0 0," + h + "," + w + "," + h + " 0,0 58" ;
+	if (shadow==1) outString = " & block 0 0,0," + w + "," + h + " 0," + h + " -1 0 0 10b1=1058" + " & block 0 0,0," + w + "," + h + " 8,-2 -1 0 0 10b?=10b1,????=10b0" + " & block 0 0," + h + "," + w + "," + h + " 0,0 58" ;
 	WScript.Echo("\"cmdgfx:" + outString + " & " + skip[showHelp] + helpMsg + " & text a 0 0 " + nofShownBalls + ":_[FRAMECOUNT] 1,1" + "\" " + extraFlag + "f0:0,0,"+w2+","+h2+","+w+","+h)
 	extraFlag=""
 
@@ -68,7 +88,8 @@ while(true) {
 	}
 	if (ti[23] == "1")
 	{
-		w=Number(ti[25])*2+1, h=Number(ti[27])*2+1, HLPY=h-3, w2=w+80, h2=h*2+20
+		w=Math.floor(Number(ti[25])*2*rW/100+1), h=Math.floor(Number(ti[27])*2*rH/100+1)
+		HLPY=h-3, w2=w+80, h2=h*2+20
 		Shell.Exec('cmdwiz showcursor 0')
 		helpMsg="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\-p\\-h 1," + (h-3)
 		DrawBufferBalls();

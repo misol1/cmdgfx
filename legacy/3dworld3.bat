@@ -20,7 +20,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /A CNT=0, SLOTS=0
-set FWORLD=3dworld2.dat
+set FWORLD=data\3dworld2.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
@@ -93,7 +93,7 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 set BKSTR="fbox 0 1 b1 0,0,%W%,30 & fbox 0 1 20 0,30,%W%,10 & fbox 9 1 b1 0,40,%W%,6 & fbox 9 1 db 0,46,%W%,4  &  fbox 0 0 20 0,51,%W%,5 & fbox 0 %GROUNDCOL% b2 0,53,%W%,5 & fbox 0 %GROUNDCOL% b1 0,57,%W%,10 & fbox 0 %GROUNDCOL% b0 0,64,%W%,22 & fbox 8 %GROUNDCOL% 20 0,80,%W%,100 "
 
 set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 146,2
+set MAPTXT=image data/3dworld2.dat e 0 0 - 146,2
 
 set HELPT=box c 0 fe 3,106,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ 4,107
 set HELP=&set /a HLP=0

@@ -5,4 +5,5 @@
 @make cmdgfx_RGB.exe
 @ren cmdgfx_RGB.exe cmdgfx_RGB_32.exe
 @move /Y cmdgfx_RGB_64.exe cmdgfx_RGB.exe 
+@if not "%~1"=="" goto :eof
 @strip cmdgfx_RGB_32.exe

@@ -13,12 +13,16 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
-call centerwindow.bat 0 -16
 
-set /a W=80, H=54, XMID=W/2, YMID=H/2, DIST=1000, DRAWMODE=0, CRX=0,CRY=0,CRZ=0, CNT=50, CHGW=0
+set /a W=80, H=54
+
+call centerwindow.bat 0 -16
+call prepareScale.bat 6
+
+set /a XMID=W/2, YMID=H/2, DIST=1000, DRAWMODE=0, CRX=0,CRY=0,CRZ=0, CNT=50, CHGW=0
 set ASPECT=0.675
 set COLS=a 2 ?  a 2 ?  9 0 ?  9 0 ?  c 4 ?  c 4 ?
-set /a IW=80, IH=58, IX=0
+set /a IH=H+4, IW=IH*138/100, IX=W/2-IW/2
 
 set STOP=
 :LOOP
@@ -36,7 +40,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W=SCRW+1, H=SCRH+1, XMID=W/2, YMID=H/2, IH=H+4, IW=IH*138/100, IX=W/2-IW/2 & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a W=SCRW*rW/100+1, H=SCRH*rH/100+1, XMID=W/2, YMID=H/2, IH=H+4, IW=IH*138/100, IX=W/2-IW/2 & cmdwiz showcursor 0
 	
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 112 cmdwiz getch

@@ -22,10 +22,12 @@ for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 set /a W=180, H=110
 
 call centerwindow.bat 0 -20
+call prepareScale.bat 0
 
-echo "cmdgfx: text 8 0 0 Generating_world...\n\n\n___(H_for_help) 82,50"
+set /a XTXT=82*rW/100, YTXT=50*rH/100
+echo "cmdgfx: text 8 0 0 Generating_world...\n\n\n___(H_for_help) %XTXT%,%YTXT%" f0:0,0,300,300
 
-set /a XMID=%W%/2, YMID=%H%/2-4
+set /a XMID=W/2, YMID=H/2-4
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
 set ASPECT=0.69259
 set /a RX=0, RY=720, RZ=0
@@ -35,7 +37,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /A CNT=0, SLOTS=0
-set FWORLD=3dworld2.dat
+set FWORLD=data\3dworld2.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
@@ -113,9 +115,13 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 call :MAKEBKG
 
 set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 146,2
 
-set HELPT=box c 0 fe 3,106,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ 4,107
+set /a XMAP=W-34*rW/100
+set MAPTXT=image data/3dworld2.dat e 0 0 - !XMAP!,2
+
+set /a HLPY=H-3,HLPY2=HLPY-1, HLPX=W/2-173/2, HLPX2=HLPX-1, XMAP=W-34*rW/100
+
+set HELPT=box c 0 fe !HLPX2!,!HLPY2!,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ !HLPX!,!HLPY!
 set /a HLP=1
 set HELP=&if !HLP!==1 set HELP=!HELPT!
 
@@ -141,7 +147,7 @@ set /a MX_LB=W/4-30, MX_RB=W/4+30, MY_TB=H/4-19, MY_BB=H/4+17
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-34), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-34*rW/100), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+2" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	set FN3=%FN4%
 	if !ENEMY! == 1 (
@@ -168,10 +174,9 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN3! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,300 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP! & !HELP! & skip text 9 0 0 [FRAMECOUNT] 1,1" F!DELOBJ!f0:0,0,!W!,!H!Z400
 	
 	set /p INPUT=
-rem echo !INPUT!
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F*rW/100, M_Y=%%G*rH/100, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2, H=SCRH*2, XMID=W/2, YMID=H/2, HLPY=H-3,HLPY2=HLPY-1, HLPX=W/2-173/2, HLPX2=HLPX-1, XMAP=W-34, ZVAL=480+W/4, MX_LB=W/4-30, MX_RB=W/4+30, MY_TB=H/4-19, MY_BB=H/4+17 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image 3dworld2.dat e 0 0 - !XMAP!,2&(if !MAP!==1 set MAPT=!MAPTXT!) & set HELPT=box c 0 fe !HLPX2!,!HLPY2!,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ !HLPX!,!HLPY!&if !HLP!==1 set HELP=!HELPT!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100, H=SCRH*2*rH/100, XMID=W/2, YMID=H/2, HLPY=H-3,HLPY2=HLPY-1, HLPX=W/2-173/2, HLPX2=HLPX-1, XMAP=W-34*rW/100, ZVAL=480+W/4, MX_LB=W/4-30, MX_RB=W/4+30, MY_TB=H/4-19, MY_BB=H/4+17 & cmdwiz showcursor 0 & call :MAKEBKG & set MAPTXT=image data/3dworld2.dat e 0 0 - !XMAP!,2&(if !MAP!==1 set MAPT=!MAPTXT!) & set HELPT=box c 0 fe !HLPX2!,!HLPY2!,173,2^& text 7 0 0 \e0_LEFT/RIGHT/J/K/MOUSE-X\r_ROTATE___\e0UP/DOWN/W/S\r_MOVE___\e0A/D\r_STRAFE___\e0PGUP/PGDWN\r_RISE/SINK___\e0HOME/END/MOUSE-Y\r_LOOK_UP/DOWN___\e0SPACE_\rRESET_Y___\e0M\r_MAP___\e0E\r_ENEMY___\e0H\r_HELP___\e0ESC\r_QUIT_ !HLPX!,!HLPY!&if !HLP!==1 set HELP=!HELPT!
 	
 	if not "!EV_BASE:~0,1!" == "N" (
 	
@@ -191,7 +196,7 @@ rem echo !INPUT!
 			if !K_DOWN!==0 (
 			   set /a KEY=!K_KEY!
 				if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
-				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=%MAPTXT%)
+				if !KEY! == 109 set MAPP=&set /a MAP=1-!MAP!&(if !MAP!==0 set MAPT=)&(if !MAP!==1 set MAPT=!MAPTXT!)
 				if !KEY! == 104 set /A HLP=1-!HLP! & (if !HLP!==1 set HELP=!HELPT!)&(if !HLP!==0 set HELP=)
 				if !KEY! == 112 cmdwiz getch
 				if !KEY! == 32 set /a YMID=%H%/2-4, TY=0, BOUNDSCHECK=1

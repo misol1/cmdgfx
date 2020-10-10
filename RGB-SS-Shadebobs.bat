@@ -17,7 +17,7 @@ set /a H=%errorlevel%/8+1
 set /a WWW=W*3
 
 set __=.
-cmdgfx_input.exe m0nW16xRz50 | call %0 %* | cmdgfx_RGB "" %TOP%Sf2:0,0,%W%,%H%t4
+cmdgfx_input.exe m0nW16xR | call %0 %* | cmdgfx_RGB "" %TOP%Sf2:0,0,%W%,%H%t4
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

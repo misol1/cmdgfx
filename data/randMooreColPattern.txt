@@ -1,0 +1,7 @@
+set /a "redP=(6), greenP=(16), blueP=(19), colChange=2, redNeg=(1), greenNeg=(2), blueNeg=(2), redAnd=1, greenAnd=4, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1"
+set /a redP=5, greenP=11, blueP=10, colChange=2, redNeg=2, greenNeg=2, blueNeg=3, redAnd=1, greenAnd=4, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1 
+set /a redP=7, greenP=10, blueP=10, colChange=2, redNeg=2, greenNeg=2, blueNeg=4, redAnd=1, greenAnd=4, blueAnd=2, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1 
+set /a redP=67, greenP=31, blueP=68, colChange=0, redNeg=12, greenNeg=8, blueNeg=4, redAnd=7, greenAnd=3, blueAnd=5, stayPatt=3, stayVal=1, topClamp=1, bottomClamp=1 
+set /a redP=67, greenP=31, blueP=68, colChange=2, redNeg=15, greenNeg=27, blueNeg=29, redAnd=1, greenAnd=1, blueAnd=1, stayPatt=6, stayVal=1, topClamp=1, bottomClamp=1 
+set /a redP=4, greenP=3, blueP=10, colChange=0, redNeg=2, greenNeg=2, blueNeg=1, redAnd=1, greenAnd=4, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1 
+set /a redP=16, greenP=6, blueP=6, colChange=0, redNeg=2, greenNeg=4, blueNeg=4, redAnd=1, greenAnd=3, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1 

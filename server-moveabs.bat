@@ -6,7 +6,7 @@ cls & cmdwiz showcursor 0 & title Absolute move
 cmdwiz setwindowstyle clear standard 0x00010000L
 cmdwiz setwindowstyle clear standard 0x00040000L
 set __=.
-cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" SR10G256,16
+cmdgfx_input.exe knW10xR | call %0 %* | cmdgfx_gdi "" SG256,16
 set __=
 cls & mode 80,50 & cmdwiz showcursor 1
 cmdwiz setwindowstyle set standard 0x00010000L
@@ -18,9 +18,11 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=80, H=40
 cmdwiz setfont 6 & cls & mode %W%,%H%
 for /F "Tokens=1 delims==" %%v in ('set')  do if not %%v==H if not %%v==W if /I not %%v==PATH set "%%v="
-call centerwindow.bat 0 -20
 
-set /a NOFSCROLLS=9, YP=19, XMUL=6
+call centerwindow.bat 0 -20
+call prepareScale.bat 6
+
+set /a NOFSCROLLS=9, YP=19*rH/100, XMUL=6
 set STOP=
 
 set MSG1=" This would most likely not be acceptable in e.g. an action game, but might be ok for some applications."
@@ -35,7 +37,7 @@ set MSG9=" When running cmdgfx externally, all flags are initially Off, and we m
 
 set /a CNT=0 & for %%a in (4  6  8  16 5  7  8  16 12 10) do set /a FW!CNT!=%%a, CNT+=1
 set /a CNT=0 & for %%a in (6  8  8  8  12 12 12 12 16 18) do set /a FH!CNT!=%%a, CNT+=1
-set /a CNT=1 & for %%a in (   31 18 14 8  62 40 12 39 10) do set /a YA!CNT!=%%a, CNT+=1
+set /a CNT=1 & for %%a in (   31 18 14 8  62 40 12 39 10) do set /a YA!CNT!=%%a*rH/100, CNT+=1
 
 set /a CNT=1 & for %%a in (5 8 9 7  3  1  8 2  0) do set /a FI!CNT!=%%a, CNT+=1
 set /a CNT=1 & for %%a in (6 4 8 14 12 10 7 13 9) do set /a FS!CNT!=%%a, CNT+=1
@@ -49,7 +51,7 @@ for /l %%a in (1,1,%NOFSCROLLS%) do (
 		set /a ENDX%%a=!errorlevel! * !FW%%b! * -%XMUL%
 		set /a XP%%a=%W%*8 + !RANDOM! %% 100, YP%%a=!YP!
 		set /a XP%%a*=%XMUL%
-		set /a YP+=!FH%%b!*2+!YA%%a!
+		set /a YP+=!FH%%b!*2*rH/100+!YA%%a!
 	)
 )
 

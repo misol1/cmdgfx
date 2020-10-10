@@ -5,7 +5,7 @@ cd /D "%~dp0"
 if defined __ goto :START
 
 cls & cmdwiz setfont 7
-mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+mode 40,20 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
 
@@ -15,7 +15,7 @@ cmdwiz getdisplaydim h
 set /a H=%errorlevel%/12+1
 
 set __=.
-call %0 %* | cmdgfx_gdi "" m0OW18%TOP%Sf7:0,0,%W%,%H%
+call %0 %* | cmdgfx_gdi "" m0OW18%TOP%Sf7:0,0,%W%,%H%t6
 set __=
 cls
 cmdwiz fullscreen 0 & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

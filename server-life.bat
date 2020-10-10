@@ -4,7 +4,7 @@ cmdwiz setfont 1 & mode %W%,%H% & cls & title Game of Life
 cmdwiz showcursor 0
 if defined __ goto :START
 set __=.
-cmdgfx_input.exe knW16xR | call %0 %* | cmdgfx "" Sf1:0,0,%W%,%H%
+cmdgfx_input.exe knW16xR | call %0 %* | cmdgfx "" Sf1:0,0,%W%,%H%t4r2
 set __=
 set W=&set H=
 cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50

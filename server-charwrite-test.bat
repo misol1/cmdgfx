@@ -20,6 +20,7 @@ set /a W=200, H=80
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 call centerwindow.bat 0 -20
+call prepareScale.bat 1
 
 set /a XMID=%W%/2, YMID=%H%/2
 set /a DIST=700, c=0
@@ -27,7 +28,8 @@ set /A RX=0,RY=0,RZ=0
 set FN=objects\scroll-planes2.obj
 set ASPECT=0.6
 
-set /A XW=40,YW=10, YROT=0, DRAWMODE=0, HLPX=13, HLPY=78
+set /A XW=40,YW=10, YROT=0, DRAWMODE=0
+set /a HLPY=H-3, HLPX=W/2-170/2
 set HELP=text 1 0 0 'p'_to_pause,_'y'_for_y_rotation,_'space'_to_reset_rotation,_'left/right'_for_direction,_'d/D'_to_zoom,_'t'_to_switch_char,_'l'_for_lens,_'m'_for_mario,_'h'_to_hide_text
 set SH=skip&set /a HLP=0
 set /a DIR=1, LENS=1, MARIO=0
@@ -90,7 +92,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 	
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-170/2, XMP=XMID" & cmdwiz showcursor 0 & set BKG="fbox 1 0 20 & fellipse 1 0 20 !XMID!,!YMID!,108,37 & fellipse 9 0 20 !XMID!,!YMID!,100,35 & fellipse b 0 20 !XMID!,!YMID!,94,33 & fellipse f 0 20 !XMID!,!YMID!,90,31"
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, XMID=W/2, YMID=H/2, HLPY=H-4, HLPX=W/2-170/2, XMP=XMID" & cmdwiz showcursor 0 & set BKG="fbox 1 0 20 & fellipse 1 0 20 !XMID!,!YMID!,108,37 & fellipse 9 0 20 !XMID!,!YMID!,100,35 & fellipse b 0 20 !XMID!,!YMID!,94,33 & fellipse f 0 20 !XMID!,!YMID!,90,31"
 	
 	set /A CNT+=1
 	if !CNT! lss 350 set /A YMP-=1 & if !YMP! lss !YMID! set YMP=!YMID!

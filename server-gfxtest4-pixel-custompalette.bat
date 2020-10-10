@@ -18,7 +18,8 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
-::call centerwindow.bat 0 -16
+call centerwindow.bat 0 -16
+call prepareScale.bat 10
 
 set /a RX=0, RY=0, RZ=0
 set /a XMID=%W%/2, YMID=%H%/2
@@ -54,7 +55,7 @@ for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4+1, H=SCRH*2*6+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4*rW/100+1, H=SCRH*2*6*rH/100+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text b 0 0 n/N=object,_SPACE=mode,_RETURN=auto/manual(cursor,z/Z),_d/D=distance,_h=help 2,!HLPY!"& if not !MSG!=="" set MSG=!HELPMSG!
 	
 	if !ROTMODE! == 0 set /a RX+=2, RY+=6, RZ-=4, XMID=!W!/2, YMID=!H!/2
 	

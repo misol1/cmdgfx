@@ -8,19 +8,30 @@ set __=
 goto :eof
 
 :START
-set /a W6=1600/8, H6=900/12
+set /a W=1600, H=900
+set /a W6=W/8, H6=H/12
 mode %W6%,%H6%
 call centerwindow.bat 0 -16
+call prepareScale.bat 10 1
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
 
-set W6=&set H6=
+set W6=&set H6=&set W=&set H=
 echo "cmdgfx: quit"
 title input:Q
 cmdwiz showcursor 1 & mode 80,50
 exit /b 0
 */
+
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
 
 function LSystem(name, axiom, rules, linelen, linecolor, iterations, rotation, startRotation, updateFrequency, x, y) {
     this.name = name
@@ -156,8 +167,10 @@ drawCounter = 0
 newRes = false
 firstRun = true
 
-W=1600, H=900, XPP=0, YPP=0
 Shell = new ActiveXObject("WScript.Shell")
+var W=GetCmdVar("W"), H=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+XPP=Math.floor((W-1600)/2), YPP=Math.floor((H-900)/2)
+YPP=0
 
 while(true) {
 
@@ -187,9 +200,11 @@ while(true) {
 	
 	if (ti[23] == "1")
 	{
-		W=Number(ti[25])*8+1, H=Number(ti[27])*12+1
+		W=Math.floor(Number(ti[25])*8*rW/100+1), H=Math.floor(Number(ti[27])*12*rH/100+1)
 		XPP=Math.floor((W-1600)/2), YPP=Math.floor((H-900)/2)
 		Shell.Exec('cmdwiz showcursor 0')
+		//Shell.Exec('cmdwiz setbuffersize - -')
+
 		if (firstRun == false) {
 			drawNextSystem = true
 			newRes = true

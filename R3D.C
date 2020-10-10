@@ -3,7 +3,7 @@
 #define PI 3.1415926535897932
 
 // Note: Resorts to atof in case of failure
-float naiveToF(const char *p) {
+static float naiveToF(const char *p) {
 	static float pow10[10] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
 	
 	float r = 0.0;
@@ -44,7 +44,7 @@ float naiveToF(const char *p) {
 	return r;
 }
 
-int naiveAtoi(const char *p) {
+static int naiveAtoi(const char *p) {
 	int n = 0;
 	int neg = 0;
 	if (*p == '-') {
@@ -61,7 +61,7 @@ int naiveAtoi(const char *p) {
 	return n;
 }
 
-char *strgets(char *in, char *ut, int max) {
+static char *strgets(char *in, char *ut, int max) {
 	int nof;
 	char *ch;
 	
@@ -84,7 +84,7 @@ char *strgets(char *in, char *ut, int max) {
 }
 
 
-int readIntSequence(char *fr, int *out, char *delims, int maxRead) {
+static int readIntSequence(char *fr, int *out, char *delims, int maxRead) {
 	int read = 0;
 	int n = 0, ok;
 	int neg;
@@ -686,7 +686,7 @@ void centerObj3d(obj3d *obj3, float scale) {
 
 /* Räknar ut normaler för samtliga vertex i ett objekt */
 /*
-void insertnormal(Object *o) {
+static void insertnormal(Object *o) {
 int i, j;
 Triangle *tri;
 Vector t[3], n, *v;
@@ -713,7 +713,7 @@ for (i = 0; i < o->nv; i++) {
 */
 
 /* Läser en rad från en PLG-fil */
-char *PLG_getline(char *s, int n, FILE *fp) {
+static char *PLG_getline(char *s, int n, FILE *fp) {
 	char buf[4096];
 	int i, j;
 

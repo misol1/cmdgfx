@@ -4,6 +4,11 @@ cd /D "%~dp0"
 if defined __ goto :START
 
 pixelfnt.exe 1 & cls
+
+set /a W=100, H=100
+mode %W%,%H%
+call prepareScale.bat 10
+
 cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0
@@ -24,7 +29,7 @@ goto :eof
 
 :START
 setlocal ENABLEDELAYEDEXPANSION
-for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if not "%%v"=="HH" if /I not "%%v"=="PATH" if /I not "%%v"=="SystemRoot" set "%%v="
+for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" if not "%%v"=="HH" if not "%%v"=="rW" if not "%%v"=="rH" if /I not "%%v"=="PATH" if /I not "%%v"=="SystemRoot" set "%%v="
 ::preserve SystemRoot for file dialog to work
  
 set /a BORD=60, DH=H+340, DG=H-100, WB=W-BORD*2, WBB=WB+1, GUI_H=50, GUI_HB=GUI_H+1
@@ -59,7 +64,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	echo "cmdgfx: !REMOVEGUI! & !DRAW:~1,-1! & !SAVEFORGUI! & !GUI! !GENGUI:~1,-1!"
 	
 	set /p INPUT=
-	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
+	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D,  M_EVENT=%%E, M_X=%%F*rW/100, M_Y=%%G*rH/100, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L 2>nul ) 
 	
 	set DRAW=""
 	if not "!EV_BASE:~0,1!" == "N" (

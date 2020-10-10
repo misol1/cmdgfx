@@ -1,0 +1,27 @@
+set /a stay=17,born=84,density=50,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,475,475" nV
+set /a stay=16,born=84,density=50,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,487,487" nV
+set /a stay=17,born=100,density=100,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,438,438" nV
+set /a stay=120,born=68,density=98,liveCol=1,slowDeath=0,opType=0 & set PAL=ffffff,2b4855,f93c9e,ee20ea,b976ff,dc4a0c,b020d4,aa2b0e,dcbf0c,bf099c,2ffe2c,b79131,0f29c9,e3529e,d6b20e,c7408a,
+set /a stay=120,born=4,density=85,liveCol=1,slowDeath=0,opType=0 & set PAL=cff7a7,904643,9165be,cabee7,a85ab5,0202dc,4ea4a2,15f8ef,a462a4,051b2e,2d8c5b,77fa6c,51686b,35b9bf,dc16fd,ae8f01,
+::set /a stay=120,born=68,density=98,liveCol=1,slowDeath=0,opType=0 & set PAL=96f0e5,5d694e,a516f9,09b309,6e2123,44a4d2,084e2a,0dbbac,7dff6a,9add6c,4a3a51,d3d039,e327e3,d3c113,2c9537,6bc049,
+::set /a stay=16,born=84,density=50,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,467,467" nV
+::set /a stay=147,born=225,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=cc79a1,c02259,85c5da,58bcea,db2ee1,ba2869,8ff082,0396c9,36cbf9,62f6b2,bb8579,998101,d866a8,7f3145,a1ba21,814443,
+::set /a stay=16,born=84,density=50,liveCol=1,slowDeath=0,opType=3 & set PAL=a9568f,0a77a5,221556,e2f0b0,5d61fc,cd48e5,d745dc,102bba,bfb1a7,e56b3b,7af9e4,fa7f88,20556b,f1ff52,fd5fe9,e22962,
+::set /a stay=17,born=84,density=50,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,559,305" nV
+::set /a stay=120,born=68,density=100,liveCol=1,slowDeath=0,opType=3 & set PAL=ffffff,5259ad,3f9052,032c01,2b9b41,07fb86,502ff7,0e3374,b9acd8,9fc47b,8534fc,91a23d,682eae,9348cf,27c4f0,a5303b,
+::set /a stay=120,born=68,density=100,liveCol=1,slowDeath=0,opType=3 & set PAL=74fc6e,330d8d,c97904,ca8eb6,ef37b7,73cfc6,bc3318,3e1b58,9daaeb,114378,0f9fa8,261c2a,2758fb,88ffe4,0ae144,9a480f,
+::set /a stay=120,born=68,density=100,liveCol=1,slowDeath=0,opType=3 & set PAL=909fa0,e12bbe,445f4c,fa853c,27446c,347228,7229f1,001d7c,ee2cfe,a237a7,7b316c,b5750a,8d5d48,a5107c,a99b50,3344c6,
+::set /a stay=120,born=68,density=100,liveCol=1,slowDeath=0,opType=3 & set PAL=ffffff,b0c9c4,613353,5cabee,ccc0bb,a3b0d0,397ef3,3546a3,b1ce5d,995d18,54d012,a7eace,d6ec5d,0c65de,fc4c41,c94c50,
+::set /a stay=120,born=68,density=100,liveCol=1,slowDeath=0,opType=3 & set PAL=f69c16,ab4dd3,d08c52,1a4697,6206d4,03c6e9,84052b,771964,a0c71c,5a1117,374f1f,e78104,5be4e0,29c39f,3390bf,843355,
+::set /a stay=230,born=196,density=100,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,339,339" nV
+::set /a stay=0,born=1,density=84,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,600,478" nV
+::set /a stay=6,born=116,density=100,liveCol=1,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 1 0 db 960,540,489,489" nV
+::set /a stay=134,born=98,density=90,liveCol=1,slowDeath=1,opType=0 
+::set /a stay=136,born=225,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=eed2cb,bb423a,e445f7,218590,956a61,a3980b,04b922,167c26,77ddb5,d3a8fe,fa3879,3685d6,db5e33,1ff291,2c9589,74c13b,
+::set /a stay=149,born=196,density=100,liveCol=1,slowDeath=1,opType=0 
+::set /a stay=149,born=196,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=ffffff,1f6d74,43bc8e,81ea93,59422b,d76fed,6bf6d3,f404ea,1e6a4e,eee656,9ba40c,a004e0,0f9e9d,28849b,2ac637,693c80,
+::set /a stay=149,born=196,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=033c57,25ea50,dd2f79,80dded,1a9d3f,0633b4,bb03af,e9d46c,c5d5f1,a0dd42,bff7d5,671e45,37454a,bb9be9,3d0ce8,de0b85,
+::set /a stay=149,born=196,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=e68f68,595bd5,cb8326,742c79,8793a6,c05174,3cdd0c,8e52ad,0f72a2,75eb71,a8da56,d18eef,b38e39,3eddbb,617c01,21314c,
+::set /a stay=149,born=196,density=100,liveCol=1,slowDeath=1,opType=0 & set PAL=ffffff,b75a8c,b9f328,4cfef5,ecdf53,1cd810,4287de,b7b004,1f3d53,f6835c,6cc7e0,730188,16dfd6,0c0d5c,8db42c,64418f,
+::set /a stay=87,born=46,density=100,liveCol=5,slowDeath=0,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 5 0 db 960,540,555,396" nV
+::set /a stay=6,born=4,density=60,liveCol=2,slowDeath=1,opType=3 & set /a initPrep=0 & echo "cmdgfx: fbox 2 0 db 960,540,468,468" nV& set PAL=000000,ffffff,0088ff,0000bb

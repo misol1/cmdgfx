@@ -14,7 +14,9 @@ set /a W=160, H=80
 set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -20
+call prepareScale.bat 1
 
 set /a XMID=%W%/2, YMID=%H%/2
 set /a DRAWMODE=1, NOF=6, DIST=2500, MODE=0
@@ -30,7 +32,7 @@ set /A XP5=0,YP5=-250,ZP5=0
 set /A XP6=0,YP6=250,ZP6=0
 
 set /a XRA1=5, YRA1=8, XRA2=1,YRA2=-7, XRA3=-5,YRA3=5, XRA4=-10,YRA4=-4, XRA5=3,YRA5=-12, XRA6=5,YRA6=9
-set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, HLPY=78
+set /A XROT=0,YROT=0,ZROT=0, XMUL=14000, HLPY=H-2
 
 set OBJ0=icosahedron.ply&set OBJ1=elephav.obj
 set SCALE0=-131,-131,-131,0,0,0
@@ -61,7 +63,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-2 & cmdwiz showcursor 0
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0
 	
 	set /a XROT-=3, YROT+=2, ZROT+=1
 

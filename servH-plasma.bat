@@ -16,7 +16,9 @@ set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+
 call centerwindow.bat 0 -12
+call prepareScale.bat 0
 
 set STREAM="0???=00db,1???=1004,2???=10db,3???=9104,4???=91db,5???=91db,6???=9704,7???=79db,8???=7f04,9???=79db,a???=9704,b???=91db,c???=9104,d???=10db,e???=1004,f???=00db"
 set STREAM="01??=00db,11??=6004,21??=60db,31??=e604,41??=e6db,51??=e6db,61??=ef04,71??=fe04,81??=fedb,91??=fe04,a1??=ef04,b1??=e6db,c1??=e604,d1??=60db,e1??=6004,f1??=00db,03??=00db,13??=2004,23??=20db,33??=a204,43??=a2db,53??=a2db,63??=af04,73??=af04,83??=fadb,98??=fadb,a8??=af04,b8??=a2db,c8??=a204,d8??=20db,e8??=2004,f8??=00db,0e??=00db,1e??=4004,2e??=40db,3e??=c404,4e??=c4db,5e??=c4db,6e??=cfb2,7e??=cf04,8e??=cf20,9e??=fdb2,ae??=df04,be??=d4db,ce??=d504,de??=50db,ee??=5004,fe??=00db,0???=00db,1???=1004,2???=10db,3???=9104,4???=91db,5???=9bb2,6???=9b04,7???=b9db,8???=bf04,9???=9bb0,a???=9bb2,b???=91db,c???=9104,d???=10db,e???=1004,f???=00db"
@@ -24,9 +26,9 @@ rem set STREAM="?"
 
 call sindef.bat
 
-set /a MODE=4, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2, XMID=W/2, YMID=H/2
+set /a MODE=4, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2, XMID=W/2, YMID=H/2, HLPY=H-2
 set ASPECT=0.58846
-set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,100"
+set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,%HLPY%"
 set /a SHOWHELP=1
 set HELP=""& if !SHOWHELP!==1 set HELP=%HELPMSG%
 
@@ -60,7 +62,7 @@ rem	if !MODE! == 3 set /a A1+=1, A2-=2 & echo "cmdgfx: block 0 0,0,120,!H! 0,0 -
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-3 & cmdwiz showcursor 0 & set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!"&if !SHOWHELP!==1 set HELP=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+1, H=SCRH*2*rH/100+2, XMID=W/2, YMID=H/2, HLPY=H-4 & cmdwiz showcursor 0 & set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!"&if !SHOWHELP!==1 set HELP=!HELPMSG!
 		
 	if !KEY! == 32 set /A MODE+=1&(if !MODE! gtr 7 set MODE=0) & for %%a in (!MODE!) do echo W!WVAL%%a!>inputflags.dat
 

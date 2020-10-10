@@ -4,7 +4,7 @@
 cd /D "%~dp0"
 if defined __ goto :START
 cmdwiz setfont 8 & cls
-mode 80,50 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
+mode 40,20 & cmdwiz showmousecursor 0 & cmdwiz fullscreen 1
 if %ERRORLEVEL% lss 0 set TOP=U
 cmdwiz showcursor 0 & cmdwiz setmousecursorpos 10000 100
 

@@ -79,11 +79,12 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	if !MODE!==6 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 %CUPOS%,%CUPOS%,!DIST!,%ASPECT% 0 0 db -1 -6 db 0 2 db 0 -8 db 0 -1 db"
 	if !MODE!==7 set OUTP="fbox 7 0 20 0,0,%W%,%H% & 3d objects\cube-t3.obj 6,!TV! !A1!,!A2!,!A3! 0,0,0 810,810,810,0,0,0 0,0,0,10 %CUPOS%,%CUPOS%,!DIST!,%ASPECT% 1 0 db"
 
+	echo "cmdgfx: !OUTP:~1,-1!" nW0
 	set /a ZZT=0, XXT=-500*5, YYT=-800*3, ZZT2=0,CPP=-2
-	for /L %%2 in (1,1,5) do set /a YYT+=980, XXT=-490*5, ZZT=!ZZT2!, ZZT2+=180*4*!RV!, CPP+=1, CPP2=CPP & for /L %%1 in (1,1,10) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% !CPP2! 0 db"&set /A ZZT+=180*4, XXT+=490, CPP2+=1*!CE!
+	set OUTP=""
+	for /L %%2 in (1,1,5) do set /a YYT+=980, XXT=-490*5, ZZT=!ZZT2!, ZZT2+=180*4*!RV!, CPP+=1, CPP2=CPP & for /L %%1 in (1,1,10) do set OUTP="!OUTP:~1,-1! & 3d %FN% 1,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% 0 0 db & 3d %FN% %DRAWMODE%,-1 0:0,0:0,!ZZT!:!TRZ! !XXT!,!YYT!,0 20,20,20,0,0,0 0,0,0,10 %XMID%,%YMID%,%TRIDIST%,%ASPECT% !CPP2! 0 db"&set /A ZZT+=180*4, XXT+=490, CPP2+=1*!CE! & if %%1==10 echo "cmdgfx: !OUTP:~1,-1!" n&set OUTP=""
 	
-	echo "cmdgfx: !OUTP:~1,-1!"
-	set OUTP=
+	echo "cmdgfx: skip text f 0 0 [FRAMECOUNT] 2,2" W13
 
 	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 

@@ -1,6 +1,6 @@
 @if (true == false) @end /*
 @echo off
-cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d (right/left Space i/I p Enter d/D p x/y/z a/A n)
+cmdwiz setfont 6 & cls & cmdwiz showcursor 0 & title L-System 3d (right/left Space i/I b p Enter d/D p x/y/z/r/n a/A/s m+xXyYzZ)
 if defined __ goto :START
 set __=.
 cmdgfx_input.exe knW15xR | call %0 %* | cmdgfx_gdi "" Sfa:0,0,1600,900N2500L150,8
@@ -8,9 +8,11 @@ set __=
 goto :eof
 
 :START
-set /a W6=1600/8, H6=900/12
+set /a W=1600, H=900
+set /a W6=W/8, H6=H/12
 mode %W6%,%H6%
 call centerwindow.bat 0 -16
+call prepareScale.bat 10 1
 
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
@@ -22,6 +24,15 @@ cmdwiz showcursor 1 & mode 80,50
 del /Q l-system.obj>nul
 exit /b 0
 */
+
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
 
 function LSystem(name, axiom, rules, linelen, linecolor, iterations, rotationX, startRotationX, rotationY, startRotationY) {
     this.name = name
@@ -114,12 +125,18 @@ function DrawSystem() {
 	
 	if (useBobs > 0) fh.WriteLine("usemtl img\\ball4-t.gxy");
 	
+	randXrot = randYrot = 0
+	randLen = 1
+	
 	for (i=0; i < current.length; i++) {
 		ch = current.substring(i,i+1)
-		if (ch == "+") currRotX+=rotationX*swap
-		if (ch == "-") currRotX-=rotationX*swap
-		if (ch == "/" && !singleAxis && rotationY != 0) currRotY+=rotationY*swap, isFlat = false
-		if (ch == "\\" && !singleAxis && rotationY != 0) currRotY-=rotationY*swap, isFlat = false
+		
+		// randXrot=Math.random()/1-1/2, randYrot=Math.random()/1-1/2
+		
+		if (ch == "+") currRotX+=(rotationX+randXrot)*swap
+		if (ch == "-") currRotX-=(rotationX+randXrot)*swap
+		if (ch == "/" && !singleAxis && rotationY != 0) currRotY+=(rotationY+randYrot)*swap, isFlat = false
+		if (ch == "\\" && !singleAxis && rotationY != 0) currRotY-=(rotationY+randYrot)*swap, isFlat = false
 		if (ch == "|") currRotX+=reverse
 		if (ch == ">") linelen *= lineScaleFactor
 		if (ch == "<") linelen /= lineScaleFactor
@@ -144,9 +161,11 @@ function DrawSystem() {
 			xf = Math.cos(currRotX)*Math.sin(currRotY)
 			zf = Math.sin(currRotX)
 			
-			xp = xp+xf*linelen
-			yp = yp+yf*linelen
-			zp = zp+zf*linelen
+			// randLen=Math.random()*2
+			
+			xp = xp+xf*linelen*randLen
+			yp = yp+yf*linelen*randLen
+			zp = zp+zf*linelen*randLen
 			
 			if(ch == "F") { 
 				fh.WriteLine("v " + oldxp.toFixed(1) + " " + oldyp.toFixed(1) + " " + oldzp.toFixed(1))
@@ -161,6 +180,17 @@ function DrawSystem() {
 	}
 	fh.Close(); 
 }
+
+function RoundDecimal(num, maxDec) {
+	// return num.toFixed(2) // also works but then we always get 2 decimals, like 0.00 
+	
+	if (maxDec < 1)
+		return Math.round(num)
+
+	mul = Math.pow(10, maxDec)
+	return Math.round(num * mul) / mul
+}
+
 
 lineScaleFactor = 1.36
 turnAngleIncrement = 5*(Math.PI/180)
@@ -183,12 +213,15 @@ flatLightPaletteRGB = "000000,1111aa,2525bb,3838cc,4e4edd,5555dd,5e5eee,6666ee,7
 useLight=true
 useBobs=0
 
-W=1600, H=900, XMID=W/2, YMID=H/2
-
 fso = new ActiveXObject("Scripting.FileSystemObject"); 
 Shell = new ActiveXObject("WScript.Shell")
 
+var W=GetCmdVar("W"), H=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+
+XMID=W/2, YMID=H/2
+
 modRotX = 0
+showModRot = false
 
 while(true) {
 
@@ -197,8 +230,10 @@ while(true) {
 		drawNextSystem = false
 	}
 
+	modS=""; if (showModRot) modS=" & text 7 0 0 " + RoundDecimal(modRotX,2) + " 7,7 2"
+	
 	if (useLight)
-		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 1) + "," + (isFlat? 0:1) + " " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 " + XMID + "," + YMID + "," + DIST + ",1 " + lightPalette + " \" F" + extraFlag + "fa:0,0," + W + "," + H + " " + (isFlat?flatLightPaletteRGB : lightPaletteRGB) )
+		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 1) + "," + (isFlat? 0:1) + " " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 " + XMID + "," + YMID + "," + DIST + ",1 " + lightPalette + modS + " \" F" + extraFlag + "fa:0,0," + W + "," + H + " " + (isFlat?flatLightPaletteRGB : lightPaletteRGB) )
 	else
 		WScript.Echo("\"cmdgfx: fbox 0 0 0 & 3d l-system.obj " + (useBobs > 0? 0 : 3) + ",-1 " + RX + ","  + RY + "," + RZ + " 0,0,0 1,1,1,0,0,0 0,-3000,0,0 " + XMID + "," + YMID + "," + DIST + ",1 " + (useBobs == 0? color : useBobs == 1? 1 : 8) + " X 0  \" F" + extraFlag + "fa:0,0," + W + "," + H + " - -")
 	
@@ -230,8 +265,9 @@ while(true) {
 		else if (key == "73") { extraIteration++; drawNextSystem=true; extraFlag="D"; }
 		else if (key == "13") { singleAxis=!singleAxis; drawNextSystem=true; extraFlag="D"; }
 		else if (key == "112") WScript.Echo("\"cmdgfx: \" K")
-		else if (key == "114") RX = RY = RZ = 0
-		else if (key == "115") { exec = Shell.Exec('cmd /c echo ' + modRotX + ' >>modXOut.txt'); exec.StdOut.ReadAll(); }
+		else if (key == "114") RX = RY = RZ = RXD = RYD = RZD = 0, RYD = 4
+		// else if (key == "115") { exec = Shell.Exec('cmd /c echo ' + modRotX + ' >>modXOut.txt'); exec.StdOut.ReadAll(); }
+		else if (key == "115") showModRot = !showModRot
 		else if (key == "331") { modRotX = 0; drawNextSystem=true; extraFlag="D"; extraIteration=0; systemIndex--; if (systemIndex < 0) systemIndex=LSystems.length-1 }
 		else if (key == "97") { modRotX += 0.2; drawNextSystem=true; extraFlag="D"; }
 		else if (key == "65") { modRotX -= 0.2; drawNextSystem=true; extraFlag="D"; }
@@ -241,7 +277,7 @@ while(true) {
 	
 	if (ti[23] == "1")
 	{
-		W=Number(ti[25])*8+1, H=Number(ti[27])*12+1
+		W=Math.floor(Number(ti[25])*8*rW/100+1), H=Math.floor(Number(ti[27])*12*rH/100+1)
 		XMID=Math.floor(W/2), YMID=Math.floor(H/2)
 		Shell.Exec('cmdwiz showcursor 0')
 	}
@@ -251,10 +287,12 @@ while(true) {
 Character        Meaning
    F	         Move forward by line length drawing a line
    f	         Move forward by line length without drawing a line
-   +	         Turn left by turning angle
-   -	         Turn right by turning angle
-   |	         Reverse direction (ie: turn by 180 degrees)
-   &	         Swap the meaning of + and -
+   +	         Turn left by turning angle (x)
+   -	         Turn right by turning angle (x)
+   /	         Turn left by turning angle (y)
+   \	         Turn right by turning angle (y)
+   |	         Reverse x direction (ie: turn by 180 degrees)
+   &	         Swap the meaning of + and -, and / and \
    [	         Push current drawing state onto stack
    ]	         Pop current drawing state from the stack
    >	         Multiply the line length by the line length scale factor
@@ -267,4 +305,9 @@ Not implemented:
    !	         Decrement the line width by line width increment
    {	         Open a polygon
    }	         Close a polygon and fill it with fill colour
+   
+    	         Reverse y direction (ie: turn by 180 degrees)
+    	         Swap the meaning of + and - (not / and \)
+    	         Swap the meaning of / and \ (not + and -)
+				 Decr/incr turning angle separately for x and y (4 chars)
 */

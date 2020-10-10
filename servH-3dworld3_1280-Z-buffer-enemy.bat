@@ -16,13 +16,16 @@ goto :eof
 :START
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
-for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
+rem for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 
 set /a W=1280, H=680
 
 call centerwindow.bat 0 -20
+call prepareScale.bat 10
 
-echo "cmdgfx: text 8 0 0 Generating_world... 142,51" f0:0,0,320,110
+set /a TXTX=142*rW/100, TXTY=51*rH/100
+
+echo "cmdgfx: text 8 0 0 Generating_world... %TXTX%,%TXTY%" f0:0,0,620,310
 
 set /a XMID=%W%/2, YMID=%H%/2-10
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
@@ -34,7 +37,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /A CNT=0, SLOTS=0
-set FWORLD=3dworld2.dat
+set FWORLD=data\3dworld2.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
@@ -111,8 +114,8 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 :SKIPGEN
 call :MAKEBKG
 
-set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 1240,15
+set /A MAP=0,ZMOD=0,XMOD=0, XMAP=W-40*rW/100
+set MAPTXT=image data/3dworld2.dat e 0 0 - %XMAP%,15
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
@@ -121,7 +124,7 @@ set /a ENEMY=1, WCNT=0
 set DELOBJ=& if !ENEMY! == 1 set DELOBJ=D
 
 set /A "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
-set /A XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1
+set /A XP1=0,XP2=500,DELT=150, CNT=0, BOUNDSCHECK=1
 copy /Y %FN% %FN4%>nul
 for /l %%a in (1,1,10) do set /p INPUT=
 
@@ -129,27 +132,57 @@ set /a SW/=2, SH/=2
 set /a MPY=%SH%-%H%/4 & cmdwiz setmousecursorpos %SW% !MPY!
 set /a ZVAL=800
 
+set /a E_RELPOSX=0, E_RELPOSZ=0, FACE_ENEMY=1
+
+rem if !FACE_ENEMY! == 1 cmdwiz print "WScript.Echo(Math.floor(Math.atan2(WScript.Arguments.Item(0),WScript.Arguments.Item(1))/Math.PI*720))">atan2.js
+
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40*rW/100), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	set SE=skip
 	if !ENEMY! == 1 (
-		set /A "XP1+=!DELT!, XP2+=!DELT!"
-		if !XP1! gtr 3500 set DELT=-300
-		if !XP1! lss -5000 set DELT=300
-		set /A "CNT+=1,FRM=(!CNT!/8) %% 2"
-		set /A TZE=TZ+XP1
+		set /a "XP1+=!DELT!, XP2+=!DELT!"
+		if !XP1! gtr 3500 set DELT=-150
+		if !XP1! lss -5000 set DELT=150
+		set /a "CNT+=1,FRM=(!CNT!/8) %% 2"
+		set /a TZE=TZ+XP1+E_RELPOSZ*MULVAL*2
+		set /a TXE=TX+MULVAL*2+E_RELPOSX*MULVAL*2
+		set /a TYE=-TY
 		set SE=
+		rem set /a TZE=0 & rem No z distance to viewer
+
+		set /a ERY=0
+		if !FACE_ENEMY! == 1 (
+			rem Using this method we can make sure the enemy plane always faces the viewer, but of course it is way too slow. Need a batch atan2, or rather: convert this whole script to js
+			rem cscript //nologo //e:javascript "atan2.js" !TXE! !TZE! >res.txt 2>nul
+			rem set /p ERY=<res.txt >nul 2>nul
+
+			rem Crude batch atan to make enemy plane always face player
+			set /a x=!TXE!, y=!TZE!, mul=1,base=0, negmul=1
+			if !y! neq 0 (
+				set /a "a=(x*100)/y"
+				if !a! lss 0 set /a negmul=-1, a=-a
+				if !a! gtr 100 set /a "a=10000/a, mul=-1, base=90"
+
+				set /a "r=(a*(4500-1566*(a-100)/100))/10000"
+				set /a "r=(base+mul*r)*negmul"
+			) else (
+				set /a r=90
+				if !x! lss 0 set /a r=-90
+				if !x! equ 0 set /a r=0
+			)
+			set /a ERY=r*4
+			
+		)
 	)
 	
-	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,20 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,20 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !SE! 3d objects\ugly!FRM!.obj !DRAWMODE!,e !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZE! 1,-200,0,800 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" F!DELOBJ!fa:0,0,!W!,!H!Z!ZVAL!
+	echo "cmdgfx: !BKSTR:~1,-1! & 3d %FN2% !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,20 !XMID!,!YMID!,%DIST%,!ASPECT! %GROUNDCOLS% & 3d !FN! !DRAWMODE!,-1 !RX!,!RY!,!RZ! 0,0,0 1,1,1,!TX!,!TY!,!TZ! 1,-200,0,20 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !SE! 3d objects\ugly!FRM!.obj !DRAWMODE!,e 0:!RX!,!ERY!:!RY!,0:!RZ! !TXE!,!TYE!,!TZE! 1,1,1,0,0,0 1,-200,0,10 !XMID!,!YMID!,%DIST%,%ASPECT% !CUBECOLS! & !MAPT! & !MAPP!" F!DELOBJ!fa:0,0,!W!,!H!Z!ZVAL!
 	
 	set /p INPUT=
-rem echo !INPUT!
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=480+W/4 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image 3dworld2.dat e 0 0 - !XMAP!,15& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4*rW/100+6, H=SCRH*2*6*rH/100+8, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40*rW/100, ZVAL=480+W/4 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image data/3dworld2.dat e 0 0 - !XMAP!,15& if !MAP!==1 set MAPT=!MAPTXT!
 	
 	if not "!EV_BASE:~0,1!" == "N" (
 	

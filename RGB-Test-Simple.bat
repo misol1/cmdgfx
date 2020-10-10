@@ -13,7 +13,9 @@ setlocal ENABLEDELAYEDEXPANSION
 set /a W=150, H=80, F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -18
+call prepareScale.bat 1
 
 echo "cmdgfx: fbox ff9944 0 A 2,2,90,60 & " f1:0,0,!W!,!H!
 

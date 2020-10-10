@@ -1,7 +1,8 @@
 @if (true == false) @end /*
 @echo off
 cmdwiz setfont 8 & cls
-set /a F8W=160/2, F8H=80/2
+set /a W=160, H=80
+set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 cmdwiz showcursor 0 & title Pixel tunnel
 if defined __ goto :START
@@ -15,6 +16,7 @@ goto :eof
 
 :START
 call centerwindow.bat 0 -20
+call prepareScale.bat 1
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
 mode 80,50
@@ -22,11 +24,21 @@ echo "cmdgfx: quit"
 title input:Q
 exit /b 0 */
 
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
 var fs = new ActiveXObject("Scripting.FileSystemObject")
 var Shell = new ActiveXObject("WScript.Shell")
 
-var W=160, H=80
-var XMID=Math.floor(W/2), YMID=Math.floor(H/2)
+var W=GetCmdVar("W"), H=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+
+var XMID=Math.floor(W/2), YMID=Math.floor(H/2), HLPY=H-3
 var DIST=2000, DRAWMODE=1
 var CRX=0,CRY=0,CRZ=0, ZROT=0
 var ASPECT=0.75
@@ -45,7 +57,7 @@ var DIVROTX=16, DIVROTY=16, SPEED=30, COLSET=0
 SetColors(COLSET)
 
 var SHOWHELP=1
-var HELPMSG="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\g1e\\g1f\\-Z/z\\-X/x\\-Y/y\\-s\\-p\\-h 1,78"
+var HELPMSG="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\g1e\\g1f\\-Z/z\\-X/x\\-Y/y\\-s\\-p\\-h 1," + HLPY
 var MSG=""; if (SHOWHELP==1) MSG=HELPMSG
 var static=0, staticskip=["skip", ""]
 
@@ -98,7 +110,8 @@ while (true) {
 	
 	if (ti[23] == "1")
 	{
-		W=Number(ti[25])*2+1, H=Number(ti[27])*2+1, XMID=Math.floor(W/2), YMID=Math.floor(H/2), HLPY=H-3
+		W=Math.floor(Number(ti[25])*2*rW/100+1), H=Math.floor(Number(ti[27])*2*rH/100+1)
+		XMID=Math.floor(W/2), YMID=Math.floor(H/2), HLPY=H-3
 		Shell.Exec('cmdwiz showcursor 0')
 		HELPMSG="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\g1e\\g1f\\-Z/z\\-X/x\\-Y/y\\-s\\-p\\-h 1," + HLPY
 		if (SHOWHELP==1) MSG=HELPMSG

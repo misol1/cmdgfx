@@ -9,7 +9,7 @@ The main difference between cmdgfx and cmdgfx_gdi is that while the former outpu
 
 Producing a bitmap instead of text may seem nonsensical, but there is a simple explanation: it is (usually) much faster! That is because the Windows API to output text to a console is very slow, as soon as there is more than one color in the output.
 
-The cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-c which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and font c 3x3). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).
+The cmdgfx_gdi executable is larger than cmdgfx, because bitmap font data is embedded inside the program. This means that while cmdgfx will use any current font set in the console window, cmdgfx_gdi only supports a small subset of embedded fonts: raster fonts 0-9, plus the specialized fonts a-f which are so called pixel fonts (1 character is 1 'pixel', font a is 1x1 size, font b 2x2 and so on). Apart from being faster and supporting pixel fonts, there are also a few other things cmdgfx_gdi can do that cmdgfx cannot (see list below).
 
 Use cmdgfx:
   1. For single output, not animating in a loop (speed is not crucial)
@@ -52,7 +52,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -66,7 +66,6 @@ block    mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [tr
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
-insert   file
 skip
 rem
 
@@ -100,14 +99,13 @@ Debug:
 - \- E  Wait for key press after error
 
 Input/timing (cmdgfx_input prefered):
-- \- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and o/O flag set)
+- \- k  Return keys (in ERRORLEVEL, and in EL.dat if server on and O flag set)
 -   K  As above, but not persistent, and will *wait* for key press
-- \- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and o/O flags set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)
+- \- m[i]  Return input (mouse/key) info (in ERRORLEVEL, and in EL.dat if server on and O flag set). Set i to wait max i ms. Format of bit pattern: kkkkkkkkuyyyyyyyyxxxxxxxxxWwrlM where M=1 if mouse event, l=left click, r=right click, w/W=mouse wheel up/down, x/y=mouse coordinates, u=key up, k is keycode (0=no key)
 - \- M[i]  As above, but reports mouse move even if no mouse key pressed
 - \- u  Also send keyboard UP events for m and M flags
-- \- wi  Wait i ms after each frame
 - \- Wi  Wait up to i ms after each frame (use for smooth frame rate)
-- \- z  Enable sleeping wait (for w and W flag). Uses less CPU but less smooth
+- \- z  Enable sleeping wait (for W flag). Uses less CPU but less smooth
 
 Output:
 -  c:x,y,w,h,format,i  Capture buffer to file, as capture-i.gxy (i starts at 0 and increases). 0-6 params. Format=0 for txt format. Last param can force i
@@ -121,7 +119,7 @@ Output:
 -   Li,j  Set z-light range to i,j. Used for 3d in mode 1. Default: 25,16
 - \- N[i]  Auto center 3d objects. If i is set, enable auto scaling by i
 -   Ri  Rotation granularity for 3d. Default is 4, i.e. full circle is 360*4
-- \- s  Z-buffer support for flat shade in 3d modes 0,1,4. Handles edge bug for pcx textures
+- \- s  Z-buffer support for flat shade in 3d modes 0,1,4. Also fixes edge bug for pcx textures
 - \- T  Support repeated texture coordinates (above 1.0)
 -   Zi  Set projection depth i for all 3d operations. Default: 500
 
@@ -129,6 +127,8 @@ Other:
 -   C  Clear frame counter (print using [FRAMECOUNT] in string for text op)
 -   Gi,j  Set maximum allowed width and height of gxy files. Default: 256,256
 -   p  Preserve the content of the cmd window text buffer when starting cmdgfx
+-   rm  Set wrapping mode for block operation, 0=skip(default), 1=clamp, 2=wrap
+-   tn  Enable using up to n threads (max 8) for increased block operation speed
 - \- v  Enable origo mode for all poly operations (first coordinate is origo, rest are deltas)
 - \- V  Enable origo mode for all box operations
   
@@ -137,8 +137,7 @@ Server:
 - \- i  If set, ignore the file 'servercmd.dat' even if present
 - \- I  If set, support setting title to supply commands to cmdgfx
 - \- J  When an input event happens, flush buffer between script and server
-- \- o  Each frame, write return value (input events) to EL.dat
-- \- O  Same as o, but only write to El.dat if an event happened (usually better)
+- \- O  Write return value (input events) to EL.dat if an event happened
 -   S  Enable server mode
 
 
@@ -146,13 +145,13 @@ Server:
 
 Running cmdgfx as a server has several advantages, mostly regarding speed. The overhead of running an executable each frame disappears, and 3d objects are kept in memory and don't have to be re-read with each use. Server functionality also presents some problems, such as dealing with asynchronicity and input lag.
 
-In order to run as server, the S flag must be set, and the program needs to be last in a pipe chain, such as: call program.bat | cmdgfx.exe  S . For practical purposes, it is a better idea to have the script call itself this way than to have to type it manually each time. There are many example batch scripts included with this program that show how do to this.
+In order to run as server, the S flag must be set, and the program needs to be last in a pipe chain, such as: call program.bat | cmdgfx.exe S . For practical purposes, it is a better idea to have the script call itself this way than to have to type it manually each time. There are many example batch scripts included with this program that show how do to this.
 
 To send operations from the script to the program, use the echo command with a prefix of 'cmdgfx:' within quotes (optionally followed by flags and palette(s)), e.g: echo "cmdgfx: fbox 9 0 A". If the string sent does not have the prefix, the server simply prints it to stdout and otherwise ignores it. It is also possible to send operations either by writing (without 'cmdgfx' prefix) to the file 'servercmd.dat', or (if I flag set) by setting the title of the window, prefixed with 'output:'. These two methods have the advantage that they bypass the frame queue over the pipe and are processed immediately.
 
 Setting flags: see the separate help section for flags. Note that flags can be disabled by preceding with -.
 
-Dealing with input lag: because the batch script may execute faster than cmdgfx, a queue of frames to render may build up over the pipe, which can result in input lag. Actually, the best way to deal with this is to use the separate 'cmdgfx_input' program to handle input, because when put at the beginning of the pipe chain (like: cmdgfx_input.exe m0nW10 | call program.bat | cmdgfx  S) it can control the speed of the batch script, preventing it from running faster than the server. Most of the example scripts included with the program use this approach. Without cmdgfx_input, the best approach is to set the O flag (see flag section), and send in extra data (~2000 characters) prefixed by 'skip' with each call to the server to fill up the pipe buffer to prevent the server from lagging behind.
+Dealing with input lag: because the batch script may execute faster than cmdgfx, a queue of frames to render may build up over the pipe, which can result in input lag. Actually, the best way to deal with this is to use the separate 'cmdgfx_input' program to handle input, because when put at the beginning of the pipe chain (like: cmdgfx_input.exe m0nW10 | call program.bat | cmdgfx.exe S) it can control the speed of the batch script, preventing it from running faster than the server. Most of the example scripts included with the program use this approach. Without cmdgfx_input, the best approach is to set the O flag (see flag section), and send in extra data (~2000 characters) prefixed by 'skip' with each call to the server to fill up the pipe buffer to prevent the server from lagging behind.
 
 Quitting the server: To exit the server, use echo as usual but follow 'cmdgfx:' with 'quit'. Using servercmd.dat or setting the title is also supported.
 
@@ -167,7 +166,7 @@ All 16 color indices can potentially be rearranged, but does not have to be.
 
 The default palette looks like 0123456789abcdef, which means index 0 is color 0, index 10 is color 10(a) etc. As an example, to keep index 0 and 1 as black and dark blue, but set index 2 to light blue, index 3 to cyan, and index 4 to white, use 019bf as palette.
 
-If runninng as server, default palette can be restored by using - as palette.
+If running as server, default palette can be restored by using - as palette.
 
 ## Operations
 
@@ -235,7 +234,7 @@ The tpoly operation cannot draw self-intersecting polygons.
 
 Image - draw an image or text file of characters
 
-Syntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
+Syntax: image filename fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]
 
 'filename' should point to a gxy file, a 16 color pcx file, or any other (preferably text) file.
 
@@ -251,7 +250,9 @@ X and y are column and row coordinates with 0,0 as top left.
 
 Both 'xflip' and 'yflip' are normally 0. Set 'xflip' to 1 to flip the image horizontally, and set 'yflip' to 1 to flip the image vertically.
 
-Specify 'w' and 'h' (width and height) to scale the image to the given width and height, or specify p to scale based on percentage. Negative values are not allowed.
+Specify 'w' and 'h' (width and height) to scale the image to the given width and height, or specify p to scale based on percentage (also see last parameter). Negative values are not allowed.
+
+If only the first of 'w' and 'h' was set, the value is used as percentage by default. Specify 'W' to mean height aspect ratio corrected by width(value means width), and 'H' to to mean width aspect ratio corrected by height(value means height).
 
 ### Box
 
@@ -400,7 +401,7 @@ x,y,w,h x2,y2[,w2,h2[,rz]]: X and y are column and row coordinates with 0,0 as t
 
 [transform]: The block operation allows per-character search and replace functionality. A transform string follows the format 1233=1233,... and the characters used are 0-f, ?=any, +=add 1, -=minus 1. To take all blank spaces (hex 20) with color 5 and bgcolor 1, and replace with A(hex 41) with color 9 and 0, the transform string would look like: 2051=4190. To also change all B's(42) to C's(43), regardless of color, ? would be used to disregard color(s), and get the string: 2051=4190,42??=43??. Finally, to take all characters from 40-4f(@ and A-O) and keep it, BUT increase the color and decrease the bgcolor, the string would be: 2051=4190,42??=43??,4???=??+-. Note that characters that do not fit any rules are left as-is, and that rules are checked from left to right only until the FIRST match is made. To do a catch-all at the end and transform all remaining characters to black spaces(20), use: 2051=4190,42??=43??,4???=??+-,????=2000. Note that + and - can also be used for characters (++ or --), and that ? can be used for color AND/OR bgcolor.
 
-[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-4]) returns 0 and stores the math expression expr in one of 5 variables called s0-s4 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.
+[colExpr]: The block operation allows using mathematical expressions on a per-character basis to change color/bgcolor. One would typically want to produce output in the range 0-15 (for color 0-15 and bgcolor 0), or 0-255 (color 0-15 in low byte, bgcolor 0-15 in high byte). A colExpr can also be combined with a transform, which is applied after the expression. Apart from regular math operations, expressions can also use standard math functions such as: sin, cos, abs, asin, pow, pi, tan, atan, log, floor, etc, plus added functions random() to make random number 0..1, eq(n,n2) return 1 if n=n2 otherwise 0, neq(n,n2) return 1 if NOT n=n2 otherwise 0, gtr(n,n2) return 1 if n>n2, lss(n,n1) return 1 if n<n2, char(xp,yp) return character value at xp,yp, col(xp,yp) return color value at xp,yp, fgcol(xp,yp) return fgcol 0-15, bgcol(xp,yp) return bgcol 0-15, store(expr, [0-9]) returns 0 and stores the math expression expr in one of 10 variables called s0-s9 for later reuse, and finally bitwise logic functions or(n,n2), and(n,n2), xor(n,n2), neg(n), shl(n,n2), shr(n,n2). In addition, the variables x and y are available inside the expression and represent the position of the character currently being processed (note that the top-left position of the block is always 0,0). A simple example of a colExpr where each row has a different color (starting with 1) would be just y+1. An example to create a plasma-like color variation could be: sin(y/13)*15*cos(x/16*y/34)*15+15.
 
 [xExpr yExpr]: Must be provided as a pair. The first determines the x position, the second the y position. By default, it determines the position this character is going *to*, but can be changed to mean where the character should be taken *from* (see next parameter). Variables and functions for xExpr and yExpr are the same as colExpr above. Note that colExpr evaluates before xExpr and yExpr, so it can be used to provide data to move. A simple example to first fill with blue and then move the lines vertically: fbox 9 0 A 0,0,80,50 & block 1 0,0,81,51 0,0 -1 0 0 - - x y*y/4
 
@@ -438,14 +439,6 @@ Note that faces with less than 3 vertices are treated differently when drawing, 
 
 Also note that the Z-buffer (if enabled) only works for textured graphics in drawmode 5 by default. Set the s flag too to support Z-buffer for flat shade in 3d modes 0,1,4 as well.
 
-### insert
-
-Insert - use the content of a file as operation input for cmdgfx
-
-Syntax: insert filename
-
-The file content replaces the insert operation, but not remaining operations after that.
-
 ### skip 
 
 Skip - ignore the following operation
@@ -476,7 +469,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -490,7 +483,6 @@ block    mode[:1233] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar] [xflip] [yflip] [tr
 3d       objectfile drawmode,drawoption[,tex_x_offset,tex_y_offset,tex_x_scale,tex_y_scale]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
-insert   file
 skip
 rem
 
@@ -519,7 +511,7 @@ Similarly, cmdgfx_gdi does not care which codepage is set, it always uses code p
 
 ## Text
 
-[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.
+[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-f, as it is otherwise not possible to output readable text in those modes with the text operation.
 
 ## Flags
 
@@ -527,7 +519,7 @@ Same as for cmdgfx, plus the following:
 
 Output:
 - \- a  Absolute (pixel) output positioning (used by f flag)
--  fFont:x,y,w,h,outW,outH  Set buffer font(0-9,a-c), position, and size. 1-7 params. Force outW and outH to screen width/height for better performance
+-  fFont:x,y,w,h,outW,outH  Set buffer font(0-9,a-f), position, and size. 1-7 params. Force outW and outH to screen width/height for better performance
 - \- U  Draw straight on top of Windows desktop instead of current window
 
 Other:
@@ -560,7 +552,7 @@ poly     fgcol bgcol char x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 ipoly    fgcol bgcol char bitop x1,y1,x2,y2,x3,y3[,x4,y4...,y24]
 gpoly    palette x1,y1,c1,x2,y2,c2,x3,y3,c3[,x4,y4,c4...,c24]
 tpoly    image fgcol bgcol char transpchar/transpcol x1,y1,tx1,ty1,x2,y2,tx2,ty2,x3,y3,tx3,ty3[...,ty24]
-image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p]
+image    image fgcol bgcol char transpchar/transpcol x,y [xflip] [yflip] [w,h|p] [P|W|H]
 box      fgcol bgcol char x,y,w,h
 fbox     fgcol bgcol char x,y,w,h
 line     fgcol bgcol char x1,y1,x2,y2 [bezierPx1,bPy1[,...,bPx6,bPy6]]
@@ -575,7 +567,6 @@ block    mode[[:1233],fgblend[,bgblend]] x,y,w,h x2,y2[,w2,h2[,rz]] [transpchar]
          rx[:rx2],ry[:ry2],rz[:rz2] tx[:tx2],ty[:ty2],tz[:tz2] scalex,scaley,scalez,xmod,ymod,zmod
          face_cull,z_near_cull,z_far_cull,z_levels xpos,ypos,distance,aspect fgcol1 bgcol1 char1 [...fgc32 bgc32 ch32]
 color16  [mode] [set] [range]
-insert   file
 skip
 rem
 
@@ -599,8 +590,6 @@ Below are help sections where cmdgfx_RGB differs from cmdgfx_gdi:
 ## Bugs and issues
 
 Only use cmdgfx_RGB if RGB output is actually needed. The program reads/writes about 8 times as much data as cmdgfx/cmdgfx_gdi, and is therefore significantly slower.
-
-Since cmdgfx_RGB is still in its early stages, it may have issues, some known, some not. One example is the block transform parameteter, which will give strange results for color changes.
 
 
 ## General
@@ -642,7 +631,7 @@ New functions: 1. shade(col,r,g,b) to add (or decrease if negative) the values r
 
 ## Text
 
-[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-c, as it is otherwise not possible to output readable text in those modes with the text operation.
+[bigFontIndex] : A font index between 0-9. If set, the output of the text operation is drawn using the given color/character where each pixel in the font is treated as a single character, creating a "big font". This is especially useful in pixelfont modes a-f, as it is otherwise not possible to output readable text in those modes with the text operation.
 
 ### Color16
 
@@ -679,15 +668,15 @@ cmdgfx_input | script.bat | cmdgfx
 There are many example scripts in the archive which shows this usage, as it is the recommended way to handle input for scripts using cmdgfx.
 
 ```
-CmdGfx_input v1.0 : Mikael Sollenborn 2017-2019
+CmdGfx_input v1.1 : Mikael Sollenborn 2017-2019
 
 Usage: cmdgfx_input [flags]
 
-[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED
-         mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z' sleep instead
-         of busy wait, 'u' enable forwarding key-up events for M/m flag, 'n' send non-events, 'A' send all events,
-         possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes,
-         'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.
+[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'Wn' await n ms, 'm[wait]' forward key/PRESSED
+         mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'zn' sleep instead
+         of busy wait with optional percentage sleeping 1-100, 'u' enable forwarding key-up events for M/m flag, 'n'
+		 send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad
+		 each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.
 
 Flags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set
 flag. Exit the server by including a 'Q' or 'q' flag.
@@ -700,21 +689,34 @@ followed by one or more flags.
 cmdwiz.exe
 ----------
 ```
-CmdWiz (Unicode) v1.4 : Mikael Sollenborn 2015-2020
+CmdWiz (Unicode) v1.7 : Mikael Sollenborn 2015-2020
 With contributions from Steffen Ilhardt and Carlos Montiers Aguilera
 
-Usage: cmdwiz [getconsoledim setbuffersize getconsolecolor getch getkeystate
-               flushkeys getquickedit setquickedit getmouse getch_or_mouse
-               getch_and_mouse getcharat getcolorat showcursor getcursorpos
-               setcursorpos print saveblock copyblock moveblock inspectblock
-               playsound delay stringfind stringlen gettime await getexetype
-               cache setwindowtransparency getwindowbounds setwindowpos
-               setwindowsize getdisplaydim getmousecursorpos setmousecursorpos
-               showmousecursor insertbmp savefont setfont gettitle getwindowstyle
-               setwindowstyle gxyinfo getpalette setpalette fullscreen getfullscreen
-               showwindow sendkey windowlist gettaskbarinfo] [params]
+Usage: cmdwiz operation [arguments]
 
-Use "cmdwiz operation /?" for info on arguments and return values
 
-See https://www.dostips.com/forum/viewtopic.php?t=7402 for full documentation
+Console window: fullscreen getconsoledim getfullscreen getpalette setbuffersize setpalette
+
+Window and display: getdisplaydim getdisplayscale getwindowbounds getwindowstyle setwindowpos setwindowsize
+setwindowstyle setwindowtransparency showwindow windowlist
+
+Input: flushkeys getch getch_and_mouse getch_or_mouse getkeystate getmouse getquickedit setquickedit
+
+Fonts and buffer: getcharat getcolorat getconsolecolor setfont savefont
+
+Cursor and printing: getcursorpos print setcursorpos showcursor
+
+String and delay: await delay gettime stringfind stringlen
+
+Mouse and keyboard: getmousecursorpos sendkey setmousecursorpos showmousecursor
+
+Block: copyblock inspectblock moveblock saveblock
+
+Misc: cache getexetype gettaskbarinfo gettitle gxyinfo insertbmp playsound server
+
+
+Use "cmdwiz operation /?" for info on an operation's arguments and return values, for example cmdwiz delay /?
+
+See https://www.dostips.com/forum/viewtopic.php?t=7402 for full documentation.
+
 ```

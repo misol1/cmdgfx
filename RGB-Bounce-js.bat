@@ -7,37 +7,49 @@ set __=
 cmdwiz showcursor 1 & goto :eof
 
 :START
+setlocal enableDelayedExpansion
 cmdwiz setfont 6 & cls & mode 120,50 & cmdwiz showcursor 0 & title RGB Bounce
 call centerwindow.bat 0 -15
+set /a W=240, H=100
+call prepareScale.bat 0
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
+endlocal
 mode 80,50
 echo "cmdgfx: quit"
 title input:Q
 exit /b 0 */
 
-var maxBalls=500, nofShownBalls=40, w=240, h=100
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
+
+var Shell = new ActiveXObject("WScript.Shell");
+var maxBalls=500, nofShownBalls=40, w=GetCmdVar("W"), h=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
 var ballsX=[], ballsY=[], ballsSX=[], ballsI=[], ballsYC=[], ballsYH=[], ballsSXcale=[], ballsCol=[], ballsJ=[], ballsOpa=[]
 var bI = ["ball4-t.gxy"], bIw = [28,24,20,16,14], bIh = [20,18,15,12,9]
-
 var multiCol=1, shadow=1, extraFlag="", opacity=0
-var showHelp=1, helpMsg="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\-o\\-p\\-h 1,98", skip=["rem "," "]
+var showHelp=1, helpMsg="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\-o\\-p\\-h 1," + (h-3), skip=["rem "," "]
 
-var Shell = new ActiveXObject("WScript.Shell")
 var bx=280, w2=w+140, h2=h*2+20
 w2=w+140, h2=h*4+20
 
 for (i = 0; i < maxBalls; i++) {
 	ballsX.push(Math.floor(Math.random() * w))
 	ballsY.push(Math.floor(Math.random() * h))
-	ballsSX.push(Math.random() * 1.8 + 0.1)
 	ballsYC.push(Math.random() * Math.PI + Math.PI);
-	ballsYH.push(Math.floor(Math.random() * 50) + 45);
 	ballsI.push(Math.floor(Math.random() * bIw.length))
 	ballsJ.push(Math.floor(Math.random() * 7))
 	ballsSXcale.push(Math.floor(Math.random() * bIw.length))
 	ballsCol.push(Math.floor(Math.random() * 6))
 	ballsOpa.push(Math.floor(Math.random() * 150)+105)
+	ballsSX[i] = Math.random() * (w/200.0) + 0.1
+	ballsYH[i] = Math.floor(Math.random() * h/2) + (h/2-5)
 }
 
 DrawBufferBalls()
@@ -75,9 +87,10 @@ while(true) {
 		if (key == "333") { nofShownBalls+=10; if (nofShownBalls > maxBalls) nofShownBalls = maxBalls; extraFlag="C" }
 		if (key == "112") WScript.Echo("\"cmdgfx: \" K")
 	}
+
 	if (ti[23] == "1")
 	{
-		w=Number(ti[25])*2+1, h=Number(ti[27])*2+1, HLPY=h-3, w2=w+140, h2=h*2+20+350
+		w=Math.floor(Number(ti[25])*2*rW/100+1), h=Math.floor(Number(ti[27])*2*rH/100+1), HLPY=h-3, w2=w+140, h2=h*2+20+350
 		Shell.Exec('cmdwiz showcursor 0')
 		helpMsg="text 7 0 0 SPACE\\-ENTER\\-\\g11\\g10\\-o\\-p\\-h 1," + (h-3)
 		DrawBufferBalls();

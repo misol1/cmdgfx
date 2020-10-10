@@ -1,5 +1,4 @@
 @echo off
-cd ..
 setlocal EnableDelayedExpansion
 set OLMB=0
 cmdwiz setfont 2
@@ -7,8 +6,7 @@ set /a SCRW=120 & set /a SCRWW=!SCRW!*2
 mode %SCRW%,70
 cmdwiz setbuffersize %SCRWW% k
 call centerwindow.bat 0 -15
-color 07
-cls
+color 07 & cls
 
 set /a XP=7, YP=4, BUTTONWIDTH=38, ACCBW=0, CHAR=0, OFFCOL=9
 

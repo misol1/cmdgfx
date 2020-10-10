@@ -24,7 +24,7 @@ set CUBECOLS=4 c db 4 c db  4 c b1  4 c b1  4 c 20 4 c 20  6 0 db 6 0 db  6 e b1
 
 set CNT=0
 set SLOTS=0
-set FWORLD=3dworld.dat
+set FWORLD=data\3dworld.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 call :STRLEN SLOTS "%%i")& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%

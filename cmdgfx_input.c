@@ -1,3 +1,10 @@
+#ifndef WINVER
+#define WINVER 0x600
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x600
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <conio.h>
@@ -7,9 +14,8 @@
 // TODO:	1. Check for CLICKS/RCLICKS?
 //			2. Make sure sent event includes doubleclicks, sums of wheel, horizontal wheel, wheel click?
 //			3. Mouse wheel reporting not working on Win10 (actually on some machines it does). Seems wrong on Win7 too, mouse coordinates get messed up. May be API bug.
-//			4. Bug: does not restore title after input:Q !!
 
-int MouseClicked(MOUSE_EVENT_RECORD mer) {
+static int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	static int bReportNext = 0;
 	int res = 0;
 
@@ -35,7 +41,7 @@ int MouseClicked(MOUSE_EVENT_RECORD mer) {
 	return res;
 }
 
-int MouseEventProc(MOUSE_EVENT_RECORD mer, char *output) {
+static int MouseEventProc(MOUSE_EVENT_RECORD mer, char *output) {
 	int res;
 	res = (mer.dwMousePosition.X << 7) | (mer.dwMousePosition.Y << 15);
 
@@ -72,7 +78,7 @@ int MouseEventProc(MOUSE_EVENT_RECORD mer, char *output) {
 	return res;
 }
 
-BOOLEAN nanosleep(LONGLONG ns){
+static BOOLEAN nanosleep(LONGLONG ns){
     HANDLE timer;
     LARGE_INTEGER li;
 
@@ -88,11 +94,11 @@ BOOLEAN nanosleep(LONGLONG ns){
     return TRUE;
 }
 
-BOOLEAN millisleep(LONGLONG ms){
+static BOOLEAN millisleep(LONGLONG ms){
 	return nanosleep(ms * 10000);
 }
 
-long long milliseconds_now(void) {
+static long long milliseconds_now(void) {
 	static LARGE_INTEGER s_frequency;
 	static BOOL s_use_qpc;
 
@@ -106,18 +112,10 @@ long long milliseconds_now(void) {
 	}
 }
 
-void process_waiting(int bWait, int waitTime, int bSleepingWait) { 
+static void process_waiting(int bWait, int waitTime, int bSleepingWait) { 
 	static long long lastTime = -1;
 
-	if (bWait==1 && waitTime > 0) {
-		long long sT = milliseconds_now();
-		if (bSleepingWait)
-			millisleep(waitTime);
-		else
-			while (milliseconds_now() < sT + waitTime) ;
-	}
-	
-	if (bWait==2 && waitTime > 0) {
+	if (bWait && waitTime > 0) {
 		
 		if (lastTime >= 0) {
 			if (milliseconds_now() >= lastTime) {
@@ -140,7 +138,7 @@ void process_waiting(int bWait, int waitTime, int bSleepingWait) {
 char g_padding[1060], g_sizeString[64];
 int g_bReportSize = 0, g_bSizeChanged = 0, g_consoleWidth, g_consoleHeight;
 
-int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadding, int bIncludeSize) {
+static int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadding, int bIncludeSize) {
 	int bOkToForward = 1;
 	
 	if (!bSendNoEvent && !bMouse && retVal == 0)
@@ -171,15 +169,15 @@ int forward_event(int bSendNoEvent, int bMouse, int retVal, char *out, int bPadd
 	return 0;
 }
 	
-HANDLE GetInputHandle() {
+static HANDLE GetInputHandle() {
 	return CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 }
 
-HANDLE GetOutputHandle() {
+static HANDLE GetOutputHandle() {
 	return CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 }
 
-void GetDim(HANDLE conout) {
+static void GetDim(HANDLE conout) {
 	CONSOLE_SCREEN_BUFFER_INFO screenBufferInfo;
 	GetConsoleScreenBufferInfo(conout, &screenBufferInfo);
 	g_consoleWidth = screenBufferInfo.srWindow.Right - screenBufferInfo.srWindow.Left + 1;
@@ -205,8 +203,10 @@ int main(int argc, char *argv[]) {
 	DWORD fdwMode, oldfdwMode;
 	HANDLE h_stdin, h_stdout;
 
+	SetProcessDPIAware();
+
 	if (argc < 2 || (argc > 1 && strcmp(argv[1], "/?") == 0)) {
-		printf("\nCmdGfx_input v1.1 : Mikael Sollenborn 2017-2020\n\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'wn/Wn' wait/await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z[p]' sleep instead of busy wait with optional percentage sleeping 1-100, 'u' enable forwarding key-up events for M/m flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
+		printf("\nCmdGfx_input v1.1 : Mikael Sollenborn 2017-2020\n\nUsage: cmdgfx_input [flags]\n\n[flags]: 'k' forward last keypress, 'K' wait for/forward key, 'Wn' await n ms, 'm[wait]' forward key/PRESSED mouse events with optional wait, 'M[wait]' forward key/ALL mouse events with optional wait, 'z[p]' sleep instead of busy wait with optional percentage sleeping 1-100, 'u' enable forwarding key-up events for M/m flag, 'n' send non-events, 'A' send all events, possibly several per wait (combined special keys not available), 'x' pad each message to be 1024 bytes, 'i' ignore inputflags.dat, 'I' ignore title flags, 'R' report window size changes.\n\nFlags can be modified during runtime by writing to 'inputflags.dat'. Precede a flag with '-' to cancel a previously set flag. Exit the server by including a 'Q' or 'q' flag.\n\nIt is also possible to communicate with cmdgfx_input by setting the title of the current window with the prefix 'input:' followed by one or more flags.\n");
 		return 0;
 	}
 
@@ -235,9 +235,9 @@ int main(int argc, char *argv[]) {
 					if (j) mouseWait = atoi(wTime);
 					break;
 				}
-				case 'W': case 'w': {
+				case 'W': {
 					char wTime[64];
-					bWait = 1; if (argv[1][i] == 'W') bWait = 2; j = 0; i++;
+					bWait = 1; j = 0; i++;
 					while (argv[1][i] >= '0' && argv[1][i] <= '9') wTime[j++] = argv[1][i++];
 					i--; wTime[j] = 0;
 					if (j) waitTime = atoi(wTime);
@@ -269,6 +269,12 @@ int main(int argc, char *argv[]) {
 	
 	memset(g_padding, '-', 1028);
 	
+	GetWindowText(GetConsoleWindow(), sTitleBuffer, 1023);
+	if (strstr(sTitleBuffer, "input:") == sTitleBuffer) { // for some reason, an old command was present in the title, erase it
+		SetWindowText(GetConsoleWindow(), "");
+		sTitleBuffer[0] = 0;
+	}
+
 	do {
 		retVal = 0;
 
@@ -410,7 +416,7 @@ int main(int argc, char *argv[]) {
 			}
 			
 			if (pch == NULL) {
-				FILE	*flushFile = NULL;
+				FILE *flushFile = NULL;
 				if (!bIgnoreInputFlagsFile)
 					flushFile = fopen("inputflags.dat", "r");
 				if (flushFile) {
@@ -456,12 +462,12 @@ int main(int argc, char *argv[]) {
 							}
 							break;
 						}
-						case 'W': case 'w': {
+						case 'W': {
 							if (neg)
 								bWait = 0;
 							else {
 								char wTime[64];
-								bWait = 1; if (pch[i] == 'W') bWait = 2; j = 0; i++;
+								bWait = 1; j = 0; i++;
 								while (pch[i] >= '0' && pch[i] <= '9') wTime[j++] = pch[i++];
 								i--; wTime[j] = 0;
 								if (j) waitTime = atoi(wTime);
@@ -498,7 +504,7 @@ int main(int argc, char *argv[]) {
 			fflush(stdout);
 
 	} while (bServer && (!feof(stdin)));
-
+	
 	SetConsoleMode(h_stdin, oldfdwMode);
 
 	CloseHandle(h_stdin);

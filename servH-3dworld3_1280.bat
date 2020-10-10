@@ -21,8 +21,11 @@ for /F "Tokens=1 delims==" %%v in ('set') do if /I not %%v==PATH set "%%v="
 set /a W=1280, H=680
 
 call centerwindow.bat 0 -20
+call prepareScale.bat 10
 
-echo "cmdgfx: text 8 0 0 Generating_world... 142,51" f0:0,0,320,110
+set /a TXTX=142*rW/100, TXTY=51*rH/100
+
+echo "cmdgfx: text 8 0 0 Generating_world... %TXTX%,%TXTY%" f0:0,0,620,310
 
 set /a XMID=%W%/2, YMID=%H%/2-10
 set /a DIST=0, DRAWMODE=5, GROUNDCOL=2, MULVAL=250, YMULVAL=125"
@@ -34,7 +37,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /A CNT=0, SLOTS=0
-set FWORLD=3dworld2.dat
+set FWORLD=data\3dworld2.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
@@ -111,8 +114,8 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 :SKIPGEN
 call :MAKEBKG
 
-set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 1240,15
+set /A MAP=0,ZMOD=0,XMOD=0, XMAP=W-40*rW/100
+set MAPTXT=image data/3dworld2.dat e 0 0 - %XMAP%,15
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!
@@ -131,7 +134,7 @@ set /a ZVAL=800
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
-	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
+	if !MAP!==1 set /A "XP=(!TX!+!XMOD!)/(%MULVAL%*2)+%SLOTS%/2+(W-40*rW/100), ZP=(%YSLOTS%)/2-(!TZ!+!ZMOD!)/(%MULVAL%*2)+15" & set MAPP=pixel c 0 db !XP!,!ZP!
 
 	set FN3=%FN4%
 	if !ENEMY! == 1 (
@@ -161,7 +164,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 rem echo !INPUT!
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, K_KEY=%%D,  M_EVENT=%%E, M_X=%%F, M_Y=%%G, M_LB=%%H, M_RB=%%I, M_DBL_LB=%%J, M_DBL_RB=%%K, M_WHEEL=%%L, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2*4, H=SCRH*2*6, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40, ZVAL=480+W/4 & cmdwiz showcursor 0 &  call :MAKEBKG & set MAPTXT=image 3dworld2.dat e 0 0 - !XMAP!,15& if !MAP!==1 set MAPT=!MAPTXT!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*4*rW/100+6, H=SCRH*2*6*rH/100+8, XMID=W/2, YMID=H/2, HLPY=H-3, XMAP=W-40*rW/100, ZVAL=480+W/4 & cmdwiz showcursor 0 & call :MAKEBKG & set MAPTXT=image data/3dworld2.dat e 0 0 - !XMAP!,15& if !MAP!==1 set MAPT=!MAPTXT!
 	
 	if not "!EV_BASE:~0,1!" == "N" (
 	

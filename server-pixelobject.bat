@@ -15,7 +15,9 @@ set /a W=160, H=80
 set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -20
+call prepareScale.bat 1
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=7000, DRAWMODE=1, ROTMODE=0
 set /a RX=0,RY=0,RZ=0
@@ -23,7 +25,8 @@ set ASPECT=0.75
 set COLS_0=f 0 04   f 0 04   f 0 .  7	 0 .   7 0 .   8 0 .  8 0 .  8 0 .  8 0 .   8 0 .   8 0 .  8 0 fa
 set COLS_1=f 0 04   f 0 04   b 0 .  9	 0 .   9 0 .   9 0 .  1 0 .  1 0 .  1 0 .   1 0 .   1 0 fa
 set /a COLCNT=0, OBJCNT=0
-set HELP="text 9 0 0 S\nP\nA\nC\nE\n\n\80t\no\n\ns\nw\ni\nt\nc\nh\n\no\nb\nj\ne\nc\nt\n 157,56"
+set /a HLPY=H+1-25,HLPX=W+1-4,HLPY2=H-2
+set HELP="text 9 0 0 S\nP\nA\nC\nE\n\n\80t\no\n\ns\nw\ni\nt\nc\nh\n\no\nb\nj\ne\nc\nt\n %HLPX%,%HLPY%"
 set OBJ0=plot-torus&set OBJ1=plot-sphere&set OBJ2=plot-double-sphere&set OBJ3=plot-cube&set OBJ4=linecube
 set SCALE0=1.2,1.2,1.2
 set SCALE1=120,120,120
@@ -31,7 +34,7 @@ set SCALE2=520,520,520
 set SCALE=%SCALE0%
 
 set /a SHOWHELP=1
-set HELPMSG="text 3 0 0 D/d\-c\-p\-ENTER\-\g1e\g1f\g11\g10zZ\-h 1,78"
+set HELPMSG="text 3 0 0 D/d\-c\-p\-ENTER\-\g1e\g1f\g11\g10zZ\-h 1,%HLPY2%"
 set MSG=""& if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set STOP=
@@ -42,7 +45,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%c in (!COLCNT!) do for %%o 
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, YMID=H/2, HLPY=H-25,HLPX=W-4,HLPY2=H-3 & cmdwiz showcursor 0 & set HELP="text 9 0 0 S\nP\nA\nC\nE\n\n\80t\no\n\ns\nw\ni\nt\nc\nh\n\no\nb\nj\ne\nc\nt\n !HLPX!,!HLPY!"&set HELPMSG="text 3 0 0 D/d\-c\-p\-ENTER\-\g1e\g1f\g11\g10zZ\-h 1,!HLPY2!"& if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100+1, H=SCRH*2*rH/100+1, XMID=W/2, YMID=H/2, HLPY=H-25,HLPX=W-4,HLPY2=H-3 & cmdwiz showcursor 0 & set HELP="text 9 0 0 S\nP\nA\nC\nE\n\n\80t\no\n\ns\nw\ni\nt\nc\nh\n\no\nb\nj\ne\nc\nt\n !HLPX!,!HLPY!"&set HELPMSG="text 3 0 0 D/d\-c\-p\-ENTER\-\g1e\g1f\g11\g10zZ\-h 1,!HLPY2!"& if !SHOWHELP!==1 set MSG=!HELPMSG!
 	
 	if !K_EVENT! == 1 (
 		if !K_DOWN! == 1 (

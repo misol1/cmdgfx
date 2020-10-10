@@ -15,8 +15,11 @@ set /a W=238, H=102
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 cmdwiz showcursor 0
+
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+
 call centerwindow.bat 0 -12
+call prepareScale.bat 0
 
 set /a SCALE=2
 set /a WW=W, HH=H, W/=SCALE, H/=SCALE
@@ -29,8 +32,8 @@ call sindef.bat
 
 set /a MODE=3, XMUL=300, YMUL=280, A1=155, A2=0, RANDPIX=3, COLCNT3=0, FADEIN=0, FADEVAL=0, WH=%W%/2, XMID=W/2, YMID=H/2, XXMID=WW/2, YYMID=HH/2
 set ASPECT=0.58846
-set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_RIGHT/LEFT,_ENTER,_P,_H 1,100"
-set /a SHOWHELP=1
+set /a SHOWHELP=1, HLPY=H-2
+set HELPMSG="text 7 0 0 SPACE,_UP/DOWN,_RIGHT/LEFT,_ENTER,_P,_H 1,%HLPY%"
 set HELP=""& if !SHOWHELP!==1 set HELP=%HELPMSG%
 
 set /a CNT=0
@@ -61,7 +64,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a W=SCRW*2/SCALE+1, H=SCRH*2/SCALE+1, WW=W*SCALE, HH=H*SCALE, XMID=W/2, YMID=H/2, XXMID=WW/2, YYMID=HH/2, HLPY=HH-5 & cmdwiz showcursor 0 & set HELPMSG="text 7 0 0 SPACE,_RIGHT/LEFT,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!"&if !SHOWHELP!==1 set HELP=!HELPMSG!
+	if "!RESIZED!"=="1" set /a W=SCRW*2*rW/100/SCALE+1, H=SCRH*2*rH/100/SCALE+2, WW=W*SCALE, HH=H*SCALE, XMID=W/2, YMID=H/2, XXMID=WW/2, YYMID=HH/2, HLPY=HH-5 & cmdwiz showcursor 0 & set HELPMSG="text 7 0 0 SPACE,_RIGHT/LEFT,_UP/DOWN,_ENTER,_P,_H 1,!HLPY!"&if !SHOWHELP!==1 set HELP=!HELPMSG!
 		
 	if !KEY! == 32 set /A MODE+=1&(if !MODE! gtr 7 set MODE=0) & for %%a in (!MODE!) do echo W!WVAL%%a!>inputflags.dat
 

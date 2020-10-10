@@ -17,8 +17,9 @@ set /a W=220, H=95
 echo "cmdgfx: fbox 0 0 00 0,0,!W!,!H!"
 cmdwiz showcursor 0
 for /F "tokens=1 delims==" %%v in ('set') do if not "%%v"=="W" if not "%%v"=="H" set "%%v="
-call centerwindow.bat 0 -15
 
+call centerwindow.bat 0 -15
+call prepareScale.bat 0
 call sindef.bat
 
 set /a DIV=2 & set /a XMID=!W!/2/!DIV!,YMID=!H!/2/!DIV!, XMUL=88/!DIV!, YMUL=38/!DIV!, SXMID=!W!/2,SYMID=!H!/2
@@ -41,8 +42,8 @@ set /a P1=9,P2=17,P3=4,P4=6,P5=14,P6=13,P7=10,P8=6,SC1=334,CC1=62,SC2=599,CC2=35
 
 set STREAM="0???=10??,1???=90??,2???=b0??,3???=f0??,4???=f0??,5???=b0??,6???=90??,7???=10??,8???=10??,9???=90??,a???=b0??,b???=f0??,c???=b0??,d???=90??,e???=10??,f???=10??"
 
-set /a SHOWHELP=1
-set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,92
+set /a SHOWHELP=1, HLPY=H-3
+set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,%HLPY%
 set SH=skip& if !SHOWHELP!==1 set SH=
 
 set CLS=&set /a SKIPCLS=0
@@ -72,7 +73,7 @@ rem	if !DIV! == 2 if !CCYCLE!==1 echo "cmdgfx: !STR:~1,-1! & block 0 0,0,!SXMID!
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV, HLPY=H-4" & cmdwiz showcursor 0 & set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,!HLPY! 
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, XMID=W/2/DIV, YMID=H/2/DIV, SXMID=W/2, SYMID=H/2, XMUL=W/2/DIV, YMUL=H/2/DIV, HLPY=H-3" & cmdwiz showcursor 0 & set MSG=text 8 0 0 SPACE\-ENTER\-c\-e\-h 1,!HLPY! 
 	
 	if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
 	if !KEY! == 32 (for /L %%a in (1,1,8) do set /a "P%%a=!RANDOM! %% 20 + 2") & for /L %%a in (1,1,%NOFLINES%) do set LN%%a=  

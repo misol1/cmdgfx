@@ -568,7 +568,7 @@ struct pline {
 Hjälpfunktion som används av systemfunktionen qsort i den generella
 polygonritaren. 
 */
-int compar(const void *vx, const void *vy) {
+static int compar(const void *vx, const void *vy) {
 	int *x = (int *)vx;
 	int *y = (int *)vy;
 	
@@ -740,10 +740,14 @@ int line_clip(int *x1, int *y1, int *x2, int *y2) {
 		yb = YRES-1;
 	}
 
-	if (ya<0) ya=0; if (ya>=YRES) ya=YRES-1;
-	if (yb<0) yb=0; if (yb>=YRES) yb=YRES-1;
-	if (xa<0) xa=0; if (xa>=XRES) xa=XRES-1;
-	if (xb<0) xb=0; if (xb>=XRES) xb=XRES-1;
+	if (ya<0) ya=0;
+	if (ya>=YRES) ya=YRES-1;
+	if (yb<0) yb=0;
+	if (yb>=YRES) yb=YRES-1;
+	if (xa<0) xa=0;
+	if (xa>=XRES) xa=XRES-1;
+	if (xb<0) xb=0;
+	if (xb>=XRES) xb=XRES-1;
 
 	*x1 = xa; *y1 = ya;
 	*x2 = xb; *y2 = yb;
@@ -904,7 +908,7 @@ typedef struct vec_interpolate {
 
 /* Initierar värden för interpolering av en vektor i "y-led" */
 
-void vecpolinit(vec_interpolate *vp, Vector v1, Vector v2, double div_val, int left) {
+static void vecpolinit(vec_interpolate *vp, Vector v1, Vector v2, double div_val, int left) {
 	if (left) {
 		vp->x_ay_l=(v1.x-v2.x)/div_val;
 		vp->y_ay_l=(v1.y-v2.y)/div_val;
@@ -925,7 +929,7 @@ void vecpolinit(vec_interpolate *vp, Vector v1, Vector v2, double div_val, int l
 
 /* Interpolerar vektor i "y-led" */
 
-void vecpol_addydelt(vec_interpolate *vp, int left) {
+static void vecpol_addydelt(vec_interpolate *vp, int left) {
 	if (left) {
 		vp->xy_l+=vp->x_ay_l;
 		vp->yy_l+=vp->y_ay_l;
@@ -940,7 +944,7 @@ void vecpol_addydelt(vec_interpolate *vp, int left) {
 
 /* Initierar värden för interpolering av en vektor i "x-led" */
 
-void vecpolinit_x(vec_interpolate *vp, double div_val, int rev) {
+static void vecpolinit_x(vec_interpolate *vp, double div_val, int rev) {
 	if (!rev) {
 		vp->ip_pos.x=vp->xy_l*65536;
 		vp->ip_pos.y=vp->yy_l*65536;
@@ -961,7 +965,7 @@ void vecpolinit_x(vec_interpolate *vp, double div_val, int rev) {
 
 /* Interpolerar vektor i "x-led" */
 
-void vecpol_addxdelt(vec_interpolate *vp) {
+static void vecpol_addxdelt(vec_interpolate *vp) {
 	vp->ip_pos.x+=vp->x_ax;
 	vp->ip_pos.y+=vp->y_ax;
 	vp->ip_pos.z+=vp->z_ax;
@@ -1116,7 +1120,7 @@ void hline(int x1, int x2, int y, uchar col) {
 	Number of control points is n+1
 	0 <= mu < 1    IMPORTANT, the last point is not computed
 */
-void curvePoint_N(long n, long *px, long *py, double mu, int *xPoints, int *yPoints) {
+static void curvePoint_N(long n, long *px, long *py, double mu, int *xPoints, int *yPoints) {
 	long   k, kn, nn, nkn;
 	double blend, muk, munk;
 	double bx = 0.0, by = 0.0;
@@ -1550,7 +1554,7 @@ int drawtpolyperspsubtri(intVector *tri, Bitmap *bild, PREPCOL plusVal)
 {
 	float x1, y1, x2, y2, x3, y3;
 	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
-	float dxdy1, dxdy2, dxdy3;
+	float dxdy1=1, dxdy2=1, dxdy3=1;
 	float tempf;
 	float denom;
 	float dy;
@@ -1813,6 +1817,7 @@ static void drawtpolyperspsubtriseg(int y1, int y2, int xSize, int ySize, PREPCO
 		viza += dvizdya;
 
 		y1++;
+		if (y1>=YRES) return;
 	}
 }
 
@@ -1905,274 +1910,8 @@ static void drawtpolyperspsubtriseg_ZBuffer(int y1, int y2, int xSize, int ySize
 		viza += dvizdya;
 
 		y1++;
+		if (y1>=YRES) return;
 	}
 }
 
 
-static void drawpolyseg(int y1, int y2, int col);
-int __scan3(intVector tri[], uchar col) {
-
-	float x1, y1, x2, y2, x3, y3;
-	float iz1, uiz1, viz1, iz2, uiz2, viz2, iz3, uiz3, viz3;
-	float dxdy1, dxdy2, dxdy3;
-	float tempf;
-	float denom;
-	float dy;
-	int y1i, y2i, y3i;
-	int side;
-
-	// Shift XY coordinate system (+0.5, +0.5) to match the subpixeling technique
-	
-	x1 = (float)tri[0].x + 0.5;
-	y1 = (float)tri[0].y + 0.5;
-	x2 = (float)tri[1].x + 0.5;
-	y2 = (float)tri[1].y + 0.5;
-	x3 = (float)tri[2].x + 0.5;
-	y3 = (float)tri[2].y + 0.5;
-
-	if (y1==y2 && y2==y3) return 0;
-	if (y1 < 0 && y2 < 0 && y3 < 0) return 0;
-	if (x1 < 0 && x2 < 0 && x3 < 0) return 0;
-	if (y1 >= YRES &&  y2 >= YRES && y3 >= YRES) return 0;
-	if (x1 >= XRES &&  x2 >= XRES && x3 >= XRES) return 0;
-
-	// Calculate alternative 1/Z, U/Z and V/Z values which will be interpolated
-
-	iz1 = 1 / tri[0].z;
-	iz2 = 1 / tri[1].z;
-	iz3 = 1 / tri[2].z;
-	
-	uiz1 = tri[0].tex_coord.x * iz1;
-	viz1 = tri[0].tex_coord.y * iz1;
-	uiz2 = tri[1].tex_coord.x * iz2;
-	viz2 = tri[1].tex_coord.y * iz2;
-	uiz3 = tri[2].tex_coord.x * iz3;
-	viz3 = tri[2].tex_coord.y * iz3;
-	
-	// Sort the vertices in ascending Y order
-
-#define swapfloat(x, y) tempf = x; x = y; y = tempf;
-	if (y1 > y2)
-	{
-		swapfloat(x1, x2);
-		swapfloat(y1, y2);
-		swapfloat(iz1, iz2);
-		swapfloat(uiz1, uiz2);
-		swapfloat(viz1, viz2);
-	}
-	if (y1 > y3)
-	{
-		swapfloat(x1, x3);
-		swapfloat(y1, y3);
-		swapfloat(iz1, iz3);
-		swapfloat(uiz1, uiz3);
-		swapfloat(viz1, viz3);
-	}
-	if (y2 > y3)
-	{
-		swapfloat(x2, x3);
-		swapfloat(y2, y3);
-		swapfloat(iz2, iz3);
-		swapfloat(uiz2, uiz3);
-		swapfloat(viz2, viz3);
-	}
-#undef swapfloat
-
-	y1i = y1;
-	y2i = y2;
-	y3i = y3;
-
-	// Skip poly if it's too thin to cover any pixels at all
-
-	if ((y1i == y2i && y1i == y3i)
-	    || ((int) x1 == (int) x2 && (int) x1 == (int) x3))
-		return 0;
-
-	// Calculate horizontal and vertical increments for UV axes (these
-	//  calcs are certainly not optimal, although they're stable (handles any dy being 0)
-
-	denom = ((x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1));
-
-	if (!denom)		// Skip poly if it's an infinitely thin line
-		return 0;	
-
-	denom = 1 / denom;	// Reciprocal for speeding up
-	dizdx = ((iz3 - iz1) * (y2 - y1) - (iz2 - iz1) * (y3 - y1)) * denom;
-	duizdx = ((uiz3 - uiz1) * (y2 - y1) - (uiz2 - uiz1) * (y3 - y1)) * denom;
-	dvizdx = ((viz3 - viz1) * (y2 - y1) - (viz2 - viz1) * (y3 - y1)) * denom;
-	dizdy = ((iz2 - iz1) * (x3 - x1) - (iz3 - iz1) * (x2 - x1)) * denom;
-	duizdy = ((uiz2 - uiz1) * (x3 - x1) - (uiz3 - uiz1) * (x2 - x1)) * denom;
-	dvizdy = ((viz2 - viz1) * (x3 - x1) - (viz3 - viz1) * (x2 - x1)) * denom;
-
-	// Calculate X-slopes along the edges
-
-	if (y2 > y1)
-		dxdy1 = (x2 - x1) / (y2 - y1);
-	if (y3 > y1)
-		dxdy2 = (x3 - x1) / (y3 - y1);
-	if (y3 > y2)
-		dxdy3 = (x3 - x2) / (y3 - y2);
-
-	// Determine which side of the poly the longer edge is on
-
-	side = dxdy2 > dxdy1;
-
-	if (y1 == y2)
-		side = x1 > x2;
-	if (y2 == y3)
-		side = x3 > x2;
-
-	if (!side)	// Longer edge is on the left side
-	{
-		// Calculate slopes along left edge
-
-		dxdya = dxdy2;
-		dizdya = dxdy2 * dizdx + dizdy;
-		duizdya = dxdy2 * duizdx + duizdy;
-		dvizdya = dxdy2 * dvizdx + dvizdy;
-
-		// Perform subpixel pre-stepping along left edge
-
-		dy = 1 - (y1 - y1i);
-		xa = x1 + dy * dxdya;
-		iza = iz1 + dy * dizdya;
-		uiza = uiz1 + dy * duizdya;
-		viza = viz1 + dy * dvizdya;
-
-		if (y1i < y2i)	// Draw upper segment if possibly visible
-		{
-			// Set right edge X-slope and perform subpixel pre-stepping
-
-			xb = x1 + dy * dxdy1;
-			dxdyb = dxdy1;
-
-			drawpolyseg(y1i, y2i, col);
-		}
-		if (y2i < y3i)	// Draw lower segment if possibly visible
-		{
-			// Set right edge X-slope and perform subpixel pre-stepping
-
-			xb = x2 + (1 - (y2 - y2i)) * dxdy3;
-			dxdyb = dxdy3;
-
-			drawpolyseg(y2i, y3i, col);
-		}
-	}
-	else	// Longer edge is on the right side
-	{
-		// Set right edge X-slope and perform subpixel pre-stepping
-
-		dxdyb = dxdy2;
-		dy = 1 - (y1 - y1i);
-		xb = x1 + dy * dxdyb;
-
-		if (y1i < y2i)	// Draw upper segment if possibly visible
-		{
-			// Set slopes along left edge and perform subpixel pre-stepping
-
-			dxdya = dxdy1;
-			dizdya = dxdy1 * dizdx + dizdy;
-			duizdya = dxdy1 * duizdx + duizdy;
-			dvizdya = dxdy1 * dvizdx + dvizdy;
-			xa = x1 + dy * dxdya;
-			iza = iz1 + dy * dizdya;
-			uiza = uiz1 + dy * duizdya;
-			viza = viz1 + dy * dvizdya;
-
-			drawpolyseg(y1i, y2i, col);
-		}
-		if (y2i < y3i)	// Draw lower segment if possibly visible
-		{
-			// Set slopes along left edge and perform subpixel pre-stepping
-
-			dxdya = dxdy3;
-			dizdya = dxdy3 * dizdx + dizdy;
-			duizdya = dxdy3 * duizdx + duizdy;
-			dvizdya = dxdy3 * dvizdx + dvizdy;
-			dy = 1 - (y2 - y2i);
-			xa = x2 + dy * dxdya;
-			iza = iz2 + dy * dizdya;
-			uiza = uiz2 + dy * duizdya;
-			viza = viz2 + dy * dvizdya;
-
-			drawpolyseg(y2i, y3i, col);
-		}
-	}
-	
-	return 1;
-
-}
-
-static void drawpolyseg(int y1, int y2, int col)
-{
-	uchar *scr;
-	int x1, x2;
-	float z, u, v, dx;
-	float iz, uiz, viz;
-
-	while (y1 < y2)		// Loop through all lines in the segment
-	{
-		x1 = xa;
-		x2 = xb;
-
-		// Perform subtexel pre-stepping on 1/Z, U/Z and V/Z
-
-		dx = 1 - (xa - x1);
-		iz = iza + dx * dizdx;
-		uiz = uiza + dx * duizdx;
-		viz = viza + dx * dvizdx;
-
-		scr = &video[y1 * XRES + x1];
-
-		if (y1 >= 0 && y1 < YRES) {
-			while (x1++ < x2 && x1 <= XRES)	// Draw horizontal line
-			{
-				// Calculate U and V from 1/Z, U/Z and V/Z
-				if (x1 <= 0) {
-					scr++;
-					iz += dizdx;
-					uiz += duizdx;
-					viz += dvizdx;
-					continue;
-				}
-				
-				//if (iz == 0) iz = 0.001;
-				//z = 1 / iz;
-
-				*scr = col;
-				scr++;
-				
-				// Step 1/Z, U/Z and V/Z horizontally
-
-				iz += dizdx;
-				uiz += duizdx;
-				viz += dvizdx;
-			}
-		}
-
-		// Step along both edges
-
-		xa += dxdya;
-		xb += dxdyb;
-		iza += dizdya;
-		uiza += duizdya;
-		viza += dvizdya;
-
-		y1++;
-	}
-}
-
-
-int __scanConvex(intVector vv[], int points, uchar col) {
-	intVector v[3];
-	register int i;
-	int ok = 0;
-
-	memcpy(v,vv,sizeof(intVector));
-	if (points<3) return 0;
-	for (i=1; i<points-1; i++) {
-		memcpy(&(v[1]),&(vv[i]),sizeof(intVector)<<1);
-		ok += __scan3(v, col);
-	}
-	return (ok > 0);
-}

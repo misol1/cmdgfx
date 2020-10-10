@@ -25,7 +25,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /a CNT=0, SLOTS=0
-set FWORLD=3dworld-maze.dat
+set FWORLD=data\3dworld-maze.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /a CNT+=1
 set /a YSLOTS=%CNT%
@@ -93,7 +93,7 @@ for /l %%a in (0,1,%CNT%) do set sx%%a=&set sy%%a=&set sz%%a=&set dx%%a=&set dy%
 
 set BKSTR="fbox 9 1 b1 0,0,%W%,800"
 set /a MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld-maze.dat 5 0 0 - 680,5
+set MAPTXT=image data/3dworld-maze.dat 5 0 0 - 680,5
 
 set /a "f0=%NOF_V%+1,f1=%NOF_V%+1+1,f2=%NOF_V%+1+2,f3=%NOF_V%+1+3"
 set /a XP1=0,XP2=500,DELT=300, CNT=0, BOUNDSCHECK=1

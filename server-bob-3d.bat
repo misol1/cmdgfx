@@ -15,15 +15,18 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do set "%%v="
-
 set /a W=120, H=80
+
+call centerwindow.bat 0 -20
+call prepareScale.bat 1
+call sindef.bat
+
 set /a XMID=W/2, YMID=H/2-4, XMID2=W/2+W, HMIN=H-10, HMIN2=YMID+10
 set /a DIST=4000, ROTMODE=0, RX=0, RY=0, RZ=0, MODE=1, WAVE=0
 set /a MOONC=0, MOONMOVE=1, MOONX=17
-set ASPECT=0.66666
+set /a WW=W*2, HH=H*2
 
-call centerwindow.bat 0 -20
-call sindef.bat
+set ASPECT=0.66666
 
 :REP
 for /L %%1 in (1,1,300) do if not defined STOP (
@@ -41,7 +44,7 @@ rem if !MODE!==1 echo "cmdgfx: fbox 1 0 b2 0,0,120,80 & fbox 1 0 08 120,0,120,80
   set /p INPUT=
   for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 		
-  if "!RESIZED!"=="1" set /a "W=SCRW*2+2, WW=W*2, H=SCRH*2+2, XMID=W/2, XMID2=XMID+W, YMID=H/2, ZVAL=500+(SCRH-40)*4, HMIN=H-10, HMIN2=YMID+10" & cmdwiz showcursor 0
+  if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, WW=W*2, H=SCRH*2*rH/100+2, XMID=W/2, XMID2=XMID+W, YMID=H/2, ZVAL=500+(SCRH-40)*4, HMIN=H-10, HMIN2=YMID+10" & cmdwiz showcursor 0
 	
   if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
   if !KEY! == 32 set /A MODE=1-!MODE!

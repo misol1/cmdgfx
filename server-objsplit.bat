@@ -15,7 +15,9 @@ goto :eof
 :START
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -16
+call prepareScale 0
 
 set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, DRAWMODE=2, ACTIVE_KEY=0, WW=W*2, ZVAL=500
 set ASPECT=0.7083
@@ -37,7 +39,7 @@ for /L %%1 in (1,1,400) do if not defined STOP for %%o in (!DRAWMODE!) do (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%E, SCRW=%%F, SCRH=%%G  2>nul ) 
 	
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+1, H=SCRH*2+1, XMID=W/2, XMID2=W/2+W, YMID=H/2, WW=W*2" & set /a "ZVAL=500+(H-100)*6" & cmdwiz showcursor 0 & call :MAKESPLIT
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+1, H=SCRH*2*rH/100+1, XMID=W/2, XMID2=W/2+W, YMID=H/2, WW=W*2" & set /a "ZVAL=500+(H-100)*6" & cmdwiz showcursor 0 & call :MAKESPLIT
 	
 	set /a RX+=2, RY+=6, RZ-=4, RR=!RANDOM! %% 100
 	if !RR! lss 10 set /a RY+=1

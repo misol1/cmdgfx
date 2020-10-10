@@ -22,7 +22,7 @@ set CUBECOLS=0 0 b2 0 0 b2  0 0 b1  0 0 b1  0 0 b0 0 0 b0
 set GROUNDCOLS=0 0 b2  0 0 b0
 
 set /A CNT=0, SLOTS=0
-set FWORLD=3dworld2.dat
+set FWORLD=data\3dworld2.dat
 if not "%~1" == "" if exist %1 set FWORLD=%1
 for /F "tokens=*" %%i in (%FWORLD%) do (if !SLOTS!==0 cmdwiz stringlen "%%i"&set SLOTS=!ERRORLEVEL!)& set WRLD!CNT!=%%i&set /A CNT+=1
 set YSLOTS=%CNT%
@@ -95,7 +95,7 @@ set TILESIZE=&set vx=&set vy=&set vz=&set PLX=&set PLZ=&set CNT2=&for /L %%a in 
 set BKSTR="fbox 0 1 20 0,0,%W%,120 & fbox 9 1 b1 0,120,%W%,250 & fbox 9 1 b1 0,105,%W%,10 & fbox 9 1 b1 0,90,%W%,5 & fbox 9 1 b1 0,75,%W%,2 & fbox 9 1 b1 0,60,%W%,1    & fbox 0 0 20 0,343,%W%,5 & fbox 0 2 20 0,344,%W%,320"
 
 set /A MAP=0,ZMOD=0,XMOD=0
-set MAPTXT=image 3dworld2.dat e 0 0 - 1220,15
+set MAPTXT=image data/3dworld2.dat e 0 0 - 1220,15
 
 set STOP=
 cmdwiz gettime&set ORGT=!errorlevel!

@@ -19,6 +19,7 @@ set /a W=240, H=110
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
 call centerwindow.bat 0 -16
+call prepareScale.bat 0
 
 call :MAKE_HILLS
 set /a WMAX=W+100, DIR=1, PLXPOS=20, PLYPOS=85, JMP=0, JMPV=0, DWN=0, DWNV=0, SHOWPLY=1, CNT=0
@@ -41,7 +42,7 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 		
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, WMAX=W+100" & cmdwiz showcursor 0 & call :MAKE_HILLS
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+2, WMAX=W+100" & cmdwiz showcursor 0 & call :MAKE_HILLS
 
 	if !JMP! == 1 set /A PLYPOS-=!JMPV!/32*4&set /A JMPV-=4&if !JMPV! lss -64 set PLYPOS=85&set JMP=0
 

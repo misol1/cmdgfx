@@ -15,7 +15,9 @@ set /a W=220, H=110
 set /a F6W=W/2, F6H=H/2
 mode %F6W%,%F6H%
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
+
 call centerwindow.bat 0 -16
+call prepareScale.bat 0
 
 set /a XMID=%W%/2, YMID=%H%/2, DIST=2100, TRIDIST=7000, DRAWMODE=0, MODE=0
 set /a CRX=0,CRY=0,CRZ=0
@@ -76,8 +78,8 @@ set /a MODE=0, TV=0, TRANSP=1, CUPOS=35
 
 set /a CS=0,CCNT=0,C0=8,C1=7,CDIV=6,CW=0 & set /a CEND=2*!CDIV! & set C2=f&set C3=f&set C4=f
 
-set /a SHOWHELP=1
-set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,108
+set /a SHOWHELP=1, HLPY=H-2
+set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,%HLPY%
 if !SHOWHELP!==1 set MSG=%HELPMSG%
 
 set CONV16=color16 0 .-+jR 3000
@@ -102,7 +104,7 @@ for /L %%_ in (1,1,300) do if not defined STOP (
 	set /p INPUT=
 	for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul ) 
 
-	if "!RESIZED!"=="1" set /a "W=SCRW*2+2, H=SCRH*2+2, XMID=W/2, YMID=H/2, HLPY=H-4, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
+	if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, H=SCRH*2*rH/100+3, XMID=W/2, YMID=H/2, HLPY=H-5, DIST=4000-(W-222)*7, TRIDIST=7000-(W-222)*17, CUPOS=35+(W-222)/7+3" & set FN=%FN0%& (if !W! gtr 300 set FN=%FN1%)& (if !W! gtr 400 set FN=%FN2%) & cmdwiz showcursor 0 & set HELPMSG=text 7 0 0 SPACE\-ENTER\-x\-p\-h 1,!HLPY! & if !SHOWHELP!==1 set MSG=!HELPMSG!
 
 	set /a CRZ+=3, CNT+=1
 

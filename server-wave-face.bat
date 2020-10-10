@@ -15,6 +15,9 @@ set /a W=147, H=80
 set /a F8W=W/2, F8H=H/2
 mode %F8W%,%F8H%
 for /F "Tokens=1 delims==" %%v in ('set') do  if not "%%v"=="W" if not "%%v"=="H" set "%%v="
+
+call prepareScale.bat 1
+
 set /a WW=W*2+26, HH=H+20, MW=WW/2
 
 call centerwindow.bat 0 -20
@@ -59,7 +62,7 @@ for /L %%1 in (1,1,300) do if not defined STOP for %%i in (!IC!) do for %%c in (
   set /p INPUT=
   for /f "tokens=1,2,4,6, 8,10,12,14,16,18,20,22, 24,26,28" %%A in ("!INPUT!") do ( set EV_BASE=%%A & set /a K_EVENT=%%B, K_DOWN=%%C, KEY=%%D, RESIZED=%%M, SCRW=%%N, SCRH=%%O 2>nul )
 
-  if "!RESIZED!"=="1" set /a "W=SCRW*2+2, WW=W*2+26, H=SCRH*2+2, HH=H+20, MW=WW/2, HLPY=H-4, IX=MW-10, IW=MW+10" & cmdwiz showcursor 0 & if not "!TEXT:~1,-1!"=="" set TEXT="text e 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,!HLPY!"
+  if "!RESIZED!"=="1" set /a "W=SCRW*2*rW/100+2, WW=W*2+26, H=SCRH*2*rH/100+2, HH=H+20, MW=WW/2, HLPY=H-4, IX=MW-10, IW=MW+10" & cmdwiz showcursor 0 & if not "!TEXT:~1,-1!"=="" set TEXT="text e 0 0 Space_c_\g11\g10\g1e\g1f_Enter 1,!HLPY!"
 
   if !KEY! == 10 cmdwiz getfullscreen & set /a ISFS=!errorlevel! & (if !ISFS!==0 cmdwiz fullscreen 1) & (if !ISFS! gtr 0 cmdwiz fullscreen 0)
   if !KEY! == 331 set /a XCP-=1 & if !XCP! lss 0 set /a XCP=0

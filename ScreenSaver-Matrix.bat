@@ -17,7 +17,7 @@ set /a H=%errorlevel%/12+1
 ::set /a W=(W*114)/100+2
 
 set __=.
-call %0 %* | cmdgfx_gdi "" %TOP%m0OW16eSf5:0,0,310,165,155,55
+call %0 %* | cmdgfx_gdi "" %TOP%m0OW16eSf5:0,0,310,165,155,55t6
 set __=
 cmdwiz fullscreen 0 & cls & cmdwiz setfont 6 & cmdwiz showcursor 1 & mode 80,50
 goto :eof

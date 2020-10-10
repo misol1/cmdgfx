@@ -20,7 +20,8 @@
 
 ::mode 100,70 & cmdgfx_gdi "block 0 100,0,500,70 100,0 -1 0 0 ????=??03 (y+1+x)%%16 & block 0 0,0,500,70 0,0 -1 0 1 - - store(sin(x/3),1)+store((y+16)/16,2)+16*s2*s1*s1*s1+50 store(x/3,1)+store((y+16)/16,2)+13*s2*cos(s1)-5*cos(s1*2)-2*cos(s1*3)-cos(4*s1)+35" f6:0,0,500,70,100,70 000000,bbddaa,220000,993333,440000,550000,660000,cc0000,880000,990000,aa0000,bb0000,ff0000,dd0000,aa9999,cc0000
 
-goto GDI
+goto :GDI
+
 setlocal enableDelayedExpansion
 cmdwiz setfont 6 & mode 100,70 & call centerwindow.bat 0 -15
 cmdwiz setpalette 000000,440000,550000,660000,cc0000,880000,990000,aa0000,bb0000,ff0000,dd0000,aa9999,cc0000,990000,660000,330000
@@ -33,10 +34,12 @@ for /l %%a in () do (
 
 :GDI
 setlocal enableDelayedExpansion
-cmdwiz setfont 6 & mode 100,70 & call centerwindow.bat 0 -15
+cmdwiz setfont 6 & mode 100,70 & set /a W=100, H=70
+call centerwindow.bat 0 -15 & call prepareScale.bat 6 1
+set /a W5=W*5
 set PAL=000000,440000,550000,660000,cc0000,880000,990000,aa0000,bb0000,ff0000,dd0000,aa9999,cc0000,990000,660000,330000
 for /l %%a in () do (
-	cmdgfx_gdi "block 0 100,0,500,70 100,0 -1 0 0 ????=??03 (y+1) & block 0 0,0,500,70 0,0 -1 0 1 - - store(sin(x/3),1)+store((y+16)/16,2)+16*s2*s1*s1*s1+50 store(x/3,1)+store((y+16)/16,2)+13*s2*cos(s1)-5*cos(s1*2)-2*cos(s1*3)-cos(4*s1)+35" f6:0,0,500,70,100,70k !PAL! 000000,400000,800000,b00000
+	cmdgfx_gdi "block 0 !W!,0,!W5!,!H! !W!,0 -1 0 0 ????=??03 (y+1) & block 0 0,0,!W5!,!H! 0,0 -1 0 1 - - store(sin(x/3),1)+store((y+16)/16,2)+16*s2*s1*s1*s1+!W!/2 store(x/3,1)+store((y+16)/16,2)+13*s2*cos(s1)-5*cos(s1*2)-2*cos(s1*3)-cos(4*s1)+!H!/2" f6:0,0,!W5!,!H!,!W!,!H!k !PAL! 000000,400000,800000,b00000
 	if !errorlevel! == 27 exit
 	set PAL=!PAL:~-6!,!PAL:~0,-7!
 )

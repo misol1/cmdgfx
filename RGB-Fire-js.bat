@@ -8,7 +8,9 @@ cmdwiz showcursor 1 & goto :eof
 
 :START
 cmdwiz setfont 2 & cls & mode 100,75 & cmdwiz showcursor 0 & title RGB Fire (Space/Enter/f)
+set /a W=100, H=75
 call centerwindow.bat 0 -10
+call prepareScale.bat 2
 cscript //nologo //e:javascript "%~dpnx0" %*
 ::cmdwiz getch & rem Enable this line to see jscript parse errors
 mode 80,50
@@ -16,11 +18,22 @@ echo "cmdgfx: quit"
 title input:Q
 exit /b 0 */
 
-var showHelp=0, helpMsg="text e 0 0 SPACE/f/h/ENTER 1,73", skip=["rem "," "]
+function Execute(cmd) {
+	var exec = Shell.Exec("cmd /c " + cmd)
+	exec.StdOut.ReadAll()
+	return exec.exitCode
+}
+function GetCmdVar(name) {
+	return Execute("exit %" + name + "%")
+}
 
 var Shell = new ActiveXObject("WScript.Shell")
 
-W=80, H=75, WW=W*2, HH=H*2
+var W=GetCmdVar("W"), H=GetCmdVar("H"), rW=GetCmdVar("rW"), rH=GetCmdVar("rH")
+
+WW=W*2, HH=H*2, HLPY=H-2
+
+var showHelp=0, helpMsg="text e 0 0 SPACE/f/h/ENTER 1," + HLPY, skip=["rem "," "]
 
 WScript.Echo("\"cmdgfx: fbox 0 0 db \"")
 
@@ -58,7 +71,7 @@ while(true) {
 
 	if (ti[23] == "1")
 	{
-		W=Number(ti[25])+1, H=Number(ti[27])+1 
+		W=Math.floor(Number(ti[25])*rW/100+1), H=Math.floor(Number(ti[27])*rH/100+1)
 		WW=W*2, HH=H*2
 		Shell.Exec('cmdwiz showcursor 0')
 		helpMsg="text e 0 0 SPACE/f/h/ENTER 1," + (H-3)

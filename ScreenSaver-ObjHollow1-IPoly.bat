@@ -23,20 +23,14 @@ goto :eof
 setlocal ENABLEDELAYEDEXPANSION
 for /F "Tokens=1 delims==" %%v in ('set') do if not %%v==H if not %%v==W set "%%v="
 
-set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, ZVAL=100+(H-100)*6, ASPECT=1
+set /a RX=0, RY=0, RZ=0, XMID=W/2, YMID=H/2, XMID2=W/2+W, DIST=2500, ZVAL=100+(H-100)*6, ASPECT=1, MODE=0
 set EXTRA=&for /L %%a in (1,1,200) do set EXTRA=!EXTRA!xtra
 
-set DRAWMODE=1
-set RGBPAL=000011,ffffff,eeeeee,dddddd,cccccc,bbbbbb,aaaaaa,999999,888888,777777,666666,555555,444444,333333,222222,111111
-::set RGBPAL=000011,ffffff,eeeeee,dddddd,cccccc,bbbbbb,aaaaaa,999999,777788,666677,555566,444455,333344,222233,111122,000011
-set PAL=2 0 0  3 0 0  4 0 0  5 0 0  6 0 0  7 0 0  8 0 0  9 0 0  a 0 0  b 0 0  c 0 0  d 0 0  e 0 0  f 0 0  f 0 0  f 0 0
-set DRAWOP=71
-
-::set DRAWMODE=0&set PAL=a 0 0  e 0 0  a 0 0  e 0 0  e 0 0  a 0 0  e 0 0  a 0 0 c 0 0  c 0 0  & set RGBPAL=- & set DRAWOP=7
+call :NEXTMODE 0
 
 :REP
 for /L %%1 in (1,1,400) do if not defined STOP (
-	echo "cmdgfx: fbox 0 0 . & 3d objects\hollowIPoly.plg !DRAWMODE!,!DRAWOP! !RX!,!RY!,!RZ! 0,0,0 -1,-1,-0.25, 0,0,0 1,0,0,1 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" fc:0,0,!W!,!H!Z!ZVAL! %RGBPAL%
+	echo "cmdgfx: fbox 0 0 . & 3d !OBJ! !DRAWMODE!,!DRAWOP! !RX!,!RY!,!RZ! 0,0,0 -1,-1,-0.25, 0,0,0 1,0,0,1 !XMID!,!YMID!,!DIST!,%ASPECT% !PAL! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%%EXTRA%" fc:0,0,!W!,!H!Z!ZVAL! !RGBPAL!
 	
 	if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22, MOUSE_EVENT=!EVENTS!&1"
 	
@@ -45,6 +39,7 @@ for /L %%1 in (1,1,400) do if not defined STOP (
 	if !RR! lss 5 set /a RX+=1
 	
 	if !KEY! == 112 set /a KEY=0 & cmdwiz getch
+	if !KEY! == 32 set /a KEY=0 & call :NEXTMODE 1
 	if !KEY! gtr 0 set STOP=1
 	if !MOUSE_EVENT! == 1 set STOP=1
 )
@@ -53,3 +48,15 @@ if not defined STOP goto REP
 endlocal
 cmdwiz delay 100
 echo "cmdgfx: quit"
+goto :eof
+
+:NEXTMODE
+set RGBPAL=000011,ffffff,eeeeee,dddddd,cccccc,bbbbbb,aaaaaa,999999,888888,777777,666666,555555,444444,333333,222222,111111
+::set RGBPAL=000011,ffffff,eeeeee,dddddd,cccccc,bbbbbb,aaaaaa,999999,777788,666677,555566,444455,333344,222233,111122,000011
+set PAL=2 0 0  3 0 0  4 0 0  5 0 0  6 0 0  7 0 0  8 0 0  9 0 0  a 0 0  b 0 0  c 0 0  d 0 0  e 0 0  f 0 0  f 0 0  f 0 0
+set /a MODE+=%1, DRAWOP=71
+if %MODE% gtr 3 set /a MODE=0
+if %MODE% == 0 set OBJ=objects\hollowIPoly.plg& set /a DRAWMODE=1
+if %MODE% == 1 set OBJ=objects\hollowGPoly.plg& set /a DRAWMODE=2
+if %MODE% == 2 set OBJ=objects\hollowGPoly.plg& set /a DRAWMODE=1
+if %MODE% == 3 set OBJ=objects\hollowIPoly.plg& set /a DRAWMODE=0, DRAWOP=7&set RGBPAL=-&set PAL=a 0 0  e 0 0  a 0 0  e 0 0  e 0 0  a 0 0  e 0 0  a 0 0 c 0 0  c 0 0
