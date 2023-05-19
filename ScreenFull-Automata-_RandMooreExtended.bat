@@ -28,7 +28,7 @@ call :MAKERULES stay
 call :MAKERULES born
 
 set zoomFont=abcdef
-set /a XTXT=2, YTXT=4, HLP=1, FPS=0, CRXTR=0, WVAL=0, slowDeath=0, liveCol=1, updateRate=0, rateCnt=0, XSC=0, YSC=0, zoom=0, WSC=W,HSC=H
+set /a XTXT=2, YTXT=4, HLP=1, FPS=0, CRXTR=0, WVAL=0, slowDeath=0, liveCol=1, updateRate=0, rateCnt=0, XSC=0, YSC=0, zoom=0, WSC=W,HSC=H, forcedWait=0
 set font=!zoomFont:~%zoom%,1!
 set TS=&if !HLP!==0 set TS=skip
 set FS=&if !FPS!==0 set FS=skip
@@ -38,13 +38,8 @@ set KEY=
 set /a stayOld=0, bornOld=0, NH=3, initPrep=1, c0pos=0, opType=0
 set OPOUT=""
 
-
-::set /a stay=187,born=110,density=84,liveCol=15,slowDeath=0,NH=0
-
 ::Disintegrate/explode
 set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3 & set PAL=000000,8a09c6,0bb285,aadb3b,32f328,05a1e8,b208a1,ca4a81,f04a68,30b7e1,924657,ee3e86,013a2f,c12a10,ee9c13,ea3ac6,
-
-::set /a stay=31,born=3423,density=70,liveCol=8,slowDeath=1,NH=7 & rem supposedly good looking rectangles but looks like nothing?
 
 
 :BEGIN
@@ -109,6 +104,7 @@ for /l %%a in () do (
 		if !LKEY! == "s" call :SAVE_CURRENT
 		if !LKEY! == "S" call :SAVE_CURRENT 1
 	
+		if !KEY! == 26 if !zoom! gtr 0 set /a "XSC=W/2-WSC/2, YSC=H/2-HSC/2" & rem ^Z
 		if !LKEY! == "Z" call :ADJUSTZOOM 1
 		if !LKEY! == "z" call :ADJUSTZOOM -1
 		if !LKEY! == "X" if !zoom! gtr 0 set /a "XSC+=10, XMAX=W-WSC" & if !XSC! geq !XMAX! set /a XSC=XMAX-1
@@ -224,7 +220,9 @@ echo "cmdgfx: fbox 0 0 db" - - -
 %pattern:~1,-1%
 if not "!PAL!"=="" set COL0=%PAL:~0,7%& echo "cmdgfx: " - !PAL!
 
-set /a WVAL=0, updateRate=0 & echo "cmdgfx: " W!WVAL!
+if !forcedWait! == 0 set /a WVAL=0, updateRate=0 & echo "cmdgfx: " W!WVAL!
+if !forcedWait! == 1 echo "cmdgfx: " W!WVAL!
+set /a forcedWait=0
 
 if !initPrep! == 1 (
 	if !opType! == 0 call :PREP 1

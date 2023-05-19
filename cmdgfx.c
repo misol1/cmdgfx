@@ -30,7 +30,7 @@
 // 3. brush op from dwself?
 // 4. Allow set texture(s) for 3d obj from 3d op, to avoid having to use loads of dupl objects just to change texture
 // 5. RGB: Make specified 3d colors work better with textures (should not overflow the colors, should be safe to do e.g 555555 and not overflow. Should also be correct for - . And work for bgcol too...)
-// 6. RGB: Allow bgy files with alpha, to use by various ops
+// 6. RGB: Allow bgy files with alpha, to be used by various ops
 // 7. Sending commands with title to cmdgfx does not seem reliable... (misses sometimes)
 // 8. 3d Z-lighting mode for textures ("fog")
 // 9. Wrap for text op
@@ -2405,10 +2405,11 @@ static int transformBlock(char *s_mode, int x, int y, int w, int h, int nx, int 
 				} else {
 					for (j = 0; j < w; j++) {
 						j2 = j; if (bFlipX) j2 = w-1-j;
-						if (nx+j >= 0 && nx+j < XRES && (blockCol[k+j2] & AND_MASK) != transpchar) {
 #ifndef _RGB32 
+						if (nx+j >= 0 && nx+j < XRES && (blockCol[k+j2] & AND_MASK) != transpchar) {
 							videoCol[k2+j] = blockCol[k+j2];
 #else
+						if (nx+j >= 0 && nx+j < XRES && (blockCol[k+j2] & 0xffffffff) != transpchar) {
 							if (!bBlend)
 								videoCol[k2+j] = blockCol[k+j2];
 							else {

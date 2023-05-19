@@ -203,14 +203,15 @@ set /a CNT=%2
 set /a "XBP=%W%/2-189/2, YBP=%H%/2-80/2"
 set /a "FXBP=%XBP%-15, FYBP=%YBP%-10"
 if "%REALFS%"=="1" set EXTRA=&for /l %%a in (1,1,100) do set EXTRA=!EXTRA!xtra
+set /a H2=H+2
 
 :PLREP
 for /L %%_ in (1,1,300) do if not defined STOP (
 
-	if "%REALFS%"=="" cmdgfx_gdi "image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80" W60kf0:0,0,%W%,%H%
+	if "%REALFS%"=="" cmdgfx_gdi "image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H2% & skip block 0 0,0,%W%,%H2% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80" W60kf0:0,0,%W%,%H2%
 	if "%REALFS%"=="" set KEY=!ERRORLEVEL!
 
-	if "%REALFS%"=="1" echo "cmdgfx: image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H% & skip block 0 0,0,%W%,%H% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80 & skip %EXTRA% %EXTRA% %EXTRA% %EXTRA% %EXTRA%" zW60f0:0,0,%W%,%H%
+	if "%REALFS%"=="1" echo "cmdgfx: image %1\!CNT!.gxy 0 0 0 -1 0,0 0 0 %W%,%H2% & skip block 0 0,0,%W%,%H2% 0,0 -1 0 0 ????=10?? & fbox 0 0 b2 %FXBP%,%FYBP%,219,97 & image %1\!CNT!.gxy 0 0 0 -1 %XBP%,%YBP% 0 0 189,80 & skip %EXTRA% %EXTRA% %EXTRA% %EXTRA% %EXTRA%" zW60f0:0,0,%W%,%H2%
 	if "%REALFS%"=="1" if exist EL.dat set /p KEY=<EL.dat & del /Q EL.dat >nul 2>nul	
 
 	for /F "tokens=1-8 delims=:.," %%a in ("!t3!:!time: =0!") do set /a "a=((((1%%e-1%%a)*60)+1%%f-1%%b)*6000+1%%g%%h-1%%c%%d)*10,a+=(a>>31)&8640000" & if !a! geq 27000 set /a STOP=1

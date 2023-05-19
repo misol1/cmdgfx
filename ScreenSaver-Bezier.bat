@@ -38,13 +38,13 @@ for /L %%a in (1,1,%NOFLINES%) do set LN%%a=
 set "DIC=QWERTYUIOPASDFGHJKLZXCVBNM@#$+[]{}"
 cmdwiz stringlen %DIC% & set /a DICLEN=!errorlevel!
 
-set /a P1=-1,P2=1,P3=-1,P4=2,P5=-1,P6=2,P7=-1,P8=0,SC=21211,CC=17675,SC2=-15297,CC2=7463,SC3=60228,CC3=-32628,SC4=-25759,CC4=16335
+set /a P1=-1,P2=1,P3=-1,P4=1,P5=-1,P6=1,P7=-1,P8=-1,SC=21211,CC=17675,SC2=-15297,CC2=7463,SC3=60228,CC3=-32628,SC4=-25759,CC4=16335
 
 :LOOP
 for /L %%1 in (1,1,300) do if not defined STOP (
 
 	set /a "LCNT+=1, DCNT=(!DCNT!+1) %% %DICLEN%"
-   if !LCNT! gtr %NOFLINES% set LCNT=1
+	if !LCNT! gtr %NOFLINES% set LCNT=1
 	
 	for /L %%a in (1,1,!REP!) do set /a "SC+=!P1!, CC+=!P2!, SC2+=!P3!, CC2+=!P4!, SC3+=!P5!, CC3+=!P6!, SC4+=!P7!, CC4+=!P8!"
 
@@ -53,14 +53,14 @@ for /L %%1 in (1,1,300) do if not defined STOP (
 	for %%a in (!SC3!) do for %%b in (!CC3!) do set /a A1=%%a,A2=%%b & set /a "XPOS3=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS3=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
 	for %%a in (!SC4!) do for %%b in (!CC4!) do set /a A1=%%a,A2=%%b & set /a "XPOS4=!XMID!+(%SINE(x):x=!A1!*31416/180%*!XMUL!>>!SHR!), YPOS4=!YMID!+(%SINE(x):x=!A2!*31416/180%*!YMUL!>>!SHR!)"
 
-	set /a CHANGECOUNT-=1,STARTCNT-=1 & if !CHANGECOUNT!==0 if !CHANGE!==1 set /a CHANGECOUNT=!CHANGESTEPS!, RAND=!RANDOM! %% 8 + 1 & for %%a in (!RAND!) do set /a "P%%a+=(!RANDOM! %% 2)*2 - 1" & (if !P%%a! gtr 2 set /a P%%a=2) & (if !P%%a! lss -1 set /a P%%a=-1)
+	set /a CHANGECOUNT-=1,STARTCNT-=1 & if !CHANGECOUNT!==0 if !CHANGE!==1 set /a CHANGECOUNT=!CHANGESTEPS!, RAND=!RANDOM! %% 8 + 1 & for %%a in (!RAND!) do set /a "P%%a+=(!RANDOM! %% 2)*2 - 1" & (if !P%%a! gtr 1 set /a P%%a=1) & (if !P%%a! lss -1 set /a P%%a=-1)
 	
 	if not !DRAWOP!==1 for %%a in (!DCNT!) do set LN!LCNT!=!DIC:~%%a,1! !XPOS!,!YPOS!,!XPOS2!,!YPOS2! !XPOS3!,!YPOS3!,!XPOS4!,!YPOS4!
 	if !DRAWOP!==1 for %%a in (!DCNT!) do set LN!LCNT!=!DIC:~%%a,1! !BITOP! !XPOS!,!YPOS!,!XPOS2!,!YPOS2!,!XPOS3!,!YPOS3!,!XPOS4!,!YPOS4!
 	set STR=""&set REP=1
 	set /a CNT=!LCNT!+!LINEGAP!, COLVAL=4 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 
-   for %%a in (!DRAWOP!) do set DRAW=!D%%a!
+	for %%a in (!DRAWOP!) do set DRAW=!D%%a!
 	for /L %%a in (!STARTLINE!,%LINEGAP%,%NOFLINES%) do for %%b in (!CNT!) do (if not "!LN%%b!"==" " set STR="!STR:~1,-1!&!DRAW! !COLVAL! 0 !LN%%b!")& set /a CNT+=!LINEGAP!,COLVAL+=1 & if !CNT! gtr %NOFLINES% set /a CNT-=%NOFLINES%
 	set /a STARTLINE+=1&if !STARTLINE! gtr %LINEGAP% set STARTLINE=1
 

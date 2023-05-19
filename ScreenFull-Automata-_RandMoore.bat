@@ -1,7 +1,5 @@
 @echo off
 
-if "%~1"=="_GETANSWER" call :POPUPANSWER %2 %3 %4 & goto :eof
-
 cd /D "%~dp0"
 if defined __ goto :START
 
@@ -98,6 +96,7 @@ for /l %%a in () do (
 		if !LKEY! == "b" set /a "born-=1" & (if !born! lss 0 set /a born=255) & call :PREP 1
 		if !LKEY! == "B" set /a "born+=1" & (if !born! gtr 255 set /a born=0) & call :PREP 1
 
+		if !KEY! == 26 if !zoom! gtr 0 set /a "XSC=W/2-WSC/2, YSC=H/2-HSC/2" & rem ^Z
 		if !LKEY! == "Z" call :ADJUSTZOOM 1
 		if !LKEY! == "z" call :ADJUSTZOOM -1
 		if !LKEY! == "X" if !zoom! gtr 0 set /a "XSC+=10, XMAX=W-WSC" & if !XSC! geq !XMAX! set /a XSC=XMAX-1

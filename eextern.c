@@ -847,6 +847,30 @@ int randMoore32conv(int w, int h, int yStart, int fullH, DWORD tickCount, int v1
 */
 
 
+
+int g_bFading=0, g_fadeR=0, g_fadeG=0, g_fadeB=0;
+
+#define FADE_IF_FADING \
+		if (g_bFading) {  \
+			r += g_fadeR; \
+			g += g_fadeG; \
+			b += g_fadeB; \
+			if (r < 0) r = 0; \
+			if (g < 0) g = 0; \
+			if (b < 0) b = 0; \
+			if (r > 0xff) r = 0xff; \
+			if (g > 0xff) g = 0xff; \
+			if (b > 0xff) b = 0xff; \
+		} \
+
+int setFade(int w, int h, int yStart, int fullH, DWORD tickCount, int v1, int v2, int v3, int v4, int v5,  unsigned long *outArray,  unsigned long *sampleArray, int threadIndex)
+{
+	if(threadIndex == 0) {
+		g_bFading = v1, g_fadeR = v2, g_fadeG = v3, g_fadeB = v4;
+	}
+}
+
+
 int randMoore32compact(int w, int h, int yStart, int fullH, DWORD tickCount, int v1, int v2, int v3, int v4, int v5,  unsigned long *outArray,  unsigned long *sampleArray, int threadIndex)
 {
 	int xm,xp,ym,yp,neighbours,state,state2, i;
@@ -1011,12 +1035,13 @@ int randMoore32compact(int w, int h, int yStart, int fullH, DWORD tickCount, int
 			if (r<0) r=bottomClampVal;
 			if (g<0) g=bottomClampVal;
 			if (b<0) b=bottomClampVal;
+
+			FADE_IF_FADING;
 			
 			*outArray++ = (r<<16)|(g<<8)|(b&0xfffff8)|state;
 		}
 	}
 }
-
 
 #define SH 24
 
@@ -1177,6 +1202,8 @@ int randMoore32compact_32bit(int w, int h, int yStart, int fullH, DWORD tickCoun
 			if (r<0) r=bottomClampVal;
 			if (g<0) g=bottomClampVal;
 			if (b<0) b=bottomClampVal;
+
+			FADE_IF_FADING;
 			
 			*outArray++ = (r<<16)|(g<<8)|(state<<SH)|b;
 		}
@@ -1599,38 +1626,280 @@ int randMooreExtended32compact(int w, int h, int yStart, int fullH, DWORD tickCo
 			if (r<0) r=bottomClampVal;
 			if (g<0) g=bottomClampVal;
 			if (b<0) b=bottomClampVal;
+
+			FADE_IF_FADING;
 			
 			*outArray++ = (r<<16)|(g<<8)|(state<<SH)|b;
-
-/*
-			state2 = py[x];
-			state = state2 >> SH;
-
-			
-			if (state) {
-				state = slowDeath? state-1 : 0;
-				if (stayRules[neighbours]) { state=neighbours; }  // for slowDeath, state=py[x] would actually be more "accurate" (but results are less interesting)
-			} else {
-				state = 0;
-				if (bornRules[neighbours]) { state = liveCol <= 1? neighbours : liveCol; }
-			}
-			
-			int r=(state2>>16)&0xff;
-			int g=(state2>>8)&0xff;
-			int b=(state2)&0xff;
-			
-			if (state) {
-				if (r < 256-6 && (state & 1)) r+=6;
-				if (g < 256-6 && (state & 2)) g+=6;
-				if (b < 256-6 && (state & 4)) b+=6;
-			} else {
-				if (r >= 2) r-=2;
-				if (g >= 2) g-=2;
-				if (b >= 2) b-=2;
-			}
-			*outArray++ = (r<<16)|(g<<8)|(state<<24)|b;
-			*/
-			
 		}
 	}
+}
+
+
+int randMooreExtended32compact_size3(int w, int h, int yStart, int fullH, DWORD tickCount, int v1, int v2, int v3, int v4, int v5,  unsigned long *outArray,  unsigned long *sampleArray, int threadIndex)
+{
+	int xm,xp,xmm,xpp,ym,yp,ypp,ymm,xppp,xmmm,yppp,ymmm,neighbours,state,state2, i;
+	unsigned long *py, *pym, *pymm, *pyp, *pypp, *pyppp, *pymmm;
+	int r,g,b;
+	int rMul, gMul, bMul;
+	int rNeg, gNeg, bNeg;
+	int rAnd, gAnd, bAnd;
+
+	int stayRules[32] = {0};
+	int bornRules[32] = {0};
+	int mulPatt = v5 & 7;
+	int stayPatt = 0, stayPattVal = 1;
+	int mulBase;
+	int topClamp, bottomClamp, bottomClampVal=0, topClampVal=255;
+
+	int stayVal = 33554432; // 2^25
+	int bornVal = 33554432;
+
+	// moved in packed bits
+	int slowDeath;
+	int liveCol;
+	int neighbourHood;
+
+
+	for (i = 0; i < 26; i++) {
+		stayRules[26 - i] = (v1 & stayVal) > 0;
+		stayVal = stayVal >> 1;
+	}
+	for (i = 0; i < 26; i++) {
+		bornRules[26 - i] = (v2 & bornVal) > 0;
+		bornVal = bornVal >> 1;
+	}
+	
+	rMul = v3 & 127;
+	if (v3 & 128) rMul = -rMul;
+	v3 >>= 8;
+	gMul = v3 & 127;
+	if (v3 & 128) gMul = -gMul;
+	v3 >>= 8;
+	bMul = v3 & 127;
+	if (v3 & 128) bMul = -bMul;
+	v3 >>= 8;
+	slowDeath = v3 & 1;
+	v3 >>= 1;
+	neighbourHood = v3 & 31;
+
+	rNeg = v4 & 127;
+	if (v4 & 128) rNeg = -rNeg;
+	v4 >>= 8;
+	gNeg = v4 & 127;
+	if (v4 & 128) gNeg = -gNeg;
+	v4 >>= 8;
+	bNeg = v4 & 127;
+	if (v4 & 128) bNeg = -bNeg;
+	v4 >>= 8;
+	liveCol = v4 & 127;
+
+	v5 >>= 3;
+	rAnd = v5 & 7;
+	v5 >>= 3;
+	gAnd = v5 & 7;
+	v5 >>= 3;
+	bAnd = v5 & 7;
+	
+	v5 >>= 3;
+	topClamp = v5 & 1;
+	if (!topClamp) topClampVal=0;
+	v5 >>= 1;
+	bottomClamp = v5 & 1;
+	if (!bottomClamp) bottomClampVal=255;
+	v5 >>= 1;
+	stayPatt = v5 & 7;
+	v5 >>= 3;
+	stayPattVal = v5 & 255;
+	
+	
+		
+ 	for (int y = yStart; y < yStart + h; y++)
+	{
+		ym=y-1; if (ym < 0) ym=fullH-1;
+		yp=y+1; if (yp >= fullH) yp=0;
+		ymm=y-2; if (ymm < 0) ymm=fullH + ymm;
+		ypp=y+2; if (ypp >= fullH) ypp=ypp-fullH;
+		ymmm=y-3; if (ymmm < 0) ymmm=fullH + ymmm;
+		yppp=y+3; if (yppp >= fullH) yppp=yppp-fullH;
+		
+		py  = &sampleArray[y * w];
+		pym = &sampleArray[ym * w];
+		pyp = &sampleArray[yp * w];
+		pymm = &sampleArray[ymm * w];
+		pypp = &sampleArray[ypp * w];
+		pymmm = &sampleArray[ymmm * w];
+		pyppp = &sampleArray[yppp * w];
+		
+		for (int x = 0; x < w; x++)
+		{
+			xm=x-1; if (xm < 0) xm=w-1;
+			xp=x+1; if (xp >= w) xp=0;
+			xmm=x-2; if (xmm < 0) xmm=w+xmm;
+			xpp=x+2; if (xpp >= w) xpp=xpp-w;
+			xmmm=x-3; if (xmmm < 0) xmmm=w+xmmm;
+			xppp=x+3; if (xppp >= w) xppp=xppp-w;
+
+			switch(neighbourHood) {
+				// ..XXX..
+				// .X...X.
+				// X..X..X
+				// X.X*X.X
+				// X..X..X
+				// .X...X.
+				// ..XXX..
+				case 0: default:
+				if (liveCol <= 1)
+					neighbours = ((pymmm[x]>>SH) > 0) + ((pyppp[x]>>SH) > 0) + ((pymmm[xm]>>SH) > 0) + ((pymmm[xp]>>SH) > 0) + ((pyppp[xm]>>SH) > 0) + ((pyppp[xp]>>SH) > 0) +
+								 ((pymm[xmm]>>SH) > 0) + ((pymm[xpp]>>SH) > 0) + ((pypp[xmm]>>SH) > 0) + ((pypp[xpp]>>SH) > 0) +
+								 ((pym[xmmm]>>SH) > 0) + ((pym[xppp]>>SH) > 0) + ((pyp[xmmm]>>SH) > 0) + ((pyp[xppp]>>SH) > 0) +
+								 ((py[xmmm]>>SH) > 0) + ((py[xppp]>>SH) > 0) +
+								 ((pym[x]>>SH) > 0) + ((pyp[x]>>SH) > 0) +
+								 ((py[xm]>>SH) > 0) + ((py[xp]>>SH) > 0);
+				else
+					neighbours = ((pymmm[x]>>SH) == liveCol) + ((pyppp[x]>>SH) == liveCol) + ((pymmm[xm]>>SH) == liveCol) + ((pymmm[xp]>>SH) == liveCol) + ((pyppp[xm]>>SH) == liveCol) + ((pyppp[xp]>>SH) == liveCol) +
+								 ((pymm[xmm]>>SH) == liveCol) + ((pymm[xpp]>>SH) == liveCol) + ((pypp[xmm]>>SH) == liveCol) + ((pypp[xpp]>>SH) == liveCol) +
+								 ((pym[xmmm]>>SH) == liveCol) + ((pym[xppp]>>SH) == liveCol) + ((pyp[xmmm]>>SH) == liveCol) + ((pyp[xppp]>>SH) == liveCol) +
+								 ((py[xmmm]>>SH) == liveCol) + ((py[xppp]>>SH) == liveCol) +
+								 ((pym[x]>>SH) == liveCol) + ((pyp[x]>>SH) == liveCol) +
+								 ((py[xm]>>SH) == liveCol) + ((py[xp]>>SH) == liveCol);
+				break;
+			
+				// ..XXX..
+				// .XXXXX.
+				// XX...XX
+				// XX.*.XX
+				// XX...XX
+				// .XXXXX.
+				// ..XXX..
+				case 1:
+				if (liveCol <= 1)
+					neighbours = ((pymmm[x]>>SH) > 0) + ((pyppp[x]>>SH) > 0) + ((pymmm[xm]>>SH) > 0) + ((pymmm[xp]>>SH) > 0) + ((pyppp[xm]>>SH) > 0) + ((pyppp[xp]>>SH) > 0) +
+								 ((pymm[xmm]>>SH) > 0) + ((pymm[xpp]>>SH) > 0) + ((pypp[xmm]>>SH) > 0) + ((pypp[xpp]>>SH) > 0) +
+								 ((pym[xmmm]>>SH) > 0) + ((pym[xppp]>>SH) > 0) + ((pyp[xmmm]>>SH) > 0) + ((pyp[xppp]>>SH) > 0) +
+								 ((py[xmmm]>>SH) > 0) + ((py[xppp]>>SH) > 0) +
+								 ((pymm[xm]>>SH) > 0) + ((pymm[x]>>SH) > 0) + ((pymm[xp]>>SH) > 0) +
+								 ((pypp[xm]>>SH) > 0) + ((pypp[x]>>SH) > 0) + ((pypp[xp]>>SH) > 0) +
+								 ((pym[xmm]>>SH) > 0) + ((py[xmm]>>SH) > 0) + ((pyp[xmm]>>SH) > 0) +
+								 ((pym[xpp]>>SH) > 0) + ((py[xpp]>>SH) > 0) + ((pyp[xpp]>>SH) > 0)
+								 ;
+				else
+					neighbours = ((pymmm[x]>>SH) == liveCol) + ((pyppp[x]>>SH) == liveCol) + ((pymmm[xm]>>SH) == liveCol) + ((pymmm[xp]>>SH) == liveCol) + ((pyppp[xm]>>SH) == liveCol) + ((pyppp[xp]>>SH) == liveCol) +
+								 ((pymm[xmm]>>SH) == liveCol) + ((pymm[xpp]>>SH) == liveCol) + ((pypp[xmm]>>SH) == liveCol) + ((pypp[xpp]>>SH) == liveCol) +
+								 ((pym[xmmm]>>SH) == liveCol) + ((pym[xppp]>>SH) == liveCol) + ((pyp[xmmm]>>SH) == liveCol) + ((pyp[xppp]>>SH) == liveCol) +
+								 ((py[xmmm]>>SH) == liveCol) + ((py[xppp]>>SH) == liveCol) +
+								 
+								 ((pymm[xm]>>SH) == liveCol) + ((pymm[x]>>SH) == liveCol) + ((pymm[xp]>>SH) == liveCol) +
+								 ((pypp[xm]>>SH) == liveCol) + ((pypp[x]>>SH) == liveCol) + ((pypp[xp]>>SH) == liveCol) +
+								 ((pym[xmm]>>SH) == liveCol) + ((py[xmm]>>SH) == liveCol) + ((pyp[xmm]>>SH) == liveCol) +
+								 ((pym[xpp]>>SH) == liveCol) + ((py[xpp]>>SH) == liveCol) + ((pyp[xpp]>>SH) == liveCol)
+								 ;
+								 
+				break;
+
+				// XXXXXXX
+				// X.....X
+				// X.....X
+				// X..*..X
+				// X.....X
+				// X.....X
+				// XXXXXXX
+				case 2:
+				if (liveCol <= 1)
+					neighbours = ((pymmm[xmmm]>>SH) > 0) + ((pymmm[xmm]>>SH) > 0) + ((pymmm[xm]>>SH) > 0) + ((pymmm[x]>>SH) > 0) + ((pymmm[xp]>>SH) > 0) + ((pymmm[xpp]>>SH) > 0) + ((pymmm[xppp]>>SH) > 0) + 
+								 ((pyppp[xmmm]>>SH) > 0) + ((pyppp[xmm]>>SH) > 0) + ((pyppp[xm]>>SH) > 0) + ((pyppp[x]>>SH) > 0) + ((pyppp[xp]>>SH) > 0) + ((pyppp[xpp]>>SH) > 0) + ((pyppp[xppp]>>SH) > 0) + 
+								 ((pypp[xmmm]>>SH) > 0) + ((pypp[xppp]>>SH) > 0) + 
+								 ((pyp[xmmm]>>SH) > 0) + ((pyp[xppp]>>SH) > 0) + 
+								 ((py[xmmm]>>SH) > 0) + ((py[xppp]>>SH) > 0) + 
+								 ((pym[xmmm]>>SH) > 0) + ((pym[xppp]>>SH) > 0) + 
+								 ((pymm[xmmm]>>SH) > 0) + ((pymm[xppp]>>SH) > 0);
+				else
+					neighbours = ((pymmm[xmmm]>>SH) == liveCol) + ((pymmm[xmm]>>SH) == liveCol) + ((pymmm[xm]>>SH) == liveCol) + ((pymmm[x]>>SH) == liveCol) + ((pymmm[xp]>>SH) == liveCol) + ((pymmm[xpp]>>SH) == liveCol) + ((pymmm[xppp]>>SH) == liveCol) + 
+								 ((pyppp[xmmm]>>SH) == liveCol) + ((pyppp[xmm]>>SH) == liveCol) + ((pyppp[xm]>>SH) == liveCol) + ((pyppp[x]>>SH) == liveCol) + ((pyppp[xp]>>SH) == liveCol) + ((pyppp[xpp]>>SH) == liveCol) + ((pyppp[xppp]>>SH) == liveCol) + 
+								 ((pypp[xmmm]>>SH) == liveCol) + ((pypp[xppp]>>SH) == liveCol) + 
+								 ((pyp[xmmm]>>SH) == liveCol) + ((pyp[xppp]>>SH) == liveCol) + 
+								 ((py[xmmm]>>SH) == liveCol) + ((py[xppp]>>SH) == liveCol) + 
+								 ((pym[xmmm]>>SH) == liveCol) + ((pym[xppp]>>SH) == liveCol) + 
+								 ((pymm[xmmm]>>SH) == liveCol) + ((pymm[xppp]>>SH) == liveCol);
+				break;
+								
+			}
+
+			state2 = py[x];
+			state = state2 >> SH;
+			if (state) {
+				state = slowDeath? state-1 : 0;
+				if (stayRules[neighbours]) { state=neighbours; /*if(state>7)state=7;*/ }  // for slowDeath, state=py[x] would actually be more "accurate" (but results are less interesting)
+			} else {
+				state = 0;
+				if (bornRules[neighbours]) { state = liveCol <= 1? neighbours : liveCol; /*if(state>7)state=7;*/ }
+			}
+
+			r=(state2>>16)&0xff;
+			g=(state2>>8)&0xff;
+			b=(state2)&0xff;
+			
+			if (state) {
+				mulBase = neighbours;
+				if (mulPatt == 1) mulBase = state;
+				if (mulPatt == 2) mulBase = 1;
+				if (mulPatt == 3) mulBase ^= state;
+				if (state & rAnd) r+=mulBase*rMul;
+				if (state & gAnd) g+=mulBase*gMul;
+				if (state & bAnd) b+=mulBase*bMul;
+				
+				if (stayPatt == 5 || stayPatt == 6) b=g=r;	
+			} else {
+				switch(stayPatt) {
+					case 0: default: 
+					r-=rNeg;
+					g-=gNeg;
+					b-=bNeg;
+					break;
+
+					case 1:
+					if (r>=stayPattVal) r-=rNeg;
+					if (r>=stayPattVal) g-=gNeg;
+					if (r>=stayPattVal) b-=bNeg;
+					break;
+					
+					case 2:
+					if (b>=stayPattVal) r-=rNeg;
+					if (b>=stayPattVal) g-=gNeg;
+					if (b>=stayPattVal) b-=bNeg;
+					break;
+
+					case 3:
+					if (g>=stayPattVal) r-=rNeg;
+					if (g>=stayPattVal) g-=gNeg;
+					if (g>=stayPattVal) b-=bNeg;
+					break;
+					
+					case 4:
+					if (b>=stayPattVal) r-=rNeg;
+					if (b>=stayPattVal) g-=gNeg;
+					if (r>=stayPattVal) b-=bNeg;
+					break;
+
+					case 5: 
+					r-=rNeg;
+					b=g=r;
+					break;
+				}
+				
+			}
+
+			if (r>255) r=topClampVal;
+			if (g>255) g=topClampVal;
+			if (b>255) b=topClampVal;
+			
+			if (r<0) r=bottomClampVal;
+			if (g<0) g=bottomClampVal;
+			if (b<0) b=bottomClampVal;
+
+			FADE_IF_FADING;
+			
+			*outArray++ = (r<<16)|(g<<8)|(state<<SH)|b;
+		}
+	}
+
 }

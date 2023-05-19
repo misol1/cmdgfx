@@ -15,6 +15,7 @@ set /a H=%errorlevel%
 set /a WW=W*2
 
 set __=.
+set /a density=50
 call %0 %* | cmdgfx_RGB_32 "fbox 0 0 db" %TOP%m0OW0Sfa:0,0,%WW%,%H%nt8
 set __=
 set W=&set H=&set density=
@@ -28,40 +29,43 @@ call :MAKERULES stay
 call :MAKERULES born
 
 set zoomFont=abcdef
-set /a XTXT=2, YTXT=4, HLP=0, FPS=0, CRXTR=0, WVAL=0, slowDeath=0, liveCol=1, updateRate=0, rateCnt=0, XSC=0, YSC=0, zoom=0, WSC=W, HSC=H
+set /a XTXT=2, YTXT=4, HLP=0, FPS=0, CRXTR=0, WVAL=0, slowDeath=0, liveCol=1, updateRate=0, rateCnt=0, XSC=0, YSC=0, zoom=0, WSC=W,HSC=H,WW=W*2
 set font=!zoomFont:~%zoom%,1!
 set TS=&if !HLP!==0 set TS=skip
 set FS=&if !FPS!==0 set FS=skip
 set LKEY=""& set SCHR="()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\] _ abcdefghijklmnopqrstuvwxyz{|}~"
 set KEY=
 
-set /a stayOld=0, bornOld=0, opType=0, initPrep=1, WMM=W-1, HMM=H-1, wrap=1, stateMethod=0, keyMode=0
+set /a stayOld=0, bornOld=0, NH=3, initPrep=1, c0pos=0, opType=0, stateMethod=1, keyMode=0, wrap=1, WMM=W-1, HMM=H-1
 set edgeS=skip&if !wrap!==0 set edgeS=
 set OPOUT=""
-set SM0=&set SM1=_32bit
 
 
-set /a stay=87,born=46,density=100,liveCol=7,slowDeath=0
-::set /a "stay=240,born=37,density=66,liveCol=1,slowDeath=0,stateMethod=1" & rem Growing blobs on red. Only looks proper using "old 2-step method, OR stateMethod=1 and palette (B) below"
+set /a stay=36544,born=6300784,density=30,liveCol=5,slowDeath=1,NH=1,wrap=0,opType=3
+set /a initPrep=0 & echo "cmdgfx: fellipse 000005 0 db 960,540,408,408" n
 
+set /a fadeVal=0, fadeOut=0, fadeCurr=0, nextKey=0, fUpDelt=1, fDownDelt=4
+set /a fadeOut=2, fadeVal=16*2
+
+:BEGIN
+
+set /a CNT=-1, NH=1, MAXBITS=24 & for %%a in (20 24 24 24 24 24 16 12 10 10 12 10 10 16) do set /a CNT+=1 & if !CNT!==!NH! set /a MAXBITS=%%a
+set /a MAXVAL="(1 << (!MAXBITS!))-1"
 
 call :EXECUTEPREP
 
 call sindef.bat
-set /a XMUL=400,YMUL=250,XMUL2=50,YMUL2=60,SCNT=0, BOB=0
+set /a XMUL=400,YMUL=250,XMUL2=50,YMUL2=60,SCNT=0, BOB=0, bobType=0
 
 ::Color output settings.  To use negative P and Neg values, add 128 to value, like: redP=(4+128) to mean -4
-set /a "redP=(4), greenP=(3), blueP=(10), colChange=0" & rem colChange=0 =add neighbours*redP to r, 1=add state*redP, 2=add 1*redP,  3=add (neighbours^state)*redP,  4-7 undefined/like 0
-::set /a "redP=(6), greenP=(16), blueP=(19), colChange=2"
-set /a "redNeg=(2), greenNeg=(2), blueNeg=(1)"
-::set /a "redNeg=(1), greenNeg=(2), blueNeg=(2)"
-set /a "redAnd=1, greenAnd=4, blueAnd=2"
-set /a "stayPatt=1, stayVal=1" & rem 0=decrease all colors, 1=decrease colors if b>=stayVal, 2 if r>=stayVal, 3 if g>=stayVal, 4 if b>=val for red/green, r>=val for blue, 5=0 but grayscale, 6=5 but not gray neg,  7 undefined
+set /a "redP=(6), greenP=(6), blueP=(6), colChange=2" & rem colChange=0 =add neighbours*redP to r, 1=add state*redP, 2=add 1*redP,  3=add (neighbours^state)*redP,  4-7 undefined/like 0
+set /a "redNeg=(2), greenNeg=(2), blueNeg=(2)"
+set /a "redAnd=1, greenAnd=2, blueAnd=4"
+set /a "stayPatt=0, stayVal=1" & rem 0=decrease all colors, 1=decrease colors if b>=stayVal, 2 if r>=stayVal, 3 if g>=stayVal, 4 if b>=val for red/green, r>=val for blue, 5=0 but grayscale, 6=5 but not gray neg,  7 undefined
 set /a "topClamp=1, bottomClamp=1"
 
-::set /a redP=6, greenP=11, blueP=10, colChange=2, redNeg=2, greenNeg=2, blueNeg=3, redAnd=1, greenAnd=4, blueAnd=2, stayPatt=1, stayVal=1, topClamp=1, bottomClamp=1
 
-::set /a "redP=6, greenP=6, blueP=6, colChange=2, redNeg=2, greenNeg=2, blueNeg=2, redAnd=1, greenAnd=2, blueAnd=4" & rem Palette (B)
+set /a redP=1, greenP=1, blueP=1, colChange=1, redNeg=2, greenNeg=2, blueNeg=2, redAnd=4, greenAnd=6, blueAnd=6, stayPatt=4, stayVal=1, topClamp=1, bottomClamp=1
 
 
 for /l %%a in () do (
@@ -79,27 +83,36 @@ for /l %%a in () do (
 			set /a SCNT=0
 		)
 		set /a rad=10, diam=rad*2
-		rem set bobS="fellipse 000007 0 db !XPOS!,!YPOS!,!rad!,!rad!"
-		rem set bobS="ipoly 000007 0 db 1 !XPOS!,!YPOS!,-5,-5,5,-5,5,5,-5,5"& rem Cube. Make an ipoly of a circle for faster version of below
-		set /a XPOS-=rad,YPOS-=rad & set bobS="block 0 !XPOS!,!YPOS!,!diam!,!diam! !XPOS!,!YPOS! -1 0 0 - or(fgcol(x,y),!liveCol!*lss(length(x-!rad!,y-!rad!),!rad!))"& rem slower but easier
+
+		if !bobType!==0 set /a XPOS-=rad,YPOS-=rad & set bobS="block 0 !XPOS!,!YPOS!,!diam!,!diam! !XPOS!,!YPOS! -1 0 0 - or(col(x,y),shl(!liveCol!*lss(length(x-!rad!,y-!rad!),!rad!),24))"& rem slower but easier
+		if !bobType!==1 set /a XPOS-=rad,YPOS-=rad & set bobS="block 0 !XPOS!,!YPOS!,!diam!,!diam! !XPOS!,!YPOS! -1 0 0 - or(fgcol(x,y),!liveCol!*lss(length(x-!rad!,y-!rad!),!rad!))"& rem NICE! with the blue sponge
+		if !bobType!==2 set bobS="fellipse !liveColCh!000000 0 db !XPOS!,!YPOS!,!rad!,!rad!"
+		if !bobType!==3 set bobS="ipoly !liveColCh!000000 0 db 1 !XPOS!,!YPOS!,-5,-5,5,-5,5,5,-5,5"& rem Cube. Make an ipoly of a circle for faster version of bobType 0
 	)
 
 	set /a rateCnt+=1
 	if !rateCnt! geq !updateRate! (
-		set XTRP=""& if !CRXTR! == 1 for /l %%b in (1,1,10) do set /a "XP=!RANDOM! %% !W!, YP=!RANDOM! %% !H!" & set XTRP="!XTRP:~1,-1! & pixel !liveColCh!000000 0 db !XP!,!YP!"
+		set XTRP=""
+		if !CRXTR! == 1 for /l %%b in (1,1,10) do set /a "XP=!RANDOM! %% !W!, YP=!RANDOM! %% !H!" & set XTRP="!XTRP:~1,-1! & pixel !liveColCh!000000 0 db !XP!,!YP!"
 
-		set /a "iflc=-1, ifi=-1, slowLive=slowDeath | (liveCol << 1), stayBorn=stay | (born << 8)"
-		set /a "colMuls=redP | (greenP<<8) | (blueP<<16), colNegs=redNeg | (greenNeg<<8) | (blueNeg<<16)"
+		set /a iflc=-1, ifi=-1
+		if not "!inFileLineCount!" == "" set /a iflc=inFileLineCount-1, ifi=inFileIndex
+
+		set /a "colMuls=redP | (greenP<<8) | (blueP<<16) | (slowDeath<<24) | (NH<<25), colNegs=redNeg | (greenNeg<<8) | (blueNeg<<16) | (liveCol<<24)"
 		set /a "options=colChange | (redAnd<<3) | (greenAnd<<6) | (blueAnd<<9)"
 		set /a "options=options | (topClamp<<12) | (bottomClamp<<13) | (stayPatt<<14) | (stayVal<<17)"
-		if not "!inFileLineCount!" == "" set /a iflc=inFileLineCount-1, ifi=inFileIndex
-		if !keyMode! == 0 set stateText="!stay!__!born!__!density!__(!slowDeath!_!liveCol!)___(!ifi!/!iflc!)"
+		if !keyMode! == 0 set stateText="!stay!__!born!__!density!__(!slowDeath!_!liveCol!)_!NH!___(!ifi!/!iflc!)"
 		if !keyMode! == 1 set stateText="COL:_!colChange!__!redP!_!greenP!_!blueP!__!redNeg!_!greenNeg!_!blueNeg!__!redAnd!_!greenAnd!_!blueAnd!__!stayPatt!_!stayVal!"
-		rem echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - DLL:eextern:randMoore32:!stay!,!born!,!slowDeath!,!liveCol! & !XTRP:~1,-1! & !TS! text b 0 0 !stay!__!born!__!density!__(!slowDeath!_!liveCol!)___(!ifi!/!iflc!) !XTXT!,!YTXT! 5 & !FS! text b 0 0 [FRAMECOUNT] 2,28 5 & block 0 0,0,%WW%,%h% 0,0 -1 0 0 - DLL:eextern:randMoore32conv & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" f!font!:0,0,%WW%,%H%,!W!,!H!,!W!,0
-		for %%m in (!stateMethod!) do echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - DLL:eextern:randMoore32compact!SM%%m!:!stayBorn!,!slowLive!,!colMuls!,!colNegs!,!options! & !XTRP:~1,-1! & !TS! fbox 000000 0 db !XTXT!,!YTXT!,400,9 & !TS! text b 0 0 !stateText:~1,-1! !XTXT!,!YTXT! 5 & !FS! text b 0 0 [FRAMECOUNT] 2,28 5 & !edgeS! box 000000 0 db 0,0,!wmm!,!hmm! & skip circle 000000 0 db 960,540,539 & !bobS:~1,-1! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" v-Vf!font!:0,0,%WW%,%H%,!WSC!,!HSC!,!XSC!,!YSC!
+
+		set FADES=skip
+		if !fadeOut! == 2 set /a "fadeVal-=fDownDelt, fadeCurr = fadeVal/2" & set FADES=&if !fadeCurr! lss 1 set /a fadeOut=0, fadeCurr=0
+		if !fadeOut! == 1 set /a "fadeVal+=fUpDelt, fadeCurr = fadeVal/2" & set FADES=&if !fadeCurr! gtr 32 set /a fadeOut=2, KEY=nextKey
+		if !fadeCurr! gtr 25 set /a "fadeCurr+=(fadeCurr - 25)*40" & if !fadeCurr! gtr 255 set /a fadeCurr=255
+		
+		echo "cmdgfx: !FADES! block 0 0,0,1,1 0,0 -1 0 0 - DLL:eextern:setFade:!fadeOut!,-!fadeCurr!,-!fadeCurr!,-!fadeCurr! & block 0 0,0,%w%,%h% 0,0 -1 0 0 - DLL:eextern:randMooreExtended32compact_size3:!stay!,!born!,!colMuls!,!colNegs!,!options! & !XTRP:~1,-1! & !TS! text b 0 0 !stateText:~1,-1! !XTXT!,!YTXT! 5 & !FS! text b 0 0 [FRAMECOUNT] 2,28 5 & !edgeS! box 000000 0 db 0,0,!wmm!,!hmm! & !bobS:~1,-1! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" v-Vf!font!:0,0,%WW%,%H%,!WSC!,!HSC!,!XSC!,!YSC!
+		
 		set /a rateCnt=0
 	) else (
-		rem echo "cmdgfx: skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" f!font!:0,0,%WW%,%H%,!W!,!H!,!W!,0
 		echo "cmdgfx: skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" f!font!:0,0,%WW%,%H%,!WSC!,!HSC!,!XSC!,!YSC!
 	)
 	
@@ -138,17 +151,22 @@ for /l %%a in () do (
 			if !LKEY! == "o" set /a "blueNeg-=1, KEY=0"&set LKEY=""
 			if !LKEY! == "O" set /a "blueNeg+=1, KEY=0"&set LKEY=""
 		)
-	
+		if !LKEY! == "k" set /a keyMode=1-keyMode
+
 		if !KEY! == 13 set /a stayOld=stay, bornOld=born & call :MAKERULES stay & call :MAKERULES born & call :PREP 1
+		if !KEY! == 10 set /a stayOld=stay, bornOld=born & call :MAKERULES stay & call :PREP 1 & rem ctrl-Enter or ctrl-j
+		if !KEY! == 11 set /a stayOld=stay, bornOld=born & set /a stay=0 & call :PREP 1 & rem ctrl-k
 		if !LKEY! == "<" set /a stay=stayOld, born=bornOld & call :PREP 1
 		if !KEY! == 32 call :PREP 1
 		if !KEY! == 9 call :PREP
-		if !LKEY! == "." call :PREP 0
-		if !LKEY! == ":" call :PREP 4
-		if !LKEY! == "." call :PREP 0
+		if !LKEY! == "." call :PREP 0 2
 		if !LKEY! == "," call :PREP 2
+		if !LKEY! == ":" call :PREP 4
 		if !LKEY! == "f" set /a FPS=1-FPS & set FS=&if !FPS!==0 set FS=skip
 
+		if !LKEY! == "-" set /a fadeOut=1, fadeVal=0, nextKey=336
+		if !LKEY! == "_" set /a fadeOut=1, fadeVal=0, nextKey=328
+		
 		if !KEY! geq 48 if !KEY! leq 57 set /a "density=(KEY-47)*10" & call :PREP 1
 		if !KEY! == 333 set /a "density+=1" & call :PREP 1
 		if !KEY! == 331 set /a "density-=1" & call :PREP 1
@@ -158,32 +176,29 @@ for /l %%a in () do (
 		if !KEY! == 408 call :GETPATTERNFROMFILE -1 colSkip
 		if !KEY! == 416 call :GETPATTERNFROMFILE 1 colSkip
 		if !LKEY! == "g" if not "!inFileLineCount!" == "" call :GETPATTERNINDEX & call :GETPATTERNFROMFILE 0
-
-		if !LKEY! == "n" call :GETCOLPATTERNFROMFILE -1
-		if !LKEY! == "N" call :GETCOLPATTERNFROMFILE 1
+		
+		if !LKEY! == "o" call :GETCOLPATTERNFROMFILE -1
+		if !LKEY! == "O" call :GETCOLPATTERNFROMFILE 1
 
 		if !LKEY! == "d" call :SETORGPAL
 		if !LKEY! == "D" if not "!inFileLineCount!" == "" call :GETPATTERNFROMFILE 0 skip
 
-
-		if !LKEY! == "a" set /a "stay-=1" & (if !stay! lss 0 set /a stay=255) & call :PREP 1
-		if !LKEY! == "A" set /a "stay+=1" & (if !stay! gtr 255 set /a stay=0) & call :PREP 1
-		if !LKEY! == "b" set /a "born-=1" & (if !born! lss 0 set /a born=255) & call :PREP 1
-		if !LKEY! == "B" set /a "born+=1" & (if !born! gtr 255 set /a born=0) & call :PREP 1
-
-		if !LKEY! == "Z" call :ADJUSTZOOM 1
-		if !LKEY! == "z" call :ADJUSTZOOM -1
-		if !KEY! == 26 if !zoom! gtr 0 set /a "XSC=W/2-WSC/2, YSC=H/2-HSC/2" & rem ^Z
-		if !LKEY! == "X" if !zoom! gtr 0 set /a "XSC+=15, XMAX=W-WSC" & if !XSC! geq !XMAX! set /a XSC=XMAX-1
-		if !LKEY! == "x" if !zoom! gtr 0 set /a "XSC-=15" & if !XSC! lss 0 set /a XSC=0
-		if !LKEY! == "Y" if !zoom! gtr 0 set /a "YSC+=15, YMAX=H-HSC" & if !YSC! geq !YMAX! set /a YSC=YMAX-1
-		if !LKEY! == "y" if !zoom! gtr 0 set /a "YSC-=15" & if !YSC! lss 0 set /a YSC=0
+		if !LKEY! == "a" set /a "stay-=1" & (if !stay! lss 0 set /a stay=!MAXVAL!) & call :PREP 1
+		if !LKEY! == "A" set /a "stay+=1" & (if !stay! gtr !MAXVAL! set /a stay=0) & call :PREP 1
+		if !LKEY! == "b" set /a "born-=1" & (if !born! lss 0 set /a born=!MAXVAL!) & call :PREP 1
+		if !LKEY! == "B" set /a "born+=1" & (if !born! gtr !MAXVAL! set /a born=0) & call :PREP 1
 
 		if !LKEY! == "s" call :SAVE_CURRENT
 		if !LKEY! == "S" call :SAVE_COLPATT & call :SAVE_CURRENT "!colPatt!"
 		if !LKEY! == "P" call :SAVE_COLPATT 1
-
-		if !KEY! == 19 set /a stateMethod=1-stateMethod & rem ^S
+	
+		if !KEY! == 26 if !zoom! gtr 0 set /a "XSC=W/2-WSC/2, YSC=H/2-HSC/2" & rem ^Z
+		if !LKEY! == "Z" call :ADJUSTZOOM 1
+		if !LKEY! == "z" call :ADJUSTZOOM -1
+		if !LKEY! == "X" if !zoom! gtr 0 set /a "XSC+=15, XMAX=W-WSC" & if !XSC! geq !XMAX! set /a XSC=XMAX-1
+		if !LKEY! == "x" if !zoom! gtr 0 set /a "XSC-=15" & if !XSC! lss 0 set /a XSC=0
+		if !LKEY! == "Y" if !zoom! gtr 0 set /a "YSC+=15, YMAX=H-HSC" & if !YSC! geq !YMAX! set /a YSC=YMAX-1
+		if !LKEY! == "y" if !zoom! gtr 0 set /a "YSC-=15" & if !YSC! lss 0 set /a YSC=0
 
 		if !LKEY! == "h" set /a HLP=1-HLP & set TS=&if !HLP!==0 set TS=skip
 		if !LKEY! == "r" set /a CRXTR=1-CRXTR
@@ -192,13 +207,16 @@ for /l %%a in () do (
 		if !KEY! == 23 set /a wrap=1-wrap & set edgeS=skip&if !wrap!==0 set edgeS=& rem ^W
 
 		if !LKEY! == "l" set /a "liveCol-=1" & if !liveCol! lss 1 set /a liveCol=1
-		if !LKEY! == "L" set /a "liveCol+=1" & if !stateMethod! == 0 if !liveCol! gtr 7 set /a liveCol=7
-
-		if !KEY! == 2 set /a BOB=1-BOB & rem ^B
-		if !LKEY! == "k" set /a keyMode=1-keyMode
+		if !LKEY! == "L" set /a "liveCol+=1" & rem if !liveCol! gtr 15 set /a liveCol=15
 
 		if !LKEY! == "m" set /a "slowDeath=1-slowDeath"
+
+		if !LKEY! == "n" set /a NH-=1 & if !NH! lss 0 set /a NH=2
+		if !LKEY! == "N" set /a NH+=1 & if !NH! gtr 2 set /a NH=0
 		
+		if !KEY! == 2 set /a BOB=1-BOB & rem ^B
+		if !KEY! == 4 set /a bobType+=1 & if !bobType! gtr 3 set /a bobType=0 & rem ^D
+
 		if !LKEY! == "p" cmdwiz getch
 		
 		if !KEY! == 27 cmdwiz delay 100 & echo "cmdgfx: quit" & exit
@@ -208,12 +226,12 @@ for /l %%a in () do (
 )
 
 :PREP
+set OPOUT=""
 set /a HIB=liveCol/16,cnt=-1 & for %%a in (0 1 2 3 4 5 6 7 8 9 a b c d e f) do set /a cnt+=1 & if !cnt! == !HIB! set liveColCh=%%a
 set /a LOB=liveCol-HIB*16,cnt=-1 & for %%a in (0 1 2 3 4 5 6 7 8 9 a b c d e f) do set /a cnt+=1 & if !cnt! == !LOB! set liveColCh=!liveColCh!%%a
-set OPOUT=""
-if "%1"=="1" set /a opType=0 & echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - min(random()*100/(101-%density%),1)*!liveCol!"& goto :PREPSTEP2
+if "%1"=="1" set /a opType=0 & echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - min(random()*100/(101-%density%),1)*!liveCol!" n & goto :PREPSTEP2
 echo "cmdgfx: fbox 0 0 db" nW0
-if "%1"=="2" set /a opType=2 & set /a SIZ=20 + !random! %% 80, WH=w/2-SIZ/2,HH=h/2-SIZ/2 & echo "cmdgfx: block 0 !WH!,!HH!,!SIZ!,!SIZ! !WH!,!HH! -1 0 0 - min(random()*100/(101-%density%),1)*!liveCol!"& goto :PREPSTEP2
+if "%1"=="2" set /a opType=2 & set /a SIZ=20 + !random! %% 80, WH=w/2-SIZ/2,HH=h/2-SIZ/2 & echo "cmdgfx: block 0 !WH!,!HH!,!SIZ!,!SIZ! !WH!,!HH! -1 0 0 - min(random()*100/(101-%density%),1)*!liveCol!" n & goto :PREPSTEP2
 if "%1"=="" ( 
 	set /a opType=1
 	for /l %%a in (1,1,65) do (
@@ -255,31 +273,34 @@ set /a XP=0, YP=H2
 :PREPSTEP2
 if !stateMethod!==0 echo "cmdgfx: " W!WVAL!
 if !stateMethod!==1 echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - shl(col(x,y),24)" W!WVAL!
-
 goto :eof
 
 :MAKERULES
 set /a VD=0
 set /a "BITC=!RANDOM! %% 3 + 2"
-for /l %%a in (1,1,8) do (
+for /l %%a in (1,1,!MAXBITS!) do (
 	set /a "BITT=!RANDOM! %% !BITC!"
 	if !BITT! gtr 0 set /a BIT=0
 	if !BITT! equ 0 set /a BIT=1
 	set /a "VD=(VD << 1) | BIT"
 )
 set %1=!VD!
+set /a c0pos=0
 goto :eof
+
 
 :SAVE_CURRENT
 set WVS=& if !WVAL! neq 0 set WVS=,WVAL=!WVAL!,updateRate=!updateRate!
 set CPATT=""
 if not "%~1" == "" set CPATT=",  %~1"
-cmdwiz print "::set /a stay=!stay!,born=!born!,density=!density!,liveCol=!liveCol!,slowDeath=!slowDeath!,wrap=!wrap!,opType=!opType!%CPATT:~1,-1%%WVS% !OPOUT:~1,-1!\n" >> data\randMooreRGB-Set.txt
+cmdwiz print "::set /a stay=!stay!,born=!born!,density=!density!,liveCol=!liveCol!,slowDeath=!slowDeath!,NH=!NH!,wrap=!wrap!,opType=!opType!%CPATT:~1,-1%%WVS% !OPOUT:~1,-1!\n" >> data\randMoore-RGB-Extended-Set-size3.txt
 set WVS=&set CPATT=
 goto :eof
 
+
+
 :GETPATTERNFROMFILE
-set inFile=data\randMooreRGB-data.txt
+set inFile=data\randMooreRGB-Extended-data-size3.txt
 if not "%inFileIndex%" == "" set /a inFileIndex += %1
 if "%inFileIndex%" == "" (
 	set /a inFileIndex=0
@@ -291,20 +312,24 @@ if %inFileIndex% lss 0 set /a inFileIndex=!inFileLineCount!-1
 set /a cnt=0, initPrep=1, orgPal=0
 if not "%~2" == "skip" set /a WVAL=0, updateRate=0, opType=0, slowDeath=0, liveCol=1, XTXT=2, YTXT=4
 for /f "tokens=*" %%a in ('type "%inFile%"') do (if !cnt! == !inFileIndex! set pattern="%%a")& set /a cnt+=1
-echo "cmdgfx: fbox 0 0 db" - - -
+echo "cmdgfx: fbox 0 0 db" n - -
 set /a WH=W/2,HH=H/2
+rem no-erase
+rem set /a WH+=W & echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - and(col(x,y),16777215) & fbox 0 0 db %w%,0,%w%,%h%"
 set pattern=!pattern:960,540,=%WH%,%HH%,!
 if "%~2" == "skip" set pattern=!pattern:set=cmdwiz delay 0!& call :SKIPCHK !pattern!
 if "%~2" == "colSkip" for %%c in (redP greenP blueP colChange redNeg greenNeg blueNeg redAnd greenAnd blueAnd stayPatt stayVal topClamp bottomClamp) do set pattern=!pattern:%%c=junk!
 %pattern:~1,-1%
-if !liveCol! gtr 7 set /a liveCol=7
 set edgeS=skip&if !wrap!==0 set edgeS=
 if !orgPal! == 1 call :SETORGPAL
+rem no-erase
+rem echo "cmdgfx: block 0 %w%,0,%w%,%h% %w%,0 -1 0 0 - shl(col(x,y),24) & block 2 %w%,0,%w%,%h% 0,0 0"
 
-set /a WVAL=0, updateRate=0 & echo "cmdgfx: " W!WVAL!
-
+set /a WVAL=0, updateRate=0 & echo "cmdgfx: " n
+rem if !srand! geq 0 echo "cmdgfx: " Q!srand! & cmdwiz delay 300
 call :EXECUTEPREP
 set pattern=
+set /a c0pos=0
 goto :eof
 
 :SKIPCHK
@@ -313,7 +338,7 @@ if !errorlevel! geq 0 set /a initPrep=0
 goto :eof
 
 :SETORGPAL
-set /a "redP=(4), greenP=(3), blueP=(10), colChange=0, redNeg=(2), greenNeg=(2), blueNeg=(1), redAnd=1, greenAnd=4, blueAnd=2, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1"
+set /a "redP=(6), greenP=(6), blueP=(6), colChange=2, redNeg=(2), greenNeg=(2), blueNeg=(2), redAnd=1, greenAnd=2, blueAnd=4, stayPatt=0, stayVal=1, topClamp=1, bottomClamp=1"
 goto :eof
 
 :GETCOLPATTERNFROMFILE
@@ -332,18 +357,6 @@ call :EXECUTEPREP
 set pattern=
 goto :eof
 
-
-:EXECUTEPREP
-if !initPrep! == 1 (
-	if !opType! == 0 call :PREP 1
-	if !opType! == 1 call :PREP
-	if !opType! == 2 call :PREP 2
-	if !opType! == 3 call :PREP 0
-) else (
-	if !stateMethod!==1 echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - shl(col(x,y),24)" W!WVAL!
-)
-goto :eof
-
 :GETPATTERNINDEX
 set /a KEY=0,VAL=0
 :KEYLOOP
@@ -354,6 +367,18 @@ if not !KEY! == 13 goto :KEYLOOP
 set /a inFileIndex = VAL, KEY=0
 if %inFileIndex% geq !inFileLineCount! set /a inFileIndex=0
 if %inFileIndex% lss 0 set /a inFileIndex=!inFileLineCount!-1
+goto :eof
+
+:EXECUTEPREP
+if !initPrep! == 1 (
+	if !opType! == 0 call :PREP 1
+	if !opType! == 1 call :PREP
+	if !opType! == 2 call :PREP 2
+	if !opType! == 3 call :PREP 0 2
+) else (
+   rem comment out if using no erase
+   if !stateMethod!==1 echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - shl(col(x,y),24)"
+)
 goto :eof
 
 :ADJUSTZOOM

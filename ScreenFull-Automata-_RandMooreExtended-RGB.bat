@@ -44,6 +44,8 @@ set OPOUT=""
 ::Disintegrate/explode
 set /a stay=33145,born=8244,density=60,liveCol=5,slowDeath=1,NH=3
 
+set /a pattCycle=0, pattCycleIndex=0
+
 
 :BEGIN
 
@@ -53,7 +55,7 @@ set /a MAXVAL="(1 << (!MAXBITS!))-1"
 call :EXECUTEPREP
 
 call sindef.bat
-set /a XMUL=400,YMUL=250,XMUL2=50,YMUL2=60,SCNT=0, BOB=0, bobType=0
+set /a XMUL=400,YMUL=250,XMUL2=50,YMUL2=60,SCNT=0, BOB=0, bobType=0, polyRandPos=0, polyRand=0
 
 ::Color output settings.  To use negative P and Neg values, add 128 to value, like: redP=(4+128) to mean -4
 set /a "redP=(6), greenP=(6), blueP=(6), colChange=2" & rem colChange=0 =add neighbours*redP to r, 1=add state*redP, 2=add 1*redP,  3=add (neighbours^state)*redP,  4-7 undefined/like 0
@@ -91,16 +93,24 @@ for /l %%a in () do (
 		if !CRXTR! == 1 for /l %%b in (1,1,10) do set /a "XP=!RANDOM! %% !W!, YP=!RANDOM! %% !H!" & set XTRP="!XTRP:~1,-1! & pixel !liveColCh!000000 0 db !XP!,!YP!"
 
 		set /a iflc=-1, ifi=-1
-		if not "!inFileLineCount!" == "" set /a iflc=inFileLineCount-1, ifi=inFileIndex
+		rem if not "!inFileLineCount!" == "" set /a iflc=inFileLineCount-1, ifi=inFileIndex
+		if not "!inFileLineCount!" == "" set /a iflc=inFileLineCount, ifi=inFileIndex+1
 
 		set /a "colMuls=redP | (greenP<<8) | (blueP<<16) | (slowDeath<<24) | (NH<<25), colNegs=redNeg | (greenNeg<<8) | (blueNeg<<16) | (liveCol<<24)"
 		set /a "options=colChange | (redAnd<<3) | (greenAnd<<6) | (blueAnd<<9)"
 		set /a "options=options | (topClamp<<12) | (bottomClamp<<13) | (stayPatt<<14) | (stayVal<<17)"
-		if !keyMode! == 0 set stateText="!stay!__!born!__!density!__(!slowDeath!_!liveCol!)___(!ifi!/!iflc!)"
+		if !keyMode! == 0 set stateText="!stay!__!born!__!density!__(!slowDeath!_!liveCol!)_!NH!___(!ifi!/!iflc!)"
 		if !keyMode! == 1 set stateText="COL:_!colChange!__!redP!_!greenP!_!blueP!__!redNeg!_!greenNeg!_!blueNeg!__!redAnd!_!greenAnd!_!blueAnd!__!stayPatt!_!stayVal!"
 
 		echo "cmdgfx: block 0 0,0,%w%,%h% 0,0 -1 0 0 - DLL:eextern:randMooreExtended32compact:!stay!,!born!,!colMuls!,!colNegs!,!options! & !XTRP:~1,-1! & !TS! text b 0 0 !stateText:~1,-1! !XTXT!,!YTXT! 5 & !FS! text b 0 0 [FRAMECOUNT] 2,28 5 & !edgeS! box 000000 0 db 0,0,!wmm!,!hmm! & !bobS:~1,-1! & skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" v-Vf!font!:0,0,%WW%,%H%,!WSC!,!HSC!,!XSC!,!YSC!
 		
+		if !pattCycle! == 1 (
+			set /a stay=p0stay, born=p0born
+			if !pattCycleIndex! gtr 25 set /a stay=p1stay, born=p1born
+			set /a pattCycleIndex +=1
+			if !pattCycleIndex! gtr 50 set /a pattCycleIndex=0
+		)
+
 		set /a rateCnt=0
 	) else (
 		echo "cmdgfx: skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%" f!font!:0,0,%WW%,%H%,!WSC!,!HSC!,!XSC!,!YSC!
@@ -149,7 +159,9 @@ for /l %%a in () do (
 		if !KEY! == 9 call :PREP
 		if !LKEY! == "." call :PREP 0 2
 		if !LKEY! == "," call :PREP 2
-		if !LKEY! == ":" call :PREP 4
+		if !LKEY! == ":" set /a polyRandPos=0, polyRand=0 & call :PREP 4
+		if !LKEY! == "_" set /a polyRandPos=1, polyRand=0 & call :PREP 4
+		if !LKEY! == "-" set /a polyRandPos=0, polyRand=1 & call :PREP 4
 		if !LKEY! == "f" set /a FPS=1-FPS & set FS=&if !FPS!==0 set FS=skip
 		
 		if !KEY! geq 48 if !KEY! leq 57 set /a "density=(KEY-47)*10" & call :PREP 1
@@ -162,8 +174,8 @@ for /l %%a in () do (
 		if !KEY! == 416 call :GETPATTERNFROMFILE 1 colSkip
 		if !LKEY! == "g" if not "!inFileLineCount!" == "" call :GETPATTERNINDEX & call :GETPATTERNFROMFILE 0
 		
-		if !LKEY! == "n" call :GETCOLPATTERNFROMFILE -1
-		if !LKEY! == "N" call :GETCOLPATTERNFROMFILE 1
+		if !LKEY! == "o" call :GETCOLPATTERNFROMFILE -1
+		if !LKEY! == "O" call :GETCOLPATTERNFROMFILE 1
 
 		if !LKEY! == "d" call :SETORGPAL
 		if !LKEY! == "D" if not "!inFileLineCount!" == "" call :GETPATTERNFROMFILE 0 skip
@@ -176,7 +188,10 @@ for /l %%a in () do (
 		if !LKEY! == "s" call :SAVE_CURRENT
 		if !LKEY! == "S" call :SAVE_COLPATT & call :SAVE_CURRENT "!colPatt!"
 		if !LKEY! == "P" call :SAVE_COLPATT 1
+
+		if !LKEY! == "j" set /a pattCycle=1-pattCycle, pattCycleIndex=0 & (if !pattCycle!==0 set /a stay=p0stay,born=p0born) & if !pattCycle!==1 set /a p0stay=stay,p0born=born& call :MAKERULES p1stay& call :MAKERULES p1born
 	
+		if !KEY! == 26 if !zoom! gtr 0 set /a "XSC=W/2-WSC/2, YSC=H/2-HSC/2" & rem ^Z
 		if !LKEY! == "Z" call :ADJUSTZOOM 1
 		if !LKEY! == "z" call :ADJUSTZOOM -1
 		if !LKEY! == "X" if !zoom! gtr 0 set /a "XSC+=15, XMAX=W-WSC" & if !XSC! geq !XMAX! set /a XSC=XMAX-1
@@ -195,8 +210,8 @@ for /l %%a in () do (
 
 		if !LKEY! == "m" set /a "slowDeath=1-slowDeath"
 
-		if !LKEY! == "n" set /a NH-=1 & if !NH! lss 0 set /a NH=3
-		if !LKEY! == "N" set /a NH+=1 & if !NH! gtr 3 set /a NH=0
+		if !LKEY! == "n" set /a NH-=1 & if !NH! lss 0 set /a NH=13
+		if !LKEY! == "N" set /a NH+=1 & if !NH! gtr 13 set /a NH=0
 		
 		if !KEY! == 2 set /a BOB=1-BOB & rem ^B
 		if !KEY! == 4 set /a bobType+=1 & if !bobType! gtr 3 set /a bobType=0 & rem ^D
@@ -205,6 +220,7 @@ for /l %%a in () do (
 		
 		if !KEY! == 27 cmdwiz delay 100 & echo "cmdgfx: quit" & exit
 	)
+		
 	set /a KEY=0
 	set LKEY=""
 )
@@ -228,13 +244,16 @@ if "%1"=="" (
 ) else if "%1"=="4" (
 	set /a opType=4
 	for /l %%a in (1,1,1) do (
-		set /a "XP=!W!/2, YP=!H!/2, XS=!RANDOM! %% 300 + 100, YS=!RANDOM! %% 200 + 200, NOFP=!RANDOM! %% 8 + 3, PMUL=!RANDOM! %% 3 + 1"
+		set /a "XP=!W!/2, YP=!H!/2"
+		if !polyRandPos! == 1 set /a "XP=!RANDOM! %% !W!, YP=!RANDOM! %% !H!"
+		set /a "XS=!RANDOM! %% 300 + 100, YS=!RANDOM! %% 200 + 200, NOFP=!RANDOM! %% 8 + 3, PMUL=!RANDOM! %% 3 + 1"
 		set OP=ipoly 0000!liveColCh! 0 db 0 
 		set /a "SC=0,CC=0,SCP=360/NOFP*PMUL,SCS=!RANDOM! %% 360,SCSC=!RANDOM! %% 3"
 		if !SCSC! == 0 set /a SC=!SCS!
 		for /l %%b in (1,1,!NOFP!) do (
 			set /a "SC+=SCP*0, CC=SC+90"
-			for %%d in (!SC!) do for %%e in (!CC!) do set /a A1=%%d,A2=%%e & set /a "XPOS=XP+(%SINE(x):x=!A1!*31416/180%*!XS!>>!SHR!), YPOS=YP+(%SINE(x):x=!A2!*31416/180%*!XS!>>!SHR!)"
+			if !polyRand! == 0 for %%d in (!SC!) do for %%e in (!CC!) do set /a A1=%%d,A2=%%e & set /a "XPOS=XP+(%SINE(x):x=!A1!*31416/180%*!XS!>>!SHR!), YPOS=YP+(%SINE(x):x=!A2!*31416/180%*!XS!>>!SHR!)"
+			if !polyRand! == 1 for %%d in (!SC!) do for %%e in (!CC!) do set /a A1=%%d,A2=%%e & set /a "XPOS=!RANDOM! %% !W!, YPOS=!RANDOM! %% !H!"
 			set OP=!OP!!XPOS!,!YPOS!,
 			set /a "SC+=SCP"
 		)
@@ -302,8 +321,12 @@ set pattern=!pattern:960,540,=%WH%,%HH%,!
 if "%~2" == "skip" set pattern=!pattern:set=cmdwiz delay 0!& call :SKIPCHK !pattern!
 if "%~2" == "colSkip" for %%c in (redP greenP blueP colChange redNeg greenNeg blueNeg redAnd greenAnd blueAnd stayPatt stayVal topClamp bottomClamp) do set pattern=!pattern:%%c=junk!
 %pattern:~1,-1%
+call :SETOPOUT !pattern!
 set edgeS=skip&if !wrap!==0 set edgeS=
 if !orgPal! == 1 call :SETORGPAL
+
+set /a CNT=-1, MAXBITS=8 & for %%a in (8 12 12 16 20 24 16 12 10 10 12 10 10 16) do set /a CNT+=1 & if !CNT!==!NH! set /a MAXBITS=%%a
+set /a MAXVAL="(1 << (!MAXBITS!))-1"
 
 set /a WVAL=0, updateRate=0 & echo "cmdgfx: " W!WVAL!
 rem if !srand! geq 0 echo "cmdgfx: " Q!srand! & cmdwiz delay 300
@@ -315,6 +338,12 @@ goto :eof
 :SKIPCHK
 cmdwiz stringfind %1 "initPrep"
 if !errorlevel! geq 0 set /a initPrep=0
+goto :eof
+
+:SETOPOUT
+cmdwiz stringfind %1 "& set /a initPrep=0"
+set /a pos=!errorlevel!+2
+if !pos! geq 2 for %%a in (!pos!) do set OPOUT="!pattern:"=\"!"&set OPOUT="!OPOUT:~%%a,-1!"
 goto :eof
 
 :SETORGPAL
@@ -344,7 +373,7 @@ echo "cmdgfx: skip %EXTRA%%EXTRA%%EXTRA%%EXTRA%"
 if exist EL.dat set /p EVENTS=<EL.dat & del /Q EL.dat >nul 2>nul & set /a "KEY=!EVENTS!>>22"
 if !KEY! geq 48 if !KEY! leq 57 set /a "VAL=VAL*10+(KEY-48), KEY=0"
 if not !KEY! == 13 goto :KEYLOOP
-set /a inFileIndex = VAL, KEY=0
+set /a inFileIndex = VAL-1, KEY=0
 if %inFileIndex% geq !inFileLineCount! set /a inFileIndex=0
 if %inFileIndex% lss 0 set /a inFileIndex=!inFileLineCount!-1
 goto :eof
